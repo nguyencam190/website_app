@@ -80,7 +80,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .header-logo{display:flex;align-items:center;gap:9px;text-decoration:none;flex-shrink:0;font-weight:700;font-size:15px;color:var(--accent)}
 .logo-box{width:30px;height:30px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;box-shadow:0 2px 8px var(--accent-glow)}
 .logo-label{color:#fff;font-size:13.5px;font-weight:700;letter-spacing:.2px}
-.header-search-wrap{flex:1;max-width:720px;position:relative;z-index:10}
+.header-center{position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;z-index:10}
+.header-search-wrap{width:460px;position:relative;z-index:10}
 .header-search-inp{width:100%;height:34px;background:rgba(255,255,255,.09);border:1.5px solid rgba(255,255,255,.14);border-radius:5px;padding:0 12px 0 34px;color:#fff;font-size:13.5px;outline:none;font-family:var(--font);transition:all .15s}
 .header-search-inp::placeholder{color:rgba(255,255,255,.42)}
 .header-search-inp:focus{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.35)}
@@ -1105,33 +1106,31 @@ td.tbl-inner-container{padding:0!important;overflow:visible!important;vertical-a
     <span class="logo-label">Project Docs</span>
   </a>
 
-  <!-- Global Search -->
-  <div class="header-search-wrap" id="hdrSearchWrap">
-    <i class="ti ti-search header-search-icon"></i>
-    <input class="header-search-inp" id="hdrSearchInp" type="text" placeholder="Search"
-      autocomplete="off" onfocus="hdrOpenSearch()" oninput="hdrHandleSearch(this.value)">
-    <div class="header-search-drop" id="hdrSearchDrop">
-      <div class="hsd-section">Gần đây</div>
-      <div class="hsd-item" id="hsdRecent1"><div class="hsd-item-icon"><i class="ti ti-file-text"></i></div><div><div>—</div><div class="hsd-item-meta">—</div></div></div>
-      <div class="hsd-item" id="hsdRecent2"><div class="hsd-item-icon"><i class="ti ti-file-text"></i></div><div><div>—</div><div class="hsd-item-meta">—</div></div></div>
-      <div class="hsd-item" id="hsdRecent3"><div class="hsd-item-icon"><i class="ti ti-file-text"></i></div><div><div>—</div><div class="hsd-item-meta">—</div></div></div>
-      <div id="hsdResultSection" style="display:none">
-        <div class="hsd-section">Kết quả</div>
-        <div id="hsdResults"></div>
-      </div>
-      <div style="border-top:1px solid var(--border);padding:9px 14px">
-        <div class="hsd-item" style="padding:0;color:var(--accent);font-size:13px;gap:6px">
-          <i class="ti ti-search" style="font-size:14px"></i>
-          <span id="hsdAdvancedLbl">Tìm kiếm...</span>
+  <!-- Search + Create — absolutely centered in header -->
+  <div class="header-center">
+    <div class="header-search-wrap" id="hdrSearchWrap">
+      <i class="ti ti-search header-search-icon"></i>
+      <input class="header-search-inp" id="hdrSearchInp" type="text" placeholder="Search"
+        autocomplete="off" onfocus="hdrOpenSearch()" oninput="hdrHandleSearch(this.value)">
+      <div class="header-search-drop" id="hdrSearchDrop">
+        <div class="hsd-section">Gần đây</div>
+        <div class="hsd-item" id="hsdRecent1"><div class="hsd-item-icon"><i class="ti ti-file-text"></i></div><div><div>—</div><div class="hsd-item-meta">—</div></div></div>
+        <div class="hsd-item" id="hsdRecent2"><div class="hsd-item-icon"><i class="ti ti-file-text"></i></div><div><div>—</div><div class="hsd-item-meta">—</div></div></div>
+        <div class="hsd-item" id="hsdRecent3"><div class="hsd-item-icon"><i class="ti ti-file-text"></i></div><div><div>—</div><div class="hsd-item-meta">—</div></div></div>
+        <div id="hsdResultSection" style="display:none">
+          <div class="hsd-section">Kết quả</div>
+          <div id="hsdResults"></div>
+        </div>
+        <div style="border-top:1px solid var(--border);padding:9px 14px">
+          <div class="hsd-item" style="padding:0;color:var(--accent);font-size:13px;gap:6px">
+            <i class="ti ti-search" style="font-size:14px"></i>
+            <span id="hsdAdvancedLbl">Tìm kiếm...</span>
+          </div>
         </div>
       </div>
     </div>
+    <button class="pab-btn primary" onclick="newDoc()" style="height:32px;font-size:13px;flex-shrink:0">Create</button>
   </div>
-
-  <!-- Create button — adjacent to search -->
-  <button class="pab-btn primary" onclick="newDoc()" style="height:32px;font-size:13px;flex-shrink:0">
-    <i class="ti ti-plus" style="font-size:14px"></i> + Create
-  </button>
 
   <!-- Right actions -->
   <div style="margin-left:auto;display:flex;align-items:center;gap:4px">
