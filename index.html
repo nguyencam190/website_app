@@ -228,16 +228,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .sb-nav::-webkit-scrollbar{width:4px}
 .sb-nav::-webkit-scrollbar-thumb{background:var(--sb-border);border-radius:4px}
 .sb-nav::-webkit-scrollbar-track{background:transparent}
-/* Section label (PAGE TREE / SPACE SHORTCUTS style) */
 .sb-section-label{padding:10px 14px 4px;font-size:11px;font-weight:700;color:var(--sb-txt2);text-transform:uppercase;letter-spacing:.9px;display:flex;align-items:center;justify-content:space-between}
-.sb-label-add{width:18px;height:18px;border:none;background:transparent;color:var(--sb-txt3);cursor:pointer;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:13px;transition:.15s}
-.sb-label-add:hover{background:var(--sb-active-bg);color:var(--sb-active-text)}
-/* Section toggle header */
-.sb-section-toggle{display:flex;align-items:center;gap:0;padding:2px 0;margin-bottom:2px}
-.sb-sec-chevron{width:24px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--sb-txt3);font-size:11px;flex-shrink:0;border-radius:4px;transition:.15s;border:none;background:transparent}
-.sb-sec-chevron:hover{background:var(--sb-active-bg);color:var(--sb-txt)}
-.sb-sec-chevron.open{color:var(--sb-txt2)}
-.sb-section{margin-bottom:1px}
 /* Doc tree items */
 .doc-item{display:flex;align-items:center;padding:5px 10px 5px 4px;cursor:pointer;color:var(--sb-txt);transition:background .12s,color .12s;font-size:13.5px;position:relative;border-radius:4px;margin:1px 6px 1px 8px;gap:0;user-select:none}
 .doc-item:hover{background:var(--sb-active-bg);color:var(--sb-txt)}
@@ -1293,10 +1284,6 @@ td.tbl-inner-container{padding:0!important;overflow:visible!important;vertical-a
       <div id="importMergeList" style="display:flex;flex-direction:column;gap:4px"></div>
     </div>
     <div class="modal-footer" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-      <div style="font-size:12px;color:var(--text3)">Nhập vào section:</div>
-      <select id="importMergeSection" style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text);font-size:13px;font-family:var(--font)"></select>
-      <div style="font-size:12px;color:var(--text3)">hoặc</div>
-      <input type="text" id="importMergeNewSec" placeholder="Tạo section mới..." style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text);font-size:13px;font-family:var(--font);outline:none">
       <div style="display:flex;gap:8px;width:100%;justify-content:flex-end;margin-top:4px">
         <button class="hbtn" onclick="closeModal('importMergeModal')">Hủy</button>
         <button class="hbtn primary" onclick="doImportMerge()"><i class="ti ti-file-import" style="font-size:13px"></i> Merge vào project của tôi</button>
@@ -1527,12 +1514,6 @@ td.tbl-inner-container{padding:0!important;overflow:visible!important;vertical-a
   <div class="ctx-item red" onclick="docCtxDelete()"><i class="ti ti-trash"></i> Xoá tài liệu</div>
 </div>
 
-<div class="ctx" id="secCtxMenu">
-  <div class="ctx-item" onclick="secCtxRename()"><i class="ti ti-pencil"></i> Đổi tên section</div>
-  <div class="ctx-sep"></div>
-  <div class="ctx-item red" onclick="secCtxDelete()"><i class="ti ti-trash"></i> Xóa section</div>
-</div>
-
 <!-- RESIZE MODAL -->
 <div class="modal-bg" id="resizeModal" onclick="closeModal('resizeModal',event)">
   <div class="modal" onclick="event.stopPropagation()">
@@ -1543,15 +1524,6 @@ td.tbl-inner-container{padding:0!important;overflow:visible!important;vertical-a
       <div class="field"><label>Căn chỉnh</label><select id="mAlign"><option value="left">Trái</option><option value="center">Giữa</option><option value="right">Phải</option><option value="full">Full</option></select></div>
     </div>
     <div class="modal-actions"><button class="hbtn" onclick="closeModal('resizeModal')">Huỷ</button><button class="hbtn primary" onclick="applyResize()">Áp dụng</button></div>
-  </div>
-</div>
-
-<!-- SECTION MODAL -->
-<div class="modal-bg" id="sectionModal" onclick="closeModal('sectionModal',event)">
-  <div class="modal" onclick="event.stopPropagation()">
-    <h3>Tạo section mới</h3>
-    <div class="field"><label>Tên section</label><input type="text" id="sectionNameInput" placeholder="Ví dụ: Pipeline, QC..."></div>
-    <div class="modal-actions"><button class="hbtn" onclick="closeModal('sectionModal')">Huỷ</button><button class="hbtn primary" onclick="saveSection()">Lưu</button></div>
   </div>
 </div>
 
@@ -1794,7 +1766,7 @@ td.tbl-inner-container{padding:0!important;overflow:visible!important;vertical-a
 
 // STATE
 const STORE_KEY='projectdocs_v3';
-let state={projectName:'My Project',username:'User',sections:['Chung','Pipeline','QC','Tools'],docs:[],currentDocId:null};
+let state={projectName:'My Project',username:'User',sections:['default'],docs:[],currentDocId:null};
 let saveTimer,dirty=false,ctxImgIdx=null,docCtxId=null,_savedRange=null,_bubbleHideTimer=null;
 
 // Bảo vệ dữ liệu chưa lưu khi đóng tab
@@ -1972,7 +1944,7 @@ function init(){
   const saved=localStorage.getItem(STORE_KEY);
   if(saved){try{state=JSON.parse(saved);}catch(e){}}
   if(!state.docs)state.docs=[];
-  if(!state.sections)state.sections=['Chung'];
+  if(!state.sections||!state.sections.length)state.sections=['default'];
   if(!state.recent)state.recent=[];
   if(!state.starred)state.starred=[];
   document.getElementById('projectNameEl').textContent=state.projectName;
@@ -2515,69 +2487,6 @@ function _quickNewRootDoc(){
   _quickNewDoc(state.sections[0],null);
 }
 
-function openSecCtx(e,sec){
-  _ctxSec=sec;
-  document.getElementById('docCtxMenu')?.classList.remove('on');
-  const m=document.getElementById('secCtxMenu');
-  m.style.left=Math.min(e.clientX,window.innerWidth-200)+'px';
-  m.style.top=Math.min(e.clientY,window.innerHeight-100)+'px';
-  m.classList.add('on');
-}
-let _ctxSec=null;
-
-function secCtxRename(){
-  document.getElementById('secCtxMenu')?.classList.remove('on');
-  const sec=_ctxSec;if(!sec)return;
-  const newName=prompt('Đổi tên section:',sec);
-  if(!newName||newName.trim()===sec)return;
-  const n=newName.trim();
-  if(state.sections.includes(n)){toast('Section đã tồn tại','error');return;}
-  const idx=state.sections.indexOf(sec);
-  if(idx>=0)state.sections[idx]=n;
-  state.docs.forEach(d=>{if(d.section===sec)d.section=n;});
-  persistNow();renderSidebar();
-  toast('Đã đổi tên thành "'+n+'"','success');
-}
-function secCtxDelete(){
-  document.getElementById('secCtxMenu')?.classList.remove('on');
-  const sec=_ctxSec;if(!sec)return;
-  const count=state.docs.filter(d=>d.section===sec).length;
-  if(!confirm(`Xóa section "${sec}"?${count?'\n⚠️ '+count+' trang trong section này cũng sẽ bị xóa.':''}`))return;
-  state.sections=state.sections.filter(s=>s!==sec);
-  state.docs=state.docs.filter(d=>d.section!==sec);
-  persistNow();renderSidebar();
-  toast('Đã xóa section','info');
-}
-
-// Close secCtxMenu on outside click
-document.addEventListener('click',e=>{
-  if(!e.target.closest('#secCtxMenu'))
-    document.getElementById('secCtxMenu')?.classList.remove('on');
-});
-
-// Inline rename section (double-click)
-function renameSection(sec, titleEl){
-  if(!titleEl)return;
-  const inp=document.createElement('input');
-  inp.value=sec;
-  inp.style.cssText='width:100%;background:var(--surface);border:1.5px solid var(--accent);border-radius:4px;padding:1px 5px;font-size:12px;font-weight:500;font-family:var(--font);color:var(--text);outline:none;min-width:60px';
-  titleEl.replaceWith(inp);inp.focus();inp.select();
-  function commit(){
-    const newName=inp.value.trim();
-    if(!newName||newName===sec){renderSidebar();return;}
-    if(state.sections.includes(newName)){toast('Section đã tồn tại','error');renderSidebar();return;}
-    const idx=state.sections.indexOf(sec);
-    if(idx>=0)state.sections[idx]=newName;
-    state.docs.forEach(d=>{if(d.section===sec)d.section=newName;});
-    persistNow();renderSidebar();
-    toast('Đã đổi tên thành "'+newName+'"','success');
-  }
-  inp.addEventListener('blur',commit);
-  inp.addEventListener('keydown',e2=>{
-    if(e2.key==='Enter'){e2.preventDefault();inp.blur();}
-    if(e2.key==='Escape'){e2.preventDefault();renderSidebar();}
-  });
-}
 function filterDocs(){renderSidebar(document.getElementById('searchInput').value.toLowerCase());}
 
 // DOCS
@@ -3915,14 +3824,10 @@ function ctxDownload(){const doc=currentDoc();if(!doc||ctxImgIdx===null)return;c
 function ctxDelete(){const doc=currentDoc();if(!doc||ctxImgIdx===null)return;const img=doc.images[ctxImgIdx];if(!confirm('Xoá ảnh/video này?')){document.getElementById('ctxMenu').classList.remove('on');return;}fmDelete('fm_'+img.id);document.getElementById('ctxMenu').classList.remove('on');}
 
 // SECTIONS
-function openSectionModal(){document.getElementById('sectionNameInput').value='';openModal('sectionModal');setTimeout(()=>document.getElementById('sectionNameInput').focus(),100);}
-function saveSection(){const name=document.getElementById('sectionNameInput').value.trim();if(!name)return;if(!state.sections.includes(name)){state.sections.push(name);persist();renderSidebar();toast('Đã thêm section','success');}closeModal('sectionModal');}
+
 
 // SETTINGS
-function openSettings(){document.getElementById('settProjectName').value=state.projectName;document.getElementById('settUsername').value=state.username;renderSettSections();openModal('settingsModal');}
-function renderSettSections(){document.getElementById('settSectionList').innerHTML=state.sections.map((s,i)=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:13px;padding:4px 0"><i class="ti ti-folder" style="color:var(--text3);font-size:13px"></i><span style="flex:1">${escH(s)}</span>${state.sections.length>1?`<button class="hbtn danger" style="padding:2px 8px;font-size:11px" onclick="deleteSection(${i})"><i class="ti ti-x"></i></button>`:''}</div>`).join('');}
-function addSectionFromSettings(){const name=document.getElementById('settNewSection').value.trim();if(!name||state.sections.includes(name))return;state.sections.push(name);document.getElementById('settNewSection').value='';renderSettSections();}
-function deleteSection(i){const sec=state.sections[i];if(state.docs.some(d=>d.section===sec)&&!confirm(`Section "${sec}" co tai lieu. Tiep tuc?`))return;state.docs.forEach(d=>{if(d.section===sec)d.section=state.sections[0]===sec?(state.sections[1]||'Chung'):state.sections[0];});state.sections.splice(i,1);renderSettSections();}
+function openSettings(){document.getElementById('settProjectName').value=state.projectName;document.getElementById('settUsername').value=state.username;openModal('settingsModal');}
 function saveSettings(){state.projectName=document.getElementById('settProjectName').value.trim()||state.projectName;state.username=document.getElementById('settUsername').value.trim()||state.username;persist();document.getElementById('projectNameEl').textContent=state.projectName;updateUserUI();renderSidebar();closeModal('settingsModal');toast('Đã lưu cài đặt','success');}
 function updateUserUI(){
   const nameEl=document.getElementById('sbUsernameEl');if(nameEl)nameEl.textContent=state.username;
@@ -8297,9 +8202,6 @@ function handleImportMerge(e){
         const imported=JSON.parse(ev.target.result);
         if(!imported.docs||!Array.isArray(imported.docs))throw new Error('Invalid');
         _importMergeDocs=imported.docs;
-        // Populate section selector
-        const sel=document.getElementById('importMergeSection');
-        sel.innerHTML=state.sections.map(s=>`<option value="${escH(s)}">${escH(s)}</option>`).join('');
         // Build doc list
         const list=document.getElementById('importMergeList');
         const info=document.getElementById('importMergeInfo');
@@ -8361,9 +8263,7 @@ function handleImportMerge(e){
         content=ev.target.result.split(/\n\n+/).map(p=>`<p>${escH(p.replace(/\n/g,'<br>'))}</p>`).join('');
       }
       // Show single-page import preview
-      _importMergeDocs=[{id:uid(),title:rawName,section:'',content,images:[],textBoxes:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()}];
-      const sel=document.getElementById('importMergeSection');
-      sel.innerHTML=state.sections.map(s=>`<option value="${escH(s)}">${escH(s)}</option>`).join('');
+      _importMergeDocs=[{id:uid(),title:rawName,section:state.sections[0]||'default',content,images:[],textBoxes:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()}];
       const info=document.getElementById('importMergeInfo');info.style.display='';
       info.innerHTML=`<i class="ti ti-file-text" style="font-size:14px;margin-right:6px;color:var(--accent)"></i>File: <strong>${escH(file.name)}</strong> — 1 trang sẽ được tạo`;
       const list=document.getElementById('importMergeList');
@@ -8386,27 +8286,13 @@ function doImportMerge(){
   const checkedIds=Array.from(document.querySelectorAll('#importMergeList input:checked')).map(i=>i.value);
   if(!checkedIds.length){toast('Chọn ít nhất 1 trang','error');return;}
   const selected=_importMergeDocs.filter(d=>checkedIds.includes(d.id));
-  // Determine target section
-  const newSecName=document.getElementById('importMergeNewSec')?.value.trim();
-  let targetSec=newSecName||document.getElementById('importMergeSection')?.value;
-  if(!targetSec)targetSec=state.sections[0]||'Imported';
-  // Add new section if needed
-  if(newSecName&&!state.sections.includes(newSecName))state.sections.push(newSecName);
-  // Import docs with new IDs to avoid conflicts
-  const imported=selected.map(d=>({
-    ...d,
-    id:uid(), // new unique id
-    section:targetSec,
-    parentId:null,
-    importedFrom:d.id,
-    updatedAt:new Date().toISOString(),
-  }));
+  const targetSec=state.sections[0]||'default';
+  const imported=selected.map(d=>({...d,id:uid(),section:targetSec,parentId:null,importedFrom:d.id,updatedAt:new Date().toISOString()}));
   state.docs.push(...imported);
   persistNow();renderSidebar();
   closeModal('importMergeModal');
-  // Open the first imported doc
   if(imported.length)openDoc(imported[0].id);
-  toast(`Đã nhập ${imported.length} trang vào section "${targetSec}"`, 'success');
+  toast(`Đã nhập ${imported.length} trang`,'success');
 }
 
 function closeWelcomeAndStart(){
@@ -8414,8 +8300,8 @@ function closeWelcomeAndStart(){
   // Create default project
   if(!state.docs||state.docs.length===0){
     const defId=uid();
-    state.sections=['Chung'];
-    state.docs=[{id:defId,title:'Trang đầu tiên',section:'Chung',
+    state.sections=['default'];
+    state.docs=[{id:defId,title:'Trang đầu tiên',section:'default',
       content:'<h1>Chào mừng!</h1><p>Bắt đầu viết tài liệu của bạn tại đây.</p>',
       images:[],textBoxes:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()}];
     persistNow();renderSidebar();openDoc(defId);
@@ -8938,9 +8824,7 @@ async function doExportWebsite(){
     '.ws-sb-resizer::after{content:"";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:3px;height:32px;border-left:1.5px solid rgba(37,99,235,.5);border-right:1.5px solid rgba(37,99,235,.5);border-radius:2px;opacity:0;transition:opacity .15s}',
     '.ws-sb-resizer:hover::after,.ws-sb-resizer.dragging::after{opacity:1}',
     '.ws-sb-resizer:hover,.ws-sb-resizer.dragging{background:rgba(37,99,235,.35)}',
-    '.ws-section{margin-bottom:4px}',
     /* text-overflow always on — prevents layout break at any sidebar width */
-    '.ws-sec-title{padding:6px 16px;font-size:10px;font-weight:600;color:var(--sb-sec);text-transform:uppercase;letter-spacing:.8px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;transition:color var(--tr)}',
     /* ── Sidebar ── */
     '.ws-space-hdr{display:flex;align-items:center;gap:10px;padding:14px 12px 12px;flex-shrink:0}',
     '.ws-space-icon{width:32px;height:32px;border-radius:7px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}',
@@ -8981,8 +8865,6 @@ async function doExportWebsite(){
     '.ws-pab{height:44px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:10px;flex-shrink:0;position:sticky;top:0;z-index:10;transition:background var(--tr),border-color var(--tr)}',
     '[data-theme="dark"] .ws-pab{background:#161b22;border-bottom-color:#30363d}',
     '.ws-pab-crumb{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text3);white-space:nowrap;overflow:hidden;flex:1}',
-    '.ws-pab-sec{color:var(--text3)}',
-    '.ws-pab-sep{font-size:11px;flex-shrink:0}',
     '.ws-pab-title{font-size:14px;font-weight:600;color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
     '.ws-pab-star{background:transparent;border:none;cursor:pointer;font-size:16px;padding:4px;color:var(--text3);border-radius:4px;transition:.12s;flex-shrink:0;line-height:1}',
     '.ws-pab-star:hover{color:var(--accent)}',
@@ -9552,7 +9434,7 @@ document.addEventListener('keydown',e=>{
   if((e.ctrlKey||e.metaKey)&&e.key==='n'){e.preventDefault();newDoc();}
   if(e.key==='Escape'){
     hdrCloseAll();
-    ['ctxMenu','docCtxMenu','secCtxMenu'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('on');});
+    ['ctxMenu','docCtxMenu'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('on');});
     document.querySelectorAll('.modal-bg.on').forEach(m=>{if(m.id!=='welcomeModal')m.classList.remove('on');});
     const sm=document.getElementById('slashMenu');if(sm)sm.classList.remove('on');
     lbClose();closeVideoLightbox();
