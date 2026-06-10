@@ -8616,7 +8616,7 @@ async function doExportWebsite(){
     const icons={recent:'ti-history',starred:'ti-star',pages:'ti-files'};
     const labels={recent:'Recent',starred:'Starred',pages:'Pages'};
     btn.innerHTML=`<i class="ti ${icons[mode]}"></i><span>${labels[mode]}</span>`;
-    btn.setAttribute('onclick',`wsSbMode('${mode}')`);
+    btn.dataset.wsmode=mode;
     pnav.appendChild(btn);
   });
   navRoot.appendChild(pnav);
@@ -8643,8 +8643,7 @@ async function doExportWebsite(){
     docs.filter(d=>d.section===sec).forEach(d=>{
       const item=document.createElement('div');item.className='ws-nav-item';item.id='nav-'+d.id;
       item.dataset.docid=d.id;
-      item.innerHTML=`<i class="ti ti-file-text ws-nav-icon"></i><span class="ws-nav-title">${escH(d.title||'Untitled')}</span><button class="ws-star-btn" onclick="event.stopPropagation();wsToggleStar('${d.id}',this)" title="Đánh dấu yêu thích">☆</button>`;
-      item.setAttribute('onclick','showDoc('+JSON.stringify(d.id)+')');
+      item.innerHTML=`<i class="ti ti-file-text ws-nav-icon"></i><span class="ws-nav-title">${escH(d.title||'Untitled')}</span><button class="ws-star-btn" data-docid="${escH(d.id)}" title="Đánh dấu yêu thích">☆</button>`;
       sg.appendChild(item);
     });
     pagesPanel.appendChild(sg);
@@ -8896,8 +8895,12 @@ async function doExportWebsite(){
     '.ws-search:focus{border-color:var(--accent)}',
     '.ws-theme-btn{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;font-size:16px;transition:.15s;flex-shrink:0}',
     '.ws-theme-btn:hover{background:var(--surface3);color:var(--text)}',
+    '.ws-sb-toggle-btn{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;font-size:18px;transition:.15s;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:0;line-height:1}',
+    '.ws-sb-toggle-btn:hover{background:var(--surface3);color:var(--text)}',
     '.ws-layout{display:flex;flex:1;overflow:hidden}',
-    '.ws-sidebar{width:260px;min-width:60px;max-width:520px;background:var(--sb);overflow-y:auto;overflow-x:visible;padding:14px 0;flex-shrink:0;position:relative;transition:background var(--tr)}',
+    '.ws-sidebar{width:260px;min-width:60px;max-width:520px;background:var(--sb);overflow-y:auto;overflow-x:hidden;padding:14px 0;flex-shrink:0;position:relative;transition:background var(--tr),width .22s cubic-bezier(.4,0,.2,1)}',
+    '.ws-sidebar.collapsed{width:0!important;min-width:0!important;overflow:hidden;padding:0;border-right:none}',
+    '.ws-sb-resizer.hidden{display:none}',
     '.ws-sidebar::-webkit-scrollbar{width:3px}',
     '.ws-sidebar::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}',
     /* resizer sits in .ws-layout (not sidebar) — avoids overflow:hidden clipping */
@@ -9044,34 +9047,27 @@ async function doExportWebsite(){
     '.ws-canvas .cf-img-inner img,.ws-canvas .cf-img-inner video{display:block;max-width:100%;height:auto;border-radius:4px;cursor:zoom-in}',
     '.ws-canvas .cf-img-caption{display:block;text-align:center;font-size:12.5px;color:var(--text3);padding:6px 8px;min-height:20px}',
     '.ws-canvas .cf-img-caption:empty{display:none}',
-    /* ── Carousel ── */
-    '.ws-canvas .cf-carousel-block{display:block;margin:16px 0;border-radius:10px;overflow:hidden;background:#000;position:relative}',
+    /* ── Carousel — merged (cf-carousel-slides + cf-car-track variants) ── */
+    '.ws-canvas .cf-carousel-block{display:block;margin:16px 0;border-radius:10px;overflow:hidden;background:#111827;position:relative}',
     '.ws-canvas .cf-carousel-stage{position:relative;width:100%;overflow:hidden}',
     '.ws-canvas .cf-carousel-slides{display:flex;transition:transform .35s ease;will-change:transform}',
     '.ws-canvas .cf-carousel-slide{min-width:100%;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#000;min-height:200px}',
     '.ws-canvas .cf-carousel-slide img,.ws-canvas .cf-carousel-slide video{max-width:100%;max-height:520px;object-fit:contain;display:block}',
     '.ws-canvas .cf-car-arrow{position:absolute;top:50%;transform:translateY(-50%);width:36px;height:36px;background:rgba(0,0,0,.5);border:none;border-radius:50%;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10}',
     '.ws-canvas .cf-car-arrow.left{left:10px}.ws-canvas .cf-car-arrow.right{right:10px}',
-    '.ws-canvas .cf-car-dots{display:flex;justify-content:center;gap:6px;padding:8px;background:var(--surface2)}',
-    '.ws-canvas .cf-car-dot{width:7px;height:7px;border-radius:50%;background:var(--border2);cursor:pointer;border:none;padding:0;transition:.15s}',
-    '.ws-canvas .cf-car-dot.active{background:var(--accent);transform:scale(1.3)}',
-    '.ws-canvas .cf-car-counter{position:absolute;top:10px;right:12px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;z-index:10}',
-    '.ws-canvas .cf-car-caption{padding:6px 12px 8px;font-size:12.5px;color:var(--text3);text-align:center}',
-    /* ── Divider ── */
-    '.ws-canvas .editor-content hr.cf-divider{border:none;border-top:2px solid var(--border);margin:16px 0;display:block}',
-    /* ── Carousel ── */
-    '.ws-canvas .cf-carousel-block{display:block;margin:16px 0;position:relative;border-radius:10px;overflow:hidden;background:var(--surface2)}',
     '.ws-canvas .cf-car-wrap{position:relative;overflow:hidden;border-radius:10px;line-height:0}',
     '.ws-canvas .cf-car-track{display:flex;transition:transform .35s cubic-bezier(.4,0,.2,1)}',
     '.ws-canvas .cf-car-slide{min-width:100%;position:relative;line-height:0}',
     '.ws-canvas .cf-car-slide img{width:100%;max-height:520px;object-fit:contain;display:block;background:#000}',
     '.ws-canvas .cf-car-btn{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.45);color:#fff;border:none;width:38px;height:38px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10}',
-    '.ws-canvas .cf-car-btn.prev{left:12px}',
-    '.ws-canvas .cf-car-btn.next{right:12px}',
-    '.ws-canvas .cf-car-dots{display:flex;justify-content:center;gap:6px;padding:10px}',
-    '.ws-canvas .cf-car-dot{width:7px;height:7px;border-radius:50%;background:var(--border2);cursor:pointer;transition:.15s}',
-    '.ws-canvas .cf-car-dot.on{background:var(--accent);transform:scale(1.3)}',
-    '.ws-canvas .cf-car-counter{position:absolute;top:10px;right:12px;background:rgba(0,0,0,.55);color:#fff;font-size:12px;padding:3px 10px;border-radius:20px;z-index:10}',
+    '.ws-canvas .cf-car-btn.prev{left:12px}.ws-canvas .cf-car-btn.next{right:12px}',
+    '.ws-canvas .cf-car-dots{display:flex;justify-content:center;gap:6px;padding:8px}',
+    '.ws-canvas .cf-car-dot{width:7px;height:7px;border-radius:50%;background:var(--border2);cursor:pointer;border:none;padding:0;transition:.15s}',
+    '.ws-canvas .cf-car-dot.active,.ws-canvas .cf-car-dot.on{background:var(--accent);transform:scale(1.3)}',
+    '.ws-canvas .cf-car-counter{position:absolute;top:10px;right:12px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;z-index:10}',
+    '.ws-canvas .cf-car-caption{padding:6px 12px 8px;font-size:12.5px;color:var(--text3);text-align:center}',
+    /* ── Divider ── */
+    '.ws-canvas .editor-content hr.cf-divider{border:none;border-top:2px solid var(--border);margin:16px 0;display:block}',
     /* ── Embed Block ── */
     '.ws-canvas .cf-embed-block{display:block;margin:16px 0;position:relative}',
     '.ws-canvas .cf-embed-wrap{position:relative;width:100%;background:#000;border-radius:10px;overflow:hidden}',
@@ -9081,7 +9077,7 @@ async function doExportWebsite(){
   ].join('\n');
 
   function captureAppCss(){
-    const raw=document.querySelector('style')?.textContent||'';
+    const raw=Array.from(document.querySelectorAll('style')).map(s=>s.textContent).join('\n');
     const blocks=[];let depth=0,start=0;
     for(let i=0;i<raw.length;i++){
       if(raw[i]==='{')depth++;
@@ -9150,12 +9146,10 @@ async function doExportWebsite(){
     /* ── Recent + Starred panel (DOM-based to avoid quote escaping) ── */
     'function _wsMkNavItem(docId,docTitle,relTime,starred){',
     '  var d=document.createElement("div");d.className="ws-nav-item";d.dataset.docid=docId;',
-    '  d.setAttribute("onclick","showDoc("+JSON.stringify(docId)+")");',
     '  var ic=document.createElement("i");ic.className="ti ti-file-text ws-nav-icon";',
     '  var nt=document.createElement("span");nt.className="ws-nav-title";nt.textContent=docTitle;',
     '  var sb=document.createElement("button");sb.className="ws-star-btn"+(starred?" starred":"");',
-    '  sb.textContent=starred?"★":"☆";',
-    '  sb.setAttribute("onclick","event.stopPropagation();wsToggleStar("+JSON.stringify(docId)+",this)");',
+    '  sb.textContent=starred?"★":"☆";sb.dataset.docid=docId;',
     '  if(relTime){var rt=document.createElement("div");rt.style.cssText="font-size:10.5px;color:var(--text3)";rt.textContent=relTime;var wrap=document.createElement("div");wrap.style.cssText="flex:1;overflow:hidden";wrap.appendChild(nt);wrap.appendChild(rt);d.appendChild(ic);d.appendChild(wrap);}',
     '  else{d.appendChild(ic);d.appendChild(nt);}',
     '  d.appendChild(sb);return d;',
@@ -9237,6 +9231,42 @@ async function doExportWebsite(){
     '    setTimeout(function(){sb.style.transition="";},220);',
     '  });',
     '})();',
+    '/* ── Event wiring — no inline handlers ── */',
+    /* ── Sidebar event delegation (nav items, star, pnav mode) ── */
+    '(function(){',
+    '  var sb=document.getElementById("wsSidebar");',
+    '  if(!sb)return;',
+    '  sb.addEventListener("click",function(e){',
+    '    var starBtn=e.target.closest(".ws-star-btn");',
+    '    if(starBtn){e.stopPropagation();var id=starBtn.dataset.docid||starBtn.closest(".ws-nav-item[data-docid]")?.dataset.docid;if(id)wsToggleStar(id,starBtn);return;}',
+    '    var modeBtn=e.target.closest("[data-wsmode]");',
+    '    if(modeBtn){wsSbMode(modeBtn.dataset.wsmode);return;}',
+    '    var navItem=e.target.closest(".ws-nav-item[data-docid]");',
+    '    if(navItem)showDoc(navItem.dataset.docid);',
+    '  });',
+    '})();',
+    /* ── Theme button, search input ── */
+    '(function(){',
+    '  var thBtn=document.getElementById("wsThemeBtn");',
+    '  if(thBtn)thBtn.addEventListener("click",wsToggleTheme);',
+    '  var srch=document.getElementById("wsSearch");',
+    '  if(srch)srch.addEventListener("input",function(){wsFilter(this.value);});',
+    '})();',
+    /* ── Sidebar toggle (collapse / expand) ── */
+    '(function(){',
+    '  var tog=document.getElementById("wsSbToggle");',
+    '  var rz=document.getElementById("wsSbRz");',
+    '  var sb=document.getElementById("wsSidebar");',
+    '  if(!tog||!sb)return;',
+    '  var colKey="ws_sb_col_"+location.pathname;',
+    '  if(localStorage.getItem(colKey)==="1"){sb.classList.add("collapsed");if(rz)rz.classList.add("hidden");}',
+    '  tog.addEventListener("click",function(){',
+    '    var collapsed=sb.classList.toggle("collapsed");',
+    '    if(rz)rz.classList.toggle("hidden",collapsed);',
+    '    try{localStorage.setItem(colKey,collapsed?"1":"0");}catch(er){}',
+    '    if(!collapsed&&_cur){setTimeout(function(){var el=document.getElementById("doc-"+_cur);if(el)fitCanvas(el);},250);}',
+    '  });',
+    '})();',
     '/* init sidebar state */',
     /* ── Rewire both carousel types ── */
     /* cf-car-track based (legacy) */
@@ -9291,12 +9321,13 @@ async function doExportWebsite(){
     '</head>',
     '<body>',
     '<div class="ws-header">',
+    '<button class="ws-sb-toggle-btn" id="wsSbToggle" title="Thu/mở sidebar">&#9776;</button>',
     '<div class="ws-logo"><div class="ws-logo-box">&#128218;</div>'+escH(title)+'</div>',
     '<span style="font-size:13px;color:var(--text2)">'+escH(state.projectName||'')+'</span>',
     '<div class="ws-spacer"></div>',
-    '<input class="ws-search" type="text" placeholder="Tìm kiếm..." oninput="wsFilter(this.value)">',
+    '<input class="ws-search" id="wsSearch" type="text" placeholder="Tìm kiếm...">',
     '<span id="wsDocCount" style="font-size:12px;color:var(--text2)">'+docs.length+' tài liệu</span>',
-    '<button class="ws-theme-btn" id="wsThemeBtn" onclick="wsToggleTheme()">&#9728;</button>',
+    '<button class="ws-theme-btn" id="wsThemeBtn">&#9728;</button>',
     '</div>',
     '<div class="ws-layout" id="wsLayout">',
     '<div class="ws-sidebar" id="wsSidebar">'+navHTML+'</div>',
