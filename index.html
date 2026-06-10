@@ -8683,12 +8683,7 @@ async function doExportWebsite(){
   }
   const pagesPanel=document.createElement('div');pagesPanel.id='wsSbPages';pagesPanel.className='ws-sb-panel';
   sections.forEach(sec=>{
-    const sg=document.createElement('div');sg.className='ws-sec-grp';
-    const sl=document.createElement('div');sl.className='ws-sec-lbl';
-    sl.innerHTML=`<i class="ti ti-folder" style="font-size:12px"></i>${escH(sec)}`;
-    sg.appendChild(sl);
-    buildWsNavTree(sg,sec,null,0);
-    pagesPanel.appendChild(sg);
+    buildWsNavTree(pagesPanel,sec,null,0);
   });
   navRoot.appendChild(pagesPanel);
 
@@ -8981,8 +8976,6 @@ async function doExportWebsite(){
     '.ws-sb-panel{flex:1;overflow-y:auto;padding:4px 0}',
     '.ws-sb-empty{display:flex;flex-direction:column;align-items:center;gap:8px;padding:24px 16px;color:var(--text3);font-size:12px;text-align:center}',
     '.ws-sb-empty i{font-size:24px;opacity:.4}',
-    '.ws-sec-grp{margin-bottom:4px}',
-    '.ws-sec-lbl{display:flex;align-items:center;gap:6px;padding:5px 12px;font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}',
     '.ws-nav-item{display:flex;align-items:center;gap:8px;padding:7px 10px 7px 4px;cursor:pointer;color:var(--sb-nav);font-size:13px;border-left:2px solid transparent;transition:.12s;border-radius:0 5px 5px 0;margin-right:6px;flex:1;min-width:0;position:relative}',
     '.ws-nav-item:hover{background:var(--sb-nav-hbg);color:var(--text)}',
     '.ws-nav-item.active{background:var(--sb-active-bg);color:var(--sb-active-txt);border-left-color:var(--accent);font-weight:500}',
