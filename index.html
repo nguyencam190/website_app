@@ -1945,6 +1945,9 @@ function init(){
   if(saved){try{state=JSON.parse(saved);}catch(e){}}
   if(!state.docs)state.docs=[];
   if(!state.sections||!state.sections.length)state.sections=['default'];
+  // Migrate all docs to the single default section
+  const _defSec=state.sections[0]||'default';
+  state.docs.forEach(d=>{d.section=_defSec;});
   if(!state.recent)state.recent=[];
   if(!state.starred)state.starred=[];
   document.getElementById('projectNameEl').textContent=state.projectName;
@@ -2511,7 +2514,7 @@ function openDoc(id){
   // Track recent
   if(!state.recent)state.recent=[];
   state.recent=state.recent.filter(r=>r.id!==id);
-  state.recent.unshift({id,title:doc.title||'Untitled',section:doc.section||'',openedAt:Date.now()});
+  state.recent.unshift({id,title:doc.title||'Untitled',openedAt:Date.now()});
   if(state.recent.length>30)state.recent=state.recent.slice(0,30);
   state.currentDocId=id;persist();
   document.getElementById('emptyState').style.display='none';
@@ -8211,23 +8214,16 @@ function handleImportMerge(e){
           <button onclick="document.querySelectorAll('#importMergeList input').forEach(i=>i.checked=true)" style="font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);cursor:pointer;color:var(--text)">✓ Chọn tất cả</button>
           <button onclick="document.querySelectorAll('#importMergeList input').forEach(i=>i.checked=false)" style="font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);cursor:pointer;color:var(--text)">✕ Bỏ chọn</button>
         </div>`;
-        const bySec={};
-        imported.docs.forEach(d=>{const s=d.section||'(Không có nhóm)';if(!bySec[s])bySec[s]=[];bySec[s].push(d);});
-        Object.entries(bySec).forEach(([sec,docs])=>{
-          const grp=document.createElement('div');grp.style.marginBottom='8px';
-          grp.innerHTML=`<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;padding:4px 4px 2px">${escH(sec)}</div>`;
-          docs.forEach(d=>{
-            const row=document.createElement('label');row.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:13px;transition:background .1s';
-            row.onmouseenter=()=>row.style.background='var(--surface2)';row.onmouseleave=()=>row.style.background='';
-            const chk=document.createElement('input');chk.type='checkbox';chk.value=d.id;chk.checked=true;chk.style.accentColor='var(--accent)';
-            const icon=document.createElement('i');icon.className='ti ti-file-text';icon.style.cssText='font-size:13px;color:var(--text2);flex-shrink:0';
-            const title=document.createElement('span');title.style.flex='1';title.textContent=d.title||'Untitled';
-            const preview=document.createElement('span');preview.style.cssText='font-size:11px;color:var(--text3);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
-            preview.textContent=(d.content||'').replace(/<[^>]+>/g,' ').trim().slice(0,60)||'(trống)';
-            row.appendChild(chk);row.appendChild(icon);row.appendChild(title);row.appendChild(preview);
-            grp.appendChild(row);
-          });
-          list.appendChild(grp);
+        imported.docs.forEach(d=>{
+          const row=document.createElement('label');row.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:13px;transition:background .1s';
+          row.onmouseenter=()=>row.style.background='var(--surface2)';row.onmouseleave=()=>row.style.background='';
+          const chk=document.createElement('input');chk.type='checkbox';chk.value=d.id;chk.checked=true;chk.style.accentColor='var(--accent)';
+          const icon=document.createElement('i');icon.className='ti ti-file-text';icon.style.cssText='font-size:13px;color:var(--text2);flex-shrink:0';
+          const title=document.createElement('span');title.style.flex='1';title.textContent=d.title||'Untitled';
+          const preview=document.createElement('span');preview.style.cssText='font-size:11px;color:var(--text3);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+          preview.textContent=(d.content||'').replace(/<[^>]+>/g,' ').trim().slice(0,60)||'(trống)';
+          row.appendChild(chk);row.appendChild(icon);row.appendChild(title);row.appendChild(preview);
+          list.appendChild(row);
         });
         openModal('importMergeModal');
       }catch(err){toast('File JSON không hợp lệ','error');}
@@ -8490,9 +8486,8 @@ async function doExportWebsite(){
   }
 
   // ── Sidebar: Recent + Starred + Pages ──────────────────────
-  const sections=[...new Set(docs.map(d=>d.section))];
-  // Embed doc index as JSON for JS use
-  const docIndex=docs.map(d=>({id:d.id,title:d.title||'Untitled',section:d.section||'',parentId:d.parentId||null}));
+  // Embed doc index as JSON for JS use (no section — fully removed)
+  const docIndex=docs.map(d=>({id:d.id,title:d.title||'Untitled',parentId:d.parentId||null}));
 
   const navRoot=document.createElement('div');
 
@@ -9092,7 +9087,7 @@ async function doExportWebsite(){
     '  document.getElementById("wsMain").scrollTop=0;_cur=id;',
     '  /* Track recent */ var doc=_WS_DOCS.find(function(d){return d.id===id;});',
     '  /* Expand ancestors */ if(doc){var _pid=doc.parentId;while(_pid){var _ch=document.getElementById("ws-nav-ch-"+_pid);var _cv=document.querySelector(".ws-nav-chev[data-treeid=\'"+_pid+"\']");if(_ch)_ch.classList.remove("collapsed");if(_cv)_cv.classList.add("open");var _par=_WS_DOCS.find(function(d){return d.id===_pid;});_pid=_par?_par.parentId:null;}}',
-    '  if(doc){var rec=_wsGetRec().filter(function(r){return r.id!==id;});rec.unshift({id:id,title:doc.title,section:doc.section,time:Date.now()});if(rec.length>20)rec=rec.slice(0,20);_wsSaveRec(rec);}',
+    '  if(doc){var rec=_wsGetRec().filter(function(r){return r.id!==id;});rec.unshift({id:id,title:doc.title,time:Date.now()});if(rec.length>20)rec=rec.slice(0,20);_wsSaveRec(rec);}',
     '  /* Update page toolbar */ var pab=document.getElementById("wsPab");',
     '  if(pab&&doc){pab.style.display="flex";document.getElementById("wsPabTitle").textContent=doc.title||"Untitled";var pabStar=document.getElementById("wsPabStar");if(pabStar){var _str=_wsGetStr();var _isS=_str.indexOf(id)>-1;pabStar.classList.toggle("starred",_isS);pabStar.textContent=_isS?"★":"☆";pabStar.dataset.docid=id;}}',
     '  /* Update star state */ var str=_wsGetStr();',
