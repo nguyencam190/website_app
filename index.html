@@ -267,14 +267,14 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 /* Tree guide line — vertical line showing parent-child */
 .doc-tree-children{position:relative}
 /* Search row in header */
-.sb-search-row{padding:8px 8px 0;flex-shrink:0;display:flex;align-items:center;gap:5px}
-.sb-search{display:flex;align-items:center;background:var(--sb-search-bg);border:1px solid var(--sb-search-border);border-radius:6px;padding:5px 9px;gap:7px;transition:border-color .15s,background var(--mode-transition);flex:1}
+.sb-search-row{padding:10px 10px 6px;flex-shrink:0;display:flex;align-items:center;gap:8px}
+.sb-search{display:flex;align-items:center;background:var(--sb-search-bg);border:1.5px solid var(--sb-search-border);border-radius:8px;padding:7px 12px;gap:8px;transition:border-color .15s,background var(--mode-transition);flex:1}
 .sb-search:focus-within{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-glow)}
 .sb-search input{background:transparent;border:none;outline:none;color:var(--text);font-size:13px;flex:1;font-family:var(--font)}
 .sb-search input::placeholder{color:var(--sb-txt3)}
 .sb-search i{font-size:13px;color:var(--sb-txt3)}
-.sb-new-btn{width:28px;height:28px;border:1px solid var(--sb-search-border);border-radius:6px;background:var(--sb-search-bg);color:var(--sb-txt2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;transition:background .15s,color .15s}
-.sb-new-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.sb-create-btn{height:34px;padding:0 12px;border:none;border-radius:8px;background:var(--accent);color:#fff;cursor:pointer;display:flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;flex-shrink:0;transition:opacity .15s;white-space:nowrap;font-family:var(--font)}
+.sb-create-btn:hover{opacity:.88}
 /* New doc button (+ icon in header) */
 .new-doc-btn{display:none}
 /* Footer */
@@ -1392,8 +1392,8 @@ td.tbl-inner-container{padding:0!important;overflow:visible!important;vertical-a
 
 
     <div class="sb-search-row">
-      <div class="sb-search"><i class="ti ti-search"></i><input type="text" placeholder="Search pages..." id="searchInput" oninput="filterDocs()"></div>
-      <button class="sb-new-btn" onclick="_quickNewRootDoc()" title="New page"><i class="ti ti-plus"></i></button>
+      <div class="sb-search"><i class="ti ti-search"></i><input type="text" placeholder="Search..." id="searchInput" oninput="filterDocs()"></div>
+      <button class="sb-create-btn" onclick="_quickNewRootDoc()"><i class="ti ti-plus" style="font-size:12px"></i> Create</button>
     </div>
 
     <!-- Nav tree -->
@@ -8920,7 +8920,7 @@ async function doExportWebsite(){
     '.ws-logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;color:#fff}',
     '.ws-logo-box{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),#7c3aed);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:700;flex-shrink:0}',
     '.ws-spacer{flex:1}',
-    '.ws-search{padding:7px 11px;border-radius:8px;border:1.5px solid rgba(255,255,255,.14);font-size:13px;background:rgba(255,255,255,.09);color:#fff;outline:none;font-family:var(--font);width:200px;transition:all .15s}',
+    '.ws-search{padding:7px 14px;border-radius:8px;border:1.5px solid rgba(255,255,255,.14);font-size:13px;background:rgba(255,255,255,.09);color:#fff;outline:none;font-family:var(--font);width:260px;transition:all .15s}',
     '.ws-search::placeholder{color:rgba(255,255,255,.4)}',
     '.ws-search:focus{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.35)}',
     '.ws-doc-count{font-size:12px;color:rgba(255,255,255,.5);white-space:nowrap}',
@@ -8947,11 +8947,11 @@ async function doExportWebsite(){
     '.ws-space-icon{width:32px;height:32px;border-radius:7px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}',
     '.ws-space-name{font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
     '.ws-pnav{display:flex;flex-direction:column;gap:1px;padding:4px 8px}',
-    '.ws-sb-search-row{padding:6px 8px 4px;flex-shrink:0}',
-    '.ws-sb-search{display:flex;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 9px;gap:7px;transition:border-color var(--tr)}',
-    '.ws-sb-search:focus-within{border-color:var(--accent)}',
-    '.ws-sb-search i{font-size:12px;color:var(--text3)}',
-    '.ws-sb-search input{background:transparent;border:none;outline:none;color:var(--text);font-size:12.5px;flex:1;font-family:var(--font)}',
+    '.ws-sb-search-row{padding:10px 10px 6px;flex-shrink:0;display:flex;align-items:center;gap:8px}',
+    '.ws-sb-search{display:flex;align-items:center;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:7px 12px;gap:8px;transition:border-color var(--tr),box-shadow var(--tr);flex:1}',
+    '.ws-sb-search:focus-within{border-color:var(--accent);box-shadow:0 0 0 2px rgba(37,99,235,.15)}',
+    '.ws-sb-search i{font-size:13px;color:var(--text3)}',
+    '.ws-sb-search input{background:transparent;border:none;outline:none;color:var(--text);font-size:13px;flex:1;font-family:var(--font)}',
     '.ws-sb-search input::placeholder{color:var(--text3)}',
     '.ws-pnav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--sb-nav);transition:background .12s;user-select:none}',
     '.ws-pnav-item:hover{background:var(--sb-nav-hbg)}',
@@ -9529,8 +9529,8 @@ async function doExportWebsite(){
     '<div class="ws-header">',
     '<div class="ws-logo"><div class="ws-logo-box">'+(title.charAt(0)||'P').toUpperCase()+'</div>'+escH(title)+'</div>',
     '<div class="ws-spacer"></div>',
-    '<input class="ws-search" id="wsSearch" type="text" placeholder="Tìm kiếm...">',
-    '<span id="wsDocCount" class="ws-doc-count">'+docs.length+' tài liệu</span>',
+    '<input class="ws-search" id="wsSearch" type="text" placeholder="Search...">',
+    '<span id="wsDocCount" class="ws-doc-count">'+docs.length+' pages</span>',
     '<button class="ws-theme-btn" id="wsThemeBtn">&#9728;</button>',
     '</div>',
     '<div class="ws-layout" id="wsLayout">',
