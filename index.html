@@ -1717,11 +1717,19 @@ td.tbl-inner-container{padding:0!important;overflow:visible!important;vertical-a
   </button>
 </div>
 <!-- ═══ SLASH COMMAND MENU ═════════════════════════════════ -->
-<div class="slash-menu" id="slashMenu">
-  <div class="slash-menu-search">
-    <input class="slash-menu-inp" id="slashMenuInp" type="text" placeholder="Tìm lệnh..." oninput="slashFilter(this.value)" autocomplete="off">
+<div class="slash-menu" id="slashMenu" role="dialog" aria-label="Slash command menu">
+  <div class="slash-menu-header">
+    <div class="slash-menu-header-icon"><i class="ti ti-command"></i></div>
+    <input class="slash-menu-inp" id="slashMenuInp" type="text" placeholder="Tìm lệnh hoặc gõ để lọc..." autocomplete="off" spellcheck="false">
   </div>
-  <div class="slash-menu-list" id="slashMenuList"></div>
+  <div class="slash-menu-list" id="slashMenuList" role="listbox"></div>
+  <div class="slash-menu-footer">
+    <div class="slash-menu-hint">
+      <kbd>↑↓</kbd> Di chuyển
+      <kbd>↵</kbd> Chọn
+      <kbd>Esc</kbd> Đóng
+    </div>
+  </div>
 </div>
 <!-- ═══ EMOJI PICKER ════════════════════════════════════════ -->
 <div class="emoji-picker" id="emojiPicker">
@@ -5615,34 +5623,45 @@ function tgInsert(rows,cols){
 // SLASH COMMANDS ENGINE
 // ═══════════════════════════════════════════════════════════
 const SLASH_ITEMS=[
-  {id:'h1',        icon:'H1', name:'Tiêu đề 1',      desc:'Heading lớn nhất',              cat:'Văn bản'},
-  {id:'h2',        icon:'H2', name:'Tiêu đề 2',       desc:'Heading cấp 2',                cat:'Văn bản'},
-  {id:'h3',        icon:'H3', name:'Tiêu đề 3',       desc:'Heading cấp 3',                cat:'Văn bản'},
-  {id:'h4',        icon:'H4', name:'Tiêu đề 4',       desc:'Heading cấp 4',                cat:'Văn bản'},
-  {id:'h5',        icon:'H5', name:'Tiêu đề 5',       desc:'Heading cấp 5',                cat:'Văn bản'},
-  {id:'h6',        icon:'H6', name:'Tiêu đề 6',       desc:'Heading cấp 6',                cat:'Văn bản'},
-  {id:'ul',        icon:'•',  name:'Danh sách chấm',  desc:'Bullet list (chấm tròn)',      cat:'Văn bản'},
-  {id:'ol',        icon:'1.', name:'Danh sách số',    desc:'Numbered list (số thứ tự)',    cat:'Văn bản'},
-  {id:'table',     icon:'📊', name:'Bảng',            desc:'Chèn bảng dữ liệu',            cat:'Cấu trúc', sub:'table'},
-  {id:'col2',      icon:'⬜', name:'2 Cột',           desc:'Bố cục 2 cột',                 cat:'Cấu trúc'},
-  {id:'col3',      icon:'⬜', name:'3 Cột',           desc:'Bố cục 3 cột',                 cat:'Cấu trúc'},
-  {id:'carousel',  icon:'🎠', name:'Carousel / Slider', desc:'Chèn nhiều ảnh dạng trượt',   cat:'Media'},
-  {id:'image',     icon:'🖼️', name:'Hình ảnh / GIF',  desc:'Tải ảnh, GIF từ máy tính',     cat:'Media'},
-  {id:'carousel',  icon:'🎠', name:'Carousel / Slider', desc:'Nhiều ảnh dạng trình chiếu', cat:'Media'},
-  {id:'video',     icon:'🎬', name:'Video',           desc:'Tải video từ máy tính',         cat:'Media'},
-  {id:'embed',     icon:'▶️', name:'Nhúng video',     desc:'YouTube, TikTok, Vimeo, Facebook...', cat:'Media'},
-  {id:'emoji',     icon:'😀', name:'Emoji',           desc:'Chèn biểu tượng cảm xúc',      cat:'Media'},
-  {id:'code',      icon:'💻', name:'Code Block',      desc:'Khối code có highlight',        cat:'Định dạng'},
-  {id:'divider',   icon:'—',  name:'Đường kẻ ngang',  desc:'Thêm divider phân cách',       cat:'Định dạng'},
-  {id:'info',      icon:'ℹ️', name:'Info Panel',      desc:'Hộp thông tin xanh',            cat:'Panel'},
-  {id:'success',   icon:'✅', name:'Success Panel',   desc:'Hộp thành công xanh lá',       cat:'Panel'},
-  {id:'warning',   icon:'⚠️', name:'Warning Panel',   desc:'Hộp cảnh báo vàng',            cat:'Panel'},
-  {id:'error',     icon:'🚨', name:'Error Panel',     desc:'Hộp lỗi đỏ',                   cat:'Panel'},
-  {id:'note',      icon:'📌', name:'Note Panel',      desc:'Hộp ghi chú tím',              cat:'Panel'},
-  {id:'callout',   icon:'📦', name:'Callout / Text Box', desc:'Hộp văn bản có viền',      cat:'Panel'},
+  // ── Văn bản ─────────────────────────────────────────────
+  {id:'paragraph',icon:'<i class="ti ti-align-left"></i>',    name:'Đoạn văn bản', desc:'Chuyển về văn bản thông thường',     cat:'Văn bản', alias:'p text normal'},
+  {id:'h1',       icon:'<span class="si-text">H1</span>',     name:'Tiêu đề 1',    desc:'Heading lớn nhất',                   cat:'Văn bản', alias:'heading1 h1'},
+  {id:'h2',       icon:'<span class="si-text">H2</span>',     name:'Tiêu đề 2',    desc:'Heading cấp 2',                      cat:'Văn bản', alias:'heading2 h2'},
+  {id:'h3',       icon:'<span class="si-text">H3</span>',     name:'Tiêu đề 3',    desc:'Heading cấp 3',                      cat:'Văn bản', alias:'heading3 h3'},
+  {id:'h4',       icon:'<span class="si-text">H4</span>',     name:'Tiêu đề 4',    desc:'Heading cấp 4',                      cat:'Văn bản', alias:'heading4 h4'},
+  {id:'h5',       icon:'<span class="si-text">H5</span>',     name:'Tiêu đề 5',    desc:'Heading cấp 5',                      cat:'Văn bản', alias:'heading5 h5'},
+  {id:'h6',       icon:'<span class="si-text">H6</span>',     name:'Tiêu đề 6',    desc:'Heading cấp 6',                      cat:'Văn bản', alias:'heading6 h6'},
+  {id:'quote',    icon:'<i class="ti ti-quote"></i>',          name:'Trích dẫn',    desc:'Blockquote có viền bên trái',        cat:'Văn bản', alias:'blockquote cite quote'},
+  {id:'ul',       icon:'<i class="ti ti-list"></i>',           name:'Danh sách chấm', desc:'Bullet list không có thứ tự',      cat:'Văn bản', alias:'bullet ul list'},
+  {id:'ol',       icon:'<i class="ti ti-list-numbers"></i>',   name:'Danh sách số', desc:'Numbered list có thứ tự',           cat:'Văn bản', alias:'numbered ol list 1'},
+  {id:'task',     icon:'<i class="ti ti-checkbox"></i>',       name:'Danh sách việc', desc:'Checkbox todo list',               cat:'Văn bản', alias:'todo checkbox task check'},
+  // ── Cấu trúc ─────────────────────────────────────────────
+  {id:'table',    icon:'<i class="ti ti-table"></i>',          name:'Bảng',         desc:'Chèn bảng dữ liệu tùy chỉnh',       cat:'Cấu trúc', alias:'table grid'},
+  {id:'col2',     icon:'<i class="ti ti-layout-columns"></i>', name:'2 Cột',        desc:'Chia bố cục thành 2 cột ngang',      cat:'Cấu trúc', alias:'column layout 2col two'},
+  {id:'col3',     icon:'<i class="ti ti-layout-board"></i>',   name:'3 Cột',        desc:'Chia bố cục thành 3 cột ngang',      cat:'Cấu trúc', alias:'column layout 3col three'},
+  {id:'divider',  icon:'<i class="ti ti-separator"></i>',      name:'Đường kẻ ngang', desc:'Thêm đường phân cách nội dung',    cat:'Cấu trúc', alias:'divider hr separator line'},
+  // ── Media ─────────────────────────────────────────────────
+  {id:'image',    icon:'<i class="ti ti-photo"></i>',           name:'Hình ảnh / GIF', desc:'Tải ảnh, GIF từ máy tính',       cat:'Media',    alias:'image photo picture img gif'},
+  {id:'carousel', icon:'<i class="ti ti-slideshow"></i>',       name:'Carousel / Slider', desc:'Nhiều ảnh dạng trình chiếu', cat:'Media',    alias:'carousel slider gallery'},
+  {id:'video',    icon:'<i class="ti ti-video"></i>',           name:'Video',        desc:'Tải file video từ máy tính',        cat:'Media',    alias:'video mp4 film'},
+  {id:'embed',    icon:'<i class="ti ti-brand-youtube"></i>',   name:'Nhúng video',  desc:'YouTube, TikTok, Vimeo, Facebook',  cat:'Media',    alias:'embed youtube tiktok vimeo'},
+  {id:'emoji',    icon:'<i class="ti ti-mood-smile"></i>',      name:'Emoji',        desc:'Chèn biểu tượng cảm xúc',          cat:'Media',    alias:'emoji icon smiley'},
+  // ── Định dạng ─────────────────────────────────────────────
+  {id:'code',     icon:'<i class="ti ti-code"></i>',            name:'Code Block',   desc:'Khối code với font mono',           cat:'Định dạng', alias:'code pre block monospace'},
+  {id:'callout',  icon:'<i class="ti ti-bulb"></i>',            name:'Callout',      desc:'Hộp văn bản nổi bật có màu',       cat:'Định dạng', alias:'callout highlight box'},
+  // ── Panel ─────────────────────────────────────────────────
+  {id:'info',     icon:'<i class="ti ti-info-circle"></i>',     name:'Info Panel',   desc:'Hộp thông tin nền xanh',            cat:'Panel', alias:'info note tip blue'},
+  {id:'success',  icon:'<i class="ti ti-circle-check"></i>',    name:'Success Panel', desc:'Hộp thành công nền xanh lá',      cat:'Panel', alias:'success done ok green'},
+  {id:'warning',  icon:'<i class="ti ti-alert-triangle"></i>',  name:'Warning Panel', desc:'Hộp cảnh báo nền vàng',           cat:'Panel', alias:'warning caution yellow'},
+  {id:'error',    icon:'<i class="ti ti-alert-circle"></i>',    name:'Error Panel',  desc:'Hộp lỗi nền đỏ',                   cat:'Panel', alias:'error danger red'},
+  {id:'note',     icon:'<i class="ti ti-pin"></i>',             name:'Note Panel',   desc:'Hộp ghi chú nền tím',               cat:'Panel', alias:'note purple pin'},
 ];
+
+// Recently used command IDs (max 3, persisted in localStorage)
+let _slashRecent=[];
+try{_slashRecent=JSON.parse(localStorage.getItem('slash_recent')||'[]');}catch(e){_slashRecent=[];}
+
 let _slashVisible=false, _slashActiveIdx=0, _slashFiltered=[], _slashSavedRange=null;
-let _slashSubMode=null; // 'table-grid'
 
 function slashOpen(){
   const sel=window.getSelection();
@@ -5650,13 +5669,13 @@ function slashOpen(){
   _slashSavedRange=sel.getRangeAt(0).cloneRange();
   const rect=_slashGetCaretRect();
   const menu=document.getElementById('slashMenu');
-  // Position near caret
   const vw=window.innerWidth,vh=window.innerHeight;
-  let top=rect.bottom+6, left=rect.left;
-  if(top+340>vh)top=rect.top-344;
-  if(left+288>vw)left=vw-292;
-  menu.style.top=Math.max(8,top)+'px';
-  menu.style.left=Math.max(8,left)+'px';
+  const menuH=380;
+  let top=rect.bottom+8, left=rect.left-4;
+  if(top+menuH>vh-8)top=Math.max(8,rect.top-menuH-8);
+  if(left+304>vw-8)left=Math.max(8,vw-308);
+  menu.style.top=top+'px';
+  menu.style.left=left+'px';
   menu.classList.add('on');
   _slashVisible=true;
   _slashActiveIdx=0;
@@ -5670,97 +5689,144 @@ function slashClose(){
   document.getElementById('slashMenu')?.classList.remove('on');
   _slashVisible=false;
   _slashActiveIdx=0;
-  _slashSubMode=null;
-  // Return focus to editor
   const editor=document.getElementById('editor');
   if(editor)editor.focus();
 }
 
 function slashFilter(q){
   _slashActiveIdx=0;
-  slashBuild(q.toLowerCase());
+  slashBuild(q.toLowerCase().trim());
 }
 
 function slashBuild(q){
-  _slashFiltered=q?SLASH_ITEMS.filter(it=>it.name.toLowerCase().includes(q)||it.desc.toLowerCase().includes(q)||it.cat.toLowerCase().includes(q)):SLASH_ITEMS;
   const list=document.getElementById('slashMenuList');
-  if(!_slashFiltered.length){
-    list.innerHTML='<div class="slash-menu-empty">Không tìm thấy lệnh</div>';
+  let items;
+  let showingRecent=false;
+
+  if(!q){
+    // Show recent commands first, then all
+    const recentItems=_slashRecent
+      .map(id=>SLASH_ITEMS.find(it=>it.id===id))
+      .filter(Boolean)
+      .map(it=>({...it,_isRecent:true}));
+    const rest=SLASH_ITEMS;
+    items=[...recentItems,...rest];
+    if(recentItems.length)showingRecent=true;
+  } else {
+    items=SLASH_ITEMS.filter(it=>{
+      const needle=q.toLowerCase();
+      return it.name.toLowerCase().includes(needle)||
+             it.desc.toLowerCase().includes(needle)||
+             it.cat.toLowerCase().includes(needle)||
+             (it.alias||'').toLowerCase().includes(needle);
+    });
+  }
+  _slashFiltered=items;
+
+  if(!items.length){
+    list.innerHTML=`<div class="slash-menu-empty"><i class="ti ti-search"></i>Không tìm thấy "<strong>${escH(q)}</strong>"<br><span style="font-size:11px;margin-top:4px;display:block;color:var(--text3)">Thử tìm: table, h1, image, panel...</span></div>`;
     return;
   }
-  const cats=[...new Set(_slashFiltered.map(i=>i.cat))];
-  let html='';
+
+  // Build grouped HTML using DocumentFragment for performance
+  const frag=document.createDocumentFragment();
+
+  if(showingRecent&&_slashRecent.length){
+    const sec=document.createElement('div');
+    sec.className='slash-menu-section';
+    sec.innerHTML='<i class="ti ti-history" style="font-size:10px"></i> Gần đây';
+    frag.appendChild(sec);
+    items.filter(it=>it._isRecent).forEach((item,idx)=>{
+      frag.appendChild(_slashMakeItem(item,idx));
+    });
+  }
+
+  const cats=[...new Set(items.filter(it=>!it._isRecent).map(i=>i.cat))];
+  let flatIdx=showingRecent?_slashRecent.length:0;
   cats.forEach(cat=>{
-    html+=`<div class="slash-menu-section">${cat}</div>`;
-    _slashFiltered.filter(i=>i.cat===cat).forEach((item,_)=>{
-      const globalIdx=_slashFiltered.indexOf(item);
-      html+=`<div class="slash-item${globalIdx===_slashActiveIdx?' active':''}" data-id="${item.id}" onmousedown="event.preventDefault();slashExec('${item.id}')" onmouseenter="_slashActiveIdx=${globalIdx};slashHighlight()">
-        <div class="slash-item-icon">${item.icon}</div>
-        <div class="slash-item-info">
-          <div class="slash-item-name">${item.name}</div>
-          <div class="slash-item-desc">${item.desc}</div>
-        </div>
-      </div>`;
+    const sec=document.createElement('div');
+    sec.className='slash-menu-section';
+    sec.textContent=cat;
+    frag.appendChild(sec);
+    items.filter(it=>it.cat===cat&&!it._isRecent).forEach(item=>{
+      frag.appendChild(_slashMakeItem(item,flatIdx));
+      flatIdx++;
     });
   });
-  list.innerHTML=html;
+
+  list.innerHTML='';
+  list.appendChild(frag);
+}
+
+function _slashMakeItem(item,idx){
+  const el=document.createElement('div');
+  el.className='slash-item'+(idx===_slashActiveIdx?' active':'');
+  el.dataset.id=item.id;
+  el.dataset.cat=item._isRecent?'Recent':item.cat;
+  el.setAttribute('role','option');
+  el.innerHTML=`<div class="slash-item-icon">${item.icon}</div><div class="slash-item-info"><div class="slash-item-name">${escH(item.name)}</div><div class="slash-item-desc">${escH(item.desc)}</div></div>`;
+  el.addEventListener('mousedown',e=>{e.preventDefault();slashExec(item.id);});
+  el.addEventListener('mouseenter',()=>{_slashActiveIdx=idx;slashHighlight();});
+  return el;
 }
 
 function slashHighlight(){
-  document.querySelectorAll('.slash-item').forEach((el,i)=>el.classList.toggle('active',i===_slashActiveIdx));
-  const active=document.querySelectorAll('.slash-item')[_slashActiveIdx];
-  if(active)active.scrollIntoView({block:'nearest'});
+  const items=document.querySelectorAll('.slash-item');
+  items.forEach((el,i)=>el.classList.toggle('active',i===_slashActiveIdx));
+  items[_slashActiveIdx]?.scrollIntoView({block:'nearest',behavior:'smooth'});
 }
 
 // Delete the "/" that triggered the menu, then execute command
 function slashExec(id){
+  // Track recent usage
+  _slashRecent=_slashRecent.filter(r=>r!==id);
+  _slashRecent.unshift(id);
+  if(_slashRecent.length>3)_slashRecent.length=3;
+  try{localStorage.setItem('slash_recent',JSON.stringify(_slashRecent));}catch(e){}
+
   slashClose();
-  // Restore caret to saved position WITHOUT calling editor.focus() first
   const sel=window.getSelection();
   try{
     if(_slashSavedRange){sel.removeAllRanges();sel.addRange(_slashSavedRange);}
   }catch(e){}
-  // Delete the "/" character
   _slashDeleteSlash();
-  // Capture range RIGHT AFTER deletion — this is the exact insertion point
   try{
     if(sel.rangeCount)_slashSavedRange=sel.getRangeAt(0).cloneRange();
   }catch(e){}
   setTimeout(()=>_slashInsert(id),10);
 }
 
+// Walk backwards from cursor to find '/' and delete from there to cursor.
+// This correctly handles both: (a) user typed "/cmd" in editor, (b) user typed in search input.
 function _slashDeleteSlash(){
   const sel=window.getSelection();
   if(!sel.rangeCount)return;
   const range=sel.getRangeAt(0);
   const node=range.startContainer;
-  const slashMenu=document.getElementById('slashMenuInp');
-  const filterLen=(slashMenu?.value||'').length;
 
   if(node.nodeType===Node.TEXT_NODE){
     const txt=node.textContent;
     const offset=range.startOffset;
-    const slashPos=offset-1-filterLen;
-    if(slashPos>=0&&txt[slashPos]==='/'){
-      const newRange=document.createRange();
-      newRange.setStart(node,slashPos);
-      newRange.setEnd(node,offset);
-      newRange.deleteContents();
-    }
+    // Walk backwards to find the triggering '/'
+    let si=offset-1;
+    while(si>=0&&txt[si]!=='/')si--;
+    if(si<0)return;
+    const r=document.createRange();
+    r.setStart(node,si);r.setEnd(node,offset);
+    r.deleteContents();
   } else if(node.nodeType===Node.ELEMENT_NODE){
-    // Cursor is at element level (e.g. inside an empty td).
-    // Walk backwards through childNodes to find the text node containing '/'.
+    // Cursor at element level (empty td, etc.) — search child text nodes
     const offset=range.startOffset;
     for(let i=offset-1;i>=0;i--){
       const ch=node.childNodes[i];
       if(ch&&ch.nodeType===Node.TEXT_NODE){
         const txt=ch.textContent;
-        const slashPos=txt.length-1-filterLen;
-        if(slashPos>=0&&txt[slashPos]==='/'){
-          const newRange=document.createRange();
-          newRange.setStart(ch,slashPos);
-          newRange.setEnd(ch,txt.length);
-          newRange.deleteContents();
+        let si=txt.length-1;
+        while(si>=0&&txt[si]!=='/')si--;
+        if(si>=0){
+          const r=document.createRange();
+          r.setStart(ch,si);r.setEnd(ch,txt.length);
+          r.deleteContents();
         }
         break;
       }
@@ -5770,16 +5836,45 @@ function _slashDeleteSlash(){
 
 function _slashInsert(id){
   const editor=document.getElementById('editor');
-  // Do NOT call editor.focus() here — it resets the carefully saved cursor position
   const sel=window.getSelection();
 
-  // Ensure cursor is in the editor
-  if(id==='table'){
-    // Show inline table grid picker at slash position
-    _slashShowTableGrid();
-    return;
+  // Helper: find nearest block ancestor (direct child of editor or container)
+  function _nearestBlock(sel2,ed){
+    if(!sel2||!sel2.rangeCount)return null;
+    let node=sel2.getRangeAt(0).startContainer;
+    while(node&&node.parentElement!==ed&&
+          !['TD','TH'].includes(node.parentElement?.tagName)&&
+          !node.parentElement?.classList.contains('cf-column-item'))
+      node=node.parentElement;
+    return (node&&node!==ed)?node:null;
   }
 
+  // Helper: insert block after current block, focus inside it
+  function _insertAfterCurrent(block,focusTarget){
+    const sel2=window.getSelection();
+    const cur=_nearestBlock(sel2,editor);
+    const p=document.createElement('p');p.innerHTML='<br>';
+    if(cur&&cur.parentElement){
+      cur.parentElement.insertBefore(block,cur.nextSibling);
+      cur.parentElement.insertBefore(p,block.nextSibling);
+      if((cur.tagName==='P'||cur.tagName==='DIV')&&!cur.textContent.trim())cur.remove();
+    } else {
+      editor.appendChild(block);editor.appendChild(p);
+    }
+    if(focusTarget){
+      try{
+        const r=document.createRange();
+        r.setStart(focusTarget,0);r.collapse(true);
+        sel2.removeAllRanges();sel2.addRange(r);
+        editor.focus();
+      }catch(e){}
+    }
+  }
+
+  // ── Table ────────────────────────────────────────────────
+  if(id==='table'){_slashShowTableGrid();return;}
+
+  // ── Media file pickers ───────────────────────────────────
   if(id==='image'||id==='video'){
     const accept=id==='image'?'image/*,image/gif':'video/mp4,video/webm,video/ogg,video/mov,.mp4,.webm,.mov';
     const inp=document.createElement('input');
@@ -5790,39 +5885,9 @@ function _slashInsert(id){
       const files=Array.from(this.files);
       document.body.removeChild(inp);
       if(!files.length)return;
-      // Use inline image blocks (Confluence style)
       for(const f of files)await cfInsertImageBlock(f);
     });
     inp.click();return;
-  }
-  if(id==='emoji'){
-    _slashShowEmoji();return;
-  }
-  // ── Heading ─────────────────────────────────────────────
-  if(id==='h1'||id==='h2'||id==='h3'||id==='h4'||id==='h5'||id==='h6'){
-    const level=id[1];
-    const tag='h'+level;
-    const sel2=window.getSelection();
-    if(sel2&&sel2.rangeCount){
-      const range2=sel2.getRangeAt(0);
-      let node2=range2.startContainer;
-      const editor2=document.getElementById('editor');
-      // Find parent block element
-      while(node2&&node2.parentElement!==editor2&&!['TD','TH'].includes(node2.parentElement?.tagName)&&!node2.parentElement?.classList.contains('cf-column-item'))
-        node2=node2.parentElement;
-      if(node2&&node2!==editor2){
-        const heading=document.createElement(tag);
-        heading.innerHTML=node2.innerHTML||'<br>';
-        node2.parentElement.replaceChild(heading,node2);
-        // Place cursor at end of heading
-        const r3=document.createRange();
-        r3.selectNodeContents(heading);r3.collapse(false);
-        sel2.removeAllRanges();sel2.addRange(r3);
-        onContentChange();return;
-      }
-    }
-    document.execCommand('formatBlock',false,tag);
-    onContentChange();return;
   }
   if(id==='carousel'){
     const inp=document.createElement('input');
@@ -5839,49 +5904,81 @@ function _slashInsert(id){
     });
     inp.click();return;
   }
-  if(id==='embed'){
-    cfEmbedOpen();return;
-  }
-  if(id==='ul'||id==='ol'){
-    const tag=id==='ul'?'ul':'ol';
-    const sel2=window.getSelection();
-    const editor2=document.getElementById('editor');
-    const list=document.createElement(tag);
-    const li=document.createElement('li');li.innerHTML='<br>';
-    list.appendChild(li);
-    // Insert at cursor position
-    if(sel2&&sel2.rangeCount){
-      let node2=sel2.getRangeAt(0).startContainer;
-      while(node2&&node2.parentElement!==editor2&&
-            !node2.parentElement?.classList.contains('cf-column-item')&&
-            !['TD','TH'].includes(node2.parentElement?.tagName))
-        node2=node2.parentElement;
-      if(node2&&node2!==editor2){
-        const parent=node2.parentElement;
-        parent.insertBefore(list,node2.nextSibling);
-        // Remove empty block
-        if((node2.tagName==='P'||node2.tagName==='DIV')&&!node2.textContent.trim())node2.remove();
-      } else {editor2.appendChild(list);}
-    } else {editor2.appendChild(list);}
-    // Place cursor in the first li
-    try{
-      const r2=document.createRange();
-      r2.setStart(li,0);r2.collapse(true);
-      sel2.removeAllRanges();sel2.addRange(r2);
-      li.focus?.();editor2.focus();
-    }catch(e){}
+  if(id==='embed'){cfEmbedOpen();return;}
+  if(id==='emoji'){_slashShowEmoji();return;}
+
+  // ── Paragraph (convert to normal text) ──────────────────
+  if(id==='paragraph'){
+    const cur=_nearestBlock(sel,editor);
+    if(cur&&cur!==editor&&cur.tagName!=='P'){
+      const p=document.createElement('p');
+      p.innerHTML=cur.innerHTML||'<br>';
+      cur.parentElement.replaceChild(p,cur);
+      try{const r=document.createRange();r.selectNodeContents(p);r.collapse(false);sel.removeAllRanges();sel.addRange(r);}catch(e){}
+    }
     onContentChange();return;
   }
+
+  // ── Headings ─────────────────────────────────────────────
+  if(/^h[1-6]$/.test(id)){
+    const cur=_nearestBlock(sel,editor);
+    if(cur&&cur!==editor){
+      const heading=document.createElement(id);
+      heading.innerHTML=cur.innerHTML||'<br>';
+      cur.parentElement.replaceChild(heading,cur);
+      try{const r=document.createRange();r.selectNodeContents(heading);r.collapse(false);sel.removeAllRanges();sel.addRange(r);}catch(e){}
+      onContentChange();return;
+    }
+    document.execCommand('formatBlock',false,id);
+    onContentChange();return;
+  }
+
+  // ── Blockquote ───────────────────────────────────────────
+  if(id==='quote'){
+    const cur=_nearestBlock(sel,editor);
+    const bq=document.createElement('blockquote');
+    bq.innerHTML=(cur&&cur.textContent.trim()?cur.innerHTML:'')||'<br>';
+    _insertAfterCurrent(bq,bq);
+    onContentChange();return;
+  }
+
+  // ── Lists ────────────────────────────────────────────────
+  if(id==='ul'||id==='ol'){
+    const list=document.createElement(id);
+    const li=document.createElement('li');li.innerHTML='<br>';
+    list.appendChild(li);
+    _insertAfterCurrent(list,li);
+    onContentChange();return;
+  }
+
+  // ── Task list (checkbox) ─────────────────────────────────
+  if(id==='task'){
+    const ul=document.createElement('ul');
+    ul.className='task-list';ul.style.listStyle='none';ul.style.paddingLeft='4px';
+    const li=document.createElement('li');
+    li.className='task-item';li.style.display='flex';li.style.alignItems='flex-start';li.style.gap='8px';
+    const cb=document.createElement('input');
+    cb.type='checkbox';cb.contentEditable='false';cb.style.cssText='flex-shrink:0;margin-top:4px;cursor:pointer;accent-color:var(--accent)';
+    cb.addEventListener('change',()=>onContentChange());
+    const span=document.createElement('span');span.contentEditable='true';span.innerHTML='<br>';
+    span.style.flex='1';
+    li.appendChild(cb);li.appendChild(span);ul.appendChild(li);
+    _insertAfterCurrent(ul,span);
+    onContentChange();return;
+  }
+
+  // ── Divider ──────────────────────────────────────────────
   if(id==='divider'){
     const hr=document.createElement('hr');
-    hr.className='cf-divider';
-    hr.contentEditable='false';
+    hr.className='cf-divider';hr.contentEditable='false';
     _cfInsertBlockAtRange(hr,_slashSavedRange);
     onContentChange();return;
   }
-  if(id==='code'){
-    insertCode();onContentChange();return;
-  }
+
+  // ── Code Block ───────────────────────────────────────────
+  if(id==='code'){insertCode();onContentChange();return;}
+
+  // ── Column Layouts ───────────────────────────────────────
   if(id==='col2'||id==='col3'){
     const n=id==='col2'?2:3;
     const layout=_cfBuildColumnLayout(n);
@@ -5890,10 +5987,11 @@ function _slashInsert(id){
     setTimeout(()=>{const first=layout.querySelector('.cf-column-item');if(first)first.focus();},30);
     return;
   }
+
+  // ── Panels ───────────────────────────────────────────────
   if(['info','success','warning','error','note','callout'].includes(id)){
     const icons={info:'ℹ️',success:'✅',warning:'⚠️',error:'🚨',note:'📌',callout:'💡'};
     const type=id==='callout'?'info':id;
-    const editor2=document.getElementById('editor');
     const panel=document.createElement('div');
     panel.className='cf-panel '+type;panel.contentEditable='false';
     const iconEl=document.createElement('span');iconEl.className='cf-panel-icon';iconEl.textContent=icons[id];
@@ -5901,72 +5999,65 @@ function _slashInsert(id){
     const actions=document.createElement('div');actions.className='cf-panel-actions';
     actions.innerHTML='<button class="cf-panel-type-btn" onclick="cfPanelChangeType(this)" title="Đổi loại">⚙️</button><button class="cf-panel-del" onclick="this.closest(\'.cf-panel\').remove();onContentChange()" title="Xóa">✕</button>';
     panel.appendChild(iconEl);panel.appendChild(content);panel.appendChild(actions);
-    // Insert at cursor
-    const sel3=window.getSelection();
-    const p3=document.createElement('p');p3.innerHTML='<br>';
-    if(sel3&&sel3.rangeCount){
-      let node3=sel3.getRangeAt(0).startContainer;
-      while(node3&&node3.parentElement!==editor2)node3=node3.parentElement;
-      if(node3&&node3!==editor2){
-        editor2.insertBefore(panel,node3.nextSibling);
-        editor2.insertBefore(p3,panel.nextSibling);
-        if((node3.tagName==='P'||node3.tagName==='DIV')&&!node3.textContent.trim())node3.remove();
-      } else {editor2.appendChild(panel);editor2.appendChild(p3);}
-    } else {editor2.appendChild(panel);editor2.appendChild(p3);}
+    _insertAfterCurrent(panel,null);
     onContentChange();
     setTimeout(()=>content.focus(),30);
     return;
   }
 }
 
-// Show inline table grid at caret position
-let _slashTgRect=null;
+// Show inline table grid at caret position — theme-aware via CSS classes
 function _slashShowTableGrid(){
   document.getElementById('slashTgPopup')?.remove();
   const popup=document.createElement('div');
   popup.id='slashTgPopup';
-  popup.style.cssText='position:fixed;z-index:910;background:#1e293b;border:1px solid #334155;border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.45);padding:12px;display:flex;flex-direction:column;gap:4px;animation:tgFade .12s ease';
+  popup.className='slash-tg-popup';
+
   const TG_ROWS=8,TG_COLS=10;
-  let html='<div id="slashTgGrid" style="display:flex;flex-direction:column;gap:3px">';
+  const grid=document.createElement('div');
+  grid.id='slashTgGrid';grid.style.cssText='display:flex;flex-direction:column;gap:3px';
+
   for(let r=0;r<TG_ROWS;r++){
-    html+='<div style="display:flex;gap:3px">';
-    for(let cc=0;cc<TG_COLS;cc++)
-      html+=`<div data-r="${r}" data-c="${cc}" style="width:24px;height:24px;border-radius:4px;background:#334155;border:1.5px solid #475569;cursor:pointer;flex-shrink:0;transition:background .08s,border-color .08s"></div>`;
-    html+='</div>';
+    const row=document.createElement('div');row.style.cssText='display:flex;gap:3px';
+    for(let cc=0;cc<TG_COLS;cc++){
+      const cell=document.createElement('div');
+      cell.className='slash-tg-cell';
+      cell.dataset.r=r;cell.dataset.c=cc;
+      row.appendChild(cell);
+    }
+    grid.appendChild(row);
   }
-  html+=`</div>
-  <div id="slashTgLabel" style="font-size:12px;color:#94a3b8;margin-top:8px;text-align:center;font-weight:600">Bảng</div>
-  <div style="display:flex;align-items:center;gap:6px;margin-top:8px;border-top:1px solid #334155;padding-top:8px">
-    <input id="slashTgC" type="number" min="1" max="20" value="3" style="width:48px;height:28px;background:#334155;border:1px solid #475569;border-radius:4px;color:#e2e8f0;font-size:12px;text-align:center;font-family:var(--font);outline:none">
-    <span style="color:#64748b;font-size:12px">×</span>
-    <input id="slashTgR" type="number" min="1" max="50" value="3" style="width:48px;height:28px;background:#334155;border:1px solid #475569;border-radius:4px;color:#e2e8f0;font-size:12px;text-align:center;font-family:var(--font);outline:none">
-    <button id="slashTgBtn" style="background:var(--accent);color:#fff;border:none;border-radius:4px;padding:4px 12px;font-size:12px;cursor:pointer;font-family:var(--font)">Tạo</button>
-  </div>`;
-  popup.innerHTML=html;
+  popup.appendChild(grid);
+
+  const label=document.createElement('div');
+  label.id='slashTgLabel';label.className='slash-tg-label';label.textContent='Chọn kích thước bảng';
+  popup.appendChild(label);
+
+  const customRow=document.createElement('div');
+  customRow.className='slash-tg-custom';
+  customRow.innerHTML=`<input class="slash-tg-inp" id="slashTgC" type="number" min="1" max="20" value="3" title="Số cột"><span style="color:var(--text3);font-size:12px">×</span><input class="slash-tg-inp" id="slashTgR" type="number" min="1" max="50" value="3" title="Số hàng"><button class="slash-tg-btn" id="slashTgBtn">Tạo bảng</button>`;
+  popup.appendChild(customRow);
   document.body.appendChild(popup);
 
   // Position near caret
   const rect=_slashGetCaretRect();
   const vw=window.innerWidth,vh=window.innerHeight;
-  const pw=302,ph=310;
-  let top=rect.bottom+6,left=rect.left;
-  if(top+ph>vh-8)top=Math.max(8,rect.top-ph-6);
+  const pw=306,ph=320;
+  let top=rect.bottom+8,left=rect.left-4;
+  if(top+ph>vh-8)top=Math.max(8,rect.top-ph-8);
   if(left+pw>vw-8)left=Math.max(8,vw-pw-8);
   popup.style.top=top+'px';popup.style.left=left+'px';
 
-  // Hover + click on cells
   function setHighlight(row,col){
-    popup.querySelectorAll('[data-r]').forEach(c=>{
-      const on=+c.dataset.r<=row&&+c.dataset.c<=col;
-      c.style.background=on?'var(--accent)':'#334155';
-      c.style.borderColor=on?'#7ab4ff':'#475569';
+    popup.querySelectorAll('.slash-tg-cell').forEach(c=>{
+      c.classList.toggle('on',+c.dataset.r<=row&&+c.dataset.c<=col);
     });
-    const lbl=document.getElementById('slashTgLabel');
-    if(lbl)lbl.textContent=(col+1)+' cột × '+(row+1)+' hàng';
-    const ic=document.getElementById('slashTgC'),ir=document.getElementById('slashTgR');
-    if(ic)ic.value=col+1;if(ir)ir.value=row+1;
+    label.textContent=(col+1)+' cột × '+(row+1)+' hàng';
+    document.getElementById('slashTgC').value=col+1;
+    document.getElementById('slashTgR').value=row+1;
   }
-  popup.querySelectorAll('[data-r]').forEach(cell=>{
+
+  popup.querySelectorAll('.slash-tg-cell').forEach(cell=>{
     cell.addEventListener('mouseenter',()=>setHighlight(+cell.dataset.r,+cell.dataset.c));
     cell.addEventListener('click',()=>{popup.remove();tgInsert(+cell.dataset.r+1,+cell.dataset.c+1);});
   });
@@ -5975,7 +6066,6 @@ function _slashShowTableGrid(){
     const cc=Math.max(1,Math.min(20,parseInt(document.getElementById('slashTgC').value)||3));
     popup.remove();tgInsert(r,cc);
   });
-  // Close on outside click
   setTimeout(()=>document.addEventListener('mousedown',function once(e){
     if(!popup.contains(e.target)){popup.remove();document.removeEventListener('mousedown',once);}
   }),80);
@@ -7014,14 +7104,42 @@ document.addEventListener('mousedown',e=>{
 // Detect '/' → open slash menu (works after text too)
 function _editorSlashKeydown(e){
   if(_slashVisible){
-    if(e.key==='ArrowDown'){e.preventDefault();_slashActiveIdx=Math.min(_slashFiltered.length-1,_slashActiveIdx+1);slashHighlight();}
-    else if(e.key==='ArrowUp'){e.preventDefault();_slashActiveIdx=Math.max(0,_slashActiveIdx-1);slashHighlight();}
-    else if(e.key==='Enter'||e.key==='Tab'){
+    const total=_slashFiltered.length;
+    if(e.key==='ArrowDown'){
+      e.preventDefault();
+      _slashActiveIdx=(_slashActiveIdx+1)%total; // wrap around
+      slashHighlight();
+    } else if(e.key==='ArrowUp'){
+      e.preventDefault();
+      _slashActiveIdx=(_slashActiveIdx-1+total)%total; // wrap around
+      slashHighlight();
+    } else if(e.key==='Enter'||e.key==='Tab'){
       e.preventDefault();
       if(_slashFiltered[_slashActiveIdx])slashExec(_slashFiltered[_slashActiveIdx].id);
+    } else if(e.key==='Escape'){
+      e.preventDefault();slashClose();
     }
-    else if(e.key==='Escape'){e.preventDefault();slashClose();}
     return;
+  }
+}
+
+// Also handle keys on the slash menu input for arrow navigation
+function _slashMenuInputKeydown(e){
+  if(!_slashVisible)return;
+  const total=_slashFiltered.length;
+  if(e.key==='ArrowDown'){
+    e.preventDefault();
+    _slashActiveIdx=(_slashActiveIdx+1)%total;
+    slashHighlight();
+  } else if(e.key==='ArrowUp'){
+    e.preventDefault();
+    _slashActiveIdx=(_slashActiveIdx-1+total)%total;
+    slashHighlight();
+  } else if(e.key==='Enter'||e.key==='Tab'){
+    e.preventDefault();
+    if(_slashFiltered[_slashActiveIdx])slashExec(_slashFiltered[_slashActiveIdx].id);
+  } else if(e.key==='Escape'){
+    e.preventDefault();slashClose();
   }
 }
 
@@ -7120,9 +7238,14 @@ function _initSlashCommands(){
   editor.addEventListener('mouseup',_updateBlockBar);
   editor.addEventListener('focus',_updateBlockBar);
   editor.addEventListener('blur',()=>{setTimeout(_hideBlockBar,150);});
-  // Hover on editor to show block bar next to hovered block
   editor.addEventListener('mousemove',_onEditorMouseMove);
   editor.addEventListener('mouseleave',()=>{if(!document.activeElement?.closest('.editor-content'))_hideBlockBar();});
+  // Wire slash menu input handlers (replaces inline oninput/onkeydown)
+  const inp=document.getElementById('slashMenuInp');
+  if(inp){
+    inp.addEventListener('input',()=>slashFilter(inp.value));
+    inp.addEventListener('keydown',_slashMenuInputKeydown);
+  }
 }
 
 // ── Block Action Bar ─────────────────────────────────────
