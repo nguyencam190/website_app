@@ -8647,6 +8647,11 @@ async function doExportWebsite(){
   });
   navRoot.appendChild(pagesPanel);
 
+  // Sidebar footer — collapse button
+  const sbFooter=document.createElement('div');sbFooter.className='ws-sb-footer-bar';
+  sbFooter.innerHTML='<button class="ws-sb-collapse-btn" id="wsSbCollapse" title="Thu gọn sidebar"><i class="ti ti-chevrons-left"></i></button>';
+  navRoot.appendChild(sbFooter);
+
   const navHTML=navRoot.innerHTML;
   const docIndexJSON=JSON.stringify(docIndex);
 
@@ -8892,10 +8897,11 @@ async function doExportWebsite(){
     '.ws-search:focus{border-color:var(--accent)}',
     '.ws-theme-btn{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;font-size:16px;transition:.15s;flex-shrink:0}',
     '.ws-theme-btn:hover{background:var(--surface3);color:var(--text)}',
-    '.ws-sb-toggle-btn{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;font-size:18px;transition:.15s;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:0;line-height:1}',
-    '.ws-sb-toggle-btn:hover{background:var(--surface3);color:var(--text)}',
+    '.ws-sb-footer-bar{padding:8px;border-top:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:flex-end;margin-top:auto}',
+    '.ws-sb-collapse-btn{width:28px;height:28px;border:none;background:transparent;color:var(--text3);cursor:pointer;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:14px;transition:.15s;flex-shrink:0}',
+    '.ws-sb-collapse-btn:hover{background:var(--surface3);color:var(--text)}',
     '.ws-layout{display:flex;flex:1;overflow:hidden}',
-    '.ws-sidebar{width:260px;min-width:60px;max-width:520px;background:var(--sb);overflow-y:auto;overflow-x:hidden;padding:14px 0;flex-shrink:0;position:relative;transition:background var(--tr),width .22s cubic-bezier(.4,0,.2,1)}',
+    '.ws-sidebar{width:260px;min-width:60px;max-width:520px;background:var(--sb);overflow-y:auto;overflow-x:hidden;padding:14px 0 0;flex-shrink:0;position:relative;transition:background var(--tr),width .22s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}',
     '.ws-sidebar.collapsed{width:0!important;min-width:0!important;overflow:hidden;padding:0;border-right:none}',
     '.ws-sb-resizer.hidden{display:none}',
     '.ws-sidebar::-webkit-scrollbar{width:3px}',
@@ -9108,9 +9114,9 @@ async function doExportWebsite(){
     '.ws-pnav-item.flyout-open{background:var(--sb-active-bg);color:var(--sb-active-txt)}',
     '.ws-pnav-arrow{margin-left:auto;font-size:12px;color:var(--text3);transition:transform .2s;flex-shrink:0}',
     '.ws-pnav-item.flyout-open .ws-pnav-arrow{transform:rotate(90deg);color:var(--accent)}',
-    /* expand button shown in ws-main when sidebar is collapsed */
-    '.ws-sb-expand{display:none;position:fixed;left:8px;top:60px;z-index:200;width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;font-size:15px;align-items:center;justify-content:center;transition:.15s;box-shadow:0 2px 8px rgba(0,0,0,.12)}',
-    '.ws-sb-expand:hover{background:var(--surface3);color:var(--text)}',
+    /* expand button — thin strip on left edge like main app */
+    '.ws-sb-expand{display:none;position:fixed;left:0;top:50%;transform:translateY(-50%);width:18px;height:48px;background:var(--border2);border:none;border-radius:0 4px 4px 0;cursor:pointer;color:var(--text2);font-size:12px;z-index:200;align-items:center;justify-content:center;transition:.15s;padding:0}',
+    '.ws-sb-expand:hover{background:var(--accent);color:#fff}',
     '.ws-sidebar.collapsed~.ws-sb-expand{display:flex}',
   ].join('\n');
 
@@ -9362,22 +9368,27 @@ async function doExportWebsite(){
     '})();',
     /* ── Sidebar toggle (collapse / expand) ── */
     '(function(){',
-    '  var tog=document.getElementById("wsSbToggle");',
+    '  var col=document.getElementById("wsSbCollapse");',
     '  var exp=document.getElementById("wsSbExpand");',
     '  var rz=document.getElementById("wsSbRz");',
     '  var sb=document.getElementById("wsSidebar");',
     '  if(!sb)return;',
-    '  function doToggle(){',
-    '    var collapsed=sb.classList.toggle("collapsed");',
-    '    if(rz)rz.classList.toggle("hidden",collapsed);',
-    '    if(collapsed)wsCloseFlyout();',
-    '    try{localStorage.setItem("ws_sb_col_"+location.pathname,collapsed?"1":"0");}catch(er){}',
-    '    if(!collapsed&&_cur){setTimeout(function(){var el=document.getElementById("doc-"+_cur);if(el)fitCanvas(el);},250);}',
+    '  function doCollapse(){',
+    '    sb.classList.add("collapsed");',
+    '    if(rz)rz.classList.add("hidden");',
+    '    wsCloseFlyout();',
+    '    try{localStorage.setItem("ws_sb_col_"+location.pathname,"1");}catch(er){}',
+    '  }',
+    '  function doExpand(){',
+    '    sb.classList.remove("collapsed");',
+    '    if(rz)rz.classList.remove("hidden");',
+    '    try{localStorage.setItem("ws_sb_col_"+location.pathname,"0");}catch(er){}',
+    '    if(_cur){setTimeout(function(){var el=document.getElementById("doc-"+_cur);if(el)fitCanvas(el);},250);}',
     '  }',
     '  var colKey="ws_sb_col_"+location.pathname;',
     '  if(localStorage.getItem(colKey)==="1"){sb.classList.add("collapsed");if(rz)rz.classList.add("hidden");}',
-    '  if(tog)tog.addEventListener("click",doToggle);',
-    '  if(exp)exp.addEventListener("click",doToggle);',
+    '  if(col)col.addEventListener("click",doCollapse);',
+    '  if(exp)exp.addEventListener("click",doExpand);',
     '})();',
     '/* init sidebar state */',
     /* ── Rewire both carousel types ── */
@@ -9435,7 +9446,6 @@ async function doExportWebsite(){
     '</head>',
     '<body>',
     '<div class="ws-header">',
-    '<button class="ws-sb-toggle-btn" id="wsSbToggle" title="Thu/mở sidebar">&#9776;</button>',
     '<div class="ws-logo"><div class="ws-logo-box">'+(title.charAt(0)||'P').toUpperCase()+'</div>'+escH(title)+'</div>',
     '<div class="ws-spacer"></div>',
     '<input class="ws-search" id="wsSearch" type="text" placeholder="Tìm kiếm...">',
@@ -9445,7 +9455,7 @@ async function doExportWebsite(){
     '<div class="ws-layout" id="wsLayout">',
     '<div class="ws-sidebar" id="wsSidebar">'+navHTML+'</div>',
     '<div class="ws-sb-resizer" id="wsSbRz" title="Kéo để thay đổi độ rộng"></div>',
-    '<button class="ws-sb-expand" id="wsSbExpand" title="Mở sidebar"><i class="ti ti-layout-sidebar"></i></button>',
+    '<button class="ws-sb-expand" id="wsSbExpand" title="Mở sidebar"><i class="ti ti-chevrons-right"></i></button>',
     '<div class="ws-main" id="wsMain">',
     pagesHTML,
     '<div id="wsNoResult" class="ws-no" style="display:none">Không tìm thấy tài liệu.</div>',
