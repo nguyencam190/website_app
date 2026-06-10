@@ -1457,10 +1457,6 @@ td.tbl-inner-container{padding:0!important;overflow:visible!important;vertical-a
               </div>
             </div>
           </div>
-          <div class="pab-breadcrumb">
-            <span id="pabSection">—</span>
-            <span class="pab-sep">›</span>
-          </div>
           <i class="ti ti-file-text" style="font-size:15px;color:var(--accent);flex-shrink:0"></i>
           <span class="pab-title" id="pabTitle">Chọn một trang để bắt đầu</span>
         </div>
@@ -1564,7 +1560,6 @@ td.tbl-inner-container{padding:0!important;overflow:visible!important;vertical-a
   <div class="modal" onclick="event.stopPropagation()">
     <h3>Tạo tài liệu mới</h3>
     <div class="field"><label>Tiêu đề</label><input type="text" id="newDocTitle" placeholder="Tiêu đề tài liệu..."></div>
-    <div class="field"><label>Section</label><select id="newDocSection"></select></div>
     <div class="modal-actions"><button class="hbtn" onclick="closeModal('newDocModal')">Huỷ</button><button class="hbtn primary" onclick="createDoc()">Tạo</button></div>
   </div>
 </div>
@@ -1575,10 +1570,6 @@ td.tbl-inner-container{padding:0!important;overflow:visible!important;vertical-a
     <h3>Cài đặt</h3>
     <div class="field"><label>Tên dự án</label><input type="text" id="settProjectName"></div>
     <div class="field"><label>Tên của bạn</label><input type="text" id="settUsername"></div>
-    <div class="field"><label>Thêm section mới</label>
-      <div style="display:flex;gap:7px"><input type="text" id="settNewSection" placeholder="Tên section..." style="flex:1"><button class="hbtn primary" onclick="addSectionFromSettings()"><i class="ti ti-plus"></i></button></div>
-    </div>
-    <div id="settSectionList" style="margin-bottom:14px"></div>
     <div class="modal-actions"><button class="hbtn" onclick="closeModal('settingsModal')">Huỷ</button><button class="hbtn primary" onclick="saveSettings()">Lưu</button></div>
   </div>
 </div>
@@ -2079,10 +2070,10 @@ const _nodeCollapsed={};  // per-doc node collapse state
 
 // Helpers
 function _getChildren(sec,parentId){
-  return state.docs.filter(d=>d.section===sec&&(d.parentId||null)===(parentId||null));
+  return state.docs.filter(d=>(d.parentId||null)===(parentId||null));
 }
 function _hasChildren(sec,docId){
-  return state.docs.some(d=>d.section===sec&&d.parentId===docId);
+  return state.docs.some(d=>d.parentId===docId);
 }
 function _matchesFilter(doc,filter){
   if(!filter)return true;
@@ -2161,7 +2152,7 @@ function buildFlyoutList(filter){
 function _mkFlyoutItem(it){
   const el=document.createElement('div');el.className='sb-flyout-item';
   const isS=(state.starred||[]).includes(it.id);
-  el.innerHTML=`<div class="sb-flyout-item-icon"><i class="ti ti-file-text"></i></div><div class="sb-flyout-item-info"><div class="sb-flyout-item-title">${escH(it.title||'Untitled')}</div><div class="sb-flyout-item-meta">${escH(it.section||'')}${it.openedAt?' · '+_relTime(it.openedAt):''}</div></div><button class="sb-flyout-item-action${isS?' starred':''}" onclick="event.stopPropagation();toggleStar('${it.id}',this)" title="${isS?'Bỏ đánh dấu':'Đánh dấu'}"><i class="ti ti-star${isS?'-filled':''}"></i></button>`;
+  el.innerHTML=`<div class="sb-flyout-item-icon"><i class="ti ti-file-text"></i></div><div class="sb-flyout-item-info"><div class="sb-flyout-item-title">${escH(it.title||'Untitled')}</div><div class="sb-flyout-item-meta">${it.openedAt?_relTime(it.openedAt):''}</div></div><button class="sb-flyout-item-action${isS?' starred':''}" onclick="event.stopPropagation();toggleStar('${it.id}',this)" title="${isS?'Bỏ đánh dấu':'Đánh dấu'}"><i class="ti ti-star${isS?'-filled':''}"></i></button>`;
   el.onclick=()=>{openDoc(it.id);closeFlyout();};
   return el;
 }
@@ -2217,7 +2208,7 @@ function hdrOpenSearch(){
     if(recents[i]){
       el.style.display='flex';
       const _rq=el.querySelector('div div:first-child');if(_rq)_rq.textContent=recents[i].title||'Untitled';
-      const _rm=el.querySelector('.hsd-item-meta');if(_rm)_rm.textContent=(recents[i].section||'')+' · '+_relTime(recents[i].openedAt||0);
+      const _rm=el.querySelector('.hsd-item-meta');if(_rm)_rm.textContent=_relTime(recents[i].openedAt||0);
       el.onclick=()=>{openDoc(recents[i].id);hdrCloseAll();};
     } else {el.style.display='none';}
   });
@@ -2232,7 +2223,7 @@ function hdrHandleSearch(v){
     const q=v.toLowerCase();
     const matches=(state.docs||[]).filter(d=>(d.title||'').toLowerCase().includes(q)||(d.content||'').replace(/<[^>]+>/g,' ').toLowerCase().includes(q)).slice(0,6);
     if(sec)sec.style.display=matches.length?'':'none';
-    if(res)res.innerHTML=matches.map(d=>`<div class="hsd-item" onclick="openDoc('${d.id}');hdrCloseAll()"><div class="hsd-item-icon"><i class="ti ti-file-text"></i></div><div><div>${escH(d.title||'Untitled')}</div><div class="hsd-item-meta">${escH(d.section||'')}</div></div></div>`).join('');
+    if(res)res.innerHTML=matches.map(d=>`<div class="hsd-item" onclick="openDoc('${d.id}');hdrCloseAll()"><div class="hsd-item-icon"><i class="ti ti-file-text"></i></div><div><div>${escH(d.title||'Untitled')}</div></div></div>`).join('');
   } else {
     if(sec)sec.style.display='none';
     if(res)res.innerHTML='';
@@ -2382,17 +2373,14 @@ function updatePageActionBar(){
   try{_pabLogoInit();}catch(e){}
   const doc=currentDoc();
   const titleEl=document.getElementById('pabTitle');
-  const sectionEl=document.getElementById('pabSection');
   const dateEl=document.getElementById('pabDate');
   const statusEl=document.getElementById('pabStatus');
   if(!doc){
     if(titleEl)titleEl.textContent='Chọn một trang để bắt đầu';
-    if(sectionEl)sectionEl.textContent='—';
     if(dateEl)dateEl.textContent='';
     return;
   }
   if(titleEl)titleEl.textContent=doc.title||'Untitled';
-  if(sectionEl)sectionEl.textContent=doc.section||'—';
   const d=new Date(doc.updatedAt||doc.createdAt||Date.now());
   if(dateEl)dateEl.textContent='Saved '+d.toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'});
   if(statusEl){const editing=typeof _hdrIsEditing!=='undefined'&&_hdrIsEditing;statusEl.textContent=editing?'Editing':'Published';statusEl.className='pab-status'+(editing?' editing':'');}
@@ -2421,15 +2409,10 @@ function renderSidebar(filter=''){
   treeLabel.appendChild(addPageBtn);
   nav.appendChild(treeLabel);
 
-  // Render all root docs from all sections without section wrappers
-  const allSecs=state.sections||[];
-  let hasAny=false;
-  allSecs.forEach(sec=>{
-    const roots=_getChildren(sec,null);
-    if(filter&&!roots.some(d=>_subtreeMatches(sec,d.id,filter)))return;
-    if(roots.length>0)hasAny=true;
-    _renderDocNodes(nav,sec,null,0,filter);
-  });
+  const roots=_getChildren(null,null);
+  let hasAny=roots.length>0;
+  if(!filter||roots.some(d=>_subtreeMatches(null,d.id,filter)))
+    _renderDocNodes(nav,null,null,0,filter);
 
   if(!hasAny&&!filter){
     const hint=document.createElement('div');
@@ -2604,14 +2587,12 @@ function filterDocs(){renderSidebar(document.getElementById('searchInput').value
 // DOCS
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function newDoc(){
-  const sel=document.getElementById('newDocSection');
-  sel.innerHTML=state.sections.map(s=>`<option value="${escH(s)}">${escH(s)}</option>`).join('');
   document.getElementById('newDocTitle').value='';
   openModal('newDocModal');setTimeout(()=>document.getElementById('newDocTitle').focus(),100);
 }
 function createDoc(){
   const title=document.getElementById('newDocTitle').value.trim()||'Untitled';
-  const section=document.getElementById('newDocSection').value;
+  const section=state.sections[0]||'default';
   const doc={id:uid(),title,section,parentId:null,content:'',images:[],textBoxes:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
   state.docs.push(doc);persist();closeModal('newDocModal');renderSidebar();openDoc(doc.id);toast('Đã tạo tài liệu mới','success');
 }
@@ -2702,7 +2683,7 @@ function renderMeta(doc){
   const el=document.getElementById('docMeta');
   const d=new Date(doc.updatedAt);
   const fmt=d.toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+d.toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'});
-  el.innerHTML=`<div class="meta-chip"><i class="ti ti-user"></i> ${escH(state.username)}</div><div class="meta-chip"><i class="ti ti-clock"></i> ${fmt}</div><div class="meta-chip"><i class="ti ti-folder"></i> ${escH(doc.section)}</div><span class="meta-tag">${escH(doc.section)}</span>`;
+  el.innerHTML=`<div class="meta-chip"><i class="ti ti-user"></i> ${escH(state.username)}</div><div class="meta-chip"><i class="ti ti-clock"></i> ${fmt}</div>`;
 }
 
 // DOC CTX
@@ -8504,38 +8485,25 @@ function openExportWebsiteModal(){
   {const _e=document.getElementById('webTitle');if(_e)_e.value=state.projectName||'Project Docs';}
   const list=document.getElementById('webDocList');
   const currentId=state.currentDocId;
-  // Only include docs that belong to currently active sections (not deleted/orphaned)
-  const activeSecs=new Set(state.sections||[]);
-  const validDocs=state.docs.filter(d=>!d._deleted&&(activeSecs.size===0||activeSecs.has(d.section)));
+  const validDocs=state.docs.filter(d=>!d._deleted);
   if(validDocs.length===0){
     list.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0">Không có trang nào để xuất.</div>';
     openModal('exportWebModal');return;
   }
-  // Group by section
-  const bySection={};
-  validDocs.forEach(d=>{
-    const s=d.section||'(Không có nhóm)';
-    if(!bySection[s])bySection[s]=[];
-    bySection[s].push(d);
-  });
   let html='';
-  // Select all / Deselect all
   html+=`<div style="display:flex;gap:8px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border)">
     <button onclick="document.querySelectorAll('#webDocList input').forEach(i=>i.checked=true)" style="font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);cursor:pointer;color:var(--text)">✓ Chọn tất cả</button>
     <button onclick="document.querySelectorAll('#webDocList input').forEach(i=>i.checked=false)" style="font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);cursor:pointer;color:var(--text)">✕ Bỏ chọn tất cả</button>
     <button onclick="document.querySelectorAll('#webDocList input').forEach(i=>i.checked=i.value==='${currentId}')" style="font-size:11px;padding:2px 8px;border:1px solid var(--accent);border-radius:4px;background:var(--accent-light);cursor:pointer;color:var(--accent)">Chỉ trang hiện tại</button>
   </div>`;
-  Object.entries(bySection).forEach(([sec,docs])=>{
-    html+=`<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin:8px 0 4px">${escH(sec)}</div>`;
-    docs.forEach(d=>{
-      const isCurrent=d.id===currentId;
-      html+=`<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:4px 6px;border-radius:4px;${isCurrent?'background:var(--accent-light)':''}">
-        <input type="checkbox" value="${d.id}" ${isCurrent?'checked':''} style="accent-color:var(--accent)">
-        <i class="ti ti-file-text" style="color:${isCurrent?'var(--accent)':'var(--text2)'};font-size:13px"></i>
-        <span style="flex:1;${isCurrent?'color:var(--accent);font-weight:500':''}">${escH(d.title||'Untitled')}</span>
-        ${isCurrent?'<span style="font-size:10px;background:var(--accent);color:#fff;padding:1px 6px;border-radius:10px">Hiện tại</span>':''}
-      </label>`;
-    });
+  validDocs.forEach(d=>{
+    const isCurrent=d.id===currentId;
+    html+=`<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:4px 6px;border-radius:4px;${isCurrent?'background:var(--accent-light)':''}">
+      <input type="checkbox" value="${d.id}" checked style="accent-color:var(--accent)">
+      <i class="ti ti-file-text" style="color:${isCurrent?'var(--accent)':'var(--text2)'};font-size:13px"></i>
+      <span style="flex:1;${isCurrent?'color:var(--accent);font-weight:500':''}">${escH(d.title||'Untitled')}</span>
+      ${isCurrent?'<span style="font-size:10px;background:var(--accent);color:#fff;padding:1px 6px;border-radius:10px">Hiện tại</span>':''}
+    </label>`;
   });
   list.innerHTML=html;
   openModal('exportWebModal');
@@ -8603,10 +8571,7 @@ async function doExportWebsite(){
   const accent=document.querySelector('input[name="webTheme"]:checked')?.value||'#2563eb';
   const exportDark=document.documentElement.getAttribute('data-theme')==='dark';
   const checkedIds=Array.from(document.querySelectorAll('#webDocList input[type=checkbox]:checked')).map(i=>i.value);
-  // Only export non-deleted docs with valid sections that are checked
-  const activeSecs2=new Set(state.sections||[]);
-  const validAll=state.docs.filter(d=>!d._deleted&&(activeSecs2.size===0||activeSecs2.has(d.section)));
-  const docs=validAll.filter(d=>checkedIds.includes(d.id));
+  const docs=state.docs.filter(d=>!d._deleted&&checkedIds.includes(d.id));
   if(!docs.length){toast('Chọn ít nhất một tài liệu','error');return;}
 
   let _tot=0,_cnt=0;
@@ -8663,10 +8628,10 @@ async function doExportWebsite(){
   // (Recent and Starred are now in flyout panel, not inline sidebar)
 
   // Pages panel — recursive tree
-  function buildWsNavTree(container,sec,parentId,depth){
-    const kids=docs.filter(d=>d.section===sec&&(d.parentId||null)===(parentId||null));
+  function buildWsNavTree(container,parentId,depth){
+    const kids=docs.filter(d=>(d.parentId||null)===(parentId||null));
     kids.forEach(d=>{
-      const hasKids=docs.some(k=>k.section===sec&&k.parentId===d.id);
+      const hasKids=docs.some(k=>k.parentId===d.id);
       const indent=8+depth*16;
       const row=document.createElement('div');row.className='ws-nav-tree-row';
       if(hasKids){
@@ -8687,15 +8652,13 @@ async function doExportWebsite(){
       container.appendChild(row);
       if(hasKids){
         const ch=document.createElement('div');ch.className='ws-nav-children collapsed';ch.id='ws-nav-ch-'+d.id;
-        buildWsNavTree(ch,sec,d.id,depth+1);
+        buildWsNavTree(ch,d.id,depth+1);
         container.appendChild(ch);
       }
     });
   }
   const pagesPanel=document.createElement('div');pagesPanel.id='wsSbPages';pagesPanel.className='ws-sb-panel';
-  sections.forEach(sec=>{
-    buildWsNavTree(pagesPanel,sec,null,0);
-  });
+  buildWsNavTree(pagesPanel,null,0);
   navRoot.appendChild(pagesPanel);
 
   // Sidebar footer — collapse button
@@ -8714,7 +8677,7 @@ async function doExportWebsite(){
     const docDiv=document.createElement('div');docDiv.className='ws-doc';docDiv.id='doc-'+d.id;docDiv.style.display='none';
     const h1=document.createElement('h1');h1.className='ws-doc-title';h1.textContent=d.title||'Untitled';
     const meta=document.createElement('div');meta.className='ws-doc-meta';
-    ['📁 '+d.section,'📅 '+dateStr,'✍ '+(state.username||'')].forEach(t=>{const s=document.createElement('span');s.textContent=t;meta.appendChild(s);});
+    ['📅 '+dateStr,'✍ '+(state.username||'')].forEach(t=>{const s=document.createElement('span');s.textContent=t;meta.appendChild(s);});
     const canvasWrap=document.createElement('div');canvasWrap.className='ws-canvas-wrap';
     const canvas=document.createElement('div');canvas.className='ws-canvas';
     const allItems=[...(d.images||[]),...(d.textBoxes||[])];
@@ -9240,7 +9203,7 @@ async function doExportWebsite(){
     '  /* Expand ancestors */ if(doc){var _pid=doc.parentId;while(_pid){var _ch=document.getElementById("ws-nav-ch-"+_pid);var _cv=document.querySelector(".ws-nav-chev[data-treeid=\'"+_pid+"\']");if(_ch)_ch.classList.remove("collapsed");if(_cv)_cv.classList.add("open");var _par=_WS_DOCS.find(function(d){return d.id===_pid;});_pid=_par?_par.parentId:null;}}',
     '  if(doc){var rec=_wsGetRec().filter(function(r){return r.id!==id;});rec.unshift({id:id,title:doc.title,section:doc.section,time:Date.now()});if(rec.length>20)rec=rec.slice(0,20);_wsSaveRec(rec);}',
     '  /* Update page toolbar */ var pab=document.getElementById("wsPab");',
-    '  if(pab&&doc){pab.style.display="flex";document.getElementById("wsPabSec").textContent=doc.section||"";document.getElementById("wsPabTitle").textContent=doc.title||"Untitled";var pabStar=document.getElementById("wsPabStar");if(pabStar){var _str=_wsGetStr();var _isS=_str.indexOf(id)>-1;pabStar.classList.toggle("starred",_isS);pabStar.textContent=_isS?"★":"☆";pabStar.dataset.docid=id;}}',
+    '  if(pab&&doc){pab.style.display="flex";document.getElementById("wsPabTitle").textContent=doc.title||"Untitled";var pabStar=document.getElementById("wsPabStar");if(pabStar){var _str=_wsGetStr();var _isS=_str.indexOf(id)>-1;pabStar.classList.toggle("starred",_isS);pabStar.textContent=_isS?"★":"☆";pabStar.dataset.docid=id;}}',
     '  /* Update star state */ var str=_wsGetStr();',
     '  document.querySelectorAll(".ws-star-btn").forEach(function(b){b.classList.toggle("starred",str.indexOf(b.closest(".ws-nav-item").dataset.docid)>-1);b.textContent=str.indexOf(b.closest(".ws-nav-item")?.dataset.docid)>-1?"★":"☆";});',
     '}',
@@ -9310,7 +9273,7 @@ async function doExportWebsite(){
     '  var ic=document.createElement("div");ic.className="ws-flyout-icon";ic.innerHTML=\'<i class="ti ti-file-text"></i>\';',
     '  var info=document.createElement("div");info.className="ws-flyout-info";',
     '  var t=document.createElement("div");t.className="ws-flyout-item-title";t.textContent=it.title||"Untitled";',
-    '  var m=document.createElement("div");m.className="ws-flyout-item-meta";m.textContent=(it.section||"")+(it.time?" · "+_wsRelTime(it.time):"");',
+    '  var m=document.createElement("div");m.className="ws-flyout-item-meta";m.textContent=it.time?_wsRelTime(it.time):"";',
     '  info.appendChild(t);info.appendChild(m);',
     '  var sb=document.createElement("button");sb.className="ws-flyout-item-star"+(isS?" starred":"");',
     '  sb.textContent=isS?"★":"☆";sb.dataset.docid=it.id;',
@@ -9533,7 +9496,7 @@ async function doExportWebsite(){
     '<div class="ws-sb-resizer" id="wsSbRz" title="Kéo để thay đổi độ rộng"></div>',
     '<button class="ws-sb-expand" id="wsSbExpand" title="Mở sidebar"><i class="ti ti-chevrons-right"></i></button>',
     '<div class="ws-main" id="wsMain">',
-    '<div class="ws-pab" id="wsPab" style="display:none"><div class="ws-pab-crumb"><span class="ws-pab-sec" id="wsPabSec"></span><i class="ti ti-chevron-right ws-pab-sep"></i><span class="ws-pab-title" id="wsPabTitle"></span></div><button class="ws-pab-star" id="wsPabStar" title="Đánh dấu yêu thích">☆</button></div>',
+    '<div class="ws-pab" id="wsPab" style="display:none"><div class="ws-pab-crumb"><span class="ws-pab-title" id="wsPabTitle"></span></div><button class="ws-pab-star" id="wsPabStar" title="Đánh dấu yêu thích">☆</button></div>',
     pagesHTML,
     '<div id="wsNoResult" class="ws-no" style="display:none">Không tìm thấy tài liệu.</div>',
     '</div>',
