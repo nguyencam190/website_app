@@ -8658,7 +8658,7 @@ async function doExportWebsite(){
   // ── Sidebar: Recent + Starred + Pages ──────────────────────
   const sections=[...new Set(docs.map(d=>d.section))];
   // Embed doc index as JSON for JS use
-  const docIndex=docs.map(d=>({id:d.id,title:d.title||'Untitled',section:d.section||''}));
+  const docIndex=docs.map(d=>({id:d.id,title:d.title||'Untitled',section:d.section||'',parentId:d.parentId||null}));
 
   const navRoot=document.createElement('div');
 
@@ -8688,19 +8688,43 @@ async function doExportWebsite(){
 
   // (Recent and Starred are now in flyout panel, not inline sidebar)
 
-  // Pages panel
+  // Pages panel — recursive tree
+  function buildWsNavTree(container,sec,parentId,depth){
+    const kids=docs.filter(d=>d.section===sec&&(d.parentId||null)===(parentId||null));
+    kids.forEach(d=>{
+      const hasKids=docs.some(k=>k.section===sec&&k.parentId===d.id);
+      const indent=8+depth*16;
+      const row=document.createElement('div');row.className='ws-nav-tree-row';
+      if(hasKids){
+        const chev=document.createElement('button');
+        chev.className='ws-nav-chev open';chev.dataset.treeid=d.id;
+        chev.style.marginLeft=indent+'px';
+        chev.innerHTML='<i class="ti ti-chevron-right"></i>';
+        row.appendChild(chev);
+      } else {
+        const bul=document.createElement('span');bul.className='ws-nav-bullet';
+        bul.style.marginLeft=indent+'px';
+        bul.innerHTML='<span style="width:4px;height:4px;border-radius:50%;background:currentColor;display:block"></span>';
+        row.appendChild(bul);
+      }
+      const item=document.createElement('div');item.className='ws-nav-item';item.id='nav-'+d.id;item.dataset.docid=d.id;
+      item.innerHTML=`<i class="ti ti-file-text ws-nav-icon"></i><span class="ws-nav-title">${escH(d.title||'Untitled')}</span><button class="ws-star-btn" data-docid="${escH(d.id)}" title="Starred">☆</button>`;
+      row.appendChild(item);
+      container.appendChild(row);
+      if(hasKids){
+        const ch=document.createElement('div');ch.className='ws-nav-children';ch.id='ws-nav-ch-'+d.id;
+        buildWsNavTree(ch,sec,d.id,depth+1);
+        container.appendChild(ch);
+      }
+    });
+  }
   const pagesPanel=document.createElement('div');pagesPanel.id='wsSbPages';pagesPanel.className='ws-sb-panel';
   sections.forEach(sec=>{
     const sg=document.createElement('div');sg.className='ws-sec-grp';
     const sl=document.createElement('div');sl.className='ws-sec-lbl';
     sl.innerHTML=`<i class="ti ti-folder" style="font-size:12px"></i>${escH(sec)}`;
     sg.appendChild(sl);
-    docs.filter(d=>d.section===sec).forEach(d=>{
-      const item=document.createElement('div');item.className='ws-nav-item';item.id='nav-'+d.id;
-      item.dataset.docid=d.id;
-      item.innerHTML=`<i class="ti ti-file-text ws-nav-icon"></i><span class="ws-nav-title">${escH(d.title||'Untitled')}</span><button class="ws-star-btn" data-docid="${escH(d.id)}" title="Đánh dấu yêu thích">☆</button>`;
-      sg.appendChild(item);
-    });
+    buildWsNavTree(sg,sec,null,0);
     pagesPanel.appendChild(sg);
   });
   navRoot.appendChild(pagesPanel);
@@ -8994,8 +9018,7 @@ async function doExportWebsite(){
     '.ws-sb-empty i{font-size:24px;opacity:.4}',
     '.ws-sec-grp{margin-bottom:4px}',
     '.ws-sec-lbl{display:flex;align-items:center;gap:6px;padding:5px 12px;font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}',
-    '.ws-nav-item{display:flex;align-items:center;gap:8px;padding:7px 10px 7px 16px;cursor:pointer;color:var(--sb-nav);font-size:13px;border-left:2px solid transparent;transition:.12s;border-radius:0 5px 5px 0;margin-right:6px;position:relative}',
-    '.ws-nav-item:hover{background:var(--sb-nav-hbg)}',
+    '.ws-nav-item{display:flex;align-items:center;gap:8px;padding:7px 10px 7px 4px;cursor:pointer;color:var(--sb-nav);font-size:13px;border-left:2px solid transparent;transition:.12s;border-radius:0 5px 5px 0;margin-right:6px;flex:1;min-width:0;position:relative}',
     '.ws-nav-item:hover{background:var(--sb-nav-hbg);color:var(--text)}',
     '.ws-nav-item.active{background:var(--sb-active-bg);color:var(--sb-active-txt);border-left-color:var(--accent);font-weight:500}',
     '.ws-nav-icon{font-size:13px;flex-shrink:0;color:var(--text3)}',
@@ -9004,6 +9027,14 @@ async function doExportWebsite(){
     '.ws-nav-item:hover .ws-star-btn{display:block}',
     '.ws-star-btn.starred{display:block;color:#f59e0b}',
     '.ws-nav-item.active .ws-star-btn{display:block}',
+    /* tree row structure */
+    '.ws-nav-tree-row{display:flex;align-items:center}',
+    '.ws-nav-chev{width:20px;height:22px;flex-shrink:0;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text3);border-radius:3px;transition:.12s;padding:0}',
+    '.ws-nav-chev:hover{background:var(--surface3);color:var(--text2)}',
+    '.ws-nav-chev i{transition:transform .15s;display:block}',
+    '.ws-nav-chev.open i{transform:rotate(90deg)}',
+    '.ws-nav-bullet{width:20px;height:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--text3)}',
+    '.ws-nav-children.collapsed{display:none}',
     '.ws-main{flex:1;overflow-y:auto;overflow-x:hidden;background:var(--bg);transition:background var(--tr)}',
     /* Page toolbar (breadcrumb bar above canvas) */
     '.ws-pab{height:44px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:10px;flex-shrink:0;position:sticky;top:0;z-index:10;transition:background var(--tr),border-color var(--tr)}',
@@ -9414,6 +9445,8 @@ async function doExportWebsite(){
     '  var sb=document.getElementById("wsSidebar");',
     '  if(!sb)return;',
     '  sb.addEventListener("click",function(e){',
+    '    var chev=e.target.closest(".ws-nav-chev[data-treeid]");',
+    '    if(chev){e.stopPropagation();var ch=document.getElementById("ws-nav-ch-"+chev.dataset.treeid);if(ch){var coll=ch.classList.toggle("collapsed");chev.classList.toggle("open",!coll);}return;}',
     '    var starBtn=e.target.closest(".ws-star-btn");',
     '    if(starBtn){e.stopPropagation();var id=starBtn.dataset.docid||starBtn.closest(".ws-nav-item[data-docid]")?.dataset.docid;if(id)wsToggleStar(id,starBtn);return;}',
     '    var modeBtn=e.target.closest("[data-wsmode]");',
