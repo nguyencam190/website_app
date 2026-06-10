@@ -170,7 +170,15 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .sb-resizer:hover::after,.sb-resizer.dragging::after{color:var(--accent)}
 /* Space header */
 .sb-space-header{display:flex;align-items:center;gap:10px;padding:14px 12px 12px;flex-shrink:0}
-.sb-space-icon{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#7c3aed);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;flex-shrink:0;cursor:pointer}
+.sb-space-icon{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#7c3aed);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;flex-shrink:0;cursor:pointer;overflow:hidden;position:relative;transition:opacity .15s}
+.sb-space-icon:hover{opacity:.85}
+.sb-space-icon img{width:100%;height:100%;object-fit:cover;border-radius:8px;display:block}
+/* Sidebar logo dropdown (position:fixed to escape overflow:hidden of sidebar) */
+.sb-logo-menu{position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.16);min-width:200px;z-index:600;overflow:hidden;display:none}
+.sb-logo-menu.on{display:block;animation:cpFade .12s ease}
+.sb-logo-menu-item{display:flex;align-items:center;gap:9px;padding:9px 13px;cursor:pointer;font-size:13px;color:var(--text);transition:.1s}
+.sb-logo-menu-item:hover{background:var(--surface2)}
+.sb-logo-colors{display:flex;gap:6px;padding:10px 13px;flex-wrap:wrap;border-top:1px solid var(--border)}
 .sb-space-name{flex:1;font-size:15px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;transition:color .15s}
 .sb-space-name:hover{color:var(--accent)}
 .sb-star-btn{width:28px;height:28px;border:none;background:transparent;color:var(--sb-txt3);cursor:pointer;border-radius:4px;font-size:14px;display:flex;align-items:center;justify-content:center;transition:.15s;flex-shrink:0}
@@ -1329,8 +1337,28 @@ td.tbl-inner-container{padding:0!important;overflow:visible!important;vertical-a
     <div class="sb-resizer" id="sbResizer" title="Kéo để thay đổi độ rộng"></div>
 
     <!-- Space header -->
+    <!-- Sidebar logo dropdown menu -->
+    <div class="sb-logo-menu" id="sbLogoMenu">
+      <label class="sb-logo-menu-item" style="cursor:pointer">
+        <i class="ti ti-upload" style="font-size:14px;color:var(--text2)"></i> Upload logo image
+        <input type="file" accept="image/*" style="display:none" onchange="pabLogoUpload(event)">
+      </label>
+      <div class="sb-logo-menu-item" onclick="pabLogoReset()">
+        <i class="ti ti-refresh" style="font-size:14px;color:var(--text2)"></i> Use initial letter
+      </div>
+      <div class="sb-logo-colors">
+        <div class="pab-logo-color" style="background:#2563eb" onclick="pabLogoColor('#2563eb')"></div>
+        <div class="pab-logo-color" style="background:#7c3aed" onclick="pabLogoColor('#7c3aed')"></div>
+        <div class="pab-logo-color" style="background:#db2777" onclick="pabLogoColor('#db2777')"></div>
+        <div class="pab-logo-color" style="background:#dc2626" onclick="pabLogoColor('#dc2626')"></div>
+        <div class="pab-logo-color" style="background:#d97706" onclick="pabLogoColor('#d97706')"></div>
+        <div class="pab-logo-color" style="background:#16a34a" onclick="pabLogoColor('#16a34a')"></div>
+        <div class="pab-logo-color" style="background:#0891b2" onclick="pabLogoColor('#0891b2')"></div>
+        <div class="pab-logo-color" style="background:#475569" onclick="pabLogoColor('#475569')"></div>
+      </div>
+    </div>
     <div class="sb-space-header">
-      <div class="sb-space-icon" id="sbSpaceIcon" onclick="editProjectName()" title="Click để đổi tên dự án">P</div>
+      <div class="sb-space-icon" id="sbSpaceIcon" onclick="sbLogoToggle()" title="Click để thêm logo dự án"><span id="sbSpaceIconText">P</span></div>
       <span class="sb-space-name" id="projectNameEl" onclick="editProjectName()" title="Click để đổi tên">My Project</span>
       <button class="sb-star-btn" title="Danh dau yeu thich"><i class="ti ti-star"></i></button>
     </div>
@@ -1957,7 +1985,7 @@ function init(){
   if(!state.recent)state.recent=[];
   if(!state.starred)state.starred=[];
   document.getElementById('projectNameEl').textContent=state.projectName;
-  const _spIcon=document.getElementById('sbSpaceIcon');if(_spIcon)_spIcon.textContent=(state.projectName||'P').charAt(0).toUpperCase();
+  const _spTxt=document.getElementById('sbSpaceIconText');if(_spTxt)_spTxt.textContent=(state.projectName||'P').charAt(0).toUpperCase();
   updateUserUI();renderSidebar();
   if(state.currentDocId)openDoc(state.currentDocId);
   // Show welcome/restore modal if no data (new file or new path)
@@ -2262,25 +2290,57 @@ function hdrCopyShareLink(){
 
 // ── PAB Logo ─────────────────────────────────────────────────
 function _pabLogoInit(){
+  const L=state.projectLogo||{};
+  const initial=(state.projectName||'P')[0].toUpperCase();
+  // Update PAB logo
   const logo=document.getElementById('pabLogo');
   const txt=document.getElementById('pabLogoText');
-  if(!logo||!txt)return;
-  const L=state.projectLogo||{};
-  logo.style.background=L.color||'var(--accent)';
-  if(L.imgDataUrl){
-    txt.style.display='none';
-    let img=logo.querySelector('img');
-    if(!img){img=document.createElement('img');logo.insertBefore(img,logo.firstChild);}
-    img.src=L.imgDataUrl;
-  } else {
-    logo.querySelectorAll('img').forEach(i=>i.remove());
-    txt.style.display='';
-    txt.textContent=(state.projectName||'P')[0].toUpperCase();
+  if(logo&&txt){
+    logo.style.background=L.color||'var(--accent)';
+    if(L.imgDataUrl){
+      txt.style.display='none';
+      let img=logo.querySelector('img');
+      if(!img){img=document.createElement('img');logo.insertBefore(img,logo.firstChild);}
+      img.src=L.imgDataUrl;
+    } else {
+      logo.querySelectorAll('img').forEach(i=>i.remove());
+      txt.style.display='';txt.textContent=initial;
+    }
+    logo.closest('[style]')?.querySelectorAll?.('.pab-logo-color')?.forEach(el=>{
+      el.classList.toggle('active',el.style.background===L.color||el.dataset.color===L.color);
+    });
   }
-  // Mark active color
-  logo.closest('[style]')?.querySelectorAll?.('.pab-logo-color')?.forEach(el=>{
-    el.classList.toggle('active',el.style.background===L.color||el.dataset.color===L.color);
-  });
+  // Sync sidebar space icon
+  const sbIcon=document.getElementById('sbSpaceIcon');
+  const sbTxt=document.getElementById('sbSpaceIconText');
+  if(sbIcon){
+    sbIcon.style.background=L.color||(L.imgDataUrl?'transparent':'');
+    if(!L.color&&!L.imgDataUrl)sbIcon.style.background='';
+    if(L.imgDataUrl){
+      if(sbTxt)sbTxt.style.display='none';
+      let img=sbIcon.querySelector('img');
+      if(!img){img=document.createElement('img');sbIcon.insertBefore(img,sbIcon.firstChild);}
+      img.src=L.imgDataUrl;
+    } else {
+      sbIcon.querySelectorAll('img').forEach(i=>i.remove());
+      if(sbTxt){sbTxt.style.display='';sbTxt.textContent=initial;}
+    }
+  }
+}
+function sbLogoToggle(){
+  const menu=document.getElementById('sbLogoMenu');
+  const icon=document.getElementById('sbSpaceIcon');
+  if(!menu||!icon)return;
+  if(menu.classList.contains('on')){menu.classList.remove('on');return;}
+  const r=icon.getBoundingClientRect();
+  menu.style.top=(r.bottom+6)+'px';
+  menu.style.left=r.left+'px';
+  menu.classList.add('on');
+  setTimeout(()=>document.addEventListener('click',function once(e){
+    if(!e.target.closest('#sbLogoMenu')&&!e.target.closest('#sbSpaceIcon')){
+      menu.classList.remove('on');document.removeEventListener('click',once);
+    }
+  }),50);
 }
 function pabLogoToggle(){
   const menu=document.getElementById('pabLogoMenu');if(!menu)return;
@@ -2292,12 +2352,12 @@ function pabLogoToggle(){
     }
   }),50);
 }
+function _closeLogoMenus(){document.getElementById('pabLogoMenu')?.classList.remove('on');document.getElementById('sbLogoMenu')?.classList.remove('on');}
 function pabLogoColor(color){
   if(!state.projectLogo)state.projectLogo={};
   state.projectLogo.color=color;
   delete state.projectLogo.imgDataUrl;
-  persistNow();_pabLogoInit();
-  document.getElementById('pabLogoMenu')?.classList.remove('on');
+  persistNow();_pabLogoInit();_closeLogoMenus();
 }
 function pabLogoUpload(e){
   const file=e.target.files[0];if(!file)return;
@@ -2305,8 +2365,7 @@ function pabLogoUpload(e){
   reader.onload=ev=>{
     if(!state.projectLogo)state.projectLogo={};
     state.projectLogo.imgDataUrl=ev.target.result;
-    persistNow();_pabLogoInit();
-    document.getElementById('pabLogoMenu')?.classList.remove('on');
+    persistNow();_pabLogoInit();_closeLogoMenus();
   };
   reader.readAsDataURL(file);
   e.target.value='';
@@ -2314,8 +2373,7 @@ function pabLogoUpload(e){
 function pabLogoReset(){
   if(!state.projectLogo)state.projectLogo={};
   delete state.projectLogo.imgDataUrl;
-  persistNow();_pabLogoInit();
-  document.getElementById('pabLogoMenu')?.classList.remove('on');
+  persistNow();_pabLogoInit();_closeLogoMenus();
 }
 
 function updatePageActionBar(){
@@ -3906,7 +3964,7 @@ function updateUserUI(){
   const nameEl=document.getElementById('sbUsernameEl');if(nameEl)nameEl.textContent=state.username;
   const avatarEl=document.getElementById('sbAvatarEl');if(avatarEl)avatarEl.textContent=(state.username||'U').charAt(0).toUpperCase();
 }
-function editProjectName(){const name=prompt('Doi ten du an:',state.projectName);if(name!==null&&name.trim()){state.projectName=name.trim();persist();const el=document.getElementById('projectNameEl');if(el)el.textContent=state.projectName;const icon=document.getElementById('sbSpaceIcon');if(icon)icon.textContent=state.projectName.charAt(0).toUpperCase();}}
+function editProjectName(){const name=prompt('Doi ten du an:',state.projectName);if(name!==null&&name.trim()){state.projectName=name.trim();persist();const el=document.getElementById('projectNameEl');if(el)el.textContent=state.projectName;const spTxt=document.getElementById('sbSpaceIconText');if(spTxt&&!(state.projectLogo&&state.projectLogo.imgDataUrl))spTxt.textContent=state.projectName.charAt(0).toUpperCase();}}
 function editUser(){const name=prompt('Doi ten:',state.username);if(name!==null){state.username=name||state.username;persist();updateUserUI();}}
 
 // MODALS
