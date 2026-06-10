@@ -2253,14 +2253,10 @@ function hdrDeletePage(){
   hdrCloseAll();
   if(!confirm(`Xóa trang "${doc.title||'Untitled'}"?
 Thao tác này không thể hoàn tác.`))return;
-  // Remove from state immediately
-  state.docs=state.docs.filter(d=>d.id!==doc.id);
-  // Also remove from recent/starred
-  state.recent=(state.recent||[]).filter(r=>r.id!==doc.id);
-  state.starred=(state.starred||[]).filter(id=>id!==doc.id);
-  persistNow(); // ← save immediately, not debounced
+  _purgeDocTree(doc.id);
+  persistNow();
   renderSidebar();
-  const rem=state.docs.find(d=>d.section===doc.section)||state.docs[0];
+  const rem=state.docs[0];
   if(rem)openDoc(rem.id);
   else{document.getElementById('editor').innerHTML='<p><br></p>';updatePageActionBar();}
   toast('Đã xóa trang','info');
@@ -2690,7 +2686,7 @@ function renderMeta(doc){
 function openDocCtx(e,id){docCtxId=id;const m=document.getElementById('docCtxMenu');m.style.left=Math.min(e.clientX,window.innerWidth-200)+'px';m.style.top=Math.min(e.clientY,window.innerHeight-130)+'px';m.classList.add('on');}
 function docCtxRename(){const doc=state.docs.find(d=>d.id===docCtxId);if(!doc)return;const name=prompt('Doi ten:',doc.title);if(name!==null){doc.title=name||doc.title;persist();renderSidebar();if(state.currentDocId===docCtxId)document.getElementById('docTitleInput').value=doc.title;}document.getElementById('docCtxMenu')?.classList.remove('on');}
 function docCtxDuplicate(){const doc=state.docs.find(d=>d.id===docCtxId);if(!doc)return;const copy=JSON.parse(JSON.stringify(doc));copy.id=uid();copy.title+=' (copy)';copy.parentId=doc.parentId||null;copy.createdAt=new Date().toISOString();copy.updatedAt=new Date().toISOString();state.docs.push(copy);persist();renderSidebar();toast('Đã nhân bản','success');document.getElementById('docCtxMenu')?.classList.remove('on');}
-function docCtxDelete(){const doc=state.docs.find(d=>d.id===docCtxId);if(!doc)return;if(!confirm(`Xoá "${doc.title}"?`)){document.getElementById('docCtxMenu')?.classList.remove('on');return;}state.docs=state.docs.filter(d=>d.id!==docCtxId);state.recent=(state.recent||[]).filter(r=>r.id!==docCtxId);state.starred=(state.starred||[]).filter(id=>id!==docCtxId);if(state.currentDocId===docCtxId){state.currentDocId=null;document.getElementById('emptyState').style.display='';document.getElementById('editorPanel').style.display='none';}persist();renderSidebar();toast('Đã xoá','info');document.getElementById('docCtxMenu')?.classList.remove('on');}
+function docCtxDelete(){const doc=state.docs.find(d=>d.id===docCtxId);if(!doc)return;if(!confirm(`Xoá "${doc.title}"?`)){document.getElementById('docCtxMenu')?.classList.remove('on');return;}_purgeDocTree(docCtxId);if(state.currentDocId===docCtxId){state.currentDocId=null;document.getElementById('emptyState').style.display='';document.getElementById('editorPanel').style.display='none';}persistNow();renderSidebar();toast('Đã xoá','info');document.getElementById('docCtxMenu')?.classList.remove('on');}
 
 // MEDIA (image/video/gif)
 // ─── INDEXEDDB BLOB STORE ─────────────────────────────────
@@ -2730,6 +2726,19 @@ function _idbDel(id){
     tx.objectStore('blobs').delete(id);
     tx.oncomplete=res;tx.onerror=res;
   }));
+}
+function _purgeDocMedia(doc){
+  if(!doc)return;
+  (doc.images||[]).forEach(m=>{if(m&&m.id)_idbDel(m.id);});
+}
+function _purgeDocTree(docId){
+  const doc=state.docs.find(d=>d.id===docId);
+  if(!doc)return;
+  _purgeDocMedia(doc);
+  state.docs.filter(d=>d.parentId===docId).forEach(child=>_purgeDocTree(child.id));
+  state.docs=state.docs.filter(d=>d.id!==docId);
+  state.recent=(state.recent||[]).filter(r=>r.id!==docId);
+  state.starred=(state.starred||[]).filter(id=>id!==docId);
 }
 // Blob → base64 DataURL (only used for export)
 function _blobToB64(blob){
