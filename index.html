@@ -8612,11 +8612,6 @@ async function doExportWebsite(){
 
   const navRoot=document.createElement('div');
 
-  // Space header
-  const sh=document.createElement('div');sh.className='ws-space-hdr';
-  sh.innerHTML=`<div class="ws-space-icon"><i class="ti ti-notebook"></i></div><div class="ws-space-name">${escH(title)}</div>`;
-  navRoot.appendChild(sh);
-
   // Primary nav buttons
   const pnav=document.createElement('div');pnav.className='ws-pnav';
   ['recent','starred','pages'].forEach((mode,i)=>{
@@ -8929,7 +8924,7 @@ async function doExportWebsite(){
     '.ws-sb-collapse-btn{width:28px;height:28px;border:none;background:transparent;color:var(--text3);cursor:pointer;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:14px;transition:.15s;flex-shrink:0}',
     '.ws-sb-collapse-btn:hover{background:var(--surface3);color:var(--text)}',
     '.ws-layout{display:flex;flex:1;overflow:hidden}',
-    '.ws-sidebar{width:260px;min-width:60px;max-width:520px;background:var(--sb);overflow-y:auto;overflow-x:hidden;padding:14px 0 0;flex-shrink:0;position:relative;transition:background var(--tr),width .22s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}',
+    '.ws-sidebar{width:260px;min-width:60px;max-width:520px;background:var(--sb);overflow-y:auto;overflow-x:hidden;padding:8px 0 0;flex-shrink:0;position:relative;transition:background var(--tr),width .22s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;border-right:1px solid var(--border)}',
     '.ws-sidebar.collapsed{width:0!important;min-width:0!important;overflow:hidden;padding:0;border-right:none}',
     '.ws-sb-resizer.hidden{display:none}',
     '.ws-sidebar::-webkit-scrollbar{width:3px}',
