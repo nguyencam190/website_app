@@ -8468,7 +8468,7 @@ function handleImport(e){const file=e.target.files[0];if(!file)return;const read
 
 // EXPORT WEBSITE - DOM-based, no string quoting issues
 function openExportWebsiteModal(){
-  {const _e=document.getElementById('webTitle');if(_e)_evalue=state.projectName||'Project Docs';}
+  {const _e=document.getElementById('webTitle');if(_e)_e.value=state.projectName||'Project Docs';}
   const list=document.getElementById('webDocList');
   const currentId=state.currentDocId;
   // Only include docs that belong to currently active sections (not deleted/orphaned)
@@ -8848,10 +8848,9 @@ async function doExportWebsite(){
         carEl.appendChild(inner);carEl.appendChild(prev);carEl.appendChild(next);carEl.appendChild(badge);
         fm.appendChild(carEl);
       } else if(m.type==='video'){
-        let src=_objUrls[m.id]||'';
-        if(!src){try{const b=await _idbGet(m.id);if(b)src=URL.createObjectURL(b);}catch(e){}}
-        _showExportProgress(++_cnt,_tot,'Xuất video...');if(!src)continue;
-        const v=document.createElement('video');v.src=src;v.controls=true;v.style.cssText='width:100%;height:100%;object-fit:contain;background:#000;display:block';
+        const b64=await idbToB64(m.id);
+        _showExportProgress(++_cnt,_tot,'Xuất video...');if(!b64)continue;
+        const v=document.createElement('video');v.src=b64;v.controls=true;v.style.cssText='width:100%;height:100%;object-fit:contain;background:#000;display:block';
         fm.appendChild(v);
       } else {
         const b64=await idbToB64(m.id);_showExportProgress(++_cnt,_tot,'Xuất ảnh...');if(!b64)continue;
