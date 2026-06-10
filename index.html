@@ -106,11 +106,18 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .pab-logo-colors{display:flex;gap:6px;padding:10px 13px;flex-wrap:wrap;border-top:1px solid var(--border)}
 .pab-logo-color{width:22px;height:22px;border-radius:5px;cursor:pointer;border:2px solid transparent;transition:.12s}
 .pab-logo-color:hover,.pab-logo-color.active{border-color:var(--text);transform:scale(1.15)}
-.pab-breadcrumb{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text3);flex-shrink:0}
-.pab-breadcrumb span{cursor:pointer;transition:color .1s}
-.pab-breadcrumb span:hover{color:var(--accent)}
-.pab-sep{color:var(--text3)}
+.pab-breadcrumb{display:flex;align-items:center;gap:3px;font-size:12.5px;flex:1;min-width:0;overflow:hidden}
+.pab-bc-space{color:var(--text2);cursor:pointer;font-weight:500;white-space:nowrap;flex-shrink:0;transition:color .1s}
+.pab-bc-space:hover{color:var(--accent)}
+.pab-sep{color:var(--text3);font-size:11px;padding:0 1px;flex-shrink:0;user-select:none}
+.pab-bc-anc{color:var(--text2);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px;transition:color .1s;flex-shrink:1}
+.pab-bc-anc:hover{color:var(--accent)}
+.pab-bc-cur{color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:1;min-width:30px}
 .pab-title{font-size:14px;font-weight:600;color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pab-icon-btn{width:30px;height:30px;border-radius:5px;border:1px solid transparent;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:14px;transition:all .15s;font-family:var(--font)}
+.pab-icon-btn:hover{background:var(--surface2);border-color:var(--border);color:var(--text)}
+.pab-icon-btn.starred{color:#f59e0b}
+.pab-icon-btn.watching{color:var(--accent)}
 .pab-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .pab-meta{font-size:12px;color:var(--text2);white-space:nowrap}
 .pab-avatar{width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -1446,32 +1453,37 @@ td.tbl-inner-container{padding:0!important;overflow:visible!important;vertical-a
               </div>
             </div>
           </div>
-          <i class="ti ti-file-text" style="font-size:15px;color:var(--accent);flex-shrink:0"></i>
-          <span class="pab-title" id="pabTitle">Chọn một trang để bắt đầu</span>
+          <nav class="pab-breadcrumb" id="pabBreadcrumb" aria-label="Vị trí trang">
+            <span class="pab-bc-space" id="pabBcSpace">My Project</span>
+          </nav>
         </div>
         <div class="pab-right">
           <span class="pab-meta" id="pabDate"></span>
           <div class="pab-avatar" id="pabAvatar">G</div>
-          <span class="pab-status" id="pabStatus" onclick="openExportWebsiteModal()" title="Click để xuất Website" style="cursor:pointer;display:flex;align-items:center;gap:4px"><i class="ti ti-world-upload" style="font-size:11px"></i>Published</span>
-          <button class="pab-btn" id="pabEditBtn" onclick="hdrToggleEdit()">
-            <i class="ti ti-pencil" style="font-size:13px"></i> Edit
+          <button class="pab-icon-btn" id="pabWatchBtn" onclick="hdrToggleWatch()" title="Theo dõi trang">
+            <i class="ti ti-bell"></i>
           </button>
+          <button class="pab-icon-btn" id="pabStarBtn" onclick="hdrToggleStar()" title="Đánh dấu yêu thích">
+            <i class="ti ti-star"></i>
+          </button>
+          <span class="pab-status" id="pabStatus" onclick="openExportWebsiteModal()" title="Click để xuất Website" style="cursor:pointer;display:flex;align-items:center;gap:4px"><i class="ti ti-world-upload" style="font-size:11px"></i>Published</span>
           <button class="pab-btn" onclick="openShareModal()">
-            <i class="ti ti-lock" style="font-size:13px"></i> Share
+            <i class="ti ti-share" style="font-size:13px"></i> Share
           </button>
           <div style="position:relative">
             <button class="pab-more-btn" onclick="hdrToggleDd('pabMoreDd')" aria-label="Thêm tùy chọn">
               <i class="ti ti-dots"></i>
             </button>
             <div class="hdr-dd" id="pabMoreDd" style="right:0;top:36px">
-              <div class="hdr-dd-item"><i class="ti ti-history"></i> Lịch sử trang</div>
-              <div class="hdr-dd-item"><i class="ti ti-copy"></i> Sao chép trang</div>
-              <div class="hdr-dd-item"><i class="ti ti-arrows-move"></i> Di chuyển</div>
-              <div class="hdr-dd-item" onclick="toggleStar(state.currentDocId,this);hdrCloseAll()"><i class="ti ti-star"></i> Đánh dấu yêu thích</div>
+              <div class="hdr-dd-item" onclick="hdrCopyLink();hdrCloseAll()"><i class="ti ti-link"></i> Copy link trang</div>
+              <div class="hdr-dd-item" onclick="hdrDuplicatePage();hdrCloseAll()"><i class="ti ti-copy"></i> Sao chép trang</div>
               <div class="hdr-dd-sep"></div>
               <div class="hdr-dd-item danger" onclick="hdrDeletePage()"><i class="ti ti-trash"></i> Xóa trang</div>
             </div>
           </div>
+          <button class="pab-btn primary" id="pabEditBtn" onclick="hdrToggleEdit()">
+            <i class="ti ti-pencil" style="font-size:13px"></i> Edit
+          </button>
         </div>
       </div>
       <div class="doc-body">
@@ -2226,18 +2238,47 @@ function hdrToggleEdit(){
   const banner=document.getElementById('editBanner');
   const editor=document.getElementById('editor');
   if(_hdrIsEditing){
-    if(btn){btn.innerHTML='<i class="ti ti-device-floppy" style="font-size:13px"></i> Save';btn.classList.add('primary');}
+    if(btn){btn.innerHTML='<i class="ti ti-device-floppy" style="font-size:13px"></i> Save';}
     if(status){status.innerHTML='<i class="ti ti-pencil" style="font-size:11px"></i>Editing';status.classList.add('editing');status.onclick=null;status.style.cursor='default';}
     if(banner)banner.classList.add('on');
     if(editor)editor.focus();
   } else {
-    if(btn){btn.innerHTML='<i class="ti ti-pencil" style="font-size:13px"></i> Edit';btn.classList.remove('primary');}
+    if(btn){btn.innerHTML='<i class="ti ti-pencil" style="font-size:13px"></i> Edit';}
     if(status){status.innerHTML='<i class="ti ti-world-upload" style="font-size:11px"></i>Published';status.classList.remove('editing');status.onclick=openExportWebsiteModal;status.style.cursor='pointer';}
     if(banner)banner.classList.remove('on');
     onContentChange();toast('Đã lưu','success');
   }
 }
 function hdrExitEdit(){if(_hdrIsEditing)hdrToggleEdit();}
+function hdrToggleStar(){
+  const doc=currentDoc();if(!doc)return;
+  if(!state.starred)state.starred=[];
+  const idx=state.starred.indexOf(doc.id);
+  if(idx>=0)state.starred.splice(idx,1);else state.starred.push(doc.id);
+  persist();_updatePabStar();renderSidebar();
+  if(typeof _flyoutMode!=='undefined'&&_flyoutMode==='starred')buildFlyoutList(document.getElementById('sbFlyoutSearch')?.value||'');
+}
+function hdrToggleWatch(){
+  const btn=document.getElementById('pabWatchBtn');if(!btn)return;
+  const now=btn.classList.toggle('watching');
+  btn.innerHTML=`<i class="ti ti-bell${now?'':'-off'}"></i>`;
+  btn.title=now?'Đang theo dõi – click để hủy':'Theo dõi trang';
+  toast(now?'Đang theo dõi trang này':'Đã hủy theo dõi','info');
+}
+function hdrCopyLink(){
+  const doc=currentDoc();if(!doc)return;
+  const url=window.location.href.split('?')[0]+'?doc='+doc.id;
+  navigator.clipboard?.writeText(url).catch(()=>{});
+  toast('Đã sao chép liên kết trang','success');
+}
+function hdrDuplicatePage(){
+  const doc=currentDoc();if(!doc)return;
+  const copy=JSON.parse(JSON.stringify(doc));
+  copy.id=uid();copy.title+=' (copy)';copy.parentId=doc.parentId||null;
+  copy.createdAt=new Date().toISOString();copy.updatedAt=new Date().toISOString();
+  state.docs.push(copy);persist();renderSidebar();
+  toast('Đã sao chép trang','success');
+}
 function hdrDeletePage(){
   const doc=currentDoc();if(!doc)return;
   hdrCloseAll();
@@ -2355,21 +2396,40 @@ function pabLogoReset(){
   persistNow();_pabLogoInit();_closeLogoMenus();
 }
 
+function _buildPabBreadcrumb(doc){
+  const nav=document.getElementById('pabBreadcrumb');if(!nav)return;
+  nav.innerHTML='';
+  const spaceEl=document.createElement('span');spaceEl.className='pab-bc-space';
+  spaceEl.textContent=state.projectName||'My Project';spaceEl.title=state.projectName||'My Project';
+  nav.appendChild(spaceEl);
+  if(!doc)return;
+  const ancestors=[];let cur=doc;
+  while(cur.parentId){const par=state.docs.find(d=>d.id===cur.parentId);if(!par)break;ancestors.unshift(par);cur=par;}
+  ancestors.forEach(anc=>{
+    const sep=document.createElement('span');sep.className='pab-sep';sep.textContent='›';nav.appendChild(sep);
+    const el=document.createElement('span');el.className='pab-bc-anc';el.textContent=anc.title||'Untitled';el.title=anc.title||'Untitled';el.onclick=()=>openDoc(anc.id);nav.appendChild(el);
+  });
+  const sep2=document.createElement('span');sep2.className='pab-sep';sep2.textContent='›';nav.appendChild(sep2);
+  const curEl=document.createElement('span');curEl.className='pab-bc-cur';curEl.textContent=doc.title||'Untitled';curEl.title=doc.title||'Untitled';nav.appendChild(curEl);
+}
+function _updatePabStar(){
+  const doc=currentDoc();const btn=document.getElementById('pabStarBtn');if(!btn)return;
+  const starred=doc&&(state.starred||[]).includes(doc.id);
+  btn.classList.toggle('starred',!!starred);
+  btn.title=starred?'Bỏ đánh dấu yêu thích':'Đánh dấu yêu thích';
+  btn.innerHTML=`<i class="ti ti-star${starred?'-filled':''}"></i>`;
+}
 function updatePageActionBar(){
   try{_pabLogoInit();}catch(e){}
   const doc=currentDoc();
-  const titleEl=document.getElementById('pabTitle');
   const dateEl=document.getElementById('pabDate');
   const statusEl=document.getElementById('pabStatus');
-  if(!doc){
-    if(titleEl)titleEl.textContent='Chọn một trang để bắt đầu';
-    if(dateEl)dateEl.textContent='';
-    return;
-  }
-  if(titleEl)titleEl.textContent=doc.title||'Untitled';
+  _buildPabBreadcrumb(doc||null);
+  _updatePabStar();
+  if(!doc){if(dateEl)dateEl.textContent='';return;}
   const d=new Date(doc.updatedAt||doc.createdAt||Date.now());
-  if(dateEl)dateEl.textContent='Saved '+d.toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'});
-  if(statusEl){const editing=typeof _hdrIsEditing!=='undefined'&&_hdrIsEditing;statusEl.textContent=editing?'Editing':'Published';statusEl.className='pab-status'+(editing?' editing':'');}
+  if(dateEl)dateEl.textContent='Edited '+d.toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'});
+  if(statusEl){const editing=typeof _hdrIsEditing!=='undefined'&&_hdrIsEditing;statusEl.innerHTML=(editing?'<i class="ti ti-pencil" style="font-size:11px"></i>Editing':'<i class="ti ti-world-upload" style="font-size:11px"></i>Published');statusEl.className='pab-status'+(editing?' editing':'');statusEl.onclick=editing?null:openExportWebsiteModal;statusEl.style.cursor=editing?'default':'pointer';}
   const sl=document.getElementById('shareLink');
   if(sl&&doc)sl.value=window.location.href.split('?')[0]+'?doc='+doc.id;
 }
@@ -2580,6 +2640,9 @@ function openDoc(id){
   document.getElementById('docTitleInput').value=doc.title||'';
   document.getElementById('editor').innerHTML=doc.content||'';
   _expandAncestors(id);
+  // Reset watch button per-page (watch state is session-only)
+  const _wb=document.getElementById('pabWatchBtn');
+  if(_wb){_wb.classList.remove('watching');_wb.innerHTML='<i class="ti ti-bell"></i>';_wb.title='Theo dõi trang';}
   renderMeta(doc);renderSidebar(document.getElementById('searchInput').value.toLowerCase());updatePageActionBar();hdrBuildNotif();
   // Reset undo stack for new doc
   _undoStack=[];_redoStack=[];
