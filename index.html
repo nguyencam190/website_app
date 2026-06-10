@@ -1948,6 +1948,13 @@ function init(){
   // Migrate all docs to the single default section
   const _defSec=state.sections[0]||'default';
   state.docs.forEach(d=>{d.section=_defSec;});
+  // Remove orphaned docs (parent was deleted without cleaning up children)
+  (function _cleanOrphans(){
+    const ids=new Set(state.docs.map(d=>d.id));
+    const before=state.docs.length;
+    state.docs=state.docs.filter(d=>!d.parentId||ids.has(d.parentId));
+    if(state.docs.length!==before)_cleanOrphans(); // repeat until stable
+  })();
   if(!state.recent)state.recent=[];
   if(!state.starred)state.starred=[];
   document.getElementById('projectNameEl').textContent=state.projectName;
@@ -8376,7 +8383,8 @@ function openExportWebsiteModal(){
   {const _e=document.getElementById('webTitle');if(_e)_e.value=state.projectName||'Project Docs';}
   const list=document.getElementById('webDocList');
   const currentId=state.currentDocId;
-  const validDocs=state.docs.filter(d=>!d._deleted);
+  const _liveIds=new Set(state.docs.map(d=>d.id));
+  const validDocs=state.docs.filter(d=>!d._deleted&&(!d.parentId||_liveIds.has(d.parentId)));
   if(validDocs.length===0){
     list.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0">Không có trang nào để xuất.</div>';
     openModal('exportWebModal');return;
