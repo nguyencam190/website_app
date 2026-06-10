@@ -8616,7 +8616,8 @@ async function doExportWebsite(){
     btn.id='wsPNavBtn-'+mode;
     const icons={recent:'ti-history',starred:'ti-star',pages:'ti-files'};
     const labels={recent:'Recent',starred:'Starred',pages:'Pages'};
-    btn.innerHTML=`<i class="ti ${icons[mode]}"></i><span>${labels[mode]}</span>`;
+    const arrow=mode!=='pages'?'<i class="ti ti-chevron-right ws-pnav-arrow"></i>':'';
+    btn.innerHTML=`<i class="ti ${icons[mode]}"></i><span>${labels[mode]}</span>${arrow}`;
     btn.dataset.wsmode=mode;
     pnav.appendChild(btn);
   });
@@ -9105,6 +9106,12 @@ async function doExportWebsite(){
     '.ws-flyout-footer-btn{display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;border:none;background:transparent;color:var(--text2);cursor:pointer;font-size:13px;border-radius:6px;transition:.12s;font-family:var(--font)}',
     '.ws-flyout-footer-btn:hover{background:var(--surface2);color:var(--text)}',
     '.ws-pnav-item.flyout-open{background:var(--sb-active-bg);color:var(--sb-active-txt)}',
+    '.ws-pnav-arrow{margin-left:auto;font-size:12px;color:var(--text3);transition:transform .2s;flex-shrink:0}',
+    '.ws-pnav-item.flyout-open .ws-pnav-arrow{transform:rotate(90deg);color:var(--accent)}',
+    /* expand button shown in ws-main when sidebar is collapsed */
+    '.ws-sb-expand{display:none;position:fixed;left:8px;top:60px;z-index:200;width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;font-size:15px;align-items:center;justify-content:center;transition:.15s;box-shadow:0 2px 8px rgba(0,0,0,.12)}',
+    '.ws-sb-expand:hover{background:var(--surface3);color:var(--text)}',
+    '.ws-sidebar.collapsed~.ws-sb-expand{display:flex}',
   ].join('\n');
 
   function captureAppCss(){
@@ -9274,7 +9281,7 @@ async function doExportWebsite(){
     'function wsFilter(q){q=q.toLowerCase();var found=0;document.querySelectorAll(".ws-doc").forEach(function(el){var id=el.id.replace("doc-","");var nav=document.getElementById("nav-"+id);var match=!q||(el.textContent||"").toLowerCase().includes(q);if(nav)nav.style.display=match?"":"none";if(match)found++;});document.getElementById("wsDocCount").textContent=found+" tài liệu";document.getElementById("wsNoResult").style.display=found?"none":"";}',
     'function wsImgLb(src){if(!src)return;var ov=document.getElementById("wsImgOv");if(!ov){ov=document.createElement("div");ov.id="wsImgOv";ov.className="lb";var img=document.createElement("img");img.className="lb-img";img.id="wsImgEl";var btn=document.createElement("button");btn.className="lb-x";btn.textContent="\\u2715";btn.onclick=function(){ov.classList.remove("on");};ov.appendChild(img);ov.appendChild(btn);ov.onclick=function(e){if(e.target===ov)ov.classList.remove("on");};document.body.appendChild(ov);}document.getElementById("wsImgEl").src=src;ov.classList.add("on");}',
     'document.addEventListener("keydown",function(e){if(e.key==="Escape"){var i=document.getElementById("wsImgOv");if(i)i.classList.remove("on");}});',
-    /* ── Sidebar Resizer — standalone flex sibling, localStorage-aware ── */
+    /* ── Sidebar Resizer — RAF-throttled, no transition during drag ── */
     '(function(){',
     '  var WS_SB_KEY="ws_sb_width_"+location.pathname;',
     '  var WS_SB_MIN=60,WS_SB_MAX=520,WS_SB_DEFAULT=260;',
@@ -9287,18 +9294,25 @@ async function doExportWebsite(){
     '    if(e.button!==0)return;',
     '    e.preventDefault();',
     '    rz.classList.add("dragging");',
+    '    sb.style.transition="none";',
     '    document.body.style.cursor="col-resize";',
     '    document.body.style.userSelect="none";',
-    '    var startX=e.clientX;',
-    '    var startW=sb.getBoundingClientRect().width;',
-    '    function onMove(e2){',
-    '      var w=Math.max(WS_SB_MIN,Math.min(WS_SB_MAX,startW+(e2.clientX-startX)));',
+    '    var startX=e.clientX,startW=sb.getBoundingClientRect().width;',
+    '    var _pendingX=startX,_raf=null;',
+    '    function applyResize(){',
+    '      _raf=null;',
+    '      var w=Math.max(WS_SB_MIN,Math.min(WS_SB_MAX,startW+(_pendingX-startX)));',
     '      sb.style.width=w+"px";',
-    '      if(_cur){var _el=document.getElementById("doc-"+_cur);if(_el)fitCanvas(_el);}',
     '      wsUpdateFlyoutPos();',
     '    }',
+    '    function onMove(e2){',
+    '      _pendingX=e2.clientX;',
+    '      if(!_raf)_raf=requestAnimationFrame(applyResize);',
+    '    }',
     '    function onUp(){',
+    '      if(_raf){cancelAnimationFrame(_raf);_raf=null;}',
     '      rz.classList.remove("dragging");',
+    '      sb.style.transition="";',
     '      document.body.style.cursor="";',
     '      document.body.style.userSelect="";',
     '      try{localStorage.setItem(WS_SB_KEY,Math.round(sb.getBoundingClientRect().width));}catch(er){}',
@@ -9349,17 +9363,21 @@ async function doExportWebsite(){
     /* ── Sidebar toggle (collapse / expand) ── */
     '(function(){',
     '  var tog=document.getElementById("wsSbToggle");',
+    '  var exp=document.getElementById("wsSbExpand");',
     '  var rz=document.getElementById("wsSbRz");',
     '  var sb=document.getElementById("wsSidebar");',
-    '  if(!tog||!sb)return;',
-    '  var colKey="ws_sb_col_"+location.pathname;',
-    '  if(localStorage.getItem(colKey)==="1"){sb.classList.add("collapsed");if(rz)rz.classList.add("hidden");}',
-    '  tog.addEventListener("click",function(){',
+    '  if(!sb)return;',
+    '  function doToggle(){',
     '    var collapsed=sb.classList.toggle("collapsed");',
     '    if(rz)rz.classList.toggle("hidden",collapsed);',
-    '    try{localStorage.setItem(colKey,collapsed?"1":"0");}catch(er){}',
+    '    if(collapsed)wsCloseFlyout();',
+    '    try{localStorage.setItem("ws_sb_col_"+location.pathname,collapsed?"1":"0");}catch(er){}',
     '    if(!collapsed&&_cur){setTimeout(function(){var el=document.getElementById("doc-"+_cur);if(el)fitCanvas(el);},250);}',
-    '  });',
+    '  }',
+    '  var colKey="ws_sb_col_"+location.pathname;',
+    '  if(localStorage.getItem(colKey)==="1"){sb.classList.add("collapsed");if(rz)rz.classList.add("hidden");}',
+    '  if(tog)tog.addEventListener("click",doToggle);',
+    '  if(exp)exp.addEventListener("click",doToggle);',
     '})();',
     '/* init sidebar state */',
     /* ── Rewire both carousel types ── */
@@ -9428,6 +9446,7 @@ async function doExportWebsite(){
     '<div class="ws-layout" id="wsLayout">',
     '<div class="ws-sidebar" id="wsSidebar">'+navHTML+'</div>',
     '<div class="ws-sb-resizer" id="wsSbRz" title="Kéo để thay đổi độ rộng"></div>',
+    '<button class="ws-sb-expand" id="wsSbExpand" title="Mở sidebar"><i class="ti ti-layout-sidebar"></i></button>',
     '<div class="ws-main" id="wsMain">',
     pagesHTML,
     '<div id="wsNoResult" class="ws-no" style="display:none">Không tìm thấy tài liệu.</div>',
