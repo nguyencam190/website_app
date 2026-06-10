@@ -1397,7 +1397,7 @@ td.tbl-inner-container{padding:0!important;overflow:visible!important;vertical-a
 
     <div class="sb-search-row">
       <div class="sb-search"><i class="ti ti-search"></i><input type="text" placeholder="Search pages..." id="searchInput" oninput="filterDocs()"></div>
-      <button class="sb-new-btn" onclick="newDoc()" title="New page"><i class="ti ti-plus"></i></button>
+      <button class="sb-new-btn" onclick="_quickNewRootDoc()" title="New page"><i class="ti ti-plus"></i></button>
     </div>
 
     <!-- Nav tree -->
@@ -2411,70 +2411,29 @@ function renderSidebar(filter=''){
   // PAGE TREE label
   const treeLabel=document.createElement('div');treeLabel.className='sb-section-label';
   treeLabel.innerHTML='<span>Page Tree</span>';
-  // "+" adds a child of current open page, or root page if none
   const addPageBtn=document.createElement('button');
-  addPageBtn.className='sb-tree-add-btn';
-  addPageBtn.title='Them trang con vao trang dang mo';
+  addPageBtn.className='sb-tree-add-btn';addPageBtn.title='Tao trang moi';
   addPageBtn.innerHTML='<i class="ti ti-plus" style="font-size:11px"></i> Trang moi';
-  addPageBtn.onclick=()=>{
-    const cur=currentDoc();
-    if(cur)_quickNewDoc(cur.section,cur.id);
-    else if(state.sections.length)_quickNewDoc(state.sections[0],null);
-  };
+  addPageBtn.onclick=()=>_quickNewRootDoc();
   treeLabel.appendChild(addPageBtn);
   nav.appendChild(treeLabel);
 
-  state.sections.forEach(sec=>{
-    const rootDocs=_getChildren(sec,null);
-    if(filter&&!rootDocs.some(d=>_subtreeMatches(sec,d.id,filter)))return;
-    const isCollapsed=_secCollapsed[sec];
-    const secWrap=document.createElement('div');secWrap.className='sb-section';
-
-    // ── Section header row ───────────────────────────────────
-    const toggleRow=document.createElement('div');toggleRow.className='sb-section-toggle';
-    const chevron=document.createElement('button');chevron.className='sb-sec-chevron'+(isCollapsed?'':' open');
-    chevron.innerHTML='<i class="ti ti-chevron-right" style="transition:transform .18s"></i>';
-    if(!isCollapsed){const _ci=chevron.querySelector('i');if(_ci)_ci.style.transform='rotate(90deg)';}
-    chevron.style.marginLeft='4px';
-    chevron.onclick=()=>{
-      _secCollapsed[sec]=!_secCollapsed[sec];
-      const _ico=chevron.querySelector('i');
-      if(_ico)_ico.style.transform=_secCollapsed[sec]?'':'rotate(90deg)';
-      listEl.style.display=_secCollapsed[sec]?'none':'';
-    };
-    const secItem=document.createElement('div');secItem.className='doc-item';secItem.style.cssText='flex:1;margin:1px 6px 1px 0';
-    secItem.innerHTML='<span class="doc-item-icon"><i class="ti ti-folder" style="font-size:12px"></i></span>';
-    const secTitle=document.createElement('span');secTitle.className='doc-title';secTitle.style.cssText='font-weight:500;font-size:12px';secTitle.textContent=sec;
-    // Double-click to rename inline
-    secTitle.addEventListener('dblclick',e=>{e.stopPropagation();renameSection(sec,secTitle);});
-    secTitle.title='Nhấn đúp để đổi tên';
-    secItem.appendChild(secTitle);
-    const secActs=document.createElement('div');secActs.className='doc-actions';
-    const secAddBtn=document.createElement('button');
-    secAddBtn.style.cssText='width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:3px;border:none;background:transparent;color:var(--sb-txt3);cursor:pointer;font-size:13px;font-weight:500;transition:.12s;flex-shrink:0';
-    secAddBtn.title='Tao trang moi trong section';
-    secAddBtn.innerHTML='<i class="ti ti-plus" style="font-size:13px"></i>';
-    secAddBtn.onmouseenter=()=>{secAddBtn.style.background='var(--sb-active-bg)';secAddBtn.style.color='var(--accent)';};
-    secAddBtn.onmouseleave=()=>{secAddBtn.style.background='transparent';secAddBtn.style.color='var(--sb-txt3)';};
-    secAddBtn.onclick=(e)=>{e.stopPropagation();_quickNewDoc(sec,null);};
-    const secMenuBtn=document.createElement('button');secMenuBtn.className='doc-act-btn';secMenuBtn.title='Tuy chon section';secMenuBtn.innerHTML='<i class="ti ti-dots"></i>';
-    secMenuBtn.onclick=(e)=>{e.stopPropagation();openSecCtx(e,sec);};
-    secActs.appendChild(secAddBtn);secActs.appendChild(secMenuBtn);
-    secItem.appendChild(secActs);
-    toggleRow.appendChild(chevron);toggleRow.appendChild(secItem);
-    secWrap.appendChild(toggleRow);
-
-    // ── Doc tree ─────────────────────────────────────────────
-    const listEl=document.createElement('div');listEl.style.display=isCollapsed?'none':'';
-    _renderDocNodes(listEl,sec,null,0,filter);
-    // Empty hint
-    if(rootDocs.length===0&&!filter){
-      const hint=document.createElement('div');
-      hint.style.cssText='padding:4px 8px 4px 32px;font-size:11px;color:var(--sb-txt3)';
-      hint.textContent='Chua co trang nao';listEl.appendChild(hint);
-    }
-    secWrap.appendChild(listEl);nav.appendChild(secWrap);
+  // Render all root docs from all sections without section wrappers
+  const allSecs=state.sections||[];
+  let hasAny=false;
+  allSecs.forEach(sec=>{
+    const roots=_getChildren(sec,null);
+    if(filter&&!roots.some(d=>_subtreeMatches(sec,d.id,filter)))return;
+    if(roots.length>0)hasAny=true;
+    _renderDocNodes(nav,sec,null,0,filter);
   });
+
+  if(!hasAny&&!filter){
+    const hint=document.createElement('div');
+    hint.style.cssText='padding:24px 16px;font-size:12px;color:var(--sb-txt3);text-align:center';
+    hint.textContent='Chưa có trang nào. Nhấn + để tạo.';
+    nav.appendChild(hint);
+  }
 }
 
 // Recursively render doc nodes in a section
@@ -2566,6 +2525,10 @@ function _quickNewDoc(section,parentId){
     const t=document.getElementById('docTitleInput');
     if(t){t.focus();t.select();}
   },80);
+}
+function _quickNewRootDoc(){
+  if(!state.sections||!state.sections.length){state.sections=['General'];persist();}
+  _quickNewDoc(state.sections[0],null);
 }
 
 function openSecCtx(e,sec){
