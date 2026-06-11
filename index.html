@@ -5197,7 +5197,7 @@ async function tblInsertImage(cell,file){
   el.style.cssText='display:block;max-width:100%;max-height:100%;width:auto;height:auto;margin:0 auto;border-radius:5px;cursor:zoom-in;background:transparent';
   cell.classList.add('tbl-has-img');
   if(!cell.style.height&&cell.offsetHeight<80)cell.style.height='120px';
-  el.onclick=()=>{lbImages=[{src:objUrl,name:el.alt}];lbIndex=0;lbRender();document.getElementById('lightbox').classList.add('on');};
+  el.addEventListener('dblclick',()=>{const _all=Array.from(document.querySelectorAll('.fmedia img,.editor-content img'));lbOpen(Math.max(0,_all.indexOf(el)));});
   el.addEventListener('mouseenter',()=>{_hoveredTblImg=el;el.style.outline='2px solid var(--accent)';el.style.outlineOffset='2px';});
   el.addEventListener('mouseleave',()=>{if(_hoveredTblImg===el){_hoveredTblImg=null;}el.style.outline='';el.style.outlineOffset='';});
   // Clear existing text/content in cell, then insert image
@@ -5572,7 +5572,7 @@ function tblAttachTable(table){
       if(!src){try{const b=await _idbGet(id);if(b){src=URL.createObjectURL(b);_cacheUrl(id,src);}}catch(e){}}
       if(src){
         img.src=src;
-        img.onclick=()=>{lbImages=[{src,name:img.alt||'image'}];lbIndex=0;lbRender();document.getElementById('lightbox').classList.add('on');};
+        img.addEventListener('dblclick',()=>{const _all=Array.from(document.querySelectorAll('.fmedia img,.editor-content img'));lbOpen(Math.max(0,_all.indexOf(img)));});
       } else {
         // IDB data missing — remove broken img and clean up cell
         img.remove();
@@ -5597,7 +5597,7 @@ function tblAttachTable(table){
     }
     cell.querySelectorAll('img').forEach(img=>{
       img.style.cssText=(img.style.cssText||'')+'display:block;max-width:100%;max-height:100%;width:auto;height:auto;margin:0 auto;background:transparent';
-      img.onclick=()=>{lbImages=[{src:img.src,name:img.alt||'image'}];lbIndex=0;lbRender();document.getElementById('lightbox').classList.add('on');};
+      img.addEventListener('dblclick',()=>{const _all=Array.from(document.querySelectorAll('.fmedia img,.editor-content img'));lbOpen(Math.max(0,_all.indexOf(img)));});
       img.addEventListener('mouseenter',()=>{_hoveredTblImg=img;img.style.outline='2px solid var(--accent)';img.style.outlineOffset='2px';});
       img.addEventListener('mouseleave',()=>{if(_hoveredTblImg===img){_hoveredTblImg=null;}img.style.outline='';img.style.outlineOffset='';});
     });
@@ -6780,8 +6780,8 @@ function _cfBuildImgToolbar(block){
   fsBtn.addEventListener('click',()=>{
     const media=block.querySelector('img,video');if(!media)return;
     const src=media.src||media.getAttribute('data-src')||'';
-    lbImages=[{src,name:block.dataset.name||'image'}];lbIndex=0;lbRender();
-    document.getElementById('lightbox').classList.add('on');
+    const _all=Array.from(document.querySelectorAll('.fmedia img,.editor-content img'));
+    lbOpen(Math.max(0,_all.indexOf(media)));
   });
   tb.appendChild(fsBtn);
 
@@ -6917,7 +6917,7 @@ function _cfBuildCarousel(slides){
   slides.forEach(s=>{
     const slide=document.createElement('div');slide.className='cf-car-slide';
     const img2=document.createElement('img');img2.src=s.src;img2.alt=s.name;img2.dataset.carid=s.id;
-    img2.addEventListener('dblclick',()=>{lbImages=[{src:img2.src,name:s.name}];lbIndex=0;lbRender();document.getElementById('lightbox')?.classList.add('on');});
+    img2.addEventListener('dblclick',()=>{const _all=Array.from(document.querySelectorAll('.fmedia img,.editor-content img'));lbOpen(Math.max(0,_all.indexOf(img2)));});
     slide.appendChild(img2);track.appendChild(slide);
   });
   const counter=document.createElement('div');counter.className='cf-car-counter';
@@ -7813,7 +7813,7 @@ async function tbInsertImages(id,inputEl,filesOverride){
     const img=document.createElement('img');
     img.src=srcs[0].src;img.alt=srcs[0].name;
     img.style.cssText='max-width:100%;display:block;margin:6px 0;border-radius:6px;cursor:zoom-in';
-    img.onclick=()=>{lbImages=[{src:srcs[0].src,name:srcs[0].name}];lbIndex=0;lbRender();document.getElementById('lightbox').classList.add('on');document.body.style.overflow='hidden';};
+    img.addEventListener('dblclick',()=>{const _all=Array.from(document.querySelectorAll('.fmedia img,.editor-content img'));lbOpen(Math.max(0,_all.indexOf(img)));});
     const br=document.createElement('br');
     const curSel=window.getSelection();
     if(curSel&&curSel.rangeCount){
