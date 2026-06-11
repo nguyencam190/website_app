@@ -525,6 +525,16 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .tg-manual button{background:var(--accent);color:#fff;border:none;border-radius:4px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:var(--font)}
 .tg-manual button:hover{opacity:.85}
 /* tg-cell.hi and tg-label defined above — no duplicate needed */
+/* Slash command table grid popup */
+.slash-tg-popup{position:fixed;z-index:910;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.18);padding:12px;animation:cpFade .12s ease}
+.slash-tg-cell{width:22px;height:22px;border-radius:5px;background:var(--surface2);border:1.5px solid var(--border);cursor:pointer;transition:background .08s,border-color .08s;flex-shrink:0}
+.slash-tg-cell.on{background:var(--accent-light);border-color:var(--accent)}
+.slash-tg-label{font-size:12px;color:var(--text3);margin-top:8px;text-align:center;font-weight:600;letter-spacing:.3px}
+.slash-tg-custom{display:flex;align-items:center;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.slash-tg-inp{width:48px;padding:4px 6px;border:1px solid var(--border);border-radius:5px;background:var(--surface2);color:var(--text);font-size:12px;font-family:var(--font);outline:none;text-align:center}
+.slash-tg-inp:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-glow)}
+.slash-tg-btn{flex:1;padding:5px 8px;background:var(--accent);color:#fff;border:none;border-radius:5px;font-size:12px;cursor:pointer;font-family:var(--font);font-weight:500;transition:opacity .12s}
+.slash-tg-btn:hover{opacity:.85}
 /* FLOATING MEDIA */
 .fmedia{position:absolute;z-index:25;display:inline-block;user-select:none}
 .fmedia img{display:block;border-radius:8px;width:100%;height:100%;object-fit:contain;background:transparent}.fmedia video{display:block;border-radius:8px;width:100%;height:100%;object-fit:contain;background:#000}
@@ -6305,7 +6315,7 @@ function _slashShowTableGrid(){
   popup.id='slashTgPopup';
   popup.className='slash-tg-popup';
 
-  const TG_ROWS=8,TG_COLS=10;
+  const TG_ROWS=10,TG_COLS=10;
   const grid=document.createElement('div');
   grid.id='slashTgGrid';grid.style.cssText='display:flex;flex-direction:column;gap:3px';
 
