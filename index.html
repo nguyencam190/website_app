@@ -1735,52 +1735,33 @@ td.tbl-inner-container{padding:0!important;overflow:visible!important;vertical-a
 <!-- TEXTBOX COLOR PALETTE POPUP -->
 <!-- TABLE MERGE TOOLBAR -->
 <div class="tbl-merge-bar" id="tblMergeBar">
-  <span style="font-size:11px;color:#94a3b8;padding:0 6px 0 4px;white-space:nowrap;display:flex;align-items:center;gap:4px">
+  <span id="tblMergeCount" style="font-size:11px;color:#94a3b8;padding:0 4px;white-space:nowrap;display:none;align-items:center;gap:4px">
     <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="0.5" y="0.5" width="12" height="12" rx="1" stroke="#94a3b8"/><line x1="4.5" y1="0.5" x2="4.5" y2="12.5" stroke="#94a3b8"/><line x1="8.5" y1="0.5" x2="8.5" y2="12.5" stroke="#94a3b8"/><line x1="0.5" y1="4.5" x2="12.5" y2="4.5" stroke="#94a3b8"/><line x1="0.5" y1="8.5" x2="12.5" y2="8.5" stroke="#94a3b8"/></svg>
-    <span id="tblMergeCount" style="color:#94a3b8">0 ô</span>
+    <span id="tblMergeLabel">0 ô</span>
   </span>
-  <div class="tbl-merge-sep"></div>
-  <!-- Gộp tất cả -->
-  <button class="tbl-merge-btn accent" onclick="tblMergeCells()" title="Gộp tất cả ô đã chọn">
-    <svg width="28" height="20" viewBox="0 0 28 20" fill="none">
+  <div class="tbl-merge-sep" id="tblMergeSep1" style="display:none"></div>
+  <!-- Merge Cells -->
+  <button id="tblBtnMerge" class="tbl-merge-btn accent" onclick="tblMergeCells()" title="Merge Cells" style="display:none">
+    <svg width="16" height="11" viewBox="0 0 28 20" fill="none">
       <rect x="1" y="1" width="26" height="18" rx="2" stroke="currentColor" stroke-width="1.2"/>
-      <line x1="10" y1="1" x2="10" y2="19" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 1.5" opacity=".4"/>
-      <line x1="18" y1="1" x2="18" y2="19" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 1.5" opacity=".4"/>
-      <line x1="1" y1="7.5" x2="27" y2="7.5" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 1.5" opacity=".4"/>
-      <line x1="1" y1="13.5" x2="27" y2="13.5" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 1.5" opacity=".4"/>
+      <line x1="10" y1="1" x2="10" y2="19" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 1.5" opacity=".5"/>
+      <line x1="18" y1="1" x2="18" y2="19" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 1.5" opacity=".5"/>
+      <line x1="1" y1="7.5" x2="27" y2="7.5" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 1.5" opacity=".5"/>
+      <line x1="1" y1="13.5" x2="27" y2="13.5" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 1.5" opacity=".5"/>
       <rect x="4" y="4" width="20" height="12" rx="1.5" fill="currentColor" opacity=".9"/>
     </svg>
+    Merge Cells
   </button>
-  <!-- Gộp cột (colspan) -->
-  <button class="tbl-merge-btn" onclick="tblMergeColsOnly()" title="Gộp cột (colspan — ngang)">
-    <svg width="28" height="20" viewBox="0 0 28 20" fill="none">
-      <rect x="1" y="1" width="26" height="18" rx="2" stroke="currentColor" stroke-width="1.2"/>
-      <line x1="10" y1="1" x2="10" y2="19" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 1.5" opacity=".4"/>
-      <line x1="18" y1="1" x2="18" y2="19" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 1.5" opacity=".4"/>
-      <line x1="1" y1="10" x2="27" y2="10" stroke="currentColor" stroke-width="1.2"/>
-      <rect x="4" y="2" width="20" height="7" rx="1" fill="currentColor" opacity=".85"/>
-    </svg>
-  </button>
-  <!-- Gộp hàng (rowspan) -->
-  <button class="tbl-merge-btn" onclick="tblMergeRowsOnly()" title="Gộp hàng (rowspan — dọc)">
-    <svg width="28" height="20" viewBox="0 0 28 20" fill="none">
-      <rect x="1" y="1" width="26" height="18" rx="2" stroke="currentColor" stroke-width="1.2"/>
-      <line x1="1" y1="7.5" x2="27" y2="7.5" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 1.5" opacity=".4"/>
-      <line x1="1" y1="13.5" x2="27" y2="13.5" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 1.5" opacity=".4"/>
-      <line x1="14" y1="1" x2="14" y2="19" stroke="currentColor" stroke-width="1.2"/>
-      <rect x="2" y="4" width="11" height="12" rx="1" fill="currentColor" opacity=".85"/>
-    </svg>
-  </button>
-  <div class="tbl-merge-sep"></div>
-  <!-- Tách ô -->
-  <button class="tbl-merge-btn" onclick="tblUnmergeCells()" title="Tách ô đã gộp">
-    <svg width="28" height="20" viewBox="0 0 28 20" fill="none">
+  <!-- Split Cell -->
+  <button id="tblBtnSplit" class="tbl-merge-btn" onclick="tblSplitCell()" title="Split Cell" style="display:none">
+    <svg width="16" height="11" viewBox="0 0 28 20" fill="none">
       <rect x="1" y="1" width="26" height="18" rx="2" stroke="currentColor" stroke-width="1.2"/>
       <line x1="10" y1="1" x2="10" y2="19" stroke="currentColor" stroke-width="1.2"/>
       <line x1="18" y1="1" x2="18" y2="19" stroke="currentColor" stroke-width="1.2"/>
       <line x1="1" y1="7.5" x2="27" y2="7.5" stroke="currentColor" stroke-width="1.2"/>
       <line x1="1" y1="13.5" x2="27" y2="13.5" stroke="currentColor" stroke-width="1.2"/>
     </svg>
+    Split Cell
   </button>
   <div class="tbl-merge-sep"></div>
   <button class="tbl-merge-btn danger" onclick="tblClearCellSel()" title="Bỏ chọn (Esc)">
@@ -4927,30 +4908,34 @@ function _selectRect(table){
 
 function _updateMergeBar(){
   const bar=document.getElementById('tblMergeBar');if(!bar)return;
-  if(!_mergeTable){bar.classList.remove('on');return;}
-  const cells=Array.from(_mergeTable.querySelectorAll('.tbl-cell-sel'))
-    .filter(c=>!c.classList.contains('tbl-row-num'));
-  if(cells.length>=1){
-    bar.classList.add('on');
-    // Update cell count
-    const cnt=document.getElementById('tblMergeCount');
-    if(cnt)cnt.textContent=cells.length+' ô đã chọn';
-    // Show/hide merge buttons based on selection
-    const mergeBtn=bar.querySelector('[onclick="tblMergeCells()"]');
-    const colBtn=bar.querySelector('[onclick="tblMergeColsOnly()"]');
-    const rowBtn=bar.querySelector('[onclick="tblMergeRowsOnly()"]');
-    if(mergeBtn)mergeBtn.style.display=cells.length>=2?'flex':'none';
-    if(colBtn)colBtn.style.display=cells.length>=2?'flex':'none';
-    if(rowBtn)rowBtn.style.display=cells.length>=2?'flex':'none';
-    // Position bar above table
-    const rect=_mergeTable.getBoundingClientRect();
-    const bw=bar.offsetWidth||380;
+  const cells=_mergeTable?Array.from(_mergeTable.querySelectorAll('.tbl-cell-sel')).filter(c=>!c.classList.contains('tbl-row-num')):[];
+  const activeIsMerged=_activeTd&&(_activeTd.colSpan>1||_activeTd.rowSpan>1);
+  const anyMergedSel=cells.some(c=>c.colSpan>1||c.rowSpan>1);
+  const canMerge=cells.length>=2;
+  const canSplit=activeIsMerged||anyMergedSel;
+  if(!canMerge&&!canSplit){bar.classList.remove('on');return;}
+  bar.classList.add('on');
+  // Count label
+  const cnt=document.getElementById('tblMergeCount');
+  const lbl=document.getElementById('tblMergeLabel');
+  const sep1=document.getElementById('tblMergeSep1');
+  const showLabel=cells.length>=2||(activeIsMerged&&cells.length===0);
+  if(lbl)lbl.textContent=cells.length>=2?(cells.length+' ô đã chọn'):'Ô đã gộp';
+  if(cnt)cnt.style.display=showLabel?'flex':'none';
+  if(sep1)sep1.style.display=showLabel?'block':'none';
+  // Merge / Split buttons
+  const mergeBtn=document.getElementById('tblBtnMerge');
+  const splitBtn=document.getElementById('tblBtnSplit');
+  if(mergeBtn)mergeBtn.style.display=canMerge?'flex':'none';
+  if(splitBtn)splitBtn.style.display=canSplit?'flex':'none';
+  // Position above table
+  const targetEl=_mergeTable||_activeTd?.closest('table');
+  if(targetEl){
+    const rect=targetEl.getBoundingClientRect();
+    const bw=bar.offsetWidth||260;
     const left=Math.max(8,Math.min(window.innerWidth-bw-8,rect.left+rect.width/2-bw/2));
     const top=rect.top>52?rect.top-48:rect.bottom+8;
-    bar.style.left=left+'px';
-    bar.style.top=Math.max(8,top)+'px';
-  } else {
-    bar.classList.remove('on');
+    bar.style.left=left+'px';bar.style.top=Math.max(8,top)+'px';
   }
 }
 
@@ -4986,96 +4971,61 @@ function tblMergeCells(){
   toast('Đã gộp '+cells.length+' ô','success');
 }
 
-// Merge only columns (colspan) on a single row
-function tblMergeColsOnly(){
-  if(!_mergeTable)return;
-  const cells=Array.from(_mergeTable.querySelectorAll('.tbl-cell-sel'))
-    .filter(c=>!c.classList.contains('tbl-row-num'));
-  if(cells.length<2){toast('Chọn ít nhất 2 ô trên cùng hàng','info');return;}
-  const grid=_buildColMap(_mergeTable);
-  const rows=Array.from(_mergeTable.rows);
-  const rowSet=[...new Set(cells.map(c=>c.closest('tr')))];
-  rowSet.forEach(row=>{
-    const rowCells=cells.filter(c=>c.closest('tr')===row);
-    if(rowCells.length<2)return;
-    const ri=rows.indexOf(row);
-    const poss=rowCells.map(c=>({c,ci:(grid[ri]||[]).indexOf(c)}));
-    const minCi=Math.min(...poss.map(p=>p.ci));
-    const anchor=poss.find(p=>p.ci===minCi)?.c;
-    if(!anchor)return;
-    anchor.colSpan=rowCells.length;
-    anchor.style.textAlign='center';
-    rowCells.filter(c=>c!==anchor).forEach(c=>c.remove());
-  });
-  tblClearCellSel();
-  onContentChange();setTimeout(tblAttachAll,50);
-  toast('Đã gộp cột','success');
-}
-
-// Merge only rows (rowspan) on a single column
-function tblMergeRowsOnly(){
-  if(!_mergeTable)return;
-  const cells=Array.from(_mergeTable.querySelectorAll('.tbl-cell-sel'))
-    .filter(c=>!c.classList.contains('tbl-row-num'));
-  if(cells.length<2){toast('Chọn ít nhất 2 ô trên cùng cột','info');return;}
-  const grid=_buildColMap(_mergeTable);
-  const rows=Array.from(_mergeTable.rows);
-  const pos=cells.map(c=>{
-    const ri=rows.indexOf(c.closest('tr'));
-    const ci=(grid[ri]||[]).indexOf(c);
-    return{ri,ci,c};
-  });
-  const cols=[...new Set(pos.map(p=>p.ci))];
-  cols.forEach(ci=>{
-    const colCells=pos.filter(p=>p.ci===ci);
-    if(colCells.length<2)return;
-    const minRi=Math.min(...colCells.map(p=>p.ri));
-    const anchor=colCells.find(p=>p.ri===minRi)?.c;
-    if(!anchor)return;
-    anchor.rowSpan=colCells.length;
-    anchor.style.verticalAlign='middle';
-    colCells.filter(p=>p.c!==anchor).forEach(p=>p.c.remove());
-  });
-  tblClearCellSel();
-  onContentChange();setTimeout(tblAttachAll,50);
-  toast('Đã gộp hàng','success');
-}
-
-function tblUnmergeCells(){
-  const cell=_activeTd;if(!cell)return;
+function tblSplitCell(){
+  // Pick the target cell: prefer active merged cell, else first selected merged cell
+  let cell=_activeTd;
+  if(!cell||!(cell.colSpan>1||cell.rowSpan>1)){
+    if(_mergeTable)cell=Array.from(_mergeTable.querySelectorAll('.tbl-cell-sel'))
+      .find(c=>!c.classList.contains('tbl-row-num')&&(c.colSpan>1||c.rowSpan>1))||null;
+  }
+  if(!cell){toast('Không có ô nào được gộp để tách','info');return;}
   const table=cell.closest('table');if(!table)return;
   const cs=cell.colSpan||1,rs=cell.rowSpan||1;
-  if(cs===1&&rs===1){toast('Ô chưa được gộp','info');return;}
-  const ri=Array.from(table.rows).indexOf(cell.closest('tr'));
-  const ci=Array.from(cell.closest('tr').cells).indexOf(cell);
+  if(cs===1&&rs===1){toast('Ô này chưa được gộp','info');return;}
+  const grid=_buildColMap(table);
+  const rows=Array.from(table.rows);
+  const ri=rows.indexOf(cell.closest('tr'));
+  const ci=(grid[ri]||[]).indexOf(cell);
   cell.colSpan=1;cell.rowSpan=1;
   for(let r=ri;r<ri+rs;r++){
+    const targetRow=table.rows[r];if(!targetRow)continue;
     for(let c=ci;c<ci+cs;c++){
       if(r===ri&&c===ci)continue;
-      const newCell=document.createElement(r===0?'th':'td');
-      const targetRow=table.rows[r];if(!targetRow)continue;
-      const ref=targetRow.cells[c]||null;
+      const newCell=document.createElement(ri===0?'th':'td');newCell.innerHTML='<br>';
+      // Find correct insertion point using the logical grid
+      const curGrid=_buildColMap(table);
+      let ref=null;
+      for(let pc=0;pc<targetRow.cells.length;pc++){
+        const pcCi=(curGrid[r]||[]).indexOf(targetRow.cells[pc]);
+        if(pcCi>=c){ref=targetRow.cells[pc];break;}
+      }
       if(ref)targetRow.insertBefore(newCell,ref);else targetRow.appendChild(newCell);
     }
   }
+  _activeTd=cell;
   tblClearCellSel();
   onContentChange();setTimeout(tblAttachAll,50);
-  toast('Đã bỏ gộp ô','success');
+  toast('Đã tách ô','success');
 }
+
+// Keep old name as alias for context menu compatibility
+function tblUnmergeCells(){tblSplitCell();}
 
 function tblClearCellSel(){
   if(_mergeTable)_mergeTable.querySelectorAll('.tbl-cell-sel').forEach(c=>c.classList.remove('tbl-cell-sel'));
   _mergeTable=null;
-  const bar=document.getElementById('tblMergeBar');if(bar)bar.classList.remove('on');
+  _updateMergeBar();
 }
 
 document.addEventListener('mousedown',e=>{
-  if(!e.target.closest('#tblMergeBar')&&!e.target.closest('.editor-content td')&&!e.target.closest('.editor-content th'))
+  if(!e.target.closest('#tblMergeBar')&&!e.target.closest('.editor-content td')&&!e.target.closest('.editor-content th')){
     tblClearCellSel();
+    if(!e.target.closest('.editor-content table')){_activeTd=null;_updateMergeBar();}
+  }
 });
 document.addEventListener('mouseup',()=>{_tblDragStart=null;});
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'&&_mergeTable)tblClearCellSel();
+  if(e.key==='Escape'&&(_mergeTable||_activeTd)){tblClearCellSel();_activeTd=null;_updateMergeBar();}
   // Undo / Redo
   if((e.ctrlKey||e.metaKey)&&!e.altKey){
     if(e.key==='z'&&!e.shiftKey){e.preventDefault();editorUndo();}
@@ -5099,13 +5049,11 @@ function _showTblCellCtx(e,cell,table){
   }
   function sep(){const d=document.createElement('div');d.className='ctx-sep';m.appendChild(d);}
   if(canMerge){
-    add('ti-layout-grid','Gộp ô đã chọn',()=>tblMergeCells());
-    add('ti-layout-rows','Gộp theo hàng (rowspan)',()=>tblMergeRowsOnly());
-    add('ti-layout-columns','Gộp theo cột (colspan)',()=>tblMergeColsOnly());
+    add('ti-layout-grid','Merge Cells',()=>tblMergeCells());
     sep();
   }
   if(isMerged){
-    add('ti-layout-grid-add','Tách ô (unmerge)',()=>{_mergeTable=table;cell.classList.add('tbl-cell-sel');tblUnmergeCells();});
+    add('ti-layout-grid-add','Split Cell',()=>{_activeTd=cell;tblSplitCell();});
     sep();
   }
   add('ti-row-insert-top','Thêm hàng phía trên',()=>{_activeTd=cell;tblAddRowAbove();});
@@ -5617,6 +5565,7 @@ function tblAttachTable(table){
         _selectRect(table);_updateMergeBar();
       } else if(!_tblDragStart){
         if(_mergeTable)tblClearCellSel();
+        _updateMergeBar();
       }
     });
     cell.addEventListener('mousedown',e=>{
