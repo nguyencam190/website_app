@@ -866,10 +866,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 [data-theme="dark"] .cf-carousel-block[data-imgborder="2"]{outline-color:rgba(255,255,255,.18)}
 [data-theme="dark"] .cf-carousel-block[data-imgborder="3"]{outline-color:rgba(255,255,255,.50)}
 [data-theme="dark"] .cf-carousel-block[data-imgborder="4"]{outline-color:rgba(255,255,255,.85)}
-.cf-car-wrap{position:relative;overflow:hidden;border-radius:10px;line-height:0}
-.cf-car-track{display:flex;transition:transform .35s cubic-bezier(.4,0,.2,1);will-change:transform}
-.cf-car-slide{min-width:100%;position:relative;line-height:0}
-.cf-car-slide img,.cf-car-slide video{width:100%;height:420px;object-fit:cover;border-radius:10px;display:block;cursor:zoom-in}
+.cf-car-wrap{position:relative;overflow:hidden;border-radius:10px}
+.cf-car-track{display:flex;transition:transform .35s cubic-bezier(.4,0,.2,1);will-change:transform;align-items:flex-start}
+.cf-car-slide{min-width:100%;position:relative;display:flex;flex-direction:column}
+.cf-car-slide img,.cf-car-slide video{width:100%;height:auto;object-fit:contain;border-radius:10px 10px 0 0;display:block;cursor:zoom-in}
 .cf-carousel-stage{position:relative;width:100%;overflow:hidden;min-height:200px;background:#000;border-radius:10px 10px 0 0}
 .cf-carousel-slides{display:flex;transition:transform .35s ease;height:100%;will-change:transform}
 .cf-carousel-slide{min-width:100%;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#000}
@@ -896,6 +896,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .cf-car-caption{padding:6px 12px 8px;font-size:12.5px;color:var(--text3);text-align:center;outline:none;min-height:20px}
 .cf-car-caption:empty::before{content:'Thêm chú thích...';pointer-events:none;color:var(--text3)}
 .cf-car-caption:focus{color:var(--text);background:var(--surface2)}
+/* Per-slide caption */
+.cf-car-slide-caption{display:block;text-align:center;font-size:12.5px;color:var(--text3);padding:6px 8px;outline:none;min-height:24px;line-height:1.5;background:var(--surface2)}
+.cf-car-slide-caption:empty::before{content:attr(data-placeholder);pointer-events:none;color:var(--text3)}
+.cf-car-slide-caption:focus{background:var(--surface3,var(--surface2));color:var(--text)}
 /* Toolbar — floating style */
 .cf-car-toolbar{position:absolute;bottom:0;left:50%;transform:translateX(-50%) translateY(100%);background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,.1);display:none;align-items:center;gap:2px;padding:4px 6px;z-index:150;white-space:nowrap;animation:cpFade .12s ease}
 .cf-carousel-block.selected .cf-car-toolbar,.cf-carousel-block:hover .cf-car-toolbar{display:flex}
@@ -7100,7 +7104,10 @@ function _cfBuildCarousel(slides){
     const slide=document.createElement('div');slide.className='cf-car-slide';
     const img2=document.createElement('img');img2.src=s.src;img2.alt=s.name;img2.dataset.carid=s.id;
     img2.addEventListener('dblclick',()=>{const _all=Array.from(document.querySelectorAll('.fmedia img,.editor-content img'));lbOpen(Math.max(0,_all.indexOf(img2)));});
-    slide.appendChild(img2);track.appendChild(slide);
+    slide.appendChild(img2);
+    const scap=document.createElement('div');scap.className='cf-car-slide-caption';scap.contentEditable='true';scap.setAttribute('data-placeholder','Thêm chú thích...');
+    slide.appendChild(scap);
+    track.appendChild(slide);
   });
   const counter=document.createElement('div');counter.className='cf-car-counter';
   counter.textContent=`1 / ${slides.length}`;
@@ -7150,6 +7157,7 @@ function _cfCarWireNav(block,track,prev,next,dots,counter){
   // Keyboard navigation when carousel is focused
   block.setAttribute('tabindex','0');
   block.addEventListener('keydown',e=>{
+    if(e.target.closest('.cf-car-slide-caption'))return;
     if(e.key==='ArrowLeft'){e.preventDefault();goTo((block._carIdx||0)-1);}
     else if(e.key==='ArrowRight'){e.preventDefault();goTo((block._carIdx||0)+1);}
   });
@@ -7157,6 +7165,7 @@ function _cfCarWireNav(block,track,prev,next,dots,counter){
   // ── Touch swipe with live drag feedback ──────────────────
   let sx=0,sy=0,sTrk=false;
   track.addEventListener('touchstart',e=>{
+    if(e.target.closest('.cf-car-slide-caption')){sTrk=false;return;}
     sx=e.touches[0].clientX;sy=e.touches[0].clientY;sTrk=true;
     track.style.transition='none';
   },{passive:true});
@@ -7179,7 +7188,7 @@ function _cfCarWireNav(block,track,prev,next,dots,counter){
   // ── Mouse drag on desktop ─────────────────────────────────
   let mx=0,mDrag=false;
   track.addEventListener('mousedown',e=>{
-    if(e.button!==0||e.target.closest('button'))return;
+    if(e.button!==0||e.target.closest('button')||e.target.closest('.cf-car-slide-caption'))return;
     mx=e.clientX;mDrag=false;track.style.transition='none';
     const onMove=ev=>{
       const d=ev.clientX-mx;
@@ -7223,7 +7232,10 @@ function _cfCarAddImages(block,track,dotsWrap,counter){
       const src=URL.createObjectURL(file);_cacheUrl(id,src);
       const slide=document.createElement('div');slide.className='cf-car-slide';
       const img2=document.createElement('img');img2.src=src;img2.dataset.carid=id;
-      slide.appendChild(img2);track.appendChild(slide);
+      slide.appendChild(img2);
+      const scap2=document.createElement('div');scap2.className='cf-car-slide-caption';scap2.contentEditable='true';scap2.setAttribute('data-placeholder','Thêm chú thích...');
+      slide.appendChild(scap2);
+      track.appendChild(slide);
       const dot=document.createElement('div');dot.className='cf-car-dot';
       const dotIdx=dotsWrap.children.length;
       dot.addEventListener('click',()=>_cfCarGoTo(block,dotIdx));
@@ -9586,10 +9598,12 @@ async function doExportWebsite(){
     '.ws-canvas .cf-carousel-slide img,.ws-canvas .cf-carousel-slide video{max-width:100%;max-height:520px;object-fit:contain;display:block}',
     '.ws-canvas .cf-car-arrow{position:absolute;top:50%;transform:translateY(-50%);width:36px;height:36px;background:rgba(0,0,0,.5);border:none;border-radius:50%;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10}',
     '.ws-canvas .cf-car-arrow.left{left:10px}.ws-canvas .cf-car-arrow.right{right:10px}',
-    '.ws-canvas .cf-car-wrap{position:relative;overflow:hidden;border-radius:10px;line-height:0}',
-    '.ws-canvas .cf-car-track{display:flex;transition:transform .35s cubic-bezier(.4,0,.2,1)}',
-    '.ws-canvas .cf-car-slide{min-width:100%;position:relative;line-height:0}',
-    '.ws-canvas .cf-car-slide img,.ws-canvas .cf-car-slide video{width:100%;height:420px;object-fit:cover;display:block}',
+    '.ws-canvas .cf-car-wrap{position:relative;overflow:hidden;border-radius:10px}',
+    '.ws-canvas .cf-car-track{display:flex;transition:transform .35s cubic-bezier(.4,0,.2,1);align-items:flex-start}',
+    '.ws-canvas .cf-car-slide{min-width:100%;position:relative;display:flex;flex-direction:column}',
+    '.ws-canvas .cf-car-slide img,.ws-canvas .cf-car-slide video{width:100%;height:auto;object-fit:contain;border-radius:10px 10px 0 0;display:block}',
+    '.ws-canvas .cf-car-slide-caption{display:block;text-align:center;font-size:12.5px;color:var(--text3);padding:6px 8px;min-height:0;line-height:1.5;background:var(--surface2)}',
+    '.ws-canvas .cf-car-slide-caption:empty{display:none}',
     '.ws-canvas .cf-car-btn{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.45);color:#fff;border:none;width:38px;height:38px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;transition:background .15s,opacity .15s,transform .15s;opacity:.85}',
     '.ws-canvas .cf-car-btn.prev{left:12px}.ws-canvas .cf-car-btn.next{right:12px}',
     '.ws-canvas .cf-car-btn:hover{background:rgba(0,0,0,.75);opacity:1;transform:translateY(-50%) scale(1.08)}',
