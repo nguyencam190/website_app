@@ -5860,8 +5860,7 @@ const SLASH_ITEMS=[
   {id:'col3',     icon:'<i class="ti ti-layout-board"></i>',   name:'3 Cột',        desc:'Chia bố cục thành 3 cột ngang',      cat:'Cấu trúc', alias:'column layout 3col three col3'},
   {id:'divider',  icon:'<i class="ti ti-separator"></i>',      name:'Đường kẻ ngang', desc:'Thêm đường phân cách nội dung',    cat:'Cấu trúc', alias:'divider hr separator line'},
   // ── Media ─────────────────────────────────────────────────
-  {id:'image',    icon:'<i class="ti ti-photo"></i>',           name:'Hình ảnh / GIF', desc:'Tải ảnh, GIF từ máy tính',       cat:'Media',    alias:'image photo picture img gif'},
-  {id:'carousel', icon:'<i class="ti ti-slideshow"></i>',       name:'Carousel / Slider', desc:'Nhiều ảnh dạng trình chiếu', cat:'Media',    alias:'carousel slider gallery'},
+  {id:'image',    icon:'<i class="ti ti-photo"></i>',           name:'Hình ảnh / GIF / Carousel', desc:'1 ảnh → chèn riêng; nhiều ảnh → chọn Carousel hoặc riêng lẻ', cat:'Media', alias:'image photo picture img gif carousel slider gallery slideshow'},
   {id:'video',    icon:'<i class="ti ti-video"></i>',           name:'Video',        desc:'Tải file video từ máy tính',        cat:'Media',    alias:'video mp4 film'},
   {id:'embed',    icon:'<i class="ti ti-brand-youtube"></i>',   name:'Nhúng video',  desc:'YouTube, TikTok, Vimeo, Facebook',  cat:'Media',    alias:'embed youtube tiktok vimeo'},
   {id:'emoji',    icon:'<i class="ti ti-mood-smile"></i>',      name:'Emoji',        desc:'Chèn biểu tượng cảm xúc',          cat:'Media',    alias:'emoji icon smiley'},
@@ -6129,10 +6128,24 @@ function _slashInsert(id){
   if(id==='table'){_slashShowTableGrid();return;}
 
   // ── Media file pickers ───────────────────────────────────
-  if(id==='image'||id==='video'){
-    const accept=id==='image'?'image/*,image/gif':'video/mp4,video/webm,video/ogg,video/mov,.mp4,.webm,.mov';
+  if(id==='image'||id==='carousel'){
     const inp=document.createElement('input');
-    inp.type='file';inp.accept=accept;inp.multiple=(id==='image');
+    inp.type='file';inp.accept='image/*,image/gif';inp.multiple=true;
+    inp.style.cssText='position:fixed;top:-9999px;left:-9999px;opacity:0';
+    document.body.appendChild(inp);
+    const savedRange=_slashSavedRange;
+    inp.addEventListener('change',async function(){
+      const files=Array.from(this.files);
+      document.body.removeChild(inp);
+      if(!files.length)return;
+      if(files.length===1){await cfInsertImageBlock(files[0]);return;}
+      _cfShowImageModeDialog(files,savedRange);
+    });
+    inp.click();return;
+  }
+  if(id==='video'){
+    const inp=document.createElement('input');
+    inp.type='file';inp.accept='video/mp4,video/webm,video/ogg,video/mov,.mp4,.webm,.mov';
     inp.style.cssText='position:fixed;top:-9999px;left:-9999px;opacity:0';
     document.body.appendChild(inp);
     inp.addEventListener('change',async function(){
@@ -6140,21 +6153,6 @@ function _slashInsert(id){
       document.body.removeChild(inp);
       if(!files.length)return;
       for(const f of files)await cfInsertImageBlock(f);
-    });
-    inp.click();return;
-  }
-  if(id==='carousel'){
-    const inp=document.createElement('input');
-    inp.type='file';inp.accept='image/*,image/gif';inp.multiple=true;
-    inp.style.cssText='position:fixed;top:-9999px;opacity:0';
-    document.body.appendChild(inp);
-    inp.addEventListener('change',async function(){
-      const files=Array.from(this.files);
-      document.body.removeChild(inp);
-      if(!files.length)return;
-      const block=await cfBuildCarouselBlock(files);
-      if(block)_cfInsertBlockAtRange(block,_slashSavedRange);
-      onContentChange();
     });
     inp.click();return;
   }
@@ -6641,6 +6639,45 @@ async function _cfMakeImgBlock(file){
   _cacheUrl(id,objUrl);
   return _cfBuildImgBlock(id,objUrl,isVid,file.name||'image');
 }
+function _cfShowImageModeDialog(files,savedRange){
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;z-index:1200;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;animation:cpFade .15s ease';
+  const box=document.createElement('div');
+  box.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:28px 24px 24px;width:360px;max-width:calc(100vw - 32px);box-shadow:0 24px 80px rgba(0,0,0,.35);font-family:var(--font)';
+  box.innerHTML=`
+<div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px">Đã chọn ${files.length} hình ảnh</div>
+<div style="font-size:13px;color:var(--text2);margin-bottom:20px">Bạn muốn chèn theo cách nào?</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+  <button id="_cfModeCarousel" style="display:flex;align-items:center;gap:14px;padding:16px 18px;border:2px solid var(--accent);border-radius:12px;background:var(--accent-light);cursor:pointer;font-family:var(--font);width:100%;text-align:left;transition:.12s">
+    <i class="ti ti-slideshow" style="font-size:24px;color:var(--accent);flex-shrink:0"></i>
+    <div>
+      <div style="font-size:13px;font-weight:600;color:var(--accent)">Carousel / Slider</div>
+      <div style="font-size:11.5px;color:var(--text2);margin-top:2px">Gộp ${files.length} ảnh thành 1 khối slideshow</div>
+    </div>
+  </button>
+  <button id="_cfModeIndividual" style="display:flex;align-items:center;gap:14px;padding:16px 18px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface);cursor:pointer;font-family:var(--font);width:100%;text-align:left;transition:.12s">
+    <i class="ti ti-layout-grid" style="font-size:24px;color:var(--text2);flex-shrink:0"></i>
+    <div>
+      <div style="font-size:13px;font-weight:600;color:var(--text)">Hình riêng lẻ</div>
+      <div style="font-size:11.5px;color:var(--text2);margin-top:2px">Chèn ${files.length} ảnh thành từng khối riêng</div>
+    </div>
+  </button>
+</div>`;
+  ov.appendChild(box);document.body.appendChild(ov);
+  const close=()=>ov.remove();
+  box.querySelector('#_cfModeCarousel').addEventListener('click',async()=>{
+    close();
+    const block=await cfBuildCarouselBlock(files);
+    if(block){_cfInsertBlockAtRange(block,savedRange);onContentChange();}
+  });
+  box.querySelector('#_cfModeIndividual').addEventListener('click',async()=>{
+    close();
+    for(const f of files)await cfInsertImageBlock(f);
+  });
+  ov.addEventListener('click',e=>{if(e.target===ov)close();});
+  document.addEventListener('keydown',function esc(e){if(e.key==='Escape'){close();document.removeEventListener('keydown',esc);}});
+}
+
 async function cfInsertImageBlock(file){
   if(!file)return;
   // Store in IDB
