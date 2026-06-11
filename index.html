@@ -94,7 +94,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .hsd-item-icon{width:30px;height:30px;border-radius:6px;background:var(--accent-light);display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:14px;flex-shrink:0}
 .hsd-item-meta{font-size:11px;color:var(--text3);margin-top:1px}
 /* Page action bar */
-.page-action-bar{height:46px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:10px;flex-shrink:0;z-index:10;transition:background var(--tr),border-color var(--tr)}
+.pab-wrapper{flex-shrink:0;overflow:hidden;height:46px;transition:height 250ms cubic-bezier(.4,0,.2,1)}
+.pab-wrapper.pab-hidden{height:0}
+.pab-wrapper.pab-hidden .page-action-bar{transform:translateY(-100%)}
+.page-action-bar{height:46px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:10px;flex-shrink:0;z-index:10;will-change:transform;transition:transform 250ms cubic-bezier(.4,0,.2,1),background var(--tr),border-color var(--tr)}
 .pab-left{display:flex;align-items:center;gap:8px;flex:1;min-width:0;overflow:hidden}
 /* Project logo in PAB */
 .pab-logo{width:28px;height:28px;border-radius:7px;background:var(--accent);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;overflow:hidden;transition:opacity .15s;user-select:none;position:relative}
@@ -1424,7 +1427,8 @@ td.tbl-inner-container{padding:0!important;overflow:visible!important;vertical-a
       <button class="hbtn primary" onclick="newDoc()" style="margin-top:10px"><i class="ti ti-plus"></i> Tạo tài liệu mới</button>
     </div>
     <div class="editor-panel" id="editorPanel" style="display:none">
-      <!-- PAGE ACTION BAR (inside editor panel) -->
+      <!-- PAGE ACTION BAR wrapper — Smart Sticky (hides on scroll down, shows on scroll up) -->
+      <div id="pabWrapper" class="pab-wrapper">
       <div class="page-action-bar" id="pageActionBar">
         <div class="pab-left">
           <!-- Project logo (Confluence-style space icon) -->
@@ -1485,6 +1489,7 @@ td.tbl-inner-container{padding:0!important;overflow:visible!important;vertical-a
           </button>
         </div>
       </div>
+      </div><!-- /#pabWrapper -->
       <div class="doc-body">
         <div class="editor-wrap" id="editorWrap">
           <div class="drop-overlay" id="dropOverlay"><i class="ti ti-photo-up"></i><span>Thả ảnh/video vào đây</span></div>
@@ -1943,11 +1948,42 @@ function _checkShowWelcome(){
   }
 }
 
+// ══ SMART STICKY PAGE TOOLBAR ════════════════════════════
+let _pabSY=0;
+function _initSmartPab(){
+  const scr=document.getElementById('editorScroll');
+  if(!scr)return;
+  scr.addEventListener('scroll',_onSmartPabScroll,{passive:true});
+}
+function _onSmartPabScroll(){
+  const scr=document.getElementById('editorScroll');
+  const wrap=document.getElementById('pabWrapper');
+  if(!scr||!wrap)return;
+  const sy=scr.scrollTop;
+  const delta=sy-_pabSY;
+  _pabSY=sy;
+  // Always show when near top
+  if(sy<10){wrap.classList.remove('pab-hidden');return;}
+  if(delta>0&&sy>40){
+    // Scrolling down past threshold — hide
+    wrap.classList.add('pab-hidden');
+  }else if(delta<-10){
+    // Scrolling up enough — reveal
+    wrap.classList.remove('pab-hidden');
+  }
+}
+function _resetSmartPab(){
+  _pabSY=0;
+  const wrap=document.getElementById('pabWrapper');
+  if(wrap)wrap.classList.remove('pab-hidden');
+}
+
 function init(){
   applyTheme();
   _sbInitResize();
   _initSlashCommands();
   _pabLogoInit();
+  _initSmartPab();
   initCanvasScaling();
   // Restore saved width
   const savedW=localStorage.getItem('sb_width');
@@ -2636,6 +2672,7 @@ function openDoc(id){
   state.currentDocId=id;persist();
   document.getElementById('emptyState').style.display='none';
   document.getElementById('editorPanel').style.display='flex';
+  _resetSmartPab();
   document.getElementById('docTitleInput').value=doc.title||'';
   document.getElementById('editor').innerHTML=doc.content||'';
   _expandAncestors(id);
