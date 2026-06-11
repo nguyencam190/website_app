@@ -81,7 +81,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .logo-box{width:30px;height:30px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;box-shadow:0 2px 8px var(--accent-glow)}
 .logo-label{color:#fff;font-size:13.5px;font-weight:700;letter-spacing:.2px}
 .header-center{position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;z-index:10}
-.header-search-wrap{width:460px;position:relative;z-index:10}
+.header-search-wrap{width:560px;position:relative;z-index:10}
 .header-search-inp{width:100%;height:34px;background:rgba(255,255,255,.09);border:1.5px solid rgba(255,255,255,.14);border-radius:5px;padding:0 12px 0 34px;color:#fff;font-size:13.5px;outline:none;font-family:var(--font);transition:all .15s}
 .header-search-inp::placeholder{color:rgba(255,255,255,.42)}
 .header-search-inp:focus{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.35)}
@@ -8946,14 +8946,17 @@ async function doExportWebsite(){
     `[data-theme="dark"]{--accent:#4d8aff;--accent-light:rgba(77,138,255,.12);--sb:var(--surface2);--sb-nav:#8b949e;--sb-nav-hbg:var(--surface3);--sb-sec:#6e7681;--sb-active-bg:rgba(77,138,255,.1);--sb-active-txt:var(--accent);--bg:#0d1117;--surface:#161b22;--surface2:#21262d;--surface3:#30363d;--border:#30363d;--border2:#484f58;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--tbl-hbg:#21262d;--tbl-htxt:#c9d1d9;--tbl-border:#30363d;--tbl-hover:#1c2128;--tbl-stripe:#161b22;--shadow-sm:0 1px 3px rgba(0,0,0,.3)}`,
     'html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);overflow-x:hidden}',
     'body{display:flex;flex-direction:column;height:100vh;overflow:hidden;transition:background var(--tr),color var(--tr)}',
-    '.ws-header{height:52px;background:#1a1a1a;border-bottom:none;display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0}',
+    '.ws-header{height:52px;background:#1a1a1a;border-bottom:none;display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;position:relative}',
     '[data-theme="dark"] .ws-header{background:#0d1117}',
-    '.ws-logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;color:#fff}',
+    '.ws-logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;color:#fff;flex-shrink:0}',
     '.ws-logo-box{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),#7c3aed);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:700;flex-shrink:0}',
     '.ws-spacer{flex:1}',
-    '.ws-search{padding:7px 14px;border-radius:8px;border:1.5px solid rgba(255,255,255,.14);font-size:13px;background:rgba(255,255,255,.09);color:#fff;outline:none;font-family:var(--font);width:260px;transition:all .15s}',
-    '.ws-search::placeholder{color:rgba(255,255,255,.4)}',
+    '.ws-header-center{position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;z-index:10}',
+    '.ws-search-wrap{width:560px;position:relative;z-index:10}',
+    '.ws-search{width:100%;height:34px;background:rgba(255,255,255,.09);border:1.5px solid rgba(255,255,255,.14);border-radius:5px;padding:0 12px 0 34px;color:#fff;font-size:13.5px;outline:none;font-family:var(--font);transition:all .15s}',
+    '.ws-search::placeholder{color:rgba(255,255,255,.42)}',
     '.ws-search:focus{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.35)}',
+    '.ws-search-icon{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.4);font-size:15px;pointer-events:none}',
     '.ws-doc-count{font-size:12px;color:rgba(255,255,255,.5);white-space:nowrap}',
     '.ws-theme-btn{width:34px;height:34px;border-radius:8px;border:none;background:transparent;color:#b3b3b3;cursor:pointer;font-size:16px;transition:.15s;flex-shrink:0}',
     '.ws-theme-btn:hover{background:rgba(255,255,255,.12);color:#fff}',
@@ -9564,10 +9567,11 @@ async function doExportWebsite(){
     '<body>',
     '<div class="ws-header">',
     '<div class="ws-logo"><div class="ws-logo-box">'+(title.charAt(0)||'P').toUpperCase()+'</div>'+escH(title)+'</div>',
-    '<div class="ws-spacer"></div>',
-    '<input class="ws-search" id="wsSearch" type="text" placeholder="Search...">',
+    '<div class="ws-header-center"><div class="ws-search-wrap"><i class="ti ti-search ws-search-icon"></i><input class="ws-search" id="wsSearch" type="text" placeholder="Search..." autocomplete="off"></div></div>',
+    '<div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0">',
     '<span id="wsDocCount" class="ws-doc-count">'+docs.length+' pages</span>',
     '<button class="ws-theme-btn" id="wsThemeBtn">&#9728;</button>',
+    '</div>',
     '</div>',
     '<div class="ws-layout" id="wsLayout">',
     '<div class="ws-sidebar" id="wsSidebar"><div class="ws-sb-resizer" id="wsSbRz" title="Keo de thay doi do rong"></div>'+navHTML+'</div>',
