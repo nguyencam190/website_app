@@ -6785,7 +6785,7 @@ function _cfBuildImgBlock(id,src,isVid,name){
 
   // Wrap + inner + media
   const wrap=document.createElement('div');wrap.className='cf-img-wrap';
-  const inner=document.createElement('div');inner.className='cf-img-inner';inner.style.width='100%';
+  const inner=document.createElement('div');inner.className='cf-img-inner';if(isVid)inner.style.width='100%';
   const media=isVid?document.createElement('video'):document.createElement('img');
   if(isVid){media.src=src;media.controls=true;media.muted=true;media.loop=true;media.autoplay=true;media.setAttribute('playsinline','');}
   else{media.src=src;media.alt=name||'image';}
