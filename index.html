@@ -9258,6 +9258,7 @@ async function doExportWebsite(){
     '  var sep2=document.createElement("span");sep2.className="ws-pab-sep";sep2.textContent="›";bc.appendChild(sep2);',
     '  var curEl=document.createElement("span");curEl.className="ws-pab-bc-cur";curEl.textContent=doc.title||"Untitled";curEl.title=doc.title||"Untitled";bc.appendChild(curEl);',
     '}',
+    'function _wsUpdatePabStar(id){var btn=document.getElementById("wsPabStarBtn");if(!btn)return;var isS=_wsGetStr().indexOf(id)>-1;btn.classList.toggle("starred",isS);btn.innerHTML=isS?\'<i class="ti ti-star-filled"></i>\':\'<i class="ti ti-star"></i>\';}',
 
     /* ── showDoc ── */
     'function showDoc(id){',
@@ -9275,6 +9276,7 @@ async function doExportWebsite(){
     '    pabW.style.display="block";',
     '    pabW.classList.remove("ws-pab-hidden");',
     '    _wsBuildPabBreadcrumb(doc);',
+    '    _wsUpdatePabStar(id);',
     '  }',
     '  /* Update star state */ var str=_wsGetStr();',
     '  document.querySelectorAll(".ws-star-btn").forEach(function(b){b.classList.toggle("starred",str.indexOf(b.closest(".ws-nav-item").dataset.docid)>-1);b.textContent=str.indexOf(b.closest(".ws-nav-item")?.dataset.docid)>-1?"★":"☆";});',
@@ -9486,6 +9488,18 @@ async function doExportWebsite(){
     '    else if(delta<0){if(_wsPabAcc>0)_wsPabAcc=0;_wsPabAcc+=delta;if(_wsPabAcc<-60)pabW.classList.remove("ws-pab-hidden");}',
     '  },{passive:true});}',
     '})();',
+    /* ── PAB star + copy-link buttons ── */
+    '(function(){',
+    '  var pabStar=document.getElementById("wsPabStarBtn");',
+    '  if(pabStar)pabStar.addEventListener("click",function(){if(_cur){wsToggleStar(_cur,null);_wsUpdatePabStar(_cur);}});',
+    '  var pabCopy=document.getElementById("wsPabCopyBtn");',
+    '  if(pabCopy)pabCopy.addEventListener("click",function(){',
+    '    navigator.clipboard.writeText(location.href).then(function(){',
+    '      pabCopy.innerHTML=\'<i class="ti ti-check"></i>\';',
+    '      setTimeout(function(){pabCopy.innerHTML=\'<i class="ti ti-link"></i>\';},1500);',
+    '    }).catch(function(){});',
+    '  });',
+    '})();',
     /* ── Sidebar toggle (collapse / expand) ── */
     '(function(){',
     '  var col=document.getElementById("wsSbCollapse");',
@@ -9577,7 +9591,7 @@ async function doExportWebsite(){
     '<div class="ws-sidebar" id="wsSidebar"><div class="ws-sb-resizer" id="wsSbRz" title="Keo de thay doi do rong"></div>'+navHTML+'</div>',
     '<button class="ws-sb-expand" id="wsSbExpand" title="Mở sidebar"><i class="ti ti-chevrons-right"></i></button>',
     '<div style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden">',
-    '<div class="ws-pab-wrapper" id="wsPabWrapper" style="display:none"><div class="ws-pab" id="wsPab"><nav class="ws-pab-crumb" id="wsPabBreadcrumb" aria-label="Vi tri trang"></nav></div></div>',
+    '<div class="ws-pab-wrapper" id="wsPabWrapper" style="display:none"><div class="ws-pab" id="wsPab"><nav class="ws-pab-crumb" id="wsPabBreadcrumb" aria-label="Vi tri trang"></nav><div class="ws-pab-right"><button class="ws-pab-icon-btn" id="wsPabStarBtn" title="Danh dau sao"><i class="ti ti-star"></i></button><button class="ws-pab-icon-btn" id="wsPabCopyBtn" title="Sao chep lien ket"><i class="ti ti-link"></i></button></div></div></div>',
     '<div class="ws-main" id="wsMain">',
     pagesHTML,
     '<div id="wsNoResult" class="ws-no" style="display:none">Không tìm thấy tài liệu.</div>',
