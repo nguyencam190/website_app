@@ -7186,14 +7186,14 @@ function emojiFilter(q){
   grid.innerHTML=html;
 }
 function emojiInsert(emoji){
-  emojiClose();
-  // Restore saved range and insert at correct position
-  const sel=window.getSelection();
-  if(_emojiInsertRange){
-    sel.removeAllRanges();sel.addRange(_emojiInsertRange);
-  }
-  document.execCommand('insertText',false,emoji);
+  const rangeToUse=_emojiInsertRange;
   _emojiInsertRange=null;
+  emojiClose();
+  const editor=document.getElementById('editor');
+  if(editor)editor.focus();
+  const sel=window.getSelection();
+  if(rangeToUse){try{sel.removeAllRanges();sel.addRange(rangeToUse);}catch(e){}}
+  document.execCommand('insertText',false,emoji);
   onContentChange();
 }
 document.addEventListener('mousedown',e=>{
