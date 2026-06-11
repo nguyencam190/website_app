@@ -4748,17 +4748,15 @@ function tblEqualizeColumns(table){
   const existingCg=table.querySelector('colgroup');
   if(existingCg)existingCg.remove();
 
-  // ── Distribute equally across available width ─────────────
-  // Use canvas width; fall back to table's own rendered width or 800px
-  const scroll=document.getElementById('editorScroll');
-  const avail=(scroll?scroll.offsetWidth:table.offsetWidth||800)-(hasRowNum?TBL_ROWNUM_W:0);
-  const eachW=Math.max(40,Math.floor(avail/dataCols));
+  // ── Distribute equally using % so CSS handles rounding perfectly ──
+  // Row-num stays px; data cols use calc((100% - 18px) / N) so no leftover pixels
+  const colPct=`calc((100% - ${hasRowNum?TBL_ROWNUM_W:0}px) / ${dataCols})`;
 
   const cg=document.createElement('colgroup');
   cg.dataset.auto='1';
   for(let i=0;i<totalCols;i++){
     const col=document.createElement('col');
-    col.style.width=(i===0&&hasRowNum)?TBL_ROWNUM_W+'px':eachW+'px';
+    col.style.width=(i===0&&hasRowNum)?TBL_ROWNUM_W+'px':colPct;
     cg.appendChild(col);
   }
   table.insertBefore(cg,table.firstChild);
@@ -4792,9 +4790,9 @@ function tblDistributeColumns(table){
   // Available width = current rendered table width minus the fixed # column
   const tableW=table.offsetWidth||table.parentElement?.offsetWidth||800;
   const avail=Math.max(dataCols*40, tableW-(hasRowNum?TBL_ROWNUM_W:0));
-  const eachW=Math.floor(avail/dataCols);
+  const distPct=`calc((100% - ${hasRowNum?TBL_ROWNUM_W:0}px) / ${dataCols})`;
 
-  // Rebuild colgroup: # stays fixed, all data cols get equal width
+  // Rebuild colgroup: # stays fixed, all data cols get equal % width
   let cg=table.querySelector('colgroup');
   if(!cg){cg=document.createElement('colgroup');table.insertBefore(cg,table.firstChild);}
   const totalColCount=(hasRowNum?1:0)+dataCols;
@@ -4803,7 +4801,7 @@ function tblDistributeColumns(table){
 
   Array.from(cg.children).forEach((col,i)=>{
     if(hasRowNum&&i===0){col.style.width=TBL_ROWNUM_W+'px';return;}
-    col.style.width=eachW+'px';
+    col.style.width=distPct;
   });
 
   // This is a deliberate user action → NOT auto, so widths persist
@@ -5853,15 +5851,13 @@ function tgInsert(rows,cols){
   // ── Build table via DOM ──────────────────────────────────
   const table=document.createElement('table');
 
-  // ── Colgroup — equal widths filling canvas width
+  // ── Colgroup — equal % widths so CSS handles rounding, no leftover pixels
   const cg=document.createElement('colgroup');
   cg.dataset.auto='1';
-  const _tgScroll=document.getElementById('editorScroll');
-  const _tgAvail=(_tgScroll?_tgScroll.offsetWidth:800)-TBL_ROWNUM_W;
-  const _tgEach=Math.max(40,Math.floor(_tgAvail/cols));
+  const _colPct=`calc((100% - ${TBL_ROWNUM_W}px) / ${cols})`;
   for(let c=0;c<cols;c++){
     const col=document.createElement('col');
-    col.style.width=_tgEach+'px';
+    col.style.width=_colPct;
     cg.appendChild(col);
   }
   table.appendChild(cg);
