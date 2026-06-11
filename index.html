@@ -9129,7 +9129,12 @@ async function doExportWebsite(){
       const b64=await idbToB64(id);
       if(b64&&media){
         media.src=b64;
-        media.style.cssText='display:block;max-width:100%;height:auto;border-radius:4px;cursor:zoom-in';
+        if(media.tagName==='VIDEO'){
+          media.style.cssText='display:block;max-width:100%;height:auto;border-radius:4px;pointer-events:auto;cursor:default';
+          media.setAttribute('controls','');media.setAttribute('muted','');media.setAttribute('loop','');media.setAttribute('playsinline','');
+        } else {
+          media.style.cssText='display:block;max-width:100%;height:auto;border-radius:4px;cursor:zoom-in';
+        }
         block.removeAttribute('data-cfimgid');
       } else {
         block.remove();
@@ -9450,7 +9455,8 @@ async function doExportWebsite(){
     '.ws-canvas .cf-img-block[data-align="center"] .cf-img-wrap{justify-content:center}',
     '.ws-canvas .cf-img-block[data-align="right"] .cf-img-wrap{justify-content:flex-end}',
     '.ws-canvas .cf-img-inner{position:relative;display:inline-block;max-width:100%;border-radius:4px;overflow:hidden;line-height:0;transition:box-shadow .35s ease,outline-color .35s ease}',
-    '.ws-canvas .cf-img-inner img,.ws-canvas .cf-img-inner video{display:block;max-width:100%;height:auto;border-radius:4px;cursor:zoom-in}',
+    '.ws-canvas .cf-img-inner img{display:block;max-width:100%;height:auto;border-radius:4px;cursor:zoom-in}',
+    '.ws-canvas .cf-img-inner video{display:block;max-width:100%;height:auto;border-radius:4px;pointer-events:auto;cursor:default}',
     '.ws-canvas .cf-img-caption{display:block;text-align:center;font-size:12.5px;color:var(--text3);padding:6px 8px;min-height:20px}',
     '.ws-canvas .cf-img-caption:empty{display:none}',
     /* ── Carousel — merged (cf-carousel-slides + cf-car-track variants) ── */
