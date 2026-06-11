@@ -4730,36 +4730,40 @@ function _tblEdgeDragStart(e,wrap,table,side){
 // ══════════════════════════════════════════════════════════
 // Default pixel width per new data column (≈ 7mm at 96dpi = ~26px, use 120px for readability)
 const TBL_DEFAULT_COL_W = 120;
-const TBL_ROWNUM_W      = 36;
+const TBL_ROWNUM_W      = 18;
 
 function tblEqualizeColumns(table){
   if(!table)return;
   table.style.tableLayout='fixed';
   table.style.borderCollapse='collapse';
-  table.style.width=''; // Let CSS (width:max-content) determine table width from colgroup
+  table.style.width='100%';
 
   const firstRow=table.rows[0];if(!firstRow)return;
   const hasRowNum=firstRow.cells[0]&&firstRow.cells[0].classList.contains('tbl-row-num');
   const totalCols=firstRow.cells.length;
+  const dataCols=totalCols-(hasRowNum?1:0);
+  if(dataCols<1)return;
 
   // ── Remove any existing colgroup ─────────────────────────
   const existingCg=table.querySelector('colgroup');
   if(existingCg)existingCg.remove();
 
-  // ── Build fresh colgroup with EXPLICIT pixel widths ───────
-  // Every col gets a fixed pixel width so width:max-content has a concrete anchor.
-  // Row-num col → 36px; data cols → TBL_DEFAULT_COL_W (120px).
+  // ── Distribute equally across available width ─────────────
+  // Use canvas width; fall back to table's own rendered width or 800px
+  const scroll=document.getElementById('editorScroll');
+  const avail=(scroll?scroll.offsetWidth:table.offsetWidth||800)-(hasRowNum?TBL_ROWNUM_W:0);
+  const eachW=Math.max(40,Math.floor(avail/dataCols));
+
   const cg=document.createElement('colgroup');
-  cg.dataset.auto='1'; // marks as auto-equalized — user drag will clear this flag
+  cg.dataset.auto='1';
   for(let i=0;i<totalCols;i++){
     const col=document.createElement('col');
-    col.style.width=(i===0&&hasRowNum)?TBL_ROWNUM_W+'px':TBL_DEFAULT_COL_W+'px';
+    col.style.width=(i===0&&hasRowNum)?TBL_ROWNUM_W+'px':eachW+'px';
     cg.appendChild(col);
   }
   table.insertBefore(cg,table.firstChild);
 
   // ── Clear ALL inline widths from cells ────────────────────
-  // colgroup is the ONLY width source with table-layout:fixed
   Array.from(table.rows).forEach(row=>{
     Array.from(row.cells).forEach(cell=>{
       cell.style.width='';
@@ -5480,7 +5484,7 @@ function tblAttachTable(table){
   // Default ON unless data-rownums="0"
   const showRowNums=table.dataset.rownums!=='0';
   if(showRowNums){
-    const ROW_NUM_W=36;
+    const ROW_NUM_W=TBL_ROWNUM_W;
     const allRows=Array.from(table.rows);
     allRows.forEach((row,ri)=>{
       const numCell=ri===0?document.createElement('th'):document.createElement('td');
@@ -5849,12 +5853,15 @@ function tgInsert(rows,cols){
   // ── Build table via DOM ──────────────────────────────────
   const table=document.createElement('table');
 
-  // ── Colgroup FIRST — explicit pixel widths lock column sizes immediately
-  // This is the skeleton that table-layout:fixed + width:max-content respects.
+  // ── Colgroup — equal widths filling canvas width
   const cg=document.createElement('colgroup');
+  cg.dataset.auto='1';
+  const _tgScroll=document.getElementById('editorScroll');
+  const _tgAvail=(_tgScroll?_tgScroll.offsetWidth:800)-TBL_ROWNUM_W;
+  const _tgEach=Math.max(40,Math.floor(_tgAvail/cols));
   for(let c=0;c<cols;c++){
     const col=document.createElement('col');
-    col.style.width=TBL_DEFAULT_COL_W+'px';
+    col.style.width=_tgEach+'px';
     cg.appendChild(col);
   }
   table.appendChild(cg);
