@@ -4892,11 +4892,14 @@ function _selectRect(table){
   const pos=all.filter(c=>!c.classList.contains('tbl-row-num')).map(c=>{
     const ri=rows.indexOf(c.closest('tr'));
     const ci=(grid[ri]||[]).indexOf(c);
-    return{ri,ci};
+    return{ri,ci,c};
   }).filter(p=>p.ci>=0);
   if(!pos.length)return;
-  const minRi=Math.min(...pos.map(p=>p.ri)),maxRi=Math.max(...pos.map(p=>p.ri));
-  const minCi=Math.min(...pos.map(p=>p.ci)),maxCi=Math.max(...pos.map(p=>p.ci));
+  // Expand bounding box to include full span extents of each cell
+  const minRi=Math.min(...pos.map(p=>p.ri));
+  const minCi=Math.min(...pos.map(p=>p.ci));
+  const maxRi=Math.max(...pos.map(p=>p.ri+(p.c.rowSpan||1)-1));
+  const maxCi=Math.max(...pos.map(p=>p.ci+(p.c.colSpan||1)-1));
   table.querySelectorAll('.tbl-cell-sel').forEach(c=>c.classList.remove('tbl-cell-sel'));
   const seen=new Set();
   for(let ri=minRi;ri<=maxRi;ri++){
@@ -4950,21 +4953,33 @@ function tblMergeCells(){
   if(cells.length<2){tblClearCellSel();return;}
   const grid=_buildColMap(_mergeTable);
   const rows=Array.from(_mergeTable.rows);
-  const pos=cells.map(c=>{
+  // Map to grid positions (deduplicate — a cell with rowSpan/colSpan appears once)
+  const seen=new Set();const pos=[];
+  for(const c of cells){
+    if(seen.has(c))continue;seen.add(c);
     const ri=rows.indexOf(c.closest('tr'));
     const ci=(grid[ri]||[]).indexOf(c);
-    return{ri,ci,c};
-  });
-  const minRi=Math.min(...pos.map(p=>p.ri)),maxRi=Math.max(...pos.map(p=>p.ri));
-  const minCi=Math.min(...pos.map(p=>p.ci)),maxCi=Math.max(...pos.map(p=>p.ci));
+    if(ci>=0)pos.push({ri,ci,c});
+  }
+  if(pos.length<2)return;
+  // Bounding box including the full extent of each cell's spans
+  const minRi=Math.min(...pos.map(p=>p.ri));
+  const minCi=Math.min(...pos.map(p=>p.ci));
+  const maxRi=Math.max(...pos.map(p=>p.ri+(p.c.rowSpan||1)-1));
+  const maxCi=Math.max(...pos.map(p=>p.ci+(p.c.colSpan||1)-1));
   const anchor=grid[minRi]&&grid[minRi][minCi];
   if(!anchor)return;
-  anchor.innerHTML='';
+  // Collect ALL unique cells within the bounding rectangle (not just selected ones)
+  const inRect=new Set();
+  for(let r=minRi;r<=maxRi;r++){
+    for(let c=minCi;c<=maxCi;c++){
+      const cell=(grid[r]||[])[c];
+      if(cell&&!cell.classList.contains('tbl-row-num'))inRect.add(cell);
+    }
+  }
   anchor.colSpan=maxCi-minCi+1;
   anchor.rowSpan=maxRi-minRi+1;
-  anchor.style.textAlign='center';
-  anchor.style.verticalAlign='middle';
-  cells.filter(c=>c!==anchor).forEach(c=>c.remove());
+  inRect.forEach(c=>{if(c!==anchor)c.remove();});
   const _cg=_mergeTable.querySelector('colgroup');
   if(_cg){
     const ws=Array.from(_cg.querySelectorAll('col')).map(col=>col.style.width||'').join(',');
@@ -4972,11 +4987,10 @@ function tblMergeCells(){
   }
   tblClearCellSel();
   onContentChange();setTimeout(tblAttachAll,50);
-  toast('Đã gộp '+cells.length+' ô','success');
+  toast('Đã gộp '+inRect.size+' ô','success');
 }
 
 function tblSplitCell(){
-  // Pick the target cell: prefer active merged cell, else first selected merged cell
   let cell=_activeTd;
   if(!cell||!(cell.colSpan>1||cell.rowSpan>1)){
     if(_mergeTable)cell=Array.from(_mergeTable.querySelectorAll('.tbl-cell-sel'))
@@ -4986,23 +5000,39 @@ function tblSplitCell(){
   const table=cell.closest('table');if(!table)return;
   const cs=cell.colSpan||1,rs=cell.rowSpan||1;
   if(cs===1&&rs===1){toast('Ô này chưa được gộp','info');return;}
+  // Capture position from the ORIGINAL grid (before any changes)
   const grid=_buildColMap(table);
   const rows=Array.from(table.rows);
   const ri=rows.indexOf(cell.closest('tr'));
   const ci=(grid[ri]||[]).indexOf(cell);
+  const maxCi=ci+cs-1;
+  // Pre-compute each row's reference element (first DOM cell at original grid col > maxCi)
+  // Must be done before resetting spans, as the grid shifts after the reset
+  const rowRefs=[];
+  for(let r=ri;r<ri+rs;r++){
+    const targetRow=table.rows[r];
+    let ref=null;
+    if(targetRow){
+      const gr=grid[r]||[];
+      for(let di=0;di<targetRow.cells.length;di++){
+        const domCell=targetRow.cells[di];
+        let gci=-1;
+        for(let gc=0;gc<gr.length;gc++){if(gr[gc]===domCell){gci=gc;break;}}
+        if(gci>maxCi){ref=domCell;break;}
+      }
+    }
+    rowRefs.push(ref);
+  }
+  // Reset anchor spans NOW (after computing refs)
   cell.colSpan=1;cell.rowSpan=1;
+  // Insert new cells using pre-computed references
   for(let r=ri;r<ri+rs;r++){
     const targetRow=table.rows[r];if(!targetRow)continue;
-    for(let c=ci;c<ci+cs;c++){
-      if(r===ri&&c===ci)continue;
-      const newCell=document.createElement(ri===0?'th':'td');newCell.innerHTML='<br>';
-      // Find correct insertion point using the logical grid
-      const curGrid=_buildColMap(table);
-      let ref=null;
-      for(let pc=0;pc<targetRow.cells.length;pc++){
-        const pcCi=(curGrid[r]||[]).indexOf(targetRow.cells[pc]);
-        if(pcCi>=c){ref=targetRow.cells[pc];break;}
-      }
+    const ref=rowRefs[r-ri];
+    // Anchor row: insert from ci+1; other rows: insert from ci
+    const startC=r===ri?ci+1:ci;
+    for(let c=startC;c<=maxCi;c++){
+      const newCell=document.createElement('td');newCell.innerHTML='<br>';
       if(ref)targetRow.insertBefore(newCell,ref);else targetRow.appendChild(newCell);
     }
   }
