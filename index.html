@@ -896,6 +896,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .cf-car-add-slide{position:absolute;bottom:40px;right:10px;background:rgba(0,0,0,.5);border:2px dashed rgba(255,255,255,.5);border-radius:6px;color:#fff;font-size:12px;padding:4px 10px;cursor:pointer;backdrop-filter:blur(4px);display:none;transition:.15s}
 .cf-carousel-block:hover .cf-car-add-slide,.cf-carousel-block.selected .cf-car-add-slide{display:flex;align-items:center;gap:4px}
 .cf-car-add-slide:hover{background:rgba(0,0,0,.7);border-color:#fff}
+.cf-carousel-block[data-carwidth="50"]{width:50%}
+.cf-carousel-block[data-carwidth="75"]{width:75%}
+.cf-carousel-block[data-align="center"]{margin-left:auto;margin-right:auto}
+.cf-carousel-block[data-align="right"]{margin-left:auto;margin-right:0}
+.cf-carousel-block[data-align="left"]{margin-left:0;margin-right:auto}
 
 /* ═══ NOTE PANEL ═══════════════════════════════════════════ */
 .cf-panel{display:flex;gap:12px;padding:14px 16px;border-radius:8px;margin:12px 0;border-left:4px solid;position:relative;box-sizing:border-box}
@@ -7053,6 +7058,28 @@ function _cfBuildCarousel(slides){
     block.parentNode?.insertBefore(fb,block);block.remove();onContentChange();
   });
   tb.appendChild(addBtn);tb.appendChild(delBtn);
+  // Align + Width controls (same style as image block)
+  const _cSep0=document.createElement('div');_cSep0.style.cssText='width:1px;height:20px;background:var(--border);margin:0 3px';tb.appendChild(_cSep0);
+  [{key:'left',icon:'ti-align-left',title:'Căn trái'},{key:'center',icon:'ti-align-center',title:'Căn giữa'},{key:'right',icon:'ti-align-right',title:'Căn phải'}].forEach(function(a){
+    const btn=document.createElement('button');btn.className='cf-img-tb-btn'+(block.dataset.align===a.key?' active':'');
+    btn.innerHTML='<i class="ti '+a.icon+'" style="font-size:13px"></i>';btn.title=a.title;btn.dataset.calign=a.key;
+    btn.addEventListener('click',function(){
+      block.dataset.align=a.key;
+      tb.querySelectorAll('[data-calign]').forEach(function(b){b.classList.toggle('active',b.dataset.calign===a.key);});
+      onContentChange();
+    });
+    tb.appendChild(btn);
+  });
+  const _cSepW=document.createElement('div');_cSepW.style.cssText='width:1px;height:20px;background:var(--border);margin:0 3px';tb.appendChild(_cSepW);
+  [{w:'50',label:'50%'},{w:'75',label:'75%'},{w:'100',label:'100%'}].forEach(function(wt){
+    const btn=document.createElement('button');btn.className='cf-img-tb-btn';
+    btn.innerHTML='<span style="font-size:10px;font-weight:600">'+wt.label+'</span>';btn.title='Chiều rộng '+wt.label;
+    btn.addEventListener('click',function(){
+      if(wt.w==='100'){delete block.dataset.carwidth;}else{block.dataset.carwidth=wt.w;}
+      onContentChange();
+    });
+    tb.appendChild(btn);
+  });
   // Shadow & Border swatches
   const _carSwPalette=[{bg:'#ffffff',border:'1px solid #ccc',val:'1',name:'Trắng'},{bg:'rgba(0,0,0,.22)',border:'none',val:'2',name:'Nhạt'},{bg:'rgba(0,0,0,.55)',border:'none',val:'3',name:'Đậm'},{bg:'#000000',border:'none',val:'4',name:'Đen'}];
   function _carMakeSwatch(labelText,dataAttr){
@@ -9111,7 +9138,6 @@ async function doExportWebsite(){
         tbl.insertBefore(cg,tbl.firstChild);
       }
       tbl.style.setProperty('table-layout','fixed','important');
-      tbl.style.setProperty('width','max-content','important');
       tbl.style.borderCollapse='collapse';
     });
     // Inner tables: rebuild from data-innerwidths + stay 100% of container
@@ -9392,7 +9418,7 @@ async function doExportWebsite(){
     '.ws-canvas .editor-content code{background:var(--surface2);border-radius:4px;padding:1px 6px;font-family:var(--mono);font-size:.85em}',
     '.ws-canvas .editor-content img{max-width:100%;height:auto;border-radius:8px;display:block;margin:10px 0}',
     '.ws-canvas .editor-content .tbl-outer{display:block;margin:14px 0;width:100%;overflow-x:auto;overflow-y:visible}',
-    '.ws-canvas .editor-content table{border-collapse:collapse;width:max-content;max-width:none;min-width:100%;font-size:.875rem;table-layout:fixed !important;word-break:break-word;border:1px solid var(--tbl-border)}',
+    '.ws-canvas .editor-content table{border-collapse:collapse;width:max-content;max-width:none;font-size:.875rem;table-layout:fixed !important;word-break:break-word;border:1px solid var(--tbl-border)}',
     '.ws-canvas .editor-content th{border:1px solid var(--tbl-border);padding:9px 14px;background:var(--tbl-hbg);font-weight:600;text-align:left;color:var(--tbl-htxt);transition:all var(--tr)}',
     '.ws-canvas .editor-content td{border:1px solid var(--tbl-border);padding:9px 14px;background:var(--surface);color:var(--text);transition:all var(--tr);position:relative;vertical-align:middle;word-break:break-word}',
     '.ws-canvas .editor-content tr:nth-child(even) td{background:var(--tbl-stripe)}',
@@ -9518,6 +9544,11 @@ async function doExportWebsite(){
     '[data-theme="dark"] .ws-canvas .cf-carousel-block[data-imgborder="2"]{outline-color:rgba(255,255,255,.18)}',
     '[data-theme="dark"] .ws-canvas .cf-carousel-block[data-imgborder="3"]{outline-color:rgba(255,255,255,.50)}',
     '[data-theme="dark"] .ws-canvas .cf-carousel-block[data-imgborder="4"]{outline-color:rgba(255,255,255,.85)}',
+    '.ws-canvas .cf-carousel-block[data-carwidth="50"]{width:50%}',
+    '.ws-canvas .cf-carousel-block[data-carwidth="75"]{width:75%}',
+    '.ws-canvas .cf-carousel-block[data-align="center"]{margin-left:auto;margin-right:auto}',
+    '.ws-canvas .cf-carousel-block[data-align="right"]{margin-left:auto;margin-right:0}',
+    '.ws-canvas .cf-carousel-block[data-align="left"]{margin-left:0;margin-right:auto}',
     '.ws-canvas .cf-carousel-stage{position:relative;width:100%;overflow:hidden}',
     '.ws-canvas .cf-carousel-slides{display:flex;transition:transform .35s ease;will-change:transform}',
     '.ws-canvas .cf-carousel-slide{min-width:100%;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#000;min-height:200px}',
