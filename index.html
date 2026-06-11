@@ -790,7 +790,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .cf-img-block[data-align="center"] .cf-img-wrap{justify-content:center}
 .cf-img-block[data-align="right"] .cf-img-wrap{justify-content:flex-end}
 .cf-img-block.selected .cf-img-inner{outline:2px solid var(--accent);outline-offset:0}
-.cf-img-inner{position:relative;display:inline-block;max-width:100%;border-radius:4px;overflow:hidden;line-height:0;transition:box-shadow .35s ease,outline-color .35s ease;cursor:zoom-in}
+.cf-img-inner{position:relative;display:inline-block;max-width:100%;border-radius:4px;overflow:visible;line-height:0;transition:box-shadow .35s ease,outline-color .35s ease;cursor:zoom-in}
 .cf-img-inner img,.cf-img-inner video{display:block;max-width:100%;height:auto;border-radius:4px;pointer-events:none}
 /* Resize handles */
 .cf-img-resize-h{position:absolute;top:50%;transform:translateY(-50%);width:8px;height:48px;background:var(--accent);border-radius:4px;cursor:ew-resize;z-index:10;opacity:0;transition:opacity .15s}
@@ -6795,7 +6795,7 @@ function _cfBuildImgBlock(id,src,isVid,name){
   const rh=document.createElement('div');rh.className='cf-img-resize-h right';
   _cfImgInitResize(inner,lh,'left');_cfImgInitResize(inner,rh,'right');
 
-  inner.appendChild(media);wrap.appendChild(lh);wrap.appendChild(inner);wrap.appendChild(rh);
+  inner.appendChild(media);inner.appendChild(lh);inner.appendChild(rh);wrap.appendChild(inner);
   block.appendChild(wrap);
 
   // Caption
@@ -6993,8 +6993,10 @@ document.addEventListener('keydown',e=>{
 function _cfImgRewireBlock(block){
   const id=uid();block.dataset.cfimgid=id;
   const inner=block.querySelector('.cf-img-inner');
-  const lh=block.querySelector('.cf-img-resize-h.left');
-  const rh=block.querySelector('.cf-img-resize-h.right');
+  let lh=block.querySelector('.cf-img-resize-h.left');
+  let rh=block.querySelector('.cf-img-resize-h.right');
+  if(inner&&!lh){lh=document.createElement('div');lh.className='cf-img-resize-h left';inner.appendChild(lh);}
+  if(inner&&!rh){rh=document.createElement('div');rh.className='cf-img-resize-h right';inner.appendChild(rh);}
   if(inner&&lh)_cfImgInitResize(inner,lh,'left');
   if(inner&&rh)_cfImgInitResize(inner,rh,'right');
   // Replace toolbar
