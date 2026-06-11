@@ -7014,6 +7014,75 @@ async function cfBuildCarouselBlock(files){
   return _cfBuildCarousel(slides);
 }
 
+function _cfBuildCarToolbar(block){
+  const track=block.querySelector('.cf-car-track');
+  const dotsWrap=block.querySelector('.cf-car-dots');
+  const counter=block.querySelector('.cf-car-counter');
+  const tb=document.createElement('div');tb.className='cf-car-toolbar';
+  const addBtn=document.createElement('button');addBtn.className='cf-car-tb-btn';
+  addBtn.innerHTML='<i class="ti ti-plus" style="font-size:13px"></i> Thêm ảnh';
+  addBtn.addEventListener('click',()=>_cfCarAddImages(block,track,dotsWrap,counter));
+  const delBtn=document.createElement('button');delBtn.className='cf-car-tb-btn danger';
+  delBtn.innerHTML='<i class="ti ti-trash" style="font-size:13px"></i> Xóa carousel';
+  delBtn.addEventListener('click',()=>{
+    if(!confirm('Xóa carousel này?'))return;
+    (block.dataset.carids||'').split(',').filter(Boolean).forEach(id=>{try{_idbDel(id);}catch(e){}});
+    const fb=document.createElement('p');fb.innerHTML='<br>';
+    block.parentNode?.insertBefore(fb,block);block.remove();onContentChange();
+  });
+  tb.appendChild(addBtn);tb.appendChild(delBtn);
+  const _cSep0=document.createElement('div');_cSep0.style.cssText='width:1px;height:20px;background:var(--border);margin:0 3px';tb.appendChild(_cSep0);
+  [{key:'left',icon:'ti-align-left',title:'Căn trái'},{key:'center',icon:'ti-align-center',title:'Căn giữa'},{key:'right',icon:'ti-align-right',title:'Căn phải'}].forEach(function(a){
+    const btn=document.createElement('button');btn.className='cf-img-tb-btn'+(block.dataset.align===a.key?' active':'');
+    btn.innerHTML='<i class="ti '+a.icon+'" style="font-size:13px"></i>';btn.title=a.title;btn.dataset.calign=a.key;
+    btn.addEventListener('click',function(){
+      block.dataset.align=a.key;
+      tb.querySelectorAll('[data-calign]').forEach(function(b){b.classList.toggle('active',b.dataset.calign===a.key);});
+      onContentChange();
+    });
+    tb.appendChild(btn);
+  });
+  const _cSepW=document.createElement('div');_cSepW.style.cssText='width:1px;height:20px;background:var(--border);margin:0 3px';tb.appendChild(_cSepW);
+  function _updateCarwActive(){
+    const cur=block.dataset.carwidth||'100';
+    tb.querySelectorAll('[data-carw]').forEach(function(b){b.classList.toggle('active',b.dataset.carw===cur);});
+  }
+  [{w:'50',label:'50%'},{w:'75',label:'75%'},{w:'100',label:'100%'}].forEach(function(wt){
+    const cur=block.dataset.carwidth||'100';
+    const btn=document.createElement('button');btn.className='cf-img-tb-btn'+(cur===wt.w?' active':'');
+    btn.innerHTML='<span style="font-size:10px;font-weight:600">'+wt.label+'</span>';btn.title='Chiều rộng '+wt.label;
+    btn.addEventListener('click',function(){
+      if(wt.w==='100'){delete block.dataset.carwidth;}else{block.dataset.carwidth=wt.w;}
+      _updateCarwActive();onContentChange();
+    });
+    btn.dataset.carw=wt.w;
+    tb.appendChild(btn);
+  });
+  const _carSwPalette=[{bg:'#ffffff',border:'1px solid #ccc',val:'1',name:'Trắng'},{bg:'rgba(0,0,0,.22)',border:'none',val:'2',name:'Nhạt'},{bg:'rgba(0,0,0,.55)',border:'none',val:'3',name:'Đậm'},{bg:'#000000',border:'none',val:'4',name:'Đen'}];
+  function _carMakeSwatch(labelText,dataAttr){
+    const grp=document.createElement('div');grp.className='cf-img-tb-group';
+    const lbl=document.createElement('span');lbl.className='cf-img-tb-grouplbl';lbl.textContent=labelText;grp.appendChild(lbl);
+    _carSwPalette.forEach(c=>{
+      const sw=document.createElement('span');sw.className='cf-img-tb-swatch';
+      sw.style.cssText='background:'+c.bg+';border:'+c.border;sw.dataset.swval=c.val;
+      sw.title=labelText+': '+c.name;
+      if(block.dataset[dataAttr]===c.val)sw.classList.add('active');
+      sw.addEventListener('click',()=>{
+        if(block.dataset[dataAttr]===c.val){delete block.dataset[dataAttr];grp.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.remove('active'));}
+        else{block.dataset[dataAttr]=c.val;grp.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.remove('active'));sw.classList.add('active');}
+        onContentChange();
+      });
+      grp.appendChild(sw);
+    });
+    return grp;
+  }
+  const _cSep1=document.createElement('div');_cSep1.style.cssText='width:1px;height:20px;background:var(--border);margin:0 3px';tb.appendChild(_cSep1);
+  tb.appendChild(_carMakeSwatch('Bóng','imgshadow'));
+  const _cSep2=document.createElement('div');_cSep2.style.cssText='width:1px;height:20px;background:var(--border);margin:0 3px';tb.appendChild(_cSep2);
+  tb.appendChild(_carMakeSwatch('Viền','imgborder'));
+  return tb;
+}
+
 function _cfBuildCarousel(slides){
   const block=document.createElement('div');
   block.className='cf-carousel-block';block.contentEditable='false';
@@ -7044,67 +7113,7 @@ function _cfBuildCarousel(slides){
   });
   block.appendChild(dotsWrap);
 
-  // Toolbar
-  const tb=document.createElement('div');tb.className='cf-car-toolbar';
-  const addBtn=document.createElement('button');addBtn.className='cf-car-tb-btn';
-  addBtn.innerHTML='<i class="ti ti-plus" style="font-size:13px"></i> Thêm ảnh';
-  addBtn.addEventListener('click',()=>_cfCarAddImages(block,track,dotsWrap,counter));
-  const delBtn=document.createElement('button');delBtn.className='cf-car-tb-btn danger';
-  delBtn.innerHTML='<i class="ti ti-trash" style="font-size:13px"></i> Xóa carousel';
-  delBtn.addEventListener('click',()=>{
-    if(!confirm('Xóa carousel này?'))return;
-    (block.dataset.carids||'').split(',').filter(Boolean).forEach(id=>{try{_idbDel(id);}catch(e){}});
-    const fb=document.createElement('p');fb.innerHTML='<br>';
-    block.parentNode?.insertBefore(fb,block);block.remove();onContentChange();
-  });
-  tb.appendChild(addBtn);tb.appendChild(delBtn);
-  // Align + Width controls (same style as image block)
-  const _cSep0=document.createElement('div');_cSep0.style.cssText='width:1px;height:20px;background:var(--border);margin:0 3px';tb.appendChild(_cSep0);
-  [{key:'left',icon:'ti-align-left',title:'Căn trái'},{key:'center',icon:'ti-align-center',title:'Căn giữa'},{key:'right',icon:'ti-align-right',title:'Căn phải'}].forEach(function(a){
-    const btn=document.createElement('button');btn.className='cf-img-tb-btn'+(block.dataset.align===a.key?' active':'');
-    btn.innerHTML='<i class="ti '+a.icon+'" style="font-size:13px"></i>';btn.title=a.title;btn.dataset.calign=a.key;
-    btn.addEventListener('click',function(){
-      block.dataset.align=a.key;
-      tb.querySelectorAll('[data-calign]').forEach(function(b){b.classList.toggle('active',b.dataset.calign===a.key);});
-      onContentChange();
-    });
-    tb.appendChild(btn);
-  });
-  const _cSepW=document.createElement('div');_cSepW.style.cssText='width:1px;height:20px;background:var(--border);margin:0 3px';tb.appendChild(_cSepW);
-  [{w:'50',label:'50%'},{w:'75',label:'75%'},{w:'100',label:'100%'}].forEach(function(wt){
-    const btn=document.createElement('button');btn.className='cf-img-tb-btn';
-    btn.innerHTML='<span style="font-size:10px;font-weight:600">'+wt.label+'</span>';btn.title='Chiều rộng '+wt.label;
-    btn.addEventListener('click',function(){
-      if(wt.w==='100'){delete block.dataset.carwidth;}else{block.dataset.carwidth=wt.w;}
-      onContentChange();
-    });
-    tb.appendChild(btn);
-  });
-  // Shadow & Border swatches
-  const _carSwPalette=[{bg:'#ffffff',border:'1px solid #ccc',val:'1',name:'Trắng'},{bg:'rgba(0,0,0,.22)',border:'none',val:'2',name:'Nhạt'},{bg:'rgba(0,0,0,.55)',border:'none',val:'3',name:'Đậm'},{bg:'#000000',border:'none',val:'4',name:'Đen'}];
-  function _carMakeSwatch(labelText,dataAttr){
-    const grp=document.createElement('div');grp.className='cf-img-tb-group';
-    const lbl=document.createElement('span');lbl.className='cf-img-tb-grouplbl';lbl.textContent=labelText;grp.appendChild(lbl);
-    _carSwPalette.forEach(c=>{
-      const sw=document.createElement('span');sw.className='cf-img-tb-swatch';
-      sw.style.cssText=`background:${c.bg};border:${c.border}`;sw.dataset.swval=c.val;
-      sw.title=labelText+': '+c.name;
-      if(block.dataset[dataAttr]===c.val)sw.classList.add('active');
-      sw.addEventListener('click',()=>{
-        if(block.dataset[dataAttr]===c.val){delete block.dataset[dataAttr];grp.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.remove('active'));}
-        else{block.dataset[dataAttr]=c.val;grp.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.remove('active'));sw.classList.add('active');}
-        onContentChange();
-      });
-      grp.appendChild(sw);
-    });
-    return grp;
-  }
-  const _cSep1=document.createElement('div');_cSep1.style.cssText='width:1px;height:20px;background:var(--border);margin:0 3px';tb.appendChild(_cSep1);
-  tb.appendChild(_carMakeSwatch('Bóng','imgshadow'));
-  const _cSep2=document.createElement('div');_cSep2.style.cssText='width:1px;height:20px;background:var(--border);margin:0 3px';tb.appendChild(_cSep2);
-  tb.appendChild(_carMakeSwatch('Viền','imgborder'));
-  block.appendChild(tb);
-
+  block.appendChild(_cfBuildCarToolbar(block));
   _cfCarWireNav(block,track,prev,next,dotsWrap,counter);
   return block;
 }
@@ -7273,6 +7282,8 @@ async function _cfCarLoadAll(editor){
     const dots=block.querySelector('.cf-car-dots');
     const counter=block.querySelector('.cf-car-counter');
     if(track&&counter){block._carIdx=0;block._carWired=false;_cfCarWireNav(block,track,prev,next,dots,counter);}
+    block.querySelector('.cf-car-toolbar')?.remove();
+    block.appendChild(_cfBuildCarToolbar(block));
   }
 }
 
