@@ -1539,6 +1539,8 @@ td.tbl-inner-container{padding:0!important;overflow:visible!important;vertical-a
   <div class="ctx-sep"></div>
   <div class="ctx-item red" onclick="ctxDelete()"><i class="ti ti-trash"></i> Xoá ảnh</div>
 </div>
+<!-- TABLE CELL CONTEXT MENU -->
+<div class="ctx" id="tblCellCtx"></div>
 
 <!-- CONTEXT MENU doc -->
 <div class="ctx" id="docCtxMenu">
@@ -3997,6 +3999,7 @@ document.addEventListener('paste',e=>{if(!state.currentDocId)return;const item=A
 document.addEventListener('click',e=>{
   document.getElementById('ctxMenu').classList.remove('on');
   document.getElementById('docCtxMenu')?.classList.remove('on');
+  document.getElementById('tblCellCtx')?.classList.remove('on');
   const dd=document.getElementById('bbSizeDD');if(dd&&!dd.contains(e.target)&&e.target.id!=='bbSizeNum')dd.classList.remove('on');
   if(!e.target.closest('#drawTableWrap'))hideTableGrid();
   if(!e.target.closest('.txtbox'))document.querySelectorAll('.txtbox').forEach(b=>b.classList.remove('selected'));
@@ -4816,6 +4819,7 @@ function tblDelTable(){
 // MERGE & CENTER ENGINE — simple, no virtual grid
 // ═══════════════════════════════════════════════════════════
 let _mergeTable=null;
+let _tblDragStart=null;
 
 
 
@@ -4977,6 +4981,7 @@ document.addEventListener('mousedown',e=>{
   if(!e.target.closest('#tblMergeBar')&&!e.target.closest('.editor-content td')&&!e.target.closest('.editor-content th'))
     tblClearCellSel();
 });
+document.addEventListener('mouseup',()=>{_tblDragStart=null;});
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'&&_mergeTable)tblClearCellSel();
   // Undo / Redo
@@ -4985,6 +4990,41 @@ document.addEventListener('keydown',e=>{
     else if((e.key==='y')||(e.key==='z'&&e.shiftKey)){e.preventDefault();editorRedo();}
   }
 });
+
+// ── Cell right-click context menu ────────────────────────────
+function _showTblCellCtx(e,cell,table){
+  e.preventDefault();e.stopPropagation();
+  _activeTd=cell;
+  const isMerged=cell.colSpan>1||cell.rowSpan>1;
+  const selCells=_mergeTable===table?Array.from(table.querySelectorAll('.tbl-cell-sel')).filter(c=>!c.classList.contains('tbl-row-num')):[];
+  const canMerge=selCells.length>=2;
+  const m=document.getElementById('tblCellCtx');if(!m)return;
+  m.innerHTML='';
+  function add(icon,label,fn,danger){
+    const el=document.createElement('div');el.className='ctx-item'+(danger?' red':'');
+    el.innerHTML=`<i class="ti ${icon}"></i>${label}`;
+    el.addEventListener('click',()=>{m.classList.remove('on');fn();});m.appendChild(el);
+  }
+  function sep(){const d=document.createElement('div');d.className='ctx-sep';m.appendChild(d);}
+  if(canMerge){
+    add('ti-layout-grid','Gộp ô đã chọn',()=>tblMergeCells());
+    add('ti-layout-rows','Gộp theo hàng (rowspan)',()=>tblMergeRowsOnly());
+    add('ti-layout-columns','Gộp theo cột (colspan)',()=>tblMergeColsOnly());
+    sep();
+  }
+  if(isMerged){
+    add('ti-layout-grid-add','Tách ô (unmerge)',()=>{_mergeTable=table;cell.classList.add('tbl-cell-sel');tblUnmergeCells();});
+    sep();
+  }
+  add('ti-row-insert-top','Thêm hàng phía trên',()=>{_activeTd=cell;tblAddRowAbove();});
+  add('ti-row-insert-bottom','Thêm hàng phía dưới',()=>{_activeTd=cell;tblAddRowBelow();});
+  add('ti-trash','Xóa hàng này',()=>{_activeTd=cell;tblDelRow();},true);
+  sep();
+  add('ti-column-insert-left','Thêm cột bên trái',()=>{_activeTd=cell;tblAddColLeft();});
+  add('ti-column-insert-right','Thêm cột bên phải',()=>{_activeTd=cell;tblAddColRight();});
+  add('ti-trash','Xóa cột này',()=>{_activeTd=cell;tblDelCol();},true);
+  showCtx('tblCellCtx',e);
+}
 
 // ── Smart entry: 1 file → image, 2+ files → carousel ──────────
 async function tblInsertImages(cell, files){
@@ -5480,18 +5520,17 @@ function tblAttachTable(table){
     cell.addEventListener('click',e=>{
       _activeTd=cell;
       if(e.shiftKey||e.ctrlKey){
-        // Multi-cell selection for Merge & Center
         _mergeTable=table;
         _selectRect(table);_updateMergeBar();
-      } else {
-        // Regular click: clear merge selection if any
+      } else if(!_tblDragStart){
         if(_mergeTable)tblClearCellSel();
       }
     });
-    // Shift+mousedown: prevent text selection range
     cell.addEventListener('mousedown',e=>{
       if(e.shiftKey||e.ctrlKey)e.preventDefault();
+      if(e.button===0&&!e.shiftKey&&!e.ctrlKey)_tblDragStart=cell;
     });
+    cell.addEventListener('contextmenu',e=>_showTblCellCtx(e,cell,table));
 
     // Drop overlay (visual feedback when dragging over cell)
     const dropOv=document.createElement('div');dropOv.className='tbl-cell-drop';
@@ -5567,7 +5606,20 @@ function tblAttachTable(table){
     table.style.borderCollapse='collapse';
     table.style.width=''; // Let CSS max-content determine table size from colgroup
   }
-  // 6. ── Add left/right edge resize handles ──
+  // 6. ── Drag-to-select cells ──────────────────────────────────
+  table.addEventListener('mouseover',e=>{
+    if(e.buttons!==1||!_tblDragStart||_tblDragStart.closest('table')!==table)return;
+    const td=e.target.closest('td:not(.tbl-row-num):not(.tbl-inner-container),th:not(.tbl-row-num)');
+    if(!td||td.closest('table')!==table||td===_tblDragStart)return;
+    if(_mergeTable!==table){_mergeTable=table;table.querySelectorAll('.tbl-cell-sel').forEach(c=>c.classList.remove('tbl-cell-sel'));}
+    _activeTd=_tblDragStart;
+    _tblDragStart.classList.add('tbl-cell-sel');
+    td.classList.add('tbl-cell-sel');
+    _selectRect(table);_updateMergeBar();
+  },{passive:true});
+  table.addEventListener('selectstart',e=>{if(_tblDragStart&&e.buttons===1)e.preventDefault();});
+
+  // 7. ── Add left/right edge resize handles ──
   _tblAddEdgeHandles(table);
 }
 
