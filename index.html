@@ -8926,15 +8926,11 @@ async function doExportWebsite(){
     '.ws-layout{display:flex;flex:1;overflow:hidden}',
     '.ws-sidebar{width:260px;min-width:60px;max-width:520px;background:var(--sb);overflow-y:auto;overflow-x:hidden;padding:8px 0 0;flex-shrink:0;position:relative;transition:background var(--tr),width .22s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;border-right:1px solid var(--border)}',
     '.ws-sidebar.collapsed{width:0!important;min-width:0!important;overflow:hidden;padding:0;border-right:none}',
-    '.ws-sb-resizer.hidden{display:none}',
     '.ws-sidebar::-webkit-scrollbar{width:3px}',
     '.ws-sidebar::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}',
-    /* resizer sits in .ws-layout (not sidebar) — avoids overflow:hidden clipping */
-    /* resizer: position:absolute inside sidebar — same as app */
-    '.ws-sb-resizer{width:5px;flex-shrink:0;align-self:stretch;cursor:col-resize;background:transparent;transition:background .15s;position:relative;z-index:10}',
-    '.ws-sb-resizer::after{content:"";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:3px;height:32px;border-left:1.5px solid rgba(37,99,235,.5);border-right:1.5px solid rgba(37,99,235,.5);border-radius:2px;opacity:0;transition:opacity .15s}',
-    '.ws-sb-resizer:hover::after,.ws-sb-resizer.dragging::after{opacity:1}',
-    '.ws-sb-resizer:hover,.ws-sb-resizer.dragging{background:rgba(37,99,235,.35)}',
+    '.ws-sb-resizer{position:absolute;top:0;right:0;bottom:0;width:5px;cursor:col-resize;z-index:50;background:transparent;transition:background .15s}',
+    '.ws-sb-resizer:hover,.ws-sb-resizer.dragging{background:rgba(37,99,235,.25)}',
+    '.ws-sb-resizer::after{display:none}',
     /* text-overflow always on — prevents layout break at any sidebar width */
     /* ── Sidebar ── */
     '.ws-space-hdr{display:flex;align-items:center;gap:10px;padding:14px 12px 12px;flex-shrink:0}',
@@ -9528,8 +9524,7 @@ async function doExportWebsite(){
     '<button class="ws-theme-btn" id="wsThemeBtn">&#9728;</button>',
     '</div>',
     '<div class="ws-layout" id="wsLayout">',
-    '<div class="ws-sidebar" id="wsSidebar">'+navHTML+'</div>',
-    '<div class="ws-sb-resizer" id="wsSbRz" title="Kéo để thay đổi độ rộng"></div>',
+    '<div class="ws-sidebar" id="wsSidebar"><div class="ws-sb-resizer" id="wsSbRz" title="Keo de thay doi do rong"></div>'+navHTML+'</div>',
     '<button class="ws-sb-expand" id="wsSbExpand" title="Mở sidebar"><i class="ti ti-chevrons-right"></i></button>',
     '<div class="ws-main" id="wsMain">',
     '<div class="ws-pab" id="wsPab" style="display:none"><nav class="ws-pab-crumb" id="wsPabBreadcrumb" aria-label="Vi tri trang"></nav><div class="ws-pab-right"><button class="ws-pab-icon-btn" id="wsPabStar" title="Danh dau yeu thich"><i class="ti ti-star"></i></button><button class="ws-pab-icon-btn" id="wsPabShare" title="Sao chep lien ket"><i class="ti ti-share"></i></button></div></div>',
