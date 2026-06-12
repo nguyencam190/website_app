@@ -5528,6 +5528,9 @@ function tblAttachAll(){
 }
 
 function tblAttachTable(table){
+  // Ensure table is inside .tbl-outer scroll container (may be missing for tables
+  // created before this was enforced, or loaded from older saved content).
+  _tblWrapOuter(table);
   // ── Helper: get ACTUAL column count (sum of all colSpan) ──
   function _tblTrueCols(tbl){
     let max=0;
@@ -5913,7 +5916,6 @@ function tgManualInsert(){
 }
 function tgInsert(rows,cols){
   hideTableGrid();
-  const editor=document.getElementById('editor');editor.focus();
 
   // ── Build table via DOM ──────────────────────────────────
   const table=document.createElement('table');
@@ -5941,7 +5943,10 @@ function tgInsert(rows,cols){
   }
 
   // Insert using generic range-based insertion (works inside columns too)
-  _cfInsertBlockAtRange(table,_slashSavedRange||(window.getSelection()?.rangeCount?window.getSelection().getRangeAt(0):null));
+  // Wrap in .tbl-outer scroll container so wide tables scroll rather than overflow the canvas
+  const _tblWrapper=document.createElement('div');_tblWrapper.className='tbl-outer';
+  _tblWrapper.appendChild(table);
+  _cfInsertBlockAtRange(_tblWrapper,_slashSavedRange||(window.getSelection()?.rangeCount?window.getSelection().getRangeAt(0):null));
 
   // ── Place cursor inside first data cell ───────────────────
   try{
@@ -6123,13 +6128,15 @@ function slashExec(id){
 
   slashClose(false); // don't refocus — we restore the correct element below
   const sel=window.getSelection();
-  // Restore focus to the element that holds the saved range (TD or editor)
+  // Restore focus to the element that holds the saved range (TD, column item, or editor)
   if(_slashSavedRange){
     try{
       const anchor=_slashSavedRange.startContainer;
-      const td=(anchor.nodeType===Node.TEXT_NODE?anchor.parentElement:anchor)
-                ?.closest('td:not(.tbl-row-num),th:not(.tbl-row-num)');
+      const anchorEl=anchor.nodeType===Node.TEXT_NODE?anchor.parentElement:anchor;
+      const td=anchorEl?.closest('td:not(.tbl-row-num),th:not(.tbl-row-num)');
+      const colItem=!td&&anchorEl?.closest('.cf-column-item');
       if(td)td.focus();
+      else if(colItem)colItem.focus();
       else document.getElementById('editor')?.focus();
       sel.removeAllRanges();sel.addRange(_slashSavedRange);
     }catch(e){}
