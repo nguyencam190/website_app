@@ -882,6 +882,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .cf-car-slide.active .cf-car-slide-resize-h,.cf-car-slide-resize-h:hover{opacity:1}
 .cf-car-slide-resize-h.left{left:-12px}
 .cf-car-slide-resize-h.right{right:-12px}
+/* Block-level resize handles — resize the whole carousel block */
+.cf-car-block-resize-h{position:absolute;top:50%;transform:translateY(-50%);width:8px;height:60px;background:var(--accent);border-radius:4px;cursor:ew-resize;z-index:30;opacity:0;transition:opacity .15s;pointer-events:auto}
+.cf-carousel-block.selected .cf-car-block-resize-h,.cf-car-block-resize-h:hover{opacity:1}
+.cf-car-block-resize-h.left{left:-12px}
+.cf-car-block-resize-h.right{right:-12px}
 /* Per-slide shadow */
 .cf-car-slide[data-carslide-imgshadow="1"] .cf-car-slide-inner{box-shadow:0 8px 28px rgba(255,255,255,.55),0 2px 8px rgba(255,255,255,.35)}
 .cf-car-slide[data-carslide-imgshadow="2"] .cf-car-slide-inner{box-shadow:0 8px 28px rgba(0,0,0,.13),0 2px 8px rgba(0,0,0,.08)}
@@ -2827,7 +2832,7 @@ function onContentChange(){
   clone.querySelectorAll('.cf-carousel-block [data-slideid]').forEach(media=>{
     if(media.src&&!media.src.startsWith('data:'))media.removeAttribute('src');
   });
-  clone.querySelectorAll('.cf-car-toolbar,.cf-car-add-slide,.cf-car-slide-resize-h').forEach(e=>e.remove());
+  clone.querySelectorAll('.cf-car-toolbar,.cf-car-add-slide,.cf-car-slide-resize-h,.cf-car-block-resize-h').forEach(e=>e.remove());
   // Strip blob URLs from inline image blocks (only save data-cfimgid on outer div)
   clone.querySelectorAll('.cf-img-block[data-cfimgid] img,.cf-img-block[data-cfimgid] video').forEach(media=>{
     if(media.src&&!media.src.startsWith('data:'))media.removeAttribute('src');
@@ -7205,7 +7210,7 @@ function _cfBuildCarToolbar(block){
   [{w:'50',label:'50%'},{w:'75',label:'75%'},{w:'100',label:'100%'}].forEach(wt=>{
     const btn=document.createElement('button');btn.className='cf-img-tb-btn'+((block.dataset.carwidth||'100')===wt.w?' active':'');
     btn.innerHTML='<span style="font-size:10px;font-weight:600">'+wt.label+'</span>';btn.title='Carousel rộng '+wt.label;btn.dataset.carw=wt.w;
-    btn.addEventListener('click',()=>{if(wt.w==='100'){delete block.dataset.carwidth;}else{block.dataset.carwidth=wt.w;}_updateCarwActive();onContentChange();});
+    btn.addEventListener('click',()=>{block.style.width='';if(wt.w==='100'){delete block.dataset.carwidth;}else{block.dataset.carwidth=wt.w;}_updateCarwActive();onContentChange();});
     tb.appendChild(btn);
   });
   tb.appendChild(sep());
@@ -7278,6 +7283,29 @@ function _cfCarWireSlide(slide){
   if(inner&&rh)_cfCarSlideInitResize(inner,rh,'right');
 }
 
+function _cfCarBlockInitResize(block,handle,side){
+  handle.addEventListener('mousedown',e=>{
+    e.preventDefault();e.stopPropagation();
+    const startX=e.clientX;
+    const startW=block.offsetWidth;
+    const maxW=block.parentElement?.offsetWidth||block.closest('.editor-content')?.offsetWidth||900;
+    document.body.style.cursor='ew-resize';document.body.style.userSelect='none';
+    function mm(e2){
+      const dx=e2.clientX-startX;
+      const newW=side==='right'?Math.max(200,startW+dx):Math.max(200,startW-dx);
+      block.style.width=Math.min(maxW,newW)+'px';
+      delete block.dataset.carwidth;
+      if(!block.dataset.align)block.dataset.align='center';
+    }
+    function mu(){
+      document.body.style.cursor='';document.body.style.userSelect='';
+      document.removeEventListener('mousemove',mm);document.removeEventListener('mouseup',mu);
+      onContentChange();
+    }
+    document.addEventListener('mousemove',mm);document.addEventListener('mouseup',mu);
+  });
+}
+
 // Refresh slide-section buttons in the unified carousel toolbar
 function _cfCarRefreshSlideSection(section,slideEl){
   if(!section||!slideEl)return;
@@ -7323,6 +7351,11 @@ function _cfBuildCarousel(slides){
 
   block.appendChild(_cfBuildCarToolbar(block));
   _cfCarWireNav(block,track,prev,next,dotsWrap,counter);
+  // Block-level resize handles
+  const _blh=document.createElement('div');_blh.className='cf-car-block-resize-h left';
+  const _brh=document.createElement('div');_brh.className='cf-car-block-resize-h right';
+  block.appendChild(_blh);block.appendChild(_brh);
+  _cfCarBlockInitResize(block,_blh,'left');_cfCarBlockInitResize(block,_brh,'right');
   block.addEventListener('mousedown',e=>{
     if(e.target.closest('.cf-car-toolbar'))return;
     document.querySelectorAll('.cf-carousel-block.selected').forEach(b=>{if(b!==block)b.classList.remove('selected');});
@@ -7518,6 +7551,12 @@ async function _cfCarLoadAll(editor){
     if(track&&counter){block._carIdx=0;block._carWired=false;_cfCarWireNav(block,track,prev,next,dots,counter);}
     block.querySelector('.cf-car-toolbar')?.remove();
     block.appendChild(_cfBuildCarToolbar(block));
+    // Re-wire block-level resize handles (stripped on save)
+    block.querySelectorAll('.cf-car-block-resize-h').forEach(h=>h.remove());
+    const _blh2=document.createElement('div');_blh2.className='cf-car-block-resize-h left';
+    const _brh2=document.createElement('div');_brh2.className='cf-car-block-resize-h right';
+    block.appendChild(_blh2);block.appendChild(_brh2);
+    _cfCarBlockInitResize(block,_blh2,'left');_cfCarBlockInitResize(block,_brh2,'right');
     if(!block._carSelectWired){
       block._carSelectWired=true;
       block.addEventListener('mousedown',e=>{
@@ -9427,7 +9466,7 @@ async function doExportWebsite(){
       }
       block.removeAttribute('data-cfcarids');
       // Remove toolbar and add-slide button
-      block.querySelectorAll('.cf-car-toolbar,.cf-car-add-slide').forEach(e=>e.remove());
+      block.querySelectorAll('.cf-car-toolbar,.cf-car-add-slide,.cf-car-block-resize-h,.cf-car-slide-resize-h').forEach(e=>e.remove());
     }
     // ── Restore inline carousel blocks ───────────────────────
     for(const block of Array.from(tmp.querySelectorAll('.cf-carousel-block[data-carids]'))){
@@ -9441,7 +9480,7 @@ async function doExportWebsite(){
         if(_cnt%3===0)await new Promise(r=>setTimeout(r,0));
       }
       // Remove toolbar, keep nav
-      block.querySelector('.cf-car-toolbar')?.remove();
+      block.querySelectorAll('.cf-car-toolbar,.cf-car-block-resize-h,.cf-car-slide-resize-h').forEach(e=>e.remove());
       block.removeAttribute('data-carids');
     }
     // data-cfimgid is on the OUTER .cf-img-block div, not on the img/video inside
