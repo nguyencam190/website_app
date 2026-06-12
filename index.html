@@ -934,8 +934,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .cf-car-slide-caption:empty::before{content:attr(data-placeholder);pointer-events:none;color:var(--text3)}
 .cf-car-slide-caption:focus{background:var(--surface3,var(--surface2));color:var(--text)}
 /* Toolbar — floating style */
-.cf-car-toolbar{position:absolute;bottom:0;left:50%;transform:translateX(-50%) translateY(100%);background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,.1);display:none;align-items:center;gap:2px;padding:4px 6px;z-index:150;white-space:nowrap;animation:cpFade .12s ease}
-.cf-carousel-block.selected .cf-car-toolbar,.cf-carousel-block:hover .cf-car-toolbar{display:flex}
+.cf-car-toolbar{position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.14);display:none;align-items:center;gap:2px;padding:4px 6px;z-index:500;white-space:nowrap;animation:cpFade .12s ease;max-width:calc(100vw - 32px);overflow-x:auto}
+/* toolbar show/hide managed via JS _cfCarPositionToolbar */
 .cf-car-tb-btn{display:flex;align-items:center;gap:5px;padding:4px 10px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text);font-size:12px;cursor:pointer;font-family:var(--font);transition:.12s}
 .cf-car-tb-btn:hover{background:var(--surface2)}
 .cf-car-tb-btn.danger:hover{background:rgba(239,68,68,.08);color:#ef4444;border-color:#ef4444}
@@ -2064,6 +2064,13 @@ function init(){
   _pabLogoInit();
   _initSmartPab();
   initCanvasScaling();
+  // Update fixed-position carousel toolbars on editor scroll
+  document.getElementById('editorScroll')?.addEventListener('scroll',()=>{
+    document.querySelectorAll('.cf-carousel-block').forEach(b=>{
+      const tb=b.querySelector('.cf-car-toolbar');
+      if(tb&&tb.style.display==='flex')_cfCarPositionToolbar(b);
+    });
+  });
   // Restore saved width
   const savedW=localStorage.getItem('sb_width');
   if(savedW){const sb=document.getElementById('sidebar');if(sb)sb.style.width=savedW+'px';}
@@ -6690,17 +6697,27 @@ function slashRemoveCol(btn){
 
 // Get caret bounding rect
 function _slashGetCaretRect(){
+  // Try _slashSavedRange first — it's set when '/' was typed, more reliable than live selection
+  if(typeof _slashSavedRange!=='undefined'&&_slashSavedRange){
+    try{
+      const sr=_slashSavedRange.cloneRange();sr.collapse(true);
+      const rr=sr.getBoundingClientRect();
+      if(rr&&(rr.top||rr.left))return rr;
+    }catch(e){}
+  }
   const sel=window.getSelection();
-  if(!sel.rangeCount)return{top:100,bottom:116,left:100,right:116};
+  if(!sel.rangeCount)return _slashFallbackRect();
   const range=sel.getRangeAt(0).cloneRange();
   range.collapse(true);
   const rect=range.getBoundingClientRect();
-  if(!rect||(!rect.top&&!rect.left)){
-    const editor=document.getElementById('editor');
-    const er=editor.getBoundingClientRect();
-    return{top:er.top+20,bottom:er.top+36,left:er.left+20,right:er.left+36};
-  }
+  if(!rect||(!rect.top&&!rect.left))return _slashFallbackRect();
   return rect;
+}
+function _slashFallbackRect(){
+  const editor=document.getElementById('editor');
+  if(!editor)return{top:200,bottom:216,left:200,right:216};
+  const er=editor.getBoundingClientRect();
+  return{top:er.top+60,bottom:er.top+76,left:er.left+40,right:er.left+56};
 }
 
 // ═══ INLINE CAROUSEL BLOCK ENGINE ═══════════════════════════
@@ -7041,8 +7058,13 @@ function _cfImgSelect(block){
 document.addEventListener('click',e=>{
   if(_cfImgSelected&&!_cfImgSelected.contains(e.target))
     _cfImgSelected.classList.remove('selected');
-  if(!e.target.closest('.cf-carousel-block'))
-    document.querySelectorAll('.cf-carousel-block.selected').forEach(b=>b.classList.remove('selected'));
+  if(!e.target.closest('.cf-carousel-block')){
+    document.querySelectorAll('.cf-carousel-block.selected').forEach(b=>{
+      b.classList.remove('selected');
+      const _t=b.querySelector('.cf-car-toolbar');
+      if(_t&&!b.matches(':hover'))_t.style.display='none';
+    });
+  }
 });
 // Delete key on selected block
 document.addEventListener('keydown',e=>{
@@ -7097,6 +7119,23 @@ async function cfBuildCarouselBlock(files){
   return _cfBuildCarousel(slides);
 }
 
+function _cfCarPositionToolbar(block){
+  const tb=block.querySelector('.cf-car-toolbar');
+  if(!tb)return;
+  const br=block.getBoundingClientRect();
+  if(!br.width)return;
+  tb.style.display='flex';
+  const vw=window.innerWidth,vh=window.innerHeight;
+  const tbW=tb.offsetWidth||360;
+  const tbH=tb.offsetHeight||40;
+  let left=br.left+(br.width-tbW)/2;
+  let top=br.bottom+6;
+  left=Math.max(8,Math.min(vw-tbW-8,left));
+  if(top+tbH>vh-8)top=Math.max(8,br.top-tbH-6);
+  tb.style.left=left+'px';
+  tb.style.top=top+'px';
+}
+
 function _cfBuildCarToolbar(block){
   const track=block.querySelector('.cf-car-track');
   const dotsWrap=block.querySelector('.cf-car-dots');
@@ -7109,35 +7148,6 @@ function _cfBuildCarToolbar(block){
 
   // ── SLIDE SECTION ────────────────────────────────────────────
   const slideSection=document.createElement('div');slideSection.style.cssText='display:contents';
-
-  // Slide align
-  [{key:'left',icon:'ti-align-left',title:'Căn trái slide'},{key:'center',icon:'ti-align-center',title:'Căn giữa slide'},{key:'right',icon:'ti-align-right',title:'Căn phải slide'}].forEach(a=>{
-    const btn=document.createElement('button');btn.className='cf-img-tb-btn';
-    btn.innerHTML='<i class="ti '+a.icon+'" style="font-size:13px"></i>';btn.title=a.title;btn.dataset.carslideAlign=a.key;
-    btn.addEventListener('click',()=>{
-      const sl=getCur();if(!sl)return;
-      sl.dataset.carslideAlign=a.key;
-      slideSection.querySelectorAll('[data-carslide-align]').forEach(b=>b.classList.toggle('active',b.dataset.carslideAlign===a.key));
-      onContentChange();
-    });
-    slideSection.appendChild(btn);
-  });
-  slideSection.appendChild(sep());
-
-  // Slide image width
-  [{w:'50%',label:'50%'},{w:'75%',label:'75%'},{w:'100%',label:'100%'}].forEach(wt=>{
-    const btn=document.createElement('button');btn.className='cf-img-tb-btn';
-    btn.innerHTML='<span style="font-size:10px;font-weight:600">'+wt.label+'</span>';btn.title='Ảnh '+wt.label;btn.dataset.carslideW=wt.w;
-    btn.addEventListener('click',()=>{
-      const sl=getCur();if(!sl)return;
-      const inn=sl.querySelector('.cf-car-slide-inner');if(!inn)return;
-      inn.style.width=wt.w;
-      slideSection.querySelectorAll('[data-carslide-w]').forEach(b=>b.classList.toggle('active',b.dataset.carslideW===wt.w));
-      onContentChange();
-    });
-    slideSection.appendChild(btn);
-  });
-  slideSection.appendChild(sep());
 
   // Slide shadow + border swatches
   function makeSlideSwatch(labelText,datasetAttr){
@@ -7232,6 +7242,15 @@ function _cfBuildCarToolbar(block){
 
   // Register refresh hook so goTo can update slide section
   block._carSlideSection=slideSection;
+
+  // Wire hover show/hide for fixed-position toolbar with gap-bridging delay
+  let _tbHide;
+  const _showTb=()=>{clearTimeout(_tbHide);_cfCarPositionToolbar(block);};
+  const _hideTb=()=>{_tbHide=setTimeout(()=>{if(!block.classList.contains('selected'))tb.style.display='none';},180);};
+  block.addEventListener('mouseenter',_showTb);
+  block.addEventListener('mouseleave',_hideTb);
+  tb.addEventListener('mouseenter',()=>clearTimeout(_tbHide));
+  tb.addEventListener('mouseleave',_hideTb);
   return tb;
 }
 
@@ -7363,8 +7382,11 @@ function _cfBuildCarousel(slides){
   _cfCarBlockInitResize(block,_blh,'left');_cfCarBlockInitResize(block,_brh,'right');
   block.addEventListener('mousedown',e=>{
     if(e.target.closest('.cf-car-toolbar'))return;
-    document.querySelectorAll('.cf-carousel-block.selected').forEach(b=>{if(b!==block)b.classList.remove('selected');});
+    document.querySelectorAll('.cf-carousel-block.selected').forEach(b=>{
+      if(b!==block){b.classList.remove('selected');const _t=b.querySelector('.cf-car-toolbar');if(_t&&!b.matches(':hover'))_t.style.display='none';}
+    });
     block.classList.add('selected');
+    _cfCarPositionToolbar(block);
   });
   return block;
 }
@@ -7566,8 +7588,11 @@ async function _cfCarLoadAll(editor){
       block._carSelectWired=true;
       block.addEventListener('mousedown',e=>{
         if(e.target.closest('.cf-car-toolbar'))return;
-        document.querySelectorAll('.cf-carousel-block.selected').forEach(b=>{if(b!==block)b.classList.remove('selected');});
+        document.querySelectorAll('.cf-carousel-block.selected').forEach(b=>{
+          if(b!==block){b.classList.remove('selected');const _t=b.querySelector('.cf-car-toolbar');if(_t&&!b.matches(':hover'))_t.style.display='none';}
+        });
         block.classList.add('selected');
+        _cfCarPositionToolbar(block);
       });
     }
   }
