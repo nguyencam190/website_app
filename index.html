@@ -435,7 +435,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .tbl-cell-drop.on{display:flex}
 .editor-content td:focus,.editor-content th:focus{outline:2px solid var(--accent);outline-offset:-2px}
 /* Row number column */
-.editor-content .tbl-row-num{width:18px!important;min-width:18px;max-width:18px;text-align:center;padding:8px 2px;font-size:11px;font-weight:600;color:var(--text3);background:var(--tbl-header-bg);cursor:default;user-select:none;border-right:2px solid var(--tbl-border)!important;box-sizing:border-box;flex-shrink:0}
+.editor-content .tbl-row-num{width:36px!important;min-width:36px;max-width:36px;text-align:center;padding:8px 2px;font-size:11px;font-weight:600;color:var(--text3);background:var(--tbl-header-bg);cursor:default;user-select:none;border-right:2px solid var(--tbl-border)!important;box-sizing:border-box;flex-shrink:0}
 .editor-content th.tbl-row-num{background:var(--tbl-header-bg);color:var(--text3);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
 /* Column resize handle */
 .tbl-col-resize-handle{position:absolute;top:0;right:-3px;bottom:0;width:6px;cursor:col-resize;z-index:20;background:transparent}
@@ -4755,7 +4755,7 @@ function _tblEdgeDragStart(e,wrap,table,side){
 // ══════════════════════════════════════════════════════════
 // Default pixel width per new data column (≈ 7mm at 96dpi = ~26px, use 120px for readability)
 const TBL_DEFAULT_COL_W = 120;
-const TBL_ROWNUM_W      = 18;
+const TBL_ROWNUM_W      = 36;
 
 function tblEqualizeColumns(table){
   if(!table)return;
@@ -4778,7 +4778,7 @@ function tblEqualizeColumns(table){
   if(existingCg)existingCg.remove();
 
   // ── Distribute equally using % so CSS handles rounding perfectly ──
-  // Row-num stays px; data cols use calc((100% - 18px) / N) so no leftover pixels
+  // Row-num stays px; data cols use calc((100% - 36px) / N) so no leftover pixels
   const colPct=`calc((100% - ${hasRowNum?TBL_ROWNUM_W:0}px) / ${dataCols})`;
 
   const cg=document.createElement('colgroup');
@@ -9451,12 +9451,15 @@ async function doExportWebsite(){
       const savedW=tbl.dataset.colwidths;
       if(savedW){
         const wArr=savedW.split(',');
+        // data-colwidths includes the row-num col as wArr[0] when row nums were ON.
+        // Row-num cells are stripped on save, so offset by 1 to get actual data col widths.
+        const _wOff=tbl.dataset.rownums!=='0'?1:0;
         const cg=document.createElement('colgroup');
         let trueCols=0;
         if(tbl.rows[0])Array.from(tbl.rows[0].cells).forEach(c=>trueCols+=(c.colSpan||1));
         for(let i=0;i<trueCols;i++){
           const col=document.createElement('col');
-          col.style.width=wArr[i]||(i===0?'36px':'120px');
+          col.style.width=wArr[i+_wOff]||'120px';
           cg.appendChild(col);
         }
         tbl.insertBefore(cg,tbl.firstChild);
@@ -9742,17 +9745,19 @@ async function doExportWebsite(){
     '.ws-canvas .editor-content code{background:var(--surface2);border-radius:4px;padding:1px 6px;font-family:var(--mono);font-size:.85em}',
     '.ws-canvas .editor-content img{max-width:100%;height:auto;border-radius:8px;display:block;margin:10px 0}',
     '.ws-canvas .editor-content .tbl-outer{display:block;margin:14px 0;width:100%;overflow-x:auto;overflow-y:visible}',
-    '.ws-canvas .editor-content table{border-collapse:collapse;width:max-content;max-width:none;font-size:.875rem;table-layout:fixed !important;word-break:break-word;border:1px solid var(--tbl-border)}',
-    '.ws-canvas .editor-content th{border:1px solid var(--tbl-border);padding:9px 14px;background:var(--tbl-hbg);font-weight:600;text-align:left;color:var(--tbl-htxt);transition:all var(--tr)}',
-    '.ws-canvas .editor-content td{border:1px solid var(--tbl-border);padding:9px 14px;background:var(--surface);color:var(--text);transition:all var(--tr);position:relative;vertical-align:middle;word-break:break-word}',
-    '.ws-canvas .editor-content tr:nth-child(even) td{background:var(--tbl-stripe)}',
+    '.ws-canvas .editor-content table{border-collapse:collapse;width:max-content;max-width:none;min-width:100%;font-size:.875rem;table-layout:fixed !important;word-break:break-word;border:1px solid var(--tbl-border);box-sizing:border-box}',
+    '.ws-canvas .editor-content th,.ws-canvas .editor-content td{padding:8px 12px;word-break:break-word;overflow-wrap:break-word;white-space:normal;vertical-align:top;min-width:40px}',
+    '.ws-canvas .editor-content th{border-right:1px solid var(--tbl-border);border-bottom:2px solid var(--tbl-border);background:var(--tbl-hbg);font-weight:600;text-align:left;color:var(--tbl-htxt)}',
+    '.ws-canvas .editor-content td{border-right:1px solid var(--tbl-border);border-bottom:1px solid var(--tbl-border);background:var(--surface);color:var(--text);position:relative}',
+    '.ws-canvas .editor-content th:last-child,.ws-canvas .editor-content td:last-child{border-right:1px solid var(--tbl-border)}',
+    '.ws-canvas .editor-content tr:last-child td,.ws-canvas .editor-content tr:last-child th{border-bottom:none}',
     /* ── Nested Row styles for published pages ── */
     '.ws-canvas .editor-content td.tbl-inner-container{padding:0!important;overflow:visible!important;vertical-align:top;background:transparent}',
     '.ws-canvas .editor-content .tbl-inner-row{width:100%;table-layout:fixed;border-collapse:collapse;border:none;margin:0;background:transparent;display:table}',
     '.ws-canvas .editor-content .tbl-inner-row td{padding:9px 14px;border-right:1px solid var(--tbl-border);border-top:none;border-bottom:none;border-left:none;position:relative;vertical-align:top;word-break:break-word}',
     '.ws-canvas .editor-content .tbl-inner-row td:last-child{border-right:none}',
     '.ws-canvas .editor-content .tbl-inner-row tr:hover td{background:var(--tbl-hover)}',
-    '.ws-canvas .editor-content tr:hover td,.ws-canvas .editor-content tr:hover th{background:var(--tbl-hover)}',
+    '.ws-canvas .editor-content tr:hover td{background:var(--tbl-hover)}',
     '.ws-canvas .editor-content td.tbl-has-img,.ws-canvas .editor-content th.tbl-has-img{padding:0;overflow:hidden;text-align:center;vertical-align:middle;line-height:0}',
     '.ws-canvas .editor-content td.tbl-has-img img,.ws-canvas .editor-content th.tbl-has-img img{width:100%;height:auto;display:block;object-fit:cover;margin:0}',
     '.ws-canvas .editor-content td img,.ws-canvas .editor-content th img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;margin:0 auto;border-radius:5px;background:transparent}',
