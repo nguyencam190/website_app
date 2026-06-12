@@ -1,5 +1,7 @@
 #!/bin/bash
 # Auto cherry-pick new commits from current branch to main after Claude stops.
+# After a successful push, rebases the feature branch onto main so histories
+# stay in sync and the next run never sees duplicate commits.
 # Outputs JSON systemMessage to notify the user.
 
 REPO_DIR=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
@@ -31,13 +33,11 @@ TEMP_BRANCH="_automerge_$$"
 git checkout -b "$TEMP_BRANCH" origin/main --quiet 2>/dev/null
 
 FAILED=0
-MERGED=0
 for COMMIT in $COMMITS; do
-  # Skip if equivalent content already in main (cherry-picked with different hash)
   if git cherry-pick "$COMMIT" --quiet 2>/dev/null; then
-    MERGED=$((MERGED+1))
+    :
   else
-    # Check if this is an empty cherry-pick (content already present)
+    # Empty cherry-pick = content already present on main, skip it
     if git diff --cached --quiet 2>/dev/null && [ "$(git status --porcelain 2>/dev/null)" = "" ]; then
       git cherry-pick --skip 2>/dev/null || true
     else
@@ -61,8 +61,13 @@ fi
 # Push temp branch to main
 if git push origin "$TEMP_BRANCH:main" --quiet 2>/dev/null; then
   git branch -D "$TEMP_BRANCH" --quiet 2>/dev/null || true
-  # Also update the remote tracking for the current branch
-  git push origin "$CURRENT_BRANCH" --quiet 2>/dev/null || true
+
+  # Rebase feature branch onto the new main so histories stay in sync.
+  # This prevents duplicate commits from accumulating on the next run.
+  git fetch origin main --quiet 2>/dev/null || true
+  git rebase origin/main --quiet 2>/dev/null || true
+  git push origin "$CURRENT_BRANCH" --force-with-lease --quiet 2>/dev/null || true
+
   printf '{"systemMessage": "✅ Đã tự động cập nhật %s commit mới vào main:\n%s"}' "$AHEAD" "$SUBJECTS"
 else
   git branch -D "$TEMP_BRANCH" --quiet 2>/dev/null || true
