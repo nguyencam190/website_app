@@ -5028,6 +5028,15 @@ function tblMergeCells(){
       if(cell&&!cell.classList.contains('tbl-row-num'))inRect.add(cell);
     }
   }
+  // Save original innerHTML of every cell in the bounding box, keyed by relative (row,col)
+  // so tblSplitCell can restore the original content instead of inserting blank cells.
+  const mergeHist={};
+  for(const mc of inRect){
+    const mri=rows.indexOf(mc.closest('tr'));
+    const mci=(grid[mri]||[]).indexOf(mc);
+    if(mci>=0){const key=`${mri-minRi},${mci-minCi}`;if(!(key in mergeHist))mergeHist[key]=mc.innerHTML;}
+  }
+  anchor.dataset.mergeHistory=JSON.stringify(mergeHist);
   anchor.colSpan=maxCi-minCi+1;
   anchor.rowSpan=maxRi-minRi+1;
   inRect.forEach(c=>{if(c!==anchor)c.remove();});
@@ -5051,6 +5060,7 @@ function tblSplitCell(){
   const table=cell.closest('table');if(!table)return;
   const cs=cell.colSpan||1,rs=cell.rowSpan||1;
   if(cs===1&&rs===1){toast('Ô này chưa được gộp','info');return;}
+  const mergeHist=cell.dataset.mergeHistory?JSON.parse(cell.dataset.mergeHistory):null;
   // Capture position from the ORIGINAL grid (before any changes)
   const grid=_buildColMap(table);
   const rows=Array.from(table.rows);
@@ -5076,6 +5086,9 @@ function tblSplitCell(){
   }
   // Reset anchor spans NOW (after computing refs)
   cell.colSpan=1;cell.rowSpan=1;
+  // Restore anchor's original content (key '0,0' in merge history)
+  if(mergeHist&&mergeHist['0,0']!==undefined){cell.innerHTML=mergeHist['0,0'];}
+  delete cell.dataset.mergeHistory;
   // Insert new cells using pre-computed references
   for(let r=ri;r<ri+rs;r++){
     const targetRow=table.rows[r];if(!targetRow)continue;
@@ -5085,7 +5098,9 @@ function tblSplitCell(){
     // Use <th> for header row (row 0) to preserve header styling/color
     const tag=r===0?'th':'td';
     for(let c=startC;c<=maxCi;c++){
-      const newCell=document.createElement(tag);newCell.innerHTML='<br>';
+      const newCell=document.createElement(tag);
+      const histKey=`${r-ri},${c-ci}`;
+      newCell.innerHTML=(mergeHist&&mergeHist[histKey]!==undefined)?mergeHist[histKey]:'<br>';
       if(ref)targetRow.insertBefore(newCell,ref);else targetRow.appendChild(newCell);
     }
   }
