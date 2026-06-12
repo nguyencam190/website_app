@@ -526,7 +526,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .tg-manual button:hover{opacity:.85}
 /* tg-cell.hi and tg-label defined above — no duplicate needed */
 /* Slash command table grid popup */
-.slash-tg-popup{position:fixed;z-index:910;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.18);padding:12px;animation:cpFade .12s ease}
+.slash-tg-popup{position:fixed;z-index:11000;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.18);padding:12px;animation:cpFade .12s ease}
 .slash-tg-cell{width:22px;height:22px;border-radius:5px;background:var(--surface2);border:1.5px solid var(--border);cursor:pointer;transition:background .08s,border-color .08s;flex-shrink:0}
 .slash-tg-cell.on{background:var(--accent-light);border-color:var(--accent)}
 .slash-tg-label{font-size:12px;color:var(--text3);margin-top:8px;text-align:center;font-weight:600;letter-spacing:.3px}
@@ -698,7 +698,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .txtbox-sw{position:absolute;left:-5px;bottom:-5px;width:10px;height:10px;border-radius:50%;background:var(--accent);cursor:sw-resize}
 /* BUBBLE TOOLBAR */
 /* ═══ SLASH COMMANDS ═══════════════════════════════════════ */
-.slash-menu{position:fixed;z-index:800;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.18);width:280px;overflow:hidden;display:none;flex-direction:column;animation:cpFade .12s ease}
+.slash-menu{position:fixed;z-index:11000;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.18);width:280px;overflow:hidden;display:none;flex-direction:column;animation:cpFade .12s ease}
 .slash-menu.on{display:flex}
 .slash-menu-search{padding:10px 12px 6px;border-bottom:1px solid var(--border);flex-shrink:0}
 .slash-menu-inp{width:100%;background:transparent;border:none;outline:none;font-size:13px;color:var(--text);font-family:var(--font)}
@@ -5964,13 +5964,14 @@ const SLASH_ITEMS=[
 let _slashRecent=[];
 try{_slashRecent=JSON.parse(localStorage.getItem('slash_recent')||'[]');}catch(e){_slashRecent=[];}
 
-let _slashVisible=false, _slashActiveIdx=0, _slashFiltered=[], _slashSavedRange=null;
+let _slashVisible=false, _slashActiveIdx=0, _slashFiltered=[], _slashSavedRange=null, _slashOpenRect=null;
 
 function slashOpen(){
   const sel=window.getSelection();
   if(!sel.rangeCount)return;
   _slashSavedRange=sel.getRangeAt(0).cloneRange();
   const rect=_slashGetCaretRect();
+  _slashOpenRect=rect; // snapshot position while caret is valid (before text deletion)
   const menu=document.getElementById('slashMenu');
   const vw=window.innerWidth,vh=window.innerHeight;
   const menuH=380;
@@ -6376,13 +6377,17 @@ function _slashShowTableGrid(){
   popup.appendChild(customRow);
   document.body.appendChild(popup);
 
-  // Position near caret
-  const rect=_slashGetCaretRect();
+  // Position near caret — use _slashOpenRect (captured when '/' was typed, always valid)
+  const rect=_slashOpenRect||_slashGetCaretRect();
   const vw=window.innerWidth,vh=window.innerHeight;
   const pw=306,ph=320;
+  // Ensure popup stays inside viewport; prefer below caret, flip above if needed
   let top=rect.bottom+8,left=rect.left-4;
   if(top+ph>vh-8)top=Math.max(8,rect.top-ph-8);
   if(left+pw>vw-8)left=Math.max(8,vw-pw-8);
+  // Clamp below any fixed header (header height ≈ 52px + toolbar ≈ 44px)
+  const minTop=100;
+  if(top<minTop)top=minTop;
   popup.style.top=top+'px';popup.style.left=left+'px';
 
   function setHighlight(row,col){
@@ -7789,7 +7794,7 @@ let _emojiInsertRange=null;
 function _slashShowEmoji(){
   // Save the slash range for correct insertion
   _emojiInsertRange=_slashSavedRange||(window.getSelection()?.rangeCount?window.getSelection().getRangeAt(0).cloneRange():null);
-  const rect=_slashGetCaretRect();
+  const rect=_slashOpenRect||_slashGetCaretRect();
   const picker=document.getElementById('emojiPicker');
   const vw=window.innerWidth,vh=window.innerHeight;
   let top=rect.bottom+6,left=rect.left;
