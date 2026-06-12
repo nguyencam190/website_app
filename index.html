@@ -6891,11 +6891,13 @@ function _cfInsertBlockAtRange(block, savedRange){
                        !insertBefore.textContent.trim()&&(insertBefore.children.length<=1);
     if(isEmptyBlock)insertBefore.remove();
   }
-  // Only add trailing <p> when needed: block is the last child, or the next sibling is
-  // also a non-editable block (no editable area for the cursor to land in).
+  // Only add trailing <p> when needed: block is the last child or followed by another
+  // non-editable block, AND we are NOT inside a cf-column-item (the column item is itself
+  // contentEditable so the browser can place a cursor there without an explicit <p>).
   const _nextEl=block.nextSibling;
-  const _needsTrail=!_nextEl||
-    (_nextEl.nodeType===Node.ELEMENT_NODE&&_nextEl.contentEditable==='false');
+  const _inColItem=insertParent.classList?.contains('cf-column-item');
+  const _needsTrail=!_inColItem&&(!_nextEl||
+    (_nextEl.nodeType===Node.ELEMENT_NODE&&_nextEl.contentEditable==='false'));
   if(_needsTrail){const p=document.createElement('p');p.innerHTML='<br>';insertParent.insertBefore(p,block.nextSibling);}
 }
 
