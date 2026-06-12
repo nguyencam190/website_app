@@ -859,6 +859,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 [data-theme="dark"] .cf-img-tb-swatch[data-swval="4"]{background:rgba(255,255,255,.9)!important;border:none!important}
 .cf-img-tb-group{display:flex;align-items:center;gap:3px;padding:0 3px}
 .cf-img-tb-grouplbl{font-size:9.5px;color:var(--text3);font-weight:700;letter-spacing:.03em;margin-right:1px;line-height:1}
+/* Swatch rows inside the "..." context menu */
+.cf-img-ctx-swrow{display:flex;align-items:center;gap:5px;padding:5px 13px;cursor:default}
+.cf-img-ctx-swlbl{font-size:11.5px;color:var(--text2);min-width:30px;flex-shrink:0}
 /* ═══ INLINE CAROUSEL BLOCK (merged) ══════════════════════ */
 .cf-carousel-block{display:block;margin:16px 0;position:relative;user-select:none;border-radius:10px;background:var(--surface2);transition:box-shadow .35s ease,outline-color .35s ease}
 .cf-carousel-block.selected{outline:2px solid var(--accent);outline-offset:2px}
@@ -6980,44 +6983,13 @@ function _cfBuildImgToolbar(block){
 
   const sep2=document.createElement('div');sep2.className='cf-img-tb-sep';tb.appendChild(sep2);
 
-  // Shadow + Border 4-swatch color pickers
+  // Swatch palette (used in ctx dropdown)
   const _swPalette=[
     {bg:'#ffffff',border:'1px solid #ccc',val:'1',name:'Trắng'},
     {bg:'rgba(0,0,0,.22)',border:'none',val:'2',name:'Nhạt'},
     {bg:'rgba(0,0,0,.55)',border:'none',val:'3',name:'Đậm'},
     {bg:'#000000',border:'none',val:'4',name:'Đen'},
   ];
-  function _makeSwatchGroup(labelText,dataAttr){
-    const grp=document.createElement('div');grp.className='cf-img-tb-group';
-    const lbl=document.createElement('span');lbl.className='cf-img-tb-grouplbl';lbl.textContent=labelText;
-    grp.appendChild(lbl);
-    _swPalette.forEach(c=>{
-      const sw=document.createElement('span');sw.className='cf-img-tb-swatch';
-      sw.style.cssText=`background:${c.bg};border:${c.border}`;
-      sw.dataset.swval=c.val;
-      sw.title=labelText+': '+c.name;
-      if(block.dataset[dataAttr]===c.val)sw.classList.add('active');
-      sw.addEventListener('click',()=>{
-        if(block.dataset[dataAttr]===c.val){
-          delete block.dataset[dataAttr];
-          grp.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.remove('active'));
-        } else {
-          block.dataset[dataAttr]=c.val;
-          grp.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.remove('active'));
-          sw.classList.add('active');
-        }
-        onContentChange();
-      });
-      grp.appendChild(sw);
-    });
-    return grp;
-  }
-  tb.appendChild(_makeSwatchGroup('Bóng','imgshadow'));
-  const sep2b=document.createElement('div');sep2b.className='cf-img-tb-sep';tb.appendChild(sep2b);
-  tb.appendChild(_makeSwatchGroup('Viền','imgborder'));
-
-  const sep2c=document.createElement('div');sep2c.className='cf-img-tb-sep';tb.appendChild(sep2c);
-
   // Fullscreen
   const fsBtn=document.createElement('button');fsBtn.className='cf-img-tb-btn';
   fsBtn.innerHTML='<i class="ti ti-arrows-maximize" style="font-size:13px"></i>';fsBtn.title='Toàn màn hình';
@@ -7036,6 +7008,28 @@ function _cfBuildImgToolbar(block){
   const moreBtn=document.createElement('button');moreBtn.className='cf-img-tb-btn';
   moreBtn.innerHTML='<i class="ti ti-dots" style="font-size:14px"></i>';moreBtn.title='Thêm';
   const ctx=document.createElement('div');ctx.className='cf-img-ctx';
+
+  // Shadow + Border swatch rows inside ctx
+  function _makeCtxSw(labelText,dataAttr){
+    const row=document.createElement('div');row.className='cf-img-ctx-swrow';
+    const lbl=document.createElement('span');lbl.className='cf-img-ctx-swlbl';lbl.textContent=labelText;row.appendChild(lbl);
+    _swPalette.forEach(c=>{
+      const sw=document.createElement('span');sw.className='cf-img-tb-swatch';
+      sw.style.cssText=`background:${c.bg};border:${c.border}`;sw.dataset.swval=c.val;sw.title=labelText+': '+c.name;
+      if(block.dataset[dataAttr]===c.val)sw.classList.add('active');
+      sw.addEventListener('click',e=>{
+        e.stopPropagation();
+        if(block.dataset[dataAttr]===c.val){delete block.dataset[dataAttr];row.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.remove('active'));}
+        else{block.dataset[dataAttr]=c.val;row.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.remove('active'));sw.classList.add('active');}
+        onContentChange();
+      });
+      row.appendChild(sw);
+    });
+    return row;
+  }
+  ctx.appendChild(_makeCtxSw('Bóng','imgshadow'));
+  ctx.appendChild(_makeCtxSw('Viền','imgborder'));
+  const _ctxSep0=document.createElement('div');_ctxSep0.className='cf-img-ctx-sep';ctx.appendChild(_ctxSep0);
 
   const ctxItems=[
     {icon:'ti-link',label:'Thêm liên kết',fn:()=>{const url=prompt('Nhập URL liên kết:');if(url){block.dataset.link=url;toast('Đã thêm link','success');}}},
@@ -7242,29 +7236,6 @@ function _cfBuildCarToolbar(block){
   });
   tb.appendChild(sep());
 
-  // Shadow + Border swatches (per-slide)
-  function makeSlideSwatch(labelText,datasetAttr){
-    const grp=document.createElement('div');grp.className='cf-img-tb-group';
-    const lbl=document.createElement('span');lbl.className='cf-img-tb-grouplbl';lbl.textContent=labelText;grp.appendChild(lbl);
-    _pal.forEach(c=>{
-      const sw=document.createElement('span');sw.className='cf-img-tb-swatch';
-      sw.style.cssText='background:'+c.bg+';border:'+c.border;sw.dataset.swval=c.val;
-      sw.title=labelText+': '+c.name;
-      sw.addEventListener('click',()=>{
-        const sl=getCur();if(!sl)return;
-        if((sl.dataset[datasetAttr]||'')=== c.val){delete sl.dataset[datasetAttr];grp.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.remove('active'));}
-        else{sl.dataset[datasetAttr]=c.val;grp.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.remove('active'));sw.classList.add('active');}
-        onContentChange();
-      });
-      grp.appendChild(sw);
-    });
-    return grp;
-  }
-  const shadowGrp=makeSlideSwatch('Bóng','carslideImgshadow');
-  const borderGrp=makeSlideSwatch('Viền','carslideImgborder');
-  tb.appendChild(shadowGrp);tb.appendChild(sep());
-  tb.appendChild(borderGrp);tb.appendChild(sep());
-
   // Fullscreen (current slide)
   const fsBtn=document.createElement('button');fsBtn.className='cf-img-tb-btn';
   fsBtn.innerHTML='<i class="ti ti-arrows-maximize" style="font-size:13px"></i>';fsBtn.title='Toàn màn hình';
@@ -7282,6 +7253,29 @@ function _cfBuildCarToolbar(block){
   const moreBtn=document.createElement('button');moreBtn.className='cf-img-tb-btn';
   moreBtn.innerHTML='<i class="ti ti-dots" style="font-size:14px"></i>';moreBtn.title='Thêm';
   const ctx=document.createElement('div');ctx.className='cf-img-ctx';
+  // Shadow + Border swatch rows in ctx (per-slide)
+  function _makeCarCtxSw(labelText,datasetAttr){
+    const row=document.createElement('div');row.className='cf-img-ctx-swrow';
+    const lbl=document.createElement('span');lbl.className='cf-img-ctx-swlbl';lbl.textContent=labelText;row.appendChild(lbl);
+    _pal.forEach(c=>{
+      const sw=document.createElement('span');sw.className='cf-img-tb-swatch';
+      sw.style.cssText='background:'+c.bg+';border:'+c.border;sw.dataset.swval=c.val;sw.title=labelText+': '+c.name;
+      sw.addEventListener('click',e=>{
+        e.stopPropagation();
+        const sl=getCur();if(!sl)return;
+        if((sl.dataset[datasetAttr]||'')=== c.val){delete sl.dataset[datasetAttr];row.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.remove('active'));}
+        else{sl.dataset[datasetAttr]=c.val;row.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.remove('active'));sw.classList.add('active');}
+        onContentChange();
+      });
+      row.appendChild(sw);
+    });
+    return row;
+  }
+  const ctxShadowRow=_makeCarCtxSw('Bóng','carslideImgshadow');
+  const ctxBorderRow=_makeCarCtxSw('Viền','carslideImgborder');
+  ctx.appendChild(ctxShadowRow);ctx.appendChild(ctxBorderRow);
+  const _carCtxSep0=document.createElement('div');_carCtxSep0.className='cf-img-ctx-sep';ctx.appendChild(_carCtxSep0);
+
   const ctxItems=[
     {icon:'ti-photo-minus',label:'Xóa slide này',fn:()=>{
       const slides=track?.querySelectorAll('.cf-car-slide')||[];
@@ -7320,8 +7314,8 @@ function _cfBuildCarToolbar(block){
   block._carSlideSection=null;
   block._carRefreshSwatches=(sl)=>{
     if(!sl)return;
-    shadowGrp.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.toggle('active',(sl.dataset.carslideImgshadow||'')=== s.dataset.swval));
-    borderGrp.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.toggle('active',(sl.dataset.carslideImgborder||'')=== s.dataset.swval));
+    ctxShadowRow.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.toggle('active',(sl.dataset.carslideImgshadow||'')=== s.dataset.swval));
+    ctxBorderRow.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.toggle('active',(sl.dataset.carslideImgborder||'')=== s.dataset.swval));
   };
 
   // Wire hover show/hide for fixed-position toolbar with gap-bridging delay
