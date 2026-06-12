@@ -2808,9 +2808,11 @@ function onContentChange(){
   // Strip interactive chrome (not content)
   clone.querySelectorAll('.tbl-row-num,.tbl-col-resize-handle,.tbl-row-resize-handle,.tbl-col-sel,.tbl-row-sel,.tbl-img-btn,.tbl-cell-drop,.tbl-shadow-btn,.tbl-edge-h').forEach(e=>e.remove());
   // Save col widths to data attribute before stripping colgroup (persist across save/load)
+  // Only save for user-customized colgroups (no data-auto).
+  // Auto-generated calc() widths are NOT saved — tblEqualizeColumns will rebuild on reload.
   clone.querySelectorAll('table').forEach(tbl=>{
     const cg=tbl.querySelector('colgroup');
-    if(!cg)return;
+    if(!cg||cg.dataset.auto==='1'){tbl.removeAttribute('data-colwidths');return;}
     const widths=Array.from(cg.querySelectorAll('col'))
       .map(col=>col.style.width||'')
       .join(',');
@@ -4129,8 +4131,10 @@ function tblClearSel(){
 function tblSelectCol(table,colIdx,triggerEl){
   tblClearSel();
   _selTable=table;_selType='col';_selIdx=colIdx;
-  // Set _activeTd so add/delete functions know which column
-  _activeTd=table.rows[0]&&table.rows[0].cells[colIdx]||null;
+  // Set _activeTd so add/delete functions know which column.
+  // Header row may have merged cells (fewer DOM cells), so fall back to first data row.
+  _activeTd=table.rows[0]?.cells[colIdx]||
+    Array.from(table.rows).slice(1).find(r=>r.cells[colIdx]&&!r.cells[colIdx].classList.contains('tbl-row-num'))?.cells[colIdx]||null;
   // Highlight all cells in this column
   Array.from(table.rows).forEach(row=>{
     const cell=row.cells[colIdx];if(cell)cell.classList.add('tbl-col-selected');
@@ -5028,7 +5032,7 @@ function tblMergeCells(){
   anchor.rowSpan=maxRi-minRi+1;
   inRect.forEach(c=>{if(c!==anchor)c.remove();});
   const _cg=_mergeTable.querySelector('colgroup');
-  if(_cg){
+  if(_cg&&!_cg.dataset.auto){
     const ws=Array.from(_cg.querySelectorAll('col')).map(col=>col.style.width||'').join(',');
     _mergeTable.dataset.colwidths=ws;
   }
@@ -5078,8 +5082,10 @@ function tblSplitCell(){
     const ref=rowRefs[r-ri];
     // Anchor row: insert from ci+1; other rows: insert from ci
     const startC=r===ri?ci+1:ci;
+    // Use <th> for header row (row 0) to preserve header styling/color
+    const tag=r===0?'th':'td';
     for(let c=startC;c<=maxCi;c++){
-      const newCell=document.createElement('td');newCell.innerHTML='<br>';
+      const newCell=document.createElement(tag);newCell.innerHTML='<br>';
       if(ref)targetRow.insertBefore(newCell,ref);else targetRow.appendChild(newCell);
     }
   }
@@ -5556,14 +5562,19 @@ function tblAttachTable(table){
   }
 
   // 2. ── Column resize handles + column selector on each th ──────
-  table.querySelectorAll('th:not(.tbl-row-num)').forEach((th,ci)=>{
+  // Use logical column index from grid so merged-cell headers point to the correct <col>
+  const _hdrGrid=_buildColMap(table);
+  const _hdrRows=Array.from(table.rows);
+  table.querySelectorAll('th:not(.tbl-row-num)').forEach((th)=>{
     th.querySelectorAll('.tbl-col-resize-handle,.tbl-col-sel').forEach(e=>e.remove());
     th.style.position='relative';
+    const _thRi=_hdrRows.indexOf(th.closest('tr'));
+    const _thCi=(_hdrGrid[_thRi]||[]).indexOf(th); // logical col index (0=row-num,1=col1…)
     // Resize handle — MUST be contentEditable=false so caret never lands inside it
     const handle=document.createElement('div');
     handle.className='tbl-col-resize-handle';
     handle.contentEditable='false';
-    handle.addEventListener('mousedown',e=>{e.preventDefault();e.stopPropagation();tblColResizeStart(e,table,th,ci+1);});
+    handle.addEventListener('mousedown',e=>{e.preventDefault();e.stopPropagation();tblColResizeStart(e,table,th,_thCi);});
     th.appendChild(handle);
     // Column selector grip (⁞⁞⁞) — shows on hover
     const colSel=document.createElement('div');colSel.className='tbl-col-sel';
@@ -5573,8 +5584,7 @@ function tblAttachTable(table){
     colSel.addEventListener('mousedown',e=>e.preventDefault());
     colSel.addEventListener('click',e=>{
       e.stopPropagation();
-      // colIdx in actual table = ci+1 (offset for row-num col)
-      tblSelectCol(table,ci+1,colSel);
+      tblSelectCol(table,_thCi,colSel);
     });
     th.appendChild(colSel);
   });
