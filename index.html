@@ -803,8 +803,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .cf-img-caption:empty::before{content:attr(data-placeholder);pointer-events:none;color:var(--text3)}
 .cf-img-caption:focus{background:var(--surface2);color:var(--text)}
 /* Bottom toolbar */
-.cf-img-toolbar{position:absolute;bottom:-42px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,.1);display:none;align-items:center;gap:2px;padding:4px 6px;z-index:150;white-space:nowrap;animation:cpFade .12s ease}
-.cf-img-block.selected .cf-img-toolbar,.cf-img-block:hover .cf-img-toolbar{display:flex}
+.cf-img-toolbar{position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.14);display:none;align-items:center;gap:2px;padding:4px 6px;z-index:500;white-space:nowrap;animation:cpFade .12s ease;max-width:calc(100vw - 32px);overflow-x:auto}
 .cf-img-tb-btn{height:28px;padding:0 8px;border:1px solid transparent;border-radius:5px;background:transparent;color:var(--text);font-size:12.5px;cursor:pointer;display:flex;align-items:center;gap:5px;font-family:var(--font);transition:.12s;flex-shrink:0}
 .cf-img-tb-btn:hover{background:var(--surface2);border-color:var(--border)}
 .cf-img-tb-btn.active{background:var(--accent-light);border-color:var(--accent);color:var(--accent)}
@@ -2064,11 +2063,15 @@ function init(){
   _pabLogoInit();
   _initSmartPab();
   initCanvasScaling();
-  // Update fixed-position carousel toolbars on editor scroll
+  // Update fixed-position toolbars on editor scroll
   document.getElementById('editorScroll')?.addEventListener('scroll',()=>{
     document.querySelectorAll('.cf-carousel-block').forEach(b=>{
       const tb=b.querySelector('.cf-car-toolbar');
       if(tb&&tb.style.display==='flex')_cfCarPositionToolbar(b);
+    });
+    document.querySelectorAll('.cf-img-block').forEach(b=>{
+      const tb=b.querySelector('.cf-img-toolbar');
+      if(tb&&tb.style.display==='flex')_cfImgPositionToolbar(b);
     });
   });
   // Restore saved width
@@ -4180,7 +4183,7 @@ function _openSelPanel(title,type,idx,table,triggerEl){
     btn.innerHTML='<i class="ti ti-'+icon+'" style="font-size:14px;flex-shrink:0"></i><span>'+label+'</span>';
     btn.onmouseenter=()=>btn.style.background=danger?'rgba(239,68,68,.15)':'rgba(255,255,255,.07)';
     btn.onmouseleave=()=>btn.style.background='transparent';
-    btn.onclick=()=>{tblClearSel();onClick();};
+    btn.onclick=()=>{onClick();tblClearSel();};
     return btn;
   }
 
@@ -6935,7 +6938,9 @@ function _cfBuildImgBlock(id,src,isVid,name){
   block.appendChild(cap);
 
   // Toolbar
-  block.appendChild(_cfBuildImgToolbar(block));
+  const _tb=_cfBuildImgToolbar(block);
+  block.appendChild(_tb);
+  _cfImgWireHover(block,_tb);
 
   // Click to select
   block.addEventListener('mousedown',e=>{
@@ -7100,14 +7105,22 @@ function _cfImgInitResize(inner,handle,side){
 }
 
 function _cfImgSelect(block){
-  if(_cfImgSelected&&_cfImgSelected!==block)_cfImgSelected.classList.remove('selected');
+  if(_cfImgSelected&&_cfImgSelected!==block){
+    _cfImgSelected.classList.remove('selected');
+    const _ot=_cfImgSelected.querySelector('.cf-img-toolbar');
+    if(_ot&&!_cfImgSelected.matches(':hover'))_ot.style.display='none';
+  }
   _cfImgSelected=block;block.classList.add('selected');
+  _cfImgPositionToolbar(block);
 }
 
 // Deselect on click outside
 document.addEventListener('click',e=>{
-  if(_cfImgSelected&&!_cfImgSelected.contains(e.target))
+  if(_cfImgSelected&&!_cfImgSelected.contains(e.target)){
     _cfImgSelected.classList.remove('selected');
+    const _ot=_cfImgSelected.querySelector('.cf-img-toolbar');
+    if(_ot&&!_cfImgSelected.matches(':hover'))_ot.style.display='none';
+  }
   if(!e.target.closest('.cf-carousel-block')){
     document.querySelectorAll('.cf-carousel-block.selected').forEach(b=>{
       b.classList.remove('selected');
@@ -7135,9 +7148,11 @@ function _cfImgRewireBlock(block){
   if(inner&&!rh){rh=document.createElement('div');rh.className='cf-img-resize-h right';inner.appendChild(rh);}
   if(inner&&lh)_cfImgInitResize(inner,lh,'left');
   if(inner&&rh)_cfImgInitResize(inner,rh,'right');
-  // Replace toolbar
+  // Replace toolbar + rewire hover
   block.querySelector('.cf-img-toolbar')?.remove();
-  block.appendChild(_cfBuildImgToolbar(block));
+  const _rTb=_cfBuildImgToolbar(block);
+  block.appendChild(_rTb);
+  _cfImgWireHover(block,_rTb);
 }
 
 // Load saved inline image blocks from IDB
@@ -7186,6 +7201,33 @@ function _cfCarPositionToolbar(block){
   tb.style.top=top+'px';
 }
 
+function _cfImgPositionToolbar(block){
+  const tb=block.querySelector('.cf-img-toolbar');
+  if(!tb)return;
+  const br=block.getBoundingClientRect();
+  if(!br.width)return;
+  tb.style.display='flex';
+  const vw=window.innerWidth,vh=window.innerHeight;
+  const tbW=tb.offsetWidth||420;
+  const tbH=tb.offsetHeight||40;
+  let left=br.left+(br.width-tbW)/2;
+  let top=br.bottom+6;
+  left=Math.max(8,Math.min(vw-tbW-8,left));
+  if(top+tbH>vh-8)top=Math.max(8,br.top-tbH-6);
+  tb.style.left=left+'px';
+  tb.style.top=top+'px';
+}
+
+function _cfImgWireHover(block,tb){
+  let _tbHide;
+  const _showTb=()=>{clearTimeout(_tbHide);_cfImgPositionToolbar(block);};
+  const _hideTb=()=>{_tbHide=setTimeout(()=>{if(!block.classList.contains('selected')){tb.style.display='none';}},180);};
+  block.addEventListener('mouseenter',_showTb);
+  block.addEventListener('mouseleave',_hideTb);
+  tb.addEventListener('mouseenter',()=>clearTimeout(_tbHide));
+  tb.addEventListener('mouseleave',_hideTb);
+}
+
 function _cfBuildCarToolbar(block){
   const track=block.querySelector('.cf-car-track');
   const dotsWrap=block.querySelector('.cf-car-dots');
@@ -7196,17 +7238,33 @@ function _cfBuildCarToolbar(block){
   function getCur(){const sl=track?.querySelectorAll('.cf-car-slide');return sl&&sl[block._carIdx||0]||null;}
   function sep(){const d=document.createElement('div');d.className='cf-img-tb-sep';return d;}
 
-  // ── SLIDE SECTION ────────────────────────────────────────────
-  const slideSection=document.createElement('div');slideSection.style.cssText='display:contents';
+  // Alignment (block-level)
+  [{key:'left',icon:'ti-align-left',title:'Căn trái'},{key:'center',icon:'ti-align-center',title:'Căn giữa'},{key:'right',icon:'ti-align-right',title:'Căn phải'}].forEach(a=>{
+    const btn=document.createElement('button');btn.className='cf-img-tb-btn'+(block.dataset.align===a.key?' active':'');
+    btn.innerHTML='<i class="ti '+a.icon+'" style="font-size:13px"></i>';btn.title=a.title;btn.dataset.calign=a.key;
+    btn.addEventListener('click',()=>{block.dataset.align=a.key;tb.querySelectorAll('[data-calign]').forEach(b=>b.classList.toggle('active',b.dataset.calign===a.key));onContentChange();});
+    tb.appendChild(btn);
+  });
+  tb.appendChild(sep());
 
-  // Slide shadow + border swatches
+  // Width presets (block-level)
+  function _updateCarwActive(){const cur=block.dataset.carwidth||'100';tb.querySelectorAll('[data-carw]').forEach(b=>b.classList.toggle('active',b.dataset.carw===cur));}
+  [{w:'50',label:'50%'},{w:'75',label:'75%'},{w:'100',label:'100%'}].forEach(wt=>{
+    const btn=document.createElement('button');btn.className='cf-img-tb-btn'+((block.dataset.carwidth||'100')===wt.w?' active':'');
+    btn.innerHTML='<span style="font-size:10px;font-weight:600">'+wt.label+'</span>';btn.title='Carousel rộng '+wt.label;btn.dataset.carw=wt.w;
+    btn.addEventListener('click',()=>{block.style.width='';if(wt.w==='100'){delete block.dataset.carwidth;}else{block.dataset.carwidth=wt.w;}_updateCarwActive();onContentChange();});
+    tb.appendChild(btn);
+  });
+  tb.appendChild(sep());
+
+  // Shadow + Border swatches (per-slide)
   function makeSlideSwatch(labelText,datasetAttr){
     const grp=document.createElement('div');grp.className='cf-img-tb-group';
     const lbl=document.createElement('span');lbl.className='cf-img-tb-grouplbl';lbl.textContent=labelText;grp.appendChild(lbl);
     _pal.forEach(c=>{
       const sw=document.createElement('span');sw.className='cf-img-tb-swatch';
-      sw.style.cssText='background:'+c.bg+';border:'+c.border;sw.dataset.swval=c.val;sw.dataset.carslideSwAttr=datasetAttr;
-      sw.title=labelText+': '+c.name;sw.dataset.carslide='sw';
+      sw.style.cssText='background:'+c.bg+';border:'+c.border;sw.dataset.swval=c.val;
+      sw.title=labelText+': '+c.name;
       sw.addEventListener('click',()=>{
         const sl=getCur();if(!sl)return;
         if((sl.dataset[datasetAttr]||'')=== c.val){delete sl.dataset[datasetAttr];grp.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.remove('active'));}
@@ -7217,81 +7275,69 @@ function _cfBuildCarToolbar(block){
     });
     return grp;
   }
-  slideSection.appendChild(makeSlideSwatch('Bóng','carslideImgshadow'));
-  slideSection.appendChild(sep());
-  slideSection.appendChild(makeSlideSwatch('Viền','carslideImgborder'));
-  slideSection.appendChild(sep());
+  const shadowGrp=makeSlideSwatch('Bóng','carslideImgshadow');
+  const borderGrp=makeSlideSwatch('Viền','carslideImgborder');
+  tb.appendChild(shadowGrp);tb.appendChild(sep());
+  tb.appendChild(borderGrp);tb.appendChild(sep());
 
-  // Fullscreen
+  // Fullscreen (current slide)
   const fsBtn=document.createElement('button');fsBtn.className='cf-img-tb-btn';
   fsBtn.innerHTML='<i class="ti ti-arrows-maximize" style="font-size:13px"></i>';fsBtn.title='Toàn màn hình';
   fsBtn.addEventListener('click',()=>{const sl=getCur();if(!sl)return;const img2=sl.querySelector('img');if(!img2)return;const _a=Array.from(document.querySelectorAll('.fmedia img,.editor-content img'));lbOpen(Math.max(0,_a.indexOf(img2)));});
-  slideSection.appendChild(fsBtn);
-  slideSection.appendChild(sep());
+  tb.appendChild(fsBtn);tb.appendChild(sep());
 
-  // Delete current slide
-  const delSlBtn=document.createElement('button');delSlBtn.className='cf-img-tb-btn';delSlBtn.title='Xóa slide này';
-  delSlBtn.innerHTML='<i class="ti ti-photo-minus" style="font-size:13px"></i>';
-  delSlBtn.addEventListener('click',()=>{
-    const slides=track?.querySelectorAll('.cf-car-slide')||[];
-    if(slides.length<=1){toast('Carousel cần ít nhất 1 ảnh','info');return;}
-    const sl=getCur();if(!sl)return;
-    const img2=sl.querySelector('img[data-carid]');
-    if(img2){const id=img2.dataset.carid;try{_idbDel(id);}catch(e){}
-      block.dataset.carids=(block.dataset.carids||'').split(',').filter(i=>i&&i!==id).join(',');
-    }
-    const idx=block._carIdx||0;sl.remove();
-    const dots=dotsWrap?.querySelectorAll('.cf-car-dot')||[];if(dots[idx])dots[idx].remove();
-    if(block._carGoTo)block._carGoTo(Math.max(0,idx-1));
-    const total=track?.querySelectorAll('.cf-car-slide').length||0;
-    if(counter)counter.textContent=`${(block._carIdx||0)+1} / ${total}`;
-    onContentChange();
-  });
-  slideSection.appendChild(delSlBtn);
-
-  tb.appendChild(slideSection);
-
-  // ── DIVIDER between slide and carousel sections ───────────────
-  const mainSep=document.createElement('div');mainSep.style.cssText='width:1.5px;height:22px;background:var(--border);margin:0 5px;flex-shrink:0';
-  tb.appendChild(mainSep);
-
-  // ── CAROUSEL SECTION ─────────────────────────────────────────
+  // Add images
   const addBtn=document.createElement('button');addBtn.className='cf-img-tb-btn';
   addBtn.innerHTML='<i class="ti ti-photo-plus" style="font-size:13px"></i>';addBtn.title='Thêm ảnh vào carousel';
   addBtn.addEventListener('click',()=>_cfCarAddImages(block,track,dotsWrap,counter));
   tb.appendChild(addBtn);tb.appendChild(sep());
 
-  // Carousel block align
-  [{key:'left',icon:'ti-align-left',title:'Carousel căn trái'},{key:'center',icon:'ti-align-center',title:'Carousel căn giữa'},{key:'right',icon:'ti-align-right',title:'Carousel căn phải'}].forEach(a=>{
-    const btn=document.createElement('button');btn.className='cf-img-tb-btn'+(block.dataset.align===a.key?' active':'');
-    btn.innerHTML='<i class="ti '+a.icon+'" style="font-size:13px"></i>';btn.title=a.title;btn.dataset.calign=a.key;
-    btn.addEventListener('click',()=>{block.dataset.align=a.key;tb.querySelectorAll('[data-calign]').forEach(b=>b.classList.toggle('active',b.dataset.calign===a.key));onContentChange();});
-    tb.appendChild(btn);
+  // More (...)
+  const moreWrap=document.createElement('div');moreWrap.style.position='relative';
+  const moreBtn=document.createElement('button');moreBtn.className='cf-img-tb-btn';
+  moreBtn.innerHTML='<i class="ti ti-dots" style="font-size:14px"></i>';moreBtn.title='Thêm';
+  const ctx=document.createElement('div');ctx.className='cf-img-ctx';
+  const ctxItems=[
+    {icon:'ti-photo-minus',label:'Xóa slide này',fn:()=>{
+      const slides=track?.querySelectorAll('.cf-car-slide')||[];
+      if(slides.length<=1){toast('Carousel cần ít nhất 1 ảnh','info');return;}
+      const sl=getCur();if(!sl)return;
+      const img2=sl.querySelector('img[data-carid]');
+      if(img2){const id=img2.dataset.carid;try{_idbDel(id);}catch(e){}
+        block.dataset.carids=(block.dataset.carids||'').split(',').filter(i=>i&&i!==id).join(',');
+      }
+      const idx=block._carIdx||0;sl.remove();
+      const dots=dotsWrap?.querySelectorAll('.cf-car-dot')||[];if(dots[idx])dots[idx].remove();
+      if(block._carGoTo)block._carGoTo(Math.max(0,idx-1));
+      const total=track?.querySelectorAll('.cf-car-slide').length||0;
+      if(counter)counter.textContent=`${(block._carIdx||0)+1} / ${total}`;
+      onContentChange();
+    }},
+    {sep:true},
+    {icon:'ti-trash',label:'Xóa carousel',danger:true,fn:()=>{
+      if(!confirm('Xóa carousel này?'))return;
+      (block.dataset.carids||'').split(',').filter(Boolean).forEach(id=>{try{_idbDel(id);}catch(e){}});
+      const fb=document.createElement('p');fb.innerHTML='<br>';block.parentNode?.insertBefore(fb,block);block.remove();onContentChange();
+    }},
+  ];
+  ctxItems.forEach(item=>{
+    if(item.sep){const d=document.createElement('div');d.className='cf-img-ctx-sep';ctx.appendChild(d);return;}
+    const el=document.createElement('div');el.className='cf-img-ctx-item'+(item.danger?' danger':'');
+    el.innerHTML=`<i class="ti ${item.icon}"></i>${item.label}`;
+    el.addEventListener('click',()=>{ctx.classList.remove('on');item.fn();});
+    ctx.appendChild(el);
   });
-  tb.appendChild(sep());
+  moreBtn.addEventListener('click',e=>{e.stopPropagation();ctx.classList.toggle('on');});
+  document.addEventListener('click',()=>ctx.classList.remove('on'));
+  moreWrap.appendChild(moreBtn);moreWrap.appendChild(ctx);tb.appendChild(moreWrap);
 
-  // Carousel block width
-  function _updateCarwActive(){const cur=block.dataset.carwidth||'100';tb.querySelectorAll('[data-carw]').forEach(b=>b.classList.toggle('active',b.dataset.carw===cur));}
-  [{w:'50',label:'50%'},{w:'75',label:'75%'},{w:'100',label:'100%'}].forEach(wt=>{
-    const btn=document.createElement('button');btn.className='cf-img-tb-btn'+((block.dataset.carwidth||'100')===wt.w?' active':'');
-    btn.innerHTML='<span style="font-size:10px;font-weight:600">'+wt.label+'</span>';btn.title='Carousel rộng '+wt.label;btn.dataset.carw=wt.w;
-    btn.addEventListener('click',()=>{block.style.width='';if(wt.w==='100'){delete block.dataset.carwidth;}else{block.dataset.carwidth=wt.w;}_updateCarwActive();onContentChange();});
-    tb.appendChild(btn);
-  });
-  tb.appendChild(sep());
-
-  // Delete carousel
-  const delCarBtn=document.createElement('button');delCarBtn.className='cf-img-tb-btn';delCarBtn.title='Xóa carousel';
-  delCarBtn.innerHTML='<i class="ti ti-trash" style="font-size:13px;color:#ef4444"></i>';
-  delCarBtn.addEventListener('click',()=>{
-    if(!confirm('Xóa carousel này?'))return;
-    (block.dataset.carids||'').split(',').filter(Boolean).forEach(id=>{try{_idbDel(id);}catch(e){}});
-    const fb=document.createElement('p');fb.innerHTML='<br>';block.parentNode?.insertBefore(fb,block);block.remove();onContentChange();
-  });
-  tb.appendChild(delCarBtn);
-
-  // Register refresh hook so goTo can update slide section
-  block._carSlideSection=slideSection;
+  // Refresh slide swatches when navigating slides
+  block._carSlideSection=null;
+  block._carRefreshSwatches=(sl)=>{
+    if(!sl)return;
+    shadowGrp.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.toggle('active',(sl.dataset.carslideImgshadow||'')=== s.dataset.swval));
+    borderGrp.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.toggle('active',(sl.dataset.carslideImgborder||'')=== s.dataset.swval));
+  };
 
   // Wire hover show/hide for fixed-position toolbar with gap-bridging delay
   let _tbHide;
@@ -7459,6 +7505,7 @@ function _cfCarWireNav(block,track,prev,next,dots,counter){
     // Mark active slide (for resize handles), refresh toolbar slide section
     slides.forEach((s,i)=>s.classList.toggle('active',i===idx));
     if(block._carSlideSection)_cfCarRefreshSlideSection(block._carSlideSection,slides[idx]);
+    if(block._carRefreshSwatches)block._carRefreshSwatches(slides[idx]);
   }
   if(prev)prev.onclick=e=>{e.stopPropagation();goTo((block._carIdx||0)-1);};
   if(next)next.onclick=e=>{e.stopPropagation();goTo((block._carIdx||0)+1);};
@@ -8073,7 +8120,23 @@ function _getBlockBar(){
   const drag=document.createElement('button');
   drag.className='editor-block-btn editor-block-drag';drag.title='Kéo để di chuyển';
   drag.innerHTML='<i class="ti ti-grip-vertical"></i>';
-  _blockBar.appendChild(plus);_blockBar.appendChild(drag);
+  // Delete button
+  const del=document.createElement('button');
+  del.className='editor-block-btn';del.title='Xóa khối';
+  del.innerHTML='<i class="ti ti-x" style="font-size:13px"></i>';
+  del.style.cssText='color:var(--text3)';
+  del.addEventListener('mousedown',e=>{
+    e.preventDefault();
+    const target=_blockBarTarget;if(!target)return;
+    if(target.classList.contains('cf-img-block')){
+      const id=target.dataset.cfimgid;
+      if(id){_revokeUrl(id);_idbDel(id).catch(()=>{});}
+    } else if(target.classList.contains('cf-carousel-block')){
+      (target.dataset.carids||'').split(',').filter(Boolean).forEach(id=>{try{_idbDel(id);}catch(e){}});
+    }
+    target.remove();_hideBlockBar();onContentChange();
+  });
+  _blockBar.appendChild(plus);_blockBar.appendChild(drag);_blockBar.appendChild(del);
   document.body.appendChild(_blockBar);
   return _blockBar;
 }
