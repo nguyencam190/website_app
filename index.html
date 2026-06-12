@@ -869,7 +869,35 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .cf-car-wrap{position:relative;overflow:hidden;border-radius:10px}
 .cf-car-track{display:flex;transition:transform .35s cubic-bezier(.4,0,.2,1);will-change:transform;align-items:flex-start}
 .cf-car-slide{min-width:100%;position:relative;display:flex;flex-direction:column}
-.cf-car-slide img,.cf-car-slide video{width:100%;height:auto;object-fit:contain;border-radius:10px 10px 0 0;display:block;cursor:zoom-in}
+.cf-car-slide img,.cf-car-slide video{width:100%;height:auto;object-fit:contain;border-radius:4px 4px 0 0;display:block;cursor:zoom-in}
+/* Per-slide inner wrap (like cf-img-inner) */
+.cf-car-slide-wrap{position:relative;display:inline-flex;align-items:center;width:100%}
+.cf-car-slide[data-carslide-align="left"] .cf-car-slide-wrap{justify-content:flex-start}
+.cf-car-slide[data-carslide-align="center"] .cf-car-slide-wrap{justify-content:center}
+.cf-car-slide[data-carslide-align="right"] .cf-car-slide-wrap{justify-content:flex-end}
+.cf-car-slide-inner{position:relative;display:inline-block;max-width:100%;border-radius:4px;overflow:visible;line-height:0;transition:box-shadow .35s ease,outline-color .35s ease;cursor:zoom-in}
+.cf-car-slide-inner img,.cf-car-slide-inner video{display:block;max-width:100%;height:auto;border-radius:4px;pointer-events:none}
+/* Resize handles (like cf-img-resize-h) */
+.cf-car-slide-resize-h{position:absolute;top:50%;transform:translateY(-50%);width:8px;height:48px;background:var(--accent);border-radius:4px;cursor:ew-resize;z-index:20;opacity:0;transition:opacity .15s}
+.cf-car-slide.active .cf-car-slide-resize-h,.cf-car-slide-resize-h:hover{opacity:1}
+.cf-car-slide-resize-h.left{left:-12px}
+.cf-car-slide-resize-h.right{right:-12px}
+/* Per-slide shadow */
+.cf-car-slide[data-carslide-imgshadow="1"] .cf-car-slide-inner{box-shadow:0 8px 28px rgba(255,255,255,.55),0 2px 8px rgba(255,255,255,.35)}
+.cf-car-slide[data-carslide-imgshadow="2"] .cf-car-slide-inner{box-shadow:0 8px 28px rgba(0,0,0,.13),0 2px 8px rgba(0,0,0,.08)}
+.cf-car-slide[data-carslide-imgshadow="3"] .cf-car-slide-inner{box-shadow:0 8px 28px rgba(0,0,0,.35),0 2px 8px rgba(0,0,0,.20)}
+.cf-car-slide[data-carslide-imgshadow="4"] .cf-car-slide-inner{box-shadow:0 8px 32px rgba(0,0,0,.65),0 2px 10px rgba(0,0,0,.40)}
+[data-theme="dark"] .cf-car-slide[data-carslide-imgshadow="2"] .cf-car-slide-inner{box-shadow:0 8px 28px rgba(255,255,255,.12),0 2px 8px rgba(255,255,255,.07)}
+[data-theme="dark"] .cf-car-slide[data-carslide-imgshadow="3"] .cf-car-slide-inner{box-shadow:0 8px 28px rgba(255,255,255,.30),0 2px 8px rgba(255,255,255,.18)}
+[data-theme="dark"] .cf-car-slide[data-carslide-imgshadow="4"] .cf-car-slide-inner{box-shadow:0 8px 32px rgba(255,255,255,.55),0 2px 10px rgba(255,255,255,.35)}
+/* Per-slide border */
+.cf-car-slide[data-carslide-imgborder="1"] .cf-car-slide-inner{outline:2px solid rgba(255,255,255,.85);outline-offset:0}
+.cf-car-slide[data-carslide-imgborder="2"] .cf-car-slide-inner{outline:2px solid rgba(0,0,0,.15);outline-offset:0}
+.cf-car-slide[data-carslide-imgborder="3"] .cf-car-slide-inner{outline:2px solid rgba(0,0,0,.5);outline-offset:0}
+.cf-car-slide[data-carslide-imgborder="4"] .cf-car-slide-inner{outline:2px solid #000;outline-offset:0}
+[data-theme="dark"] .cf-car-slide[data-carslide-imgborder="2"] .cf-car-slide-inner{outline-color:rgba(255,255,255,.18)}
+[data-theme="dark"] .cf-car-slide[data-carslide-imgborder="3"] .cf-car-slide-inner{outline-color:rgba(255,255,255,.50)}
+[data-theme="dark"] .cf-car-slide[data-carslide-imgborder="4"] .cf-car-slide-inner{outline-color:rgba(255,255,255,.85)}
 .cf-carousel-stage{position:relative;width:100%;overflow:hidden;min-height:200px;background:#000;border-radius:10px 10px 0 0}
 .cf-carousel-slides{display:flex;transition:transform .35s ease;height:100%;will-change:transform}
 .cf-carousel-slide{min-width:100%;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#000}
@@ -2799,7 +2827,7 @@ function onContentChange(){
   clone.querySelectorAll('.cf-carousel-block [data-slideid]').forEach(media=>{
     if(media.src&&!media.src.startsWith('data:'))media.removeAttribute('src');
   });
-  clone.querySelectorAll('.cf-car-toolbar,.cf-car-add-slide').forEach(e=>e.remove());
+  clone.querySelectorAll('.cf-car-toolbar,.cf-car-add-slide,.cf-car-slide-resize-h').forEach(e=>e.remove());
   // Strip blob URLs from inline image blocks (only save data-cfimgid on outer div)
   clone.querySelectorAll('.cf-img-block[data-cfimgid] img,.cf-img-block[data-cfimgid] video').forEach(media=>{
     if(media.src&&!media.src.startsWith('data:'))media.removeAttribute('src');
@@ -7058,68 +7086,204 @@ function _cfBuildCarToolbar(block){
   const dotsWrap=block.querySelector('.cf-car-dots');
   const counter=block.querySelector('.cf-car-counter');
   const tb=document.createElement('div');tb.className='cf-car-toolbar';
-  const addBtn=document.createElement('button');addBtn.className='cf-car-tb-btn';
-  addBtn.innerHTML='<i class="ti ti-plus" style="font-size:13px"></i> Thêm ảnh';
-  addBtn.addEventListener('click',()=>_cfCarAddImages(block,track,dotsWrap,counter));
-  const delBtn=document.createElement('button');delBtn.className='cf-car-tb-btn danger';
-  delBtn.innerHTML='<i class="ti ti-trash" style="font-size:13px"></i> Xóa carousel';
-  delBtn.addEventListener('click',()=>{
-    if(!confirm('Xóa carousel này?'))return;
-    (block.dataset.carids||'').split(',').filter(Boolean).forEach(id=>{try{_idbDel(id);}catch(e){}});
-    const fb=document.createElement('p');fb.innerHTML='<br>';
-    block.parentNode?.insertBefore(fb,block);block.remove();onContentChange();
-  });
-  tb.appendChild(addBtn);tb.appendChild(delBtn);
-  const _cSep0=document.createElement('div');_cSep0.style.cssText='width:1px;height:20px;background:var(--border);margin:0 3px';tb.appendChild(_cSep0);
-  [{key:'left',icon:'ti-align-left',title:'Căn trái'},{key:'center',icon:'ti-align-center',title:'Căn giữa'},{key:'right',icon:'ti-align-right',title:'Căn phải'}].forEach(function(a){
-    const btn=document.createElement('button');btn.className='cf-img-tb-btn'+(block.dataset.align===a.key?' active':'');
-    btn.innerHTML='<i class="ti '+a.icon+'" style="font-size:13px"></i>';btn.title=a.title;btn.dataset.calign=a.key;
-    btn.addEventListener('click',function(){
-      block.dataset.align=a.key;
-      tb.querySelectorAll('[data-calign]').forEach(function(b){b.classList.toggle('active',b.dataset.calign===a.key);});
+  const _pal=[{bg:'#ffffff',border:'1px solid #ccc',val:'1',name:'Trắng'},{bg:'rgba(0,0,0,.22)',border:'none',val:'2',name:'Nhạt'},{bg:'rgba(0,0,0,.55)',border:'none',val:'3',name:'Đậm'},{bg:'#000000',border:'none',val:'4',name:'Đen'}];
+
+  function getCur(){const sl=track?.querySelectorAll('.cf-car-slide');return sl&&sl[block._carIdx||0]||null;}
+  function sep(){const d=document.createElement('div');d.className='cf-img-tb-sep';return d;}
+
+  // ── SLIDE SECTION ────────────────────────────────────────────
+  const slideSection=document.createElement('div');slideSection.style.cssText='display:contents';
+
+  // Slide align
+  [{key:'left',icon:'ti-align-left',title:'Căn trái slide'},{key:'center',icon:'ti-align-center',title:'Căn giữa slide'},{key:'right',icon:'ti-align-right',title:'Căn phải slide'}].forEach(a=>{
+    const btn=document.createElement('button');btn.className='cf-img-tb-btn';
+    btn.innerHTML='<i class="ti '+a.icon+'" style="font-size:13px"></i>';btn.title=a.title;btn.dataset.carslideAlign=a.key;
+    btn.addEventListener('click',()=>{
+      const sl=getCur();if(!sl)return;
+      sl.dataset.carslideAlign=a.key;
+      slideSection.querySelectorAll('[data-carslide-align]').forEach(b=>b.classList.toggle('active',b.dataset.carslideAlign===a.key));
       onContentChange();
     });
-    tb.appendChild(btn);
+    slideSection.appendChild(btn);
   });
-  const _cSepW=document.createElement('div');_cSepW.style.cssText='width:1px;height:20px;background:var(--border);margin:0 3px';tb.appendChild(_cSepW);
-  function _updateCarwActive(){
-    const cur=block.dataset.carwidth||'100';
-    tb.querySelectorAll('[data-carw]').forEach(function(b){b.classList.toggle('active',b.dataset.carw===cur);});
-  }
-  [{w:'50',label:'50%'},{w:'75',label:'75%'},{w:'100',label:'100%'}].forEach(function(wt){
-    const cur=block.dataset.carwidth||'100';
-    const btn=document.createElement('button');btn.className='cf-img-tb-btn'+(cur===wt.w?' active':'');
-    btn.innerHTML='<span style="font-size:10px;font-weight:600">'+wt.label+'</span>';btn.title='Chiều rộng '+wt.label;
-    btn.addEventListener('click',function(){
-      if(wt.w==='100'){delete block.dataset.carwidth;}else{block.dataset.carwidth=wt.w;}
-      _updateCarwActive();onContentChange();
+  slideSection.appendChild(sep());
+
+  // Slide image width
+  [{w:'50%',label:'50%'},{w:'75%',label:'75%'},{w:'100%',label:'100%'}].forEach(wt=>{
+    const btn=document.createElement('button');btn.className='cf-img-tb-btn';
+    btn.innerHTML='<span style="font-size:10px;font-weight:600">'+wt.label+'</span>';btn.title='Ảnh '+wt.label;btn.dataset.carslideW=wt.w;
+    btn.addEventListener('click',()=>{
+      const sl=getCur();if(!sl)return;
+      const inn=sl.querySelector('.cf-car-slide-inner');if(!inn)return;
+      inn.style.width=wt.w;
+      slideSection.querySelectorAll('[data-carslide-w]').forEach(b=>b.classList.toggle('active',b.dataset.carslideW===wt.w));
+      onContentChange();
     });
-    btn.dataset.carw=wt.w;
-    tb.appendChild(btn);
+    slideSection.appendChild(btn);
   });
-  const _carSwPalette=[{bg:'#ffffff',border:'1px solid #ccc',val:'1',name:'Trắng'},{bg:'rgba(0,0,0,.22)',border:'none',val:'2',name:'Nhạt'},{bg:'rgba(0,0,0,.55)',border:'none',val:'3',name:'Đậm'},{bg:'#000000',border:'none',val:'4',name:'Đen'}];
-  function _carMakeSwatch(labelText,dataAttr){
+  slideSection.appendChild(sep());
+
+  // Slide shadow + border swatches
+  function makeSlideSwatch(labelText,datasetAttr){
     const grp=document.createElement('div');grp.className='cf-img-tb-group';
     const lbl=document.createElement('span');lbl.className='cf-img-tb-grouplbl';lbl.textContent=labelText;grp.appendChild(lbl);
-    _carSwPalette.forEach(c=>{
+    _pal.forEach(c=>{
       const sw=document.createElement('span');sw.className='cf-img-tb-swatch';
-      sw.style.cssText='background:'+c.bg+';border:'+c.border;sw.dataset.swval=c.val;
-      sw.title=labelText+': '+c.name;
-      if(block.dataset[dataAttr]===c.val)sw.classList.add('active');
+      sw.style.cssText='background:'+c.bg+';border:'+c.border;sw.dataset.swval=c.val;sw.dataset.carslideSwAttr=datasetAttr;
+      sw.title=labelText+': '+c.name;sw.dataset.carslide='sw';
       sw.addEventListener('click',()=>{
-        if(block.dataset[dataAttr]===c.val){delete block.dataset[dataAttr];grp.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.remove('active'));}
-        else{block.dataset[dataAttr]=c.val;grp.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.remove('active'));sw.classList.add('active');}
+        const sl=getCur();if(!sl)return;
+        if((sl.dataset[datasetAttr]||'')=== c.val){delete sl.dataset[datasetAttr];grp.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.remove('active'));}
+        else{sl.dataset[datasetAttr]=c.val;grp.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.remove('active'));sw.classList.add('active');}
         onContentChange();
       });
       grp.appendChild(sw);
     });
     return grp;
   }
-  const _cSep1=document.createElement('div');_cSep1.style.cssText='width:1px;height:20px;background:var(--border);margin:0 3px';tb.appendChild(_cSep1);
-  tb.appendChild(_carMakeSwatch('Bóng','imgshadow'));
-  const _cSep2=document.createElement('div');_cSep2.style.cssText='width:1px;height:20px;background:var(--border);margin:0 3px';tb.appendChild(_cSep2);
-  tb.appendChild(_carMakeSwatch('Viền','imgborder'));
+  slideSection.appendChild(makeSlideSwatch('Bóng','carslideImgshadow'));
+  slideSection.appendChild(sep());
+  slideSection.appendChild(makeSlideSwatch('Viền','carslideImgborder'));
+  slideSection.appendChild(sep());
+
+  // Fullscreen
+  const fsBtn=document.createElement('button');fsBtn.className='cf-img-tb-btn';
+  fsBtn.innerHTML='<i class="ti ti-arrows-maximize" style="font-size:13px"></i>';fsBtn.title='Toàn màn hình';
+  fsBtn.addEventListener('click',()=>{const sl=getCur();if(!sl)return;const img2=sl.querySelector('img');if(!img2)return;const _a=Array.from(document.querySelectorAll('.fmedia img,.editor-content img'));lbOpen(Math.max(0,_a.indexOf(img2)));});
+  slideSection.appendChild(fsBtn);
+  slideSection.appendChild(sep());
+
+  // Delete current slide
+  const delSlBtn=document.createElement('button');delSlBtn.className='cf-img-tb-btn';delSlBtn.title='Xóa slide này';
+  delSlBtn.innerHTML='<i class="ti ti-photo-minus" style="font-size:13px"></i>';
+  delSlBtn.addEventListener('click',()=>{
+    const slides=track?.querySelectorAll('.cf-car-slide')||[];
+    if(slides.length<=1){toast('Carousel cần ít nhất 1 ảnh','info');return;}
+    const sl=getCur();if(!sl)return;
+    const img2=sl.querySelector('img[data-carid]');
+    if(img2){const id=img2.dataset.carid;try{_idbDel(id);}catch(e){}
+      block.dataset.carids=(block.dataset.carids||'').split(',').filter(i=>i&&i!==id).join(',');
+    }
+    const idx=block._carIdx||0;sl.remove();
+    const dots=dotsWrap?.querySelectorAll('.cf-car-dot')||[];if(dots[idx])dots[idx].remove();
+    if(block._carGoTo)block._carGoTo(Math.max(0,idx-1));
+    const total=track?.querySelectorAll('.cf-car-slide').length||0;
+    if(counter)counter.textContent=`${(block._carIdx||0)+1} / ${total}`;
+    onContentChange();
+  });
+  slideSection.appendChild(delSlBtn);
+
+  tb.appendChild(slideSection);
+
+  // ── DIVIDER between slide and carousel sections ───────────────
+  const mainSep=document.createElement('div');mainSep.style.cssText='width:1.5px;height:22px;background:var(--border);margin:0 5px;flex-shrink:0';
+  tb.appendChild(mainSep);
+
+  // ── CAROUSEL SECTION ─────────────────────────────────────────
+  const addBtn=document.createElement('button');addBtn.className='cf-img-tb-btn';
+  addBtn.innerHTML='<i class="ti ti-photo-plus" style="font-size:13px"></i>';addBtn.title='Thêm ảnh vào carousel';
+  addBtn.addEventListener('click',()=>_cfCarAddImages(block,track,dotsWrap,counter));
+  tb.appendChild(addBtn);tb.appendChild(sep());
+
+  // Carousel block align
+  [{key:'left',icon:'ti-align-left',title:'Carousel căn trái'},{key:'center',icon:'ti-align-center',title:'Carousel căn giữa'},{key:'right',icon:'ti-align-right',title:'Carousel căn phải'}].forEach(a=>{
+    const btn=document.createElement('button');btn.className='cf-img-tb-btn'+(block.dataset.align===a.key?' active':'');
+    btn.innerHTML='<i class="ti '+a.icon+'" style="font-size:13px"></i>';btn.title=a.title;btn.dataset.calign=a.key;
+    btn.addEventListener('click',()=>{block.dataset.align=a.key;tb.querySelectorAll('[data-calign]').forEach(b=>b.classList.toggle('active',b.dataset.calign===a.key));onContentChange();});
+    tb.appendChild(btn);
+  });
+  tb.appendChild(sep());
+
+  // Carousel block width
+  function _updateCarwActive(){const cur=block.dataset.carwidth||'100';tb.querySelectorAll('[data-carw]').forEach(b=>b.classList.toggle('active',b.dataset.carw===cur));}
+  [{w:'50',label:'50%'},{w:'75',label:'75%'},{w:'100',label:'100%'}].forEach(wt=>{
+    const btn=document.createElement('button');btn.className='cf-img-tb-btn'+((block.dataset.carwidth||'100')===wt.w?' active':'');
+    btn.innerHTML='<span style="font-size:10px;font-weight:600">'+wt.label+'</span>';btn.title='Carousel rộng '+wt.label;btn.dataset.carw=wt.w;
+    btn.addEventListener('click',()=>{if(wt.w==='100'){delete block.dataset.carwidth;}else{block.dataset.carwidth=wt.w;}_updateCarwActive();onContentChange();});
+    tb.appendChild(btn);
+  });
+  tb.appendChild(sep());
+
+  // Delete carousel
+  const delCarBtn=document.createElement('button');delCarBtn.className='cf-img-tb-btn';delCarBtn.title='Xóa carousel';
+  delCarBtn.innerHTML='<i class="ti ti-trash" style="font-size:13px;color:#ef4444"></i>';
+  delCarBtn.addEventListener('click',()=>{
+    if(!confirm('Xóa carousel này?'))return;
+    (block.dataset.carids||'').split(',').filter(Boolean).forEach(id=>{try{_idbDel(id);}catch(e){}});
+    const fb=document.createElement('p');fb.innerHTML='<br>';block.parentNode?.insertBefore(fb,block);block.remove();onContentChange();
+  });
+  tb.appendChild(delCarBtn);
+
+  // Register refresh hook so goTo can update slide section
+  block._carSlideSection=slideSection;
   return tb;
+}
+
+// Build one carousel slide (image + inner container + handles + caption)
+function _cfBuildCarSlide(s){
+  const slide=document.createElement('div');slide.className='cf-car-slide';
+  slide.dataset.carslideAlign='center';
+  // Wrap + inner (mirrors cf-img-wrap / cf-img-inner)
+  const swrap=document.createElement('div');swrap.className='cf-car-slide-wrap';
+  const inner=document.createElement('div');inner.className='cf-car-slide-inner';
+  const img2=document.createElement('img');img2.src=s.src||'';img2.alt=s.name||'';img2.dataset.carid=s.id;
+  img2.addEventListener('dblclick',()=>{
+    const _all=Array.from(document.querySelectorAll('.fmedia img,.editor-content img'));
+    lbOpen(Math.max(0,_all.indexOf(img2)));
+  });
+  const lh=document.createElement('div');lh.className='cf-car-slide-resize-h left';
+  const rh=document.createElement('div');rh.className='cf-car-slide-resize-h right';
+  inner.appendChild(img2);inner.appendChild(lh);inner.appendChild(rh);
+  swrap.appendChild(inner);slide.appendChild(swrap);
+  const cap=document.createElement('div');cap.className='cf-car-slide-caption';
+  cap.contentEditable='true';cap.setAttribute('data-placeholder','Thêm chú thích...');
+  slide.appendChild(cap);
+  return slide;
+}
+
+function _cfCarSlideInitResize(inner,handle,side){
+  handle.addEventListener('mousedown',e=>{
+    e.preventDefault();e.stopPropagation();
+    const startX=e.clientX,startW=inner.offsetWidth;
+    const maxW=inner.closest('.cf-car-wrap')?.offsetWidth||inner.closest('.cf-carousel-block')?.offsetWidth||800;
+    handle.style.opacity='1';
+    document.body.style.cursor='ew-resize';document.body.style.userSelect='none';
+    function mm(e2){
+      const dx=e2.clientX-startX;
+      const newW=side==='right'?Math.max(80,startW+dx):Math.max(80,startW-dx);
+      inner.style.width=Math.min(maxW,newW)+'px';
+    }
+    function mu(){
+      document.body.style.cursor='';document.body.style.userSelect='';
+      document.removeEventListener('mousemove',mm);document.removeEventListener('mouseup',mu);
+      onContentChange();
+    }
+    document.addEventListener('mousemove',mm);document.addEventListener('mouseup',mu);
+  });
+}
+
+function _cfCarWireSlide(slide){
+  const inner=slide.querySelector('.cf-car-slide-inner');
+  const lh=slide.querySelector('.cf-car-slide-resize-h.left')||
+    (()=>{const h=document.createElement('div');h.className='cf-car-slide-resize-h left';inner?.appendChild(h);return h;})();
+  const rh=slide.querySelector('.cf-car-slide-resize-h.right')||
+    (()=>{const h=document.createElement('div');h.className='cf-car-slide-resize-h right';inner?.appendChild(h);return h;})();
+  if(inner&&lh)_cfCarSlideInitResize(inner,lh,'left');
+  if(inner&&rh)_cfCarSlideInitResize(inner,rh,'right');
+}
+
+// Refresh slide-section buttons in the unified carousel toolbar
+function _cfCarRefreshSlideSection(section,slideEl){
+  if(!section||!slideEl)return;
+  const align=slideEl.dataset.carslideAlign||'center';
+  section.querySelectorAll('[data-carslide-align]').forEach(b=>b.classList.toggle('active',b.dataset.carslideAlign===align));
+  const inner=slideEl.querySelector('.cf-car-slide-inner');
+  const curW=inner?.style.width||'';
+  section.querySelectorAll('[data-carslide-w]').forEach(b=>b.classList.toggle('active',b.dataset.carslideW===curW));
+  section.querySelectorAll('[data-carslide-sw]').forEach(sw=>{
+    const attr=sw.dataset.carslideSwAttr;const val=sw.dataset.swval;
+    if(attr)sw.classList.toggle('active',(slideEl.dataset[attr]||'')=== val);
+  });
 }
 
 function _cfBuildCarousel(slides){
@@ -7131,12 +7295,8 @@ function _cfBuildCarousel(slides){
   const wrap=document.createElement('div');wrap.className='cf-car-wrap';
   const track=document.createElement('div');track.className='cf-car-track';
   slides.forEach(s=>{
-    const slide=document.createElement('div');slide.className='cf-car-slide';
-    const img2=document.createElement('img');img2.src=s.src;img2.alt=s.name;img2.dataset.carid=s.id;
-    img2.addEventListener('dblclick',()=>{const _all=Array.from(document.querySelectorAll('.fmedia img,.editor-content img'));lbOpen(Math.max(0,_all.indexOf(img2)));});
-    slide.appendChild(img2);
-    const scap=document.createElement('div');scap.className='cf-car-slide-caption';scap.contentEditable='true';scap.setAttribute('data-placeholder','Thêm chú thích...');
-    slide.appendChild(scap);
+    const slide=_cfBuildCarSlide(s);
+    _cfCarWireSlide(slide);
     track.appendChild(slide);
   });
   const counter=document.createElement('div');counter.className='cf-car-counter';
@@ -7180,6 +7340,9 @@ function _cfCarWireNav(block,track,prev,next,dots,counter){
     if(counter)counter.textContent=`${idx+1} / ${n}`;
     if(prev){prev.disabled=idx===0;}
     if(next){const n2=track.querySelectorAll('.cf-car-slide').length;next.disabled=idx>=n2-1;}
+    // Mark active slide (for resize handles), refresh toolbar slide section
+    slides.forEach((s,i)=>s.classList.toggle('active',i===idx));
+    if(block._carSlideSection)_cfCarRefreshSlideSection(block._carSlideSection,slides[idx]);
   }
   if(prev)prev.onclick=e=>{e.stopPropagation();goTo((block._carIdx||0)-1);};
   if(next)next.onclick=e=>{e.stopPropagation();goTo((block._carIdx||0)+1);};
@@ -7260,11 +7423,8 @@ function _cfCarAddImages(block,track,dotsWrap,counter){
       const id=uid();
       try{await _idbPut(id,file);}catch(e){}
       const src=URL.createObjectURL(file);_cacheUrl(id,src);
-      const slide=document.createElement('div');slide.className='cf-car-slide';
-      const img2=document.createElement('img');img2.src=src;img2.dataset.carid=id;
-      slide.appendChild(img2);
-      const scap2=document.createElement('div');scap2.className='cf-car-slide-caption';scap2.contentEditable='true';scap2.setAttribute('data-placeholder','Thêm chú thích...');
-      slide.appendChild(scap2);
+      const slide=_cfBuildCarSlide({id,src,name:file.name||'image'});
+      _cfCarWireSlide(slide);
       track.appendChild(slide);
       const dot=document.createElement('div');dot.className='cf-car-dot';
       const dotIdx=dotsWrap.children.length;
@@ -7333,6 +7493,22 @@ async function _cfCarLoadAll(editor){
     const next=block.querySelector('.cf-car-btn.next');
     const dots=block.querySelector('.cf-car-dots');
     const counter=block.querySelector('.cf-car-counter');
+    // Wire resize handles for each slide (stripped on save)
+    if(track)track.querySelectorAll('.cf-car-slide').forEach(sl=>{
+      if(!sl.querySelector('.cf-car-slide-wrap')){
+        // Legacy slide (no inner wrapper yet) — upgrade in-place
+        const img2=sl.querySelector('img[data-carid]');
+        const cap=sl.querySelector('.cf-car-slide-caption');
+        if(img2){
+          const swrap=document.createElement('div');swrap.className='cf-car-slide-wrap';
+          const inner=document.createElement('div');inner.className='cf-car-slide-inner';
+          inner.appendChild(img2.cloneNode(true));img2.replaceWith(swrap);
+          swrap.appendChild(inner);
+          if(!sl.dataset.carslideAlign)sl.dataset.carslideAlign='center';
+        }
+      }
+      _cfCarWireSlide(sl);
+    });
     if(track&&counter){block._carIdx=0;block._carWired=false;_cfCarWireNav(block,track,prev,next,dots,counter);}
     block.querySelector('.cf-car-toolbar')?.remove();
     block.appendChild(_cfBuildCarToolbar(block));
@@ -9631,9 +9807,26 @@ async function doExportWebsite(){
     '.ws-canvas .cf-car-wrap{position:relative;overflow:hidden;border-radius:10px}',
     '.ws-canvas .cf-car-track{display:flex;transition:transform .35s cubic-bezier(.4,0,.2,1);align-items:flex-start}',
     '.ws-canvas .cf-car-slide{min-width:100%;position:relative;display:flex;flex-direction:column}',
-    '.ws-canvas .cf-car-slide img,.ws-canvas .cf-car-slide video{width:100%;height:auto;object-fit:contain;border-radius:10px 10px 0 0;display:block}',
+    '.ws-canvas .cf-car-slide-wrap{position:relative;display:inline-flex;align-items:center;width:100%}',
+    '.ws-canvas .cf-car-slide[data-carslide-align="left"] .cf-car-slide-wrap{justify-content:flex-start}',
+    '.ws-canvas .cf-car-slide[data-carslide-align="center"] .cf-car-slide-wrap{justify-content:center}',
+    '.ws-canvas .cf-car-slide[data-carslide-align="right"] .cf-car-slide-wrap{justify-content:flex-end}',
+    '.ws-canvas .cf-car-slide-inner{position:relative;display:inline-block;max-width:100%;border-radius:4px;overflow:hidden;line-height:0;transition:box-shadow .35s ease}',
+    '.ws-canvas .cf-car-slide-inner img,.ws-canvas .cf-car-slide-inner video{display:block;max-width:100%;height:auto;border-radius:4px}',
+    /* legacy direct img in slide (pre-upgrade) */
+    '.ws-canvas .cf-car-slide>img,.ws-canvas .cf-car-slide>video{width:100%;height:auto;object-fit:contain;border-radius:4px;display:block}',
     '.ws-canvas .cf-car-slide-caption{display:block;text-align:center;font-size:12.5px;color:var(--text3);padding:6px 8px;min-height:0;line-height:1.5;background:var(--surface2)}',
     '.ws-canvas .cf-car-slide-caption:empty{display:none}',
+    /* Per-slide shadow */
+    '.ws-canvas .cf-car-slide[data-carslide-imgshadow="1"] .cf-car-slide-inner{box-shadow:0 8px 28px rgba(255,255,255,.55),0 2px 8px rgba(255,255,255,.35)}',
+    '.ws-canvas .cf-car-slide[data-carslide-imgshadow="2"] .cf-car-slide-inner{box-shadow:0 8px 28px rgba(0,0,0,.13),0 2px 8px rgba(0,0,0,.08)}',
+    '.ws-canvas .cf-car-slide[data-carslide-imgshadow="3"] .cf-car-slide-inner{box-shadow:0 8px 28px rgba(0,0,0,.35),0 2px 8px rgba(0,0,0,.20)}',
+    '.ws-canvas .cf-car-slide[data-carslide-imgshadow="4"] .cf-car-slide-inner{box-shadow:0 8px 32px rgba(0,0,0,.65),0 2px 10px rgba(0,0,0,.40)}',
+    /* Per-slide border */
+    '.ws-canvas .cf-car-slide[data-carslide-imgborder="1"] .cf-car-slide-inner{outline:2px solid rgba(255,255,255,.85)}',
+    '.ws-canvas .cf-car-slide[data-carslide-imgborder="2"] .cf-car-slide-inner{outline:2px solid rgba(0,0,0,.15)}',
+    '.ws-canvas .cf-car-slide[data-carslide-imgborder="3"] .cf-car-slide-inner{outline:2px solid rgba(0,0,0,.5)}',
+    '.ws-canvas .cf-car-slide[data-carslide-imgborder="4"] .cf-car-slide-inner{outline:2px solid #000}',
     '.ws-canvas .cf-car-btn{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.45);color:#fff;border:none;width:38px;height:38px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;transition:background .15s,opacity .15s,transform .15s;opacity:.85}',
     '.ws-canvas .cf-car-btn.prev{left:12px}.ws-canvas .cf-car-btn.next{right:12px}',
     '.ws-canvas .cf-car-btn:hover{background:rgba(0,0,0,.75);opacity:1;transform:translateY(-50%) scale(1.08)}',
