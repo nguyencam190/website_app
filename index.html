@@ -4753,7 +4753,11 @@ function tblEqualizeColumns(table){
 
   const firstRow=table.rows[0];if(!firstRow)return;
   const hasRowNum=firstRow.cells[0]&&firstRow.cells[0].classList.contains('tbl-row-num');
-  const totalCols=firstRow.cells.length;
+  // Use TRUE logical col count (max sum of colSpans across all rows)
+  // firstRow.cells.length under-counts when cells have colspan after a merge
+  let totalCols=0;
+  Array.from(table.rows).forEach(row=>{let n=0;Array.from(row.cells).forEach(c=>n+=(c.colSpan||1));if(n>totalCols)totalCols=n;});
+  if(!totalCols)totalCols=firstRow.cells.length;
   const dataCols=totalCols-(hasRowNum?1:0);
   if(dataCols<1)return;
 
@@ -5527,6 +5531,8 @@ function tblAttachTable(table){
     });
     table.style.tableLayout='fixed';
     table.style.width=''; // Let CSS max-content lock actual size
+    // Mark as custom so step 5 does NOT call tblEqualizeColumns again
+    cg.removeAttribute('data-auto');
   }
 
   // 2. ── Column resize handles + column selector on each th ──────
