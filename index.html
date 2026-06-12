@@ -5140,7 +5140,7 @@ function tblClearCellSel(){
 }
 
 document.addEventListener('mousedown',e=>{
-  if(!e.target.closest('#tblMergeBar')&&!e.target.closest('.editor-content td')&&!e.target.closest('.editor-content th')){
+  if(!e.target.closest('#tblMergeBar')&&!e.target.closest('.editor-content td')&&!e.target.closest('.editor-content th')&&!e.target.closest('#tblSelPanel')){
     tblClearCellSel();
     if(!e.target.closest('.editor-content table')){_activeTd=null;_updateMergeBar();}
   }
