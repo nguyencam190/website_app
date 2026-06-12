@@ -6874,15 +6874,18 @@ function _cfInsertBlockAtRange(block, savedRange){
 
   // Insert block
   insertParent.insertBefore(block, insertBefore);
-  // Insert trailing <p> after block
-  const p=document.createElement('p');p.innerHTML='<br>';
-  insertParent.insertBefore(p, block.nextSibling);
-  // Remove the original empty block if we replaced it
+  // Remove the original empty block first (e.g. the empty <p> the slash command was on)
   if(insertBefore&&insertParent.contains(insertBefore)){
     const isEmptyBlock=(insertBefore.tagName==='P'||insertBefore.tagName==='DIV')&&
                        !insertBefore.textContent.trim()&&(insertBefore.children.length<=1);
     if(isEmptyBlock)insertBefore.remove();
   }
+  // Only add trailing <p> when needed: block is the last child, or the next sibling is
+  // also a non-editable block (no editable area for the cursor to land in).
+  const _nextEl=block.nextSibling;
+  const _needsTrail=!_nextEl||
+    (_nextEl.nodeType===Node.ELEMENT_NODE&&_nextEl.contentEditable==='false');
+  if(_needsTrail){const p=document.createElement('p');p.innerHTML='<br>';insertParent.insertBefore(p,block.nextSibling);}
 }
 
 function _cfBuildImgBlock(id,src,isVid,name){
