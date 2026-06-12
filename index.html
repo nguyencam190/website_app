@@ -1618,8 +1618,6 @@ td.tbl-inner-container{padding:0!important;overflow:visible!important;vertical-a
   <div class="ctx-sep"></div>
   <div class="ctx-item red" onclick="ctxDelete()"><i class="ti ti-trash"></i> Xoá ảnh</div>
 </div>
-<!-- TABLE CELL CONTEXT MENU -->
-<div class="ctx" id="tblCellCtx"></div>
 
 <!-- CONTEXT MENU doc -->
 <div class="ctx" id="docCtxMenu">
@@ -4072,8 +4070,7 @@ document.addEventListener('paste',e=>{if(!state.currentDocId)return;const item=A
 document.addEventListener('click',e=>{
   document.getElementById('ctxMenu').classList.remove('on');
   document.getElementById('docCtxMenu')?.classList.remove('on');
-  document.getElementById('tblCellCtx')?.classList.remove('on');
-  const dd=document.getElementById('bbSizeDD');if(dd&&!dd.contains(e.target)&&e.target.id!=='bbSizeNum')dd.classList.remove('on');
+const dd=document.getElementById('bbSizeDD');if(dd&&!dd.contains(e.target)&&e.target.id!=='bbSizeNum')dd.classList.remove('on');
   if(!e.target.closest('#drawTableWrap'))hideTableGrid();
   if(!e.target.closest('.txtbox'))document.querySelectorAll('.txtbox').forEach(b=>b.classList.remove('selected'));
   if(!e.target.closest('.fmedia'))document.querySelectorAll('.fmedia').forEach(f=>f.classList.remove('sel'));
@@ -4538,13 +4535,6 @@ function _tblAttachInnerRow(innerTbl){
 
     // ── Click: set _activeTd so slash menu context is correct ──
     cell.addEventListener('click',()=>{_activeTd=cell;});
-
-    // ── Right-click: inner cell context menu ─────────────────
-    cell.addEventListener('contextmenu',e=>{
-      e.preventDefault();e.stopPropagation();
-      _activeTd=cell;
-      _openInnerCellMenu(e.clientX,e.clientY,cell,innerTbl);
-    });
 
     // ── Drag & drop image support ─────────────────────────────
     const dropOv=document.createElement('div');dropOv.className='tbl-cell-drop';
@@ -5149,38 +5139,6 @@ document.addEventListener('keydown',e=>{
   }
 });
 
-// ── Cell right-click context menu ────────────────────────────
-function _showTblCellCtx(e,cell,table){
-  e.preventDefault();e.stopPropagation();
-  _activeTd=cell;
-  const isMerged=cell.colSpan>1||cell.rowSpan>1;
-  const selCells=_mergeTable===table?Array.from(table.querySelectorAll('.tbl-cell-sel')).filter(c=>!c.classList.contains('tbl-row-num')):[];
-  const canMerge=selCells.length>=2;
-  const m=document.getElementById('tblCellCtx');if(!m)return;
-  m.innerHTML='';
-  function add(icon,label,fn,danger){
-    const el=document.createElement('div');el.className='ctx-item'+(danger?' red':'');
-    el.innerHTML=`<i class="ti ${icon}"></i>${label}`;
-    el.addEventListener('click',()=>{m.classList.remove('on');fn();});m.appendChild(el);
-  }
-  function sep(){const d=document.createElement('div');d.className='ctx-sep';m.appendChild(d);}
-  if(canMerge){
-    add('ti-layout-grid','Merge Cells',()=>tblMergeCells());
-    sep();
-  }
-  if(isMerged){
-    add('ti-layout-grid-add','Split Cell',()=>{_activeTd=cell;tblSplitCell();});
-    sep();
-  }
-  add('ti-row-insert-top','Thêm hàng phía trên',()=>{_activeTd=cell;tblAddRowAbove();});
-  add('ti-row-insert-bottom','Thêm hàng phía dưới',()=>{_activeTd=cell;tblAddRowBelow();});
-  add('ti-trash','Xóa hàng này',()=>{_activeTd=cell;tblDelRow();},true);
-  sep();
-  add('ti-column-insert-left','Thêm cột bên trái',()=>{_activeTd=cell;tblAddColLeft();});
-  add('ti-column-insert-right','Thêm cột bên phải',()=>{_activeTd=cell;tblAddColRight();});
-  add('ti-trash','Xóa cột này',()=>{_activeTd=cell;tblDelCol();},true);
-  showCtx('tblCellCtx',e);
-}
 
 // ── Smart entry: 1 file → image, 2+ files → carousel ──────────
 async function tblInsertImages(cell, files){
@@ -5696,8 +5654,6 @@ function tblAttachTable(table){
       if(e.shiftKey||e.ctrlKey)e.preventDefault();
       if(e.button===0&&!e.shiftKey&&!e.ctrlKey)_tblDragStart=cell;
     });
-    cell.addEventListener('contextmenu',e=>_showTblCellCtx(e,cell,table));
-
     // Drop overlay (visual feedback when dragging over cell)
     const dropOv=document.createElement('div');dropOv.className='tbl-cell-drop';
     dropOv.contentEditable='false';
