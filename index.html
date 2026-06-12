@@ -4997,8 +4997,16 @@ function _updateMergeBar(){
   }
 }
 
+function _tblSaveRowHeights(table){
+  return Array.from(table.rows).map(r=>r.offsetHeight);
+}
+function _tblRestoreRowHeights(table,heights){
+  Array.from(table.rows).forEach((r,i)=>{if(heights[i]>0)r.style.height=heights[i]+'px';});
+}
+
 function tblMergeCells(){
   if(!_mergeTable)return;
+  const _preH=_tblSaveRowHeights(_mergeTable);
   const cells=Array.from(_mergeTable.querySelectorAll('.tbl-cell-sel'))
     .filter(c=>!c.classList.contains('tbl-row-num'));
   if(cells.length<2){tblClearCellSel();return;}
@@ -5040,6 +5048,7 @@ function tblMergeCells(){
   anchor.colSpan=maxCi-minCi+1;
   anchor.rowSpan=maxRi-minRi+1;
   inRect.forEach(c=>{if(c!==anchor)c.remove();});
+  _tblRestoreRowHeights(_mergeTable,_preH);
   const _cg=_mergeTable.querySelector('colgroup');
   if(_cg&&!_cg.dataset.auto){
     const ws=Array.from(_cg.querySelectorAll('col')).map(col=>col.style.width||'').join(',');
@@ -5058,6 +5067,7 @@ function tblSplitCell(){
   }
   if(!cell){toast('Không có ô nào được gộp để tách','info');return;}
   const table=cell.closest('table');if(!table)return;
+  const _preH=_tblSaveRowHeights(table);
   const cs=cell.colSpan||1,rs=cell.rowSpan||1;
   if(cs===1&&rs===1){toast('Ô này chưa được gộp','info');return;}
   const mergeHist=cell.dataset.mergeHistory?JSON.parse(cell.dataset.mergeHistory):null;
@@ -5104,6 +5114,7 @@ function tblSplitCell(){
       if(ref)targetRow.insertBefore(newCell,ref);else targetRow.appendChild(newCell);
     }
   }
+  _tblRestoreRowHeights(table,_preH);
   _activeTd=cell;
   tblClearCellSel();
   onContentChange();setTimeout(tblAttachAll,50);
@@ -9478,21 +9489,37 @@ async function doExportWebsite(){
     // ─ 3c. Fixed Table Layout: rebuild colgroup + lock sizes ─
     // Outer tables: rebuild from data-colwidths + lock fixed layout
     tmp.querySelectorAll('table:not(.tbl-inner-row)').forEach(tbl=>{
+      const showRN=tbl.dataset.rownums!=='0';
       const savedW=tbl.dataset.colwidths;
       if(savedW){
         const wArr=savedW.split(',');
-        // data-colwidths includes the row-num col as wArr[0] when row nums were ON.
-        // Row-num cells are stripped on save, so offset by 1 to get actual data col widths.
-        const _wOff=tbl.dataset.rownums!=='0'?1:0;
+        // data-colwidths[0] = row-num col width (when row nums ON), rest = data columns.
+        const _wOff=showRN?1:0;
         const cg=document.createElement('colgroup');
         let trueCols=0;
         if(tbl.rows[0])Array.from(tbl.rows[0].cells).forEach(c=>trueCols+=(c.colSpan||1));
+        if(showRN){
+          // Prepend row-num col to colgroup (wArr[0] = row-num width, typically '36px')
+          const rnCol=document.createElement('col');
+          rnCol.style.width=wArr[0]||'36px';
+          cg.appendChild(rnCol);
+        }
         for(let i=0;i<trueCols;i++){
           const col=document.createElement('col');
           col.style.width=wArr[i+_wOff]||'120px';
           cg.appendChild(col);
         }
         tbl.insertBefore(cg,tbl.firstChild);
+      }
+      // Rebuild row-number cells for viewer (stripped on save, recreate for published view)
+      if(showRN){
+        Array.from(tbl.rows).forEach((row,ri)=>{
+          const nc=ri===0?document.createElement('th'):document.createElement('td');
+          nc.className='tbl-row-num';
+          nc.textContent=ri===0?'#':String(ri);
+          nc.style.cssText='width:36px;min-width:36px;max-width:36px;';
+          row.insertBefore(nc,row.cells[0]);
+        });
       }
       tbl.style.setProperty('table-layout','fixed','important');
       tbl.style.borderCollapse='collapse';
@@ -9779,6 +9806,8 @@ async function doExportWebsite(){
     '.ws-canvas .editor-content th,.ws-canvas .editor-content td{padding:8px 12px;word-break:break-word;overflow-wrap:break-word;white-space:normal;vertical-align:top;min-width:40px}',
     '.ws-canvas .editor-content th{border-right:1px solid var(--tbl-border);border-bottom:2px solid var(--tbl-border);background:var(--tbl-hbg);font-weight:600;text-align:left;color:var(--tbl-htxt)}',
     '.ws-canvas .editor-content td{border-right:1px solid var(--tbl-border);border-bottom:1px solid var(--tbl-border);background:var(--surface);color:var(--text);position:relative}',
+    '.ws-canvas .editor-content .tbl-row-num{width:36px!important;min-width:36px!important;max-width:36px!important;text-align:center!important;padding:8px 2px!important;font-size:11px;font-weight:600;background:var(--tbl-hbg)!important;color:var(--text3);border-right:2px solid var(--tbl-border)!important;user-select:none;cursor:default}',
+    '.ws-canvas .editor-content th.tbl-row-num{font-size:10px;text-transform:uppercase;letter-spacing:.5px}',
     '.ws-canvas .editor-content th:last-child,.ws-canvas .editor-content td:last-child{border-right:1px solid var(--tbl-border)}',
     '.ws-canvas .editor-content tr:last-child td,.ws-canvas .editor-content tr:last-child th{border-bottom:none}',
     /* ── Nested Row styles for published pages ── */
