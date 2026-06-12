@@ -6027,14 +6027,27 @@ function slashOpen(){
   const inp=document.getElementById('slashMenuInp');
   inp.value='';
   slashBuild('');
-  setTimeout(()=>inp.focus(),30);
+  // Save scroll position and use preventScroll so focusing the menu input
+  // doesn't cause #editorScroll to jump away from the "/" position
+  const _edSc=document.getElementById('editorScroll');
+  const _savedTop=_edSc?_edSc.scrollTop:0;
+  setTimeout(()=>{
+    inp.focus({preventScroll:true});
+    if(_edSc)_edSc.scrollTop=_savedTop;
+  },30);
 }
 
 function slashClose(refocus=true){
   document.getElementById('slashMenu')?.classList.remove('on');
   _slashVisible=false;
   _slashActiveIdx=0;
-  if(refocus){const editor=document.getElementById('editor');if(editor)editor.focus();}
+  if(refocus){
+    const _edSc=document.getElementById('editorScroll');
+    const _savedTop=_edSc?_edSc.scrollTop:0;
+    const editor=document.getElementById('editor');
+    if(editor)editor.focus({preventScroll:true});
+    if(_edSc)_edSc.scrollTop=_savedTop;
+  }
 }
 
 function slashFilter(q){
@@ -6138,9 +6151,9 @@ function slashExec(id){
       const anchorEl=anchor.nodeType===Node.TEXT_NODE?anchor.parentElement:anchor;
       const td=anchorEl?.closest('td:not(.tbl-row-num),th:not(.tbl-row-num)');
       const colItem=!td&&anchorEl?.closest('.cf-column-item');
-      if(td)td.focus();
-      else if(colItem)colItem.focus();
-      else document.getElementById('editor')?.focus();
+      if(td)td.focus({preventScroll:true});
+      else if(colItem)colItem.focus({preventScroll:true});
+      else document.getElementById('editor')?.focus({preventScroll:true});
       sel.removeAllRanges();sel.addRange(_slashSavedRange);
     }catch(e){}
   }
@@ -6233,11 +6246,12 @@ function _slashInsert(id){
         const r=document.createRange();
         r.setStart(focusTarget,0);r.collapse(true);
         sel2.removeAllRanges();sel2.addRange(r);
-        // Focus the correct container
+        // Focus the correct container without scrolling; then scroll block into view
         const focusEl=(focusTarget.nodeType===Node.TEXT_NODE?focusTarget.parentElement:focusTarget)?.closest?.('td,th')||editor;
-        focusEl.focus();
+        focusEl.focus({preventScroll:true});
       }catch(e){}
     }
+    setTimeout(()=>block.scrollIntoView({block:'nearest',behavior:'smooth'}),60);
   }
 
   // Detect if cursor is inside a table cell
@@ -6909,6 +6923,8 @@ function _cfInsertBlockAtRange(block, savedRange){
   const _needsTrail=!_inColItem&&(!_nextEl||
     (_nextEl.nodeType===Node.ELEMENT_NODE&&_nextEl.contentEditable==='false'));
   if(_needsTrail){const p=document.createElement('p');p.innerHTML='<br>';insertParent.insertBefore(p,block.nextSibling);}
+  // Scroll the inserted block into view after layout settles
+  setTimeout(()=>block.scrollIntoView({block:'nearest',behavior:'smooth'}),60);
 }
 
 function _cfBuildImgBlock(id,src,isVid,name){
