@@ -31,11 +31,20 @@ TEMP_BRANCH="_automerge_$$"
 git checkout -b "$TEMP_BRANCH" origin/main --quiet 2>/dev/null
 
 FAILED=0
+MERGED=0
 for COMMIT in $COMMITS; do
-  if ! git cherry-pick "$COMMIT" --quiet 2>/dev/null; then
-    git cherry-pick --abort 2>/dev/null || true
-    FAILED=1
-    break
+  # Skip if equivalent content already in main (cherry-picked with different hash)
+  if git cherry-pick "$COMMIT" --quiet 2>/dev/null; then
+    MERGED=$((MERGED+1))
+  else
+    # Check if this is an empty cherry-pick (content already present)
+    if git diff --cached --quiet 2>/dev/null && [ "$(git status --porcelain 2>/dev/null)" = "" ]; then
+      git cherry-pick --skip 2>/dev/null || true
+    else
+      git cherry-pick --abort 2>/dev/null || true
+      FAILED=1
+      break
+    fi
   fi
 done
 
