@@ -5520,6 +5520,10 @@ function tblAttachTable(table){
   const savedWidths=table.dataset.colwidths;
   if(savedWidths){
     let cg=table.querySelector('colgroup');
+    // Skip restore when a valid user-configured colgroup already exists in the live DOM.
+    // This prevents stale data-colwidths (set on load) from overwriting user resize/merge operations.
+    const alreadyHasCustom=cg&&!cg.dataset.auto&&cg.querySelectorAll('col').length>0;
+    if(alreadyHasCustom){}else{
     if(!cg){cg=document.createElement('colgroup');table.insertBefore(cg,table.firstChild);}
     const wArr=savedWidths.split(',');
     // Use TRUE column count (sum of colSpans) — NOT cells.length which is wrong after merge
@@ -5538,6 +5542,7 @@ function tblAttachTable(table){
     table.style.width=''; // Let CSS max-content lock actual size
     // Mark as custom so step 5 does NOT call tblEqualizeColumns again
     cg.removeAttribute('data-auto');
+    } // end else (alreadyHasCustom)
   }
 
   // 2. ── Column resize handles + column selector on each th ──────
