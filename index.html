@@ -785,6 +785,38 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .cf-toc-del{position:absolute;top:8px;right:8px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;width:22px;height:22px;border-radius:4px;display:flex;align-items:center;justify-content:center;transition:background .1s,color .1s;opacity:0}
 .cf-toc:hover .cf-toc-del{opacity:1}
 .cf-toc-del:hover{background:var(--surface3);color:var(--text)}
+/* ═══ BUTTON / CTA BLOCK ═══════════════════════════════════ */
+.cf-btn-block{margin:12px 0;position:relative;display:block}
+.cf-btn-wrap{display:flex;justify-content:center;transition:justify-content .1s}
+.cf-btn-block[data-align="left"] .cf-btn-wrap{justify-content:flex-start}
+.cf-btn-block[data-align="right"] .cf-btn-wrap{justify-content:flex-end}
+.cf-btn-el{display:inline-flex;align-items:center;gap:6px;padding:9px 22px;border-radius:8px;font-size:14px;font-weight:600;font-family:var(--font);cursor:pointer;text-decoration:none;transition:opacity .15s,transform .1s,box-shadow .15s;border:2px solid transparent;user-select:none;white-space:nowrap;min-width:80px;justify-content:center}
+.cf-btn-el:hover{opacity:.87;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.18)}
+.cf-btn-block[data-btnstyle="primary"] .cf-btn-el{background:var(--accent);color:#fff;border-color:var(--accent)}
+.cf-btn-block[data-btnstyle="outline"] .cf-btn-el{background:transparent;color:var(--accent);border-color:var(--accent)}
+.cf-btn-block[data-btnstyle="ghost"] .cf-btn-el{background:var(--surface2);color:var(--text);border-color:transparent}
+.cf-btn-text{outline:none;min-width:40px;text-align:center}
+.cf-btn-toolbar{position:absolute;top:-46px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.15);display:none;align-items:center;gap:4px;padding:5px 8px;z-index:200;white-space:nowrap;animation:cpFade .15s ease}
+.cf-btn-block:hover .cf-btn-toolbar,.cf-btn-block:focus-within .cf-btn-toolbar{display:flex}
+.cf-btn-tb-inp{background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:3px 8px;font-size:12px;color:var(--text);font-family:var(--font);outline:none;width:160px;transition:border-color .15s}
+.cf-btn-tb-inp:focus{border-color:var(--accent)}
+.cf-btn-tb-btn{background:none;border:1px solid var(--border);border-radius:5px;padding:3px 7px;font-size:11.5px;font-weight:500;cursor:pointer;color:var(--text2);font-family:var(--font);transition:.12s;white-space:nowrap}
+.cf-btn-tb-btn:hover,.cf-btn-tb-btn.active{background:var(--accent-light);color:var(--accent);border-color:var(--accent)}
+.cf-btn-tb-sep{width:1px;height:18px;background:var(--border);flex-shrink:0}
+.cf-btn-tb-icon{width:26px;height:26px;border:none;border-radius:5px;background:none;cursor:pointer;color:var(--text3);font-size:14px;display:flex;align-items:center;justify-content:center;transition:.12s}
+.cf-btn-tb-icon:hover{background:var(--surface2);color:var(--text)}
+/* ═══ FILE ATTACHMENT BLOCK ══════════════════════════════════ */
+.cf-file-block{display:flex;align-items:center;gap:12px;padding:12px 16px;border:1px solid var(--border);border-radius:10px;margin:10px 0;background:var(--surface);cursor:default;position:relative;transition:border-color .15s,box-shadow .15s}
+.cf-file-block:hover{border-color:var(--accent);box-shadow:0 2px 10px rgba(37,99,235,.1)}
+.cf-file-icon{width:40px;height:40px;border-radius:8px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;color:var(--text2)}
+.cf-file-meta{flex:1;min-width:0}
+.cf-file-name{font-size:13.5px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cf-file-size{font-size:11.5px;color:var(--text3);margin-top:2px}
+.cf-file-dl{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:6px;background:var(--accent-light);color:var(--accent);font-size:12.5px;font-weight:600;text-decoration:none;transition:.12s;flex-shrink:0;border:1px solid transparent}
+.cf-file-dl:hover{background:var(--accent);color:#fff}
+.cf-file-del{position:absolute;top:6px;right:6px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;width:22px;height:22px;border-radius:4px;display:flex;align-items:center;justify-content:center;transition:.1s;opacity:0}
+.cf-file-block:hover .cf-file-del{opacity:1}
+.cf-file-del:hover{background:var(--surface2);color:var(--text)}
 /* ═══ COLUMN LAYOUT ════════════════════════════════════════ */
 /* ═══ COLUMN LAYOUT (Confluence-style) ═══════════════════ */
 .cf-column-layout{display:flex;align-items:stretch;width:100%;margin:16px 0;position:relative;border-radius:4px;min-height:80px}
@@ -6119,15 +6151,20 @@ function slashBuild(q){
   let showingRecent=false;
 
   if(!q){
-    // Show recent commands first, then all
+    // Pinned items first, then recent, then rest
+    const pinnedItems=_slashPinned
+      .map(id=>SLASH_ITEMS.find(it=>it.id===id))
+      .filter(Boolean)
+      .map(it=>({...it,_isPinned:true}));
     const recentItems=_slashRecent
+      .filter(id=>!_slashPinned.includes(id))
       .map(id=>SLASH_ITEMS.find(it=>it.id===id))
       .filter(Boolean)
       .map(it=>({...it,_isRecent:true}));
-    const recentIds=new Set(_slashRecent);
-    const rest=SLASH_ITEMS.filter(it=>!recentIds.has(it.id));
-    items=[...recentItems,...rest];
-    if(recentItems.length)showingRecent=true;
+    const usedIds=new Set([..._slashPinned,..._slashRecent]);
+    const rest=SLASH_ITEMS.filter(it=>!usedIds.has(it.id));
+    items=[...pinnedItems,...recentItems,...rest];
+    if(pinnedItems.length||recentItems.length)showingRecent=true;
   } else {
     items=SLASH_ITEMS.filter(it=>{
       const needle=q.toLowerCase();
@@ -6147,24 +6184,32 @@ function slashBuild(q){
   // Build grouped HTML using DocumentFragment for performance
   const frag=document.createDocumentFragment();
 
-  if(showingRecent&&_slashRecent.length){
-    const sec=document.createElement('div');
-    sec.className='slash-menu-section';
-    sec.innerHTML='<i class="ti ti-history" style="font-size:10px"></i> Gần đây';
-    frag.appendChild(sec);
-    items.filter(it=>it._isRecent).forEach((item,idx)=>{
-      frag.appendChild(_slashMakeItem(item,idx));
-    });
+  if(showingRecent){
+    const pinnedSection=items.filter(it=>it._isPinned);
+    const recentSection=items.filter(it=>it._isRecent);
+    let secIdx=0;
+    if(pinnedSection.length){
+      const sec=document.createElement('div');sec.className='slash-menu-section';
+      sec.innerHTML='<i class="ti ti-pin" style="font-size:10px"></i> Đã ghim';
+      frag.appendChild(sec);
+      pinnedSection.forEach(item=>{frag.appendChild(_slashMakeItem(item,secIdx++));});
+    }
+    if(recentSection.length){
+      const sec=document.createElement('div');sec.className='slash-menu-section';
+      sec.innerHTML='<i class="ti ti-history" style="font-size:10px"></i> Gần đây';
+      frag.appendChild(sec);
+      recentSection.forEach(item=>{frag.appendChild(_slashMakeItem(item,secIdx++));});
+    }
   }
 
-  const cats=[...new Set(items.filter(it=>!it._isRecent).map(i=>i.cat))];
-  let flatIdx=showingRecent?_slashRecent.length:0;
+  const cats=[...new Set(items.filter(it=>!it._isRecent&&!it._isPinned).map(i=>i.cat))];
+  let flatIdx=showingRecent?(items.filter(it=>it._isPinned||it._isRecent).length):0;
   cats.forEach(cat=>{
     const sec=document.createElement('div');
     sec.className='slash-menu-section';
     sec.textContent=cat;
     frag.appendChild(sec);
-    items.filter(it=>it.cat===cat&&!it._isRecent).forEach(item=>{
+    items.filter(it=>it.cat===cat&&!it._isRecent&&!it._isPinned).forEach(item=>{
       frag.appendChild(_slashMakeItem(item,flatIdx));
       flatIdx++;
     });
@@ -6180,8 +6225,22 @@ function _slashMakeItem(item,idx){
   el.dataset.id=item.id;
   el.dataset.cat=item._isRecent?'Recent':item.cat;
   el.setAttribute('role','option');
-  el.innerHTML=`<div class="slash-item-icon">${item.icon}</div><div class="slash-item-info"><div class="slash-item-name">${escH(item.name)}</div><div class="slash-item-desc">${escH(item.desc)}</div></div>`;
-  el.addEventListener('mousedown',e=>{e.preventDefault();slashExec(item.id);});
+  const isPinned=_slashPinned.includes(item.id);
+  el.innerHTML=`<div class="slash-item-icon">${item.icon}</div><div class="slash-item-info"><div class="slash-item-name">${escH(item.name)}</div><div class="slash-item-desc">${escH(item.desc)}</div></div>${item.shortcut?`<span class="slash-item-shortcut">${escH(item.shortcut)}</span>`:''}`;
+  // Pin button
+  const pinBtn=document.createElement('button');
+  pinBtn.className='slash-item-pin'+(isPinned?' pinned':'');
+  pinBtn.type='button';pinBtn.title=isPinned?'Bỏ ghim':'Ghim lên đầu';
+  pinBtn.innerHTML=isPinned?'<i class="ti ti-pin-filled"></i>':'<i class="ti ti-pin"></i>';
+  pinBtn.addEventListener('mousedown',e=>{
+    e.preventDefault();e.stopPropagation();
+    if(_slashPinned.includes(item.id)){_slashPinned=_slashPinned.filter(p=>p!==item.id);}
+    else{_slashPinned.unshift(item.id);if(_slashPinned.length>5)_slashPinned.length=5;}
+    try{localStorage.setItem('slash_pinned',JSON.stringify(_slashPinned));}catch(e2){}
+    slashBuild(document.getElementById('slashMenuInp').value||'');
+  });
+  el.appendChild(pinBtn);
+  el.addEventListener('mousedown',e=>{if(e.target.closest('.slash-item-pin'))return;e.preventDefault();slashExec(item.id);});
   el.addEventListener('mouseenter',()=>{_slashActiveIdx=idx;slashHighlight();});
   return el;
 }
@@ -6428,6 +6487,101 @@ function _slashInsert(id){
     onContentChange();return;
   }
 
+  // ── Button / CTA block ───────────────────────────────────
+  if(id==='button'){
+    const wrap=document.createElement('div');
+    wrap.className='cf-btn-block';wrap.contentEditable='false';
+    wrap.dataset.btnstyle='primary';wrap.dataset.align='center';wrap.dataset.btnlink='';
+    const btnWrap=document.createElement('div');btnWrap.className='cf-btn-wrap';
+    const btnEl=document.createElement('div');btnEl.className='cf-btn-el';
+    const btnTxt=document.createElement('span');btnTxt.className='cf-btn-text';
+    btnTxt.contentEditable='true';btnTxt.textContent='Nhấn vào đây';
+    btnEl.appendChild(btnTxt);btnWrap.appendChild(btnEl);
+    // Toolbar
+    const tb=document.createElement('div');tb.className='cf-btn-toolbar';
+    // Link input
+    const linkInp=document.createElement('input');linkInp.className='cf-btn-tb-inp';
+    linkInp.type='url';linkInp.placeholder='https://...';linkInp.title='URL liên kết';
+    linkInp.addEventListener('input',()=>{wrap.dataset.btnlink=linkInp.value;onContentChange();});
+    // Style buttons
+    const sep1=document.createElement('div');sep1.className='cf-btn-tb-sep';
+    ['primary','outline','ghost'].forEach(style=>{
+      const b=document.createElement('button');b.className='cf-btn-tb-btn'+(style==='primary'?' active':'');
+      b.type='button';b.textContent={primary:'Solid',outline:'Outline',ghost:'Ghost'}[style];
+      b.addEventListener('click',()=>{
+        wrap.dataset.btnstyle=style;
+        tb.querySelectorAll('.cf-btn-tb-btn').forEach(x=>x.classList.toggle('active',x===b));
+        onContentChange();
+      });
+      tb.appendChild(b);
+    });
+    // Align buttons
+    const sep2=document.createElement('div');sep2.className='cf-btn-tb-sep';
+    [['left','ti-align-left'],['center','ti-align-center'],['right','ti-align-right']].forEach(([align,icon])=>{
+      const b=document.createElement('button');b.className='cf-btn-tb-icon'+(align==='center'?' active':'');
+      b.type='button';b.innerHTML=`<i class="ti ${icon}"></i>`;b.title=align;
+      b.addEventListener('click',()=>{
+        wrap.dataset.align=align;
+        tb.querySelectorAll('.cf-btn-tb-icon').forEach(x=>x.classList.toggle('active',x===b));
+        onContentChange();
+      });
+      tb.appendChild(b);
+    });
+    // Delete
+    const sep3=document.createElement('div');sep3.className='cf-btn-tb-sep';
+    const delBtn=document.createElement('button');delBtn.className='cf-btn-tb-icon';delBtn.type='button';
+    delBtn.innerHTML='<i class="ti ti-trash" style="color:#ef4444"></i>';delBtn.title='Xóa';
+    delBtn.addEventListener('click',()=>{wrap.remove();onContentChange();});
+    tb.insertBefore(linkInp,tb.firstChild);tb.insertBefore(sep1,tb.children[1]);
+    tb.appendChild(sep2);tb.appendChild(sep3);tb.appendChild(delBtn);
+    wrap.appendChild(btnWrap);wrap.appendChild(tb);
+    _cfInsertBlockAtRange(wrap,_slashSavedRange);
+    onContentChange();
+    setTimeout(()=>btnTxt.focus(),30);
+    return;
+  }
+
+  // ── File attachment block ─────────────────────────────────
+  if(id==='file'){
+    const inp=document.createElement('input');
+    inp.type='file';inp.accept='*/*';
+    inp.style.cssText='position:fixed;top:-9999px;left:-9999px;opacity:0';
+    document.body.appendChild(inp);
+    inp.addEventListener('change',async function(){
+      const file=this.files[0];document.body.removeChild(inp);
+      if(!file)return;
+      const MAX=30*1024*1024;
+      if(file.size>MAX){toast('File quá lớn (tối đa 30 MB)','error');return;}
+      const fileId='cf-file-'+Date.now()+'-'+Math.random().toString(36).slice(2,8);
+      try{await _idbSet(fileId,file);}catch(e){toast('Không thể lưu file','error');return;}
+      const fmt=n=>{if(n<1024)return n+' B';if(n<1048576)return (n/1024).toFixed(1)+' KB';return (n/1048576).toFixed(1)+' MB';};
+      const ext=(file.name.split('.').pop()||'').toLowerCase();
+      const iconMap={pdf:'ti-file-type-pdf',doc:'ti-file-type-doc',docx:'ti-file-type-doc',xls:'ti-file-type-xls',xlsx:'ti-file-type-xls',zip:'ti-file-zip',rar:'ti-file-zip',mp3:'ti-file-music',mp4:'ti-file-video',jpg:'ti-file-type-jpg',jpeg:'ti-file-type-jpg',png:'ti-file-type-png',txt:'ti-file-text'};
+      const iconCls=iconMap[ext]||'ti-file';
+      const block=document.createElement('div');
+      block.className='cf-file-block';block.contentEditable='false';
+      block.dataset.cffileid=fileId;block.dataset.filename=file.name;block.dataset.filesize=fmt(file.size);
+      const iconEl=document.createElement('div');iconEl.className='cf-file-icon';iconEl.innerHTML=`<i class="ti ${iconCls}"></i>`;
+      const meta=document.createElement('div');meta.className='cf-file-meta';
+      const nameEl=document.createElement('div');nameEl.className='cf-file-name';nameEl.textContent=file.name;
+      const sizeEl=document.createElement('div');sizeEl.className='cf-file-size';sizeEl.textContent=fmt(file.size);
+      meta.appendChild(nameEl);meta.appendChild(sizeEl);
+      const objUrl=URL.createObjectURL(file);
+      const dlBtn=document.createElement('a');dlBtn.className='cf-file-dl';
+      dlBtn.href=objUrl;dlBtn.download=file.name;
+      dlBtn.innerHTML=`<i class="ti ti-download"></i> Tải xuống`;
+      const delBtn=document.createElement('button');delBtn.className='cf-file-del';delBtn.type='button';
+      delBtn.innerHTML='<i class="ti ti-x"></i>';
+      delBtn.addEventListener('click',()=>{block.remove();onContentChange();});
+      block.appendChild(iconEl);block.appendChild(meta);block.appendChild(dlBtn);block.appendChild(delBtn);
+      _cfInsertBlockAtRange(block,_slashSavedRange);
+      onContentChange();
+      toast('Đã đính kèm '+file.name,'success');
+    });
+    inp.click();
+    return;
+  }
+
   // ── Toggle block ─────────────────────────────────────────
   if(id==='toggle'){
     const toggle=document.createElement('div');
@@ -6578,6 +6732,23 @@ function cfPanelChangeType(btn){
   const icon=panel.querySelector('.cf-panel-icon');
   if(icon)icon.textContent=PANEL_ICONS[next];
   onContentChange();
+}
+
+function _cfFileLoadAll(editor){
+  editor.querySelectorAll('.cf-file-block[data-cffileid]').forEach(async block=>{
+    const id=block.dataset.cffileid;if(!id)return;
+    const dlBtn=block.querySelector('.cf-file-dl');if(!dlBtn)return;
+    if(dlBtn.href&&dlBtn.href.startsWith('blob:'))return; // already loaded
+    try{
+      const blob=await _idbGet(id);
+      if(blob){const url=URL.createObjectURL(blob);dlBtn.href=url;dlBtn.download=block.dataset.filename||'file';}
+    }catch(e){}
+    const delBtn=block.querySelector('.cf-file-del');
+    if(delBtn&&!delBtn._wired){
+      delBtn._wired=true;
+      delBtn.addEventListener('click',()=>{block.remove();onContentChange();});
+    }
+  });
 }
 
 function _cfWireToggle(el){
