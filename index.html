@@ -2021,13 +2021,14 @@ window.addEventListener('beforeunload',e=>{
 // ═══════════════════════════════════════════════════════════
 // CANVAS AUTO-SCALE — fmedia + txtbox tự scale khi sidebar resize
 // ═══════════════════════════════════════════════════════════
-let _canvasW=0,_scaleRaf=null;
+let _canvasW=0,_scaleRaf=null,_sbAnim=false;
 
 function initCanvasScaling(){
   const scroll=document.getElementById('editorScroll');
   if(!scroll||typeof ResizeObserver==='undefined')return;
   _canvasW=scroll.offsetWidth||0;
   new ResizeObserver(entries=>{
+    if(_sbAnim)return; // don't interfere during sidebar toggle animation
     const newW=entries[0]?.contentRect?.width;
     if(!newW||Math.abs(newW-_canvasW)<1)return;
     cancelAnimationFrame(_scaleRaf);
@@ -2117,8 +2118,13 @@ function _sbInitResize(){
 
   handle.addEventListener('dblclick',function(){
     if(sidebar.classList.contains('collapsed')){sbExpand();return;}
-    sidebar.style.transition='width .2s ease';sidebar.style.width=SB_DEFAULT+'px';
-    setTimeout(()=>{sidebar.style.transition='';resetCanvasWidth();},220);
+    const scroll=document.getElementById('editorScroll');
+    // canvas gains/loses the difference between current and default sidebar widths
+    const targetW=scroll?Math.max(100,scroll.offsetWidth+(sidebar.offsetWidth-SB_DEFAULT)):_canvasW;
+    _sbAnimFmedia(targetW,220);
+    sidebar.style.transition='width .22s cubic-bezier(.4,0,.2,1)';
+    sidebar.style.width=SB_DEFAULT+'px';
+    setTimeout(()=>{sidebar.style.transition='';},240);
     localStorage.setItem('sb_width',SB_DEFAULT);
   });
 }
@@ -2128,40 +2134,69 @@ function sbCollapse(){
   const expBtn=document.getElementById('sbExpandBtn');
   const scroll=document.getElementById('editorScroll');
   const savedScroll=scroll?scroll.scrollTop:0;
+  // predict new canvas width: scroll gains the sidebar's current width
+  const targetW=scroll&&sb?scroll.offsetWidth+sb.offsetWidth:_canvasW;
+  _sbAnimFmedia(targetW,250);
   sb.classList.add('collapsed');
   if(expBtn)expBtn.style.display='flex';
   localStorage.setItem('sb_collapsed','1');
-  if(scroll)scroll.scrollTop=savedScroll;
-  _sbSyncFmedia(260);
+  if(scroll)requestAnimationFrame(()=>{scroll.scrollTop=savedScroll;});
 }
 function sbExpand(){
   const sb=document.getElementById('sidebar');
   const expBtn=document.getElementById('sbExpandBtn');
   const scroll=document.getElementById('editorScroll');
   const savedScroll=scroll?scroll.scrollTop:0;
+  const savedW=parseInt(localStorage.getItem('sb_width'))||260;
+  // predict new canvas width: scroll loses the saved sidebar width
+  const targetW=scroll?Math.max(100,scroll.offsetWidth-savedW):_canvasW;
+  _sbAnimFmedia(targetW,250);
   sb.classList.remove('collapsed');
   if(expBtn)expBtn.style.display='none';
-  const savedW=localStorage.getItem('sb_width');
-  if(savedW)sb.style.width=savedW+'px';
+  sb.style.width=savedW+'px';
   localStorage.removeItem('sb_collapsed');
-  if(scroll)scroll.scrollTop=savedScroll;
-  _sbSyncFmedia(260);
+  if(scroll)requestAnimationFrame(()=>{scroll.scrollTop=savedScroll;});
 }
-function _sbSyncFmedia(delay){
-  const scroll=document.getElementById('editorScroll');
-  if(!scroll)return;
-  const savedScroll=scroll.scrollTop;
+// Animate fmedia + txtbox in sync with sidebar CSS transition.
+// Text/tables/columns reflow naturally (browser handles reflow).
+function _sbAnimFmedia(targetW,dur){
+  if(!_canvasW||!targetW||Math.abs(targetW-_canvasW)<2)return;
+  const fmEls=[...document.querySelectorAll('#editorScroll .fmedia')];
+  const txEls=[...document.querySelectorAll('#editorScroll .txtbox')];
+  const allEls=[...fmEls,...txEls];
+  _sbAnim=true;
+  const prevW=_canvasW,scale=targetW/prevW;
+  if(allEls.length){
+    const tr=`left ${dur}ms cubic-bezier(.4,0,.2,1),top ${dur}ms cubic-bezier(.4,0,.2,1),width ${dur}ms cubic-bezier(.4,0,.2,1),height ${dur}ms cubic-bezier(.4,0,.2,1)`;
+    allEls.forEach(el=>{el.style.transition=tr;});
+    void(allEls[0].offsetHeight); // force reflow so transition registers before position change
+    fmEls.forEach(el=>{
+      const l=parseFloat(el.style.left)||0,t=parseFloat(el.style.top)||0;
+      const w=el.offsetWidth,h=el.offsetHeight;
+      el.style.left=Math.max(0,Math.round(targetW-(prevW-l)*scale))+'px';
+      el.style.top=Math.max(0,Math.round(t*scale))+'px';
+      el.style.width=Math.max(80,Math.round(w*scale))+'px';
+      el.style.height=Math.max(50,Math.round(h*scale))+'px';
+    });
+    txEls.forEach(el=>{
+      const l=parseFloat(el.style.left)||0,t=parseFloat(el.style.top)||0;
+      const w=el.offsetWidth,h=parseFloat(el.style.minHeight)||el.offsetHeight;
+      el.style.left=Math.max(0,Math.round(targetW-(prevW-l)*scale))+'px';
+      el.style.top=Math.max(0,Math.round(t*scale))+'px';
+      el.style.width=Math.max(120,Math.round(w*scale))+'px';
+      el.style.minHeight=Math.max(40,Math.round(h*scale))+'px';
+    });
+  }
+  _canvasW=targetW;
   setTimeout(()=>{
-    const newW=scroll.offsetWidth;
-    if(!newW||!_canvasW||Math.abs(newW-_canvasW)<1){_canvasW=newW||_canvasW;scroll.scrollTop=savedScroll;return;}
-    const fmEls=document.querySelectorAll('#editorScroll .fmedia');
-    const tr='left .22s cubic-bezier(.4,0,.2,1),top .22s cubic-bezier(.4,0,.2,1),width .22s cubic-bezier(.4,0,.2,1),height .22s cubic-bezier(.4,0,.2,1)';
-    fmEls.forEach(el=>{el.style.transition=tr;});
-    void(fmEls[0]?.offsetHeight); // force reflow so transition registers
-    _applyCanvasScale(newW);
-    scroll.scrollTop=savedScroll;
-    setTimeout(()=>{fmEls.forEach(el=>{el.style.transition='';});},240);
-  },delay);
+    allEls.forEach(el=>{el.style.transition='';});
+    _sbAnim=false;
+    // Measure actual final width and correct if prediction was off
+    const sc=document.getElementById('editorScroll');
+    const actualW=sc?sc.offsetWidth:targetW;
+    if(Math.abs(actualW-_canvasW)>4){_canvasW=actualW;}
+    if(allEls.length){fmSaveAll();tbSaveAll();}
+  },dur+20);
 }
 
 function toggleTheme(){
