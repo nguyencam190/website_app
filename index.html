@@ -322,8 +322,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
   color:var(--text3);pointer-events:none;position:absolute;left:0;white-space:nowrap;font-size:.875rem;line-height:1.9
 }
 /* Floating block action bar (+ and drag handle) */
-.editor-block-bar{position:fixed;display:none;align-items:center;gap:2px;z-index:50}
+.editor-block-bar{position:fixed;display:none;align-items:center;gap:2px;z-index:500}
 .editor-block-bar.on{display:flex}
+/* Nested mode: overlaid inside cell — shows with background so it's visible over content */
+.editor-block-bar.on-nested{background:var(--surface);border:1px solid var(--border);border-radius:5px;box-shadow:0 1px 6px rgba(0,0,0,.14);padding:1px}
 .editor-block-btn{width:24px;height:24px;border:none;background:transparent;border-radius:5px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text3);font-size:15px;transition:background .12s,color .12s;flex-shrink:0}
 .editor-block-btn:hover{background:var(--surface2);color:var(--text)}
 .editor-block-drag{cursor:grab;font-size:13px;letter-spacing:-1px;color:var(--text3)}
@@ -8830,11 +8832,13 @@ function _showBlockBar(targetEl){
     container.classList.contains('cf-tab-content'));
   bar.style.position='fixed';
   if(isNested){
-    // Inside table cell or column: show ABOVE the block within the cell's
-    // horizontal area so the user doesn't need to move outside the cell to click
-    bar.style.top=Math.max(4,rect.top-26)+'px';
+    // Overlaid at top-left corner of the block — mouse stays within the cell
+    // so bar never disappears while user moves to click it
+    bar.style.top=rect.top+'px';
     bar.style.left=rect.left+'px';
+    bar.classList.add('on-nested');
   } else {
+    bar.classList.remove('on-nested');
     bar.style.top=(rect.top+2)+'px';
     bar.style.left=Math.max(4,rect.left-56)+'px';
   }
@@ -8843,7 +8847,7 @@ function _showBlockBar(targetEl){
 
 function _hideBlockBar(){
   const bar=document.getElementById('editorBlockBar');
-  if(bar)bar.classList.remove('on');
+  if(bar){bar.classList.remove('on');bar.classList.remove('on-nested');}
   _blockBarTarget=null;
 }
 
