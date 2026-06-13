@@ -2126,31 +2126,42 @@ function _sbInitResize(){
 function sbCollapse(){
   const sb=document.getElementById('sidebar');
   const expBtn=document.getElementById('sbExpandBtn');
+  const scroll=document.getElementById('editorScroll');
+  const savedScroll=scroll?scroll.scrollTop:0;
   sb.classList.add('collapsed');
   if(expBtn)expBtn.style.display='flex';
   localStorage.setItem('sb_collapsed','1');
-  _sbAnimCanvas(260);
+  if(scroll)scroll.scrollTop=savedScroll;
+  _sbSyncFmedia(260);
 }
 function sbExpand(){
   const sb=document.getElementById('sidebar');
   const expBtn=document.getElementById('sbExpandBtn');
+  const scroll=document.getElementById('editorScroll');
+  const savedScroll=scroll?scroll.scrollTop:0;
   sb.classList.remove('collapsed');
   if(expBtn)expBtn.style.display='none';
   const savedW=localStorage.getItem('sb_width');
   if(savedW)sb.style.width=savedW+'px';
   localStorage.removeItem('sb_collapsed');
-  _sbAnimCanvas(260);
+  if(scroll)scroll.scrollTop=savedScroll;
+  _sbSyncFmedia(260);
 }
-function _sbAnimCanvas(dur){
+function _sbSyncFmedia(delay){
   const scroll=document.getElementById('editorScroll');
   if(!scroll)return;
-  const t0=performance.now();
-  (function loop(){
+  const savedScroll=scroll.scrollTop;
+  setTimeout(()=>{
     const newW=scroll.offsetWidth;
-    if(newW&&Math.abs(newW-_canvasW)>0.5)_applyCanvasScale(newW);
-    if(performance.now()-t0<dur)requestAnimationFrame(loop);
-    else _canvasW=scroll.offsetWidth||_canvasW;
-  })();
+    if(!newW||!_canvasW||Math.abs(newW-_canvasW)<1){_canvasW=newW||_canvasW;scroll.scrollTop=savedScroll;return;}
+    const fmEls=document.querySelectorAll('#editorScroll .fmedia');
+    const tr='left .22s cubic-bezier(.4,0,.2,1),top .22s cubic-bezier(.4,0,.2,1),width .22s cubic-bezier(.4,0,.2,1),height .22s cubic-bezier(.4,0,.2,1)';
+    fmEls.forEach(el=>{el.style.transition=tr;});
+    void(fmEls[0]?.offsetHeight); // force reflow so transition registers
+    _applyCanvasScale(newW);
+    scroll.scrollTop=savedScroll;
+    setTimeout(()=>{fmEls.forEach(el=>{el.style.transition='';});},240);
+  },delay);
 }
 
 function toggleTheme(){
