@@ -1810,59 +1810,63 @@ td.tbl-inner-container{padding:0!important;overflow:visible!important;vertical-a
 
 <!-- EXPORT WEBSITE MODAL -->
 <div class="modal-bg" id="exportWebModal" onclick="closeModal('exportWebModal',event)">
-  <div class="modal" style="width:430px" onclick="event.stopPropagation()">
-    <h3><i class="ti ti-world-upload" style="font-size:18px;vertical-align:-3px;margin-right:7px;color:var(--accent)"></i>Xuat Website Local</h3>
-    <p style="font-size:13px;color:var(--text2);margin-bottom:18px;line-height:1.65">Tạo một file <strong>HTML duy nhất</strong> chứa toàn bộ tài liệu. Mở bằng Chrome/Edge là dùng được ngay.</p>
-    <div class="field"><label>Tên website</label><input type="text" id="webTitle" placeholder="Ví dụ: Vehicle Project Docs"></div>
-    <div class="field"><label>Mau theme</label>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="radio" name="webTheme" value="#2563eb" checked> <span style="width:16px;height:16px;background:#2563eb;border-radius:4px;display:inline-block"></span> Blue</label>
-        <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="radio" name="webTheme" value="#0f766e"> <span style="width:16px;height:16px;background:#0f766e;border-radius:4px;display:inline-block"></span> Teal</label>
-        <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="radio" name="webTheme" value="#7c3aed"> <span style="width:16px;height:16px;background:#7c3aed;border-radius:4px;display:inline-block"></span> Purple</label>
-        <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="radio" name="webTheme" value="#b91c1c"> <span style="width:16px;height:16px;background:#b91c1c;border-radius:4px;display:inline-block"></span> Red</label>
-      </div>
+  <div class="modal" style="width:430px;max-height:calc(100vh - 48px);display:flex;flex-direction:column;padding:0;overflow:hidden" onclick="event.stopPropagation()">
+    <div style="padding:20px 24px 0;flex-shrink:0">
+      <h3 style="margin-bottom:10px"><i class="ti ti-world-upload" style="font-size:18px;vertical-align:-3px;margin-right:7px;color:var(--accent)"></i>Xuat Website Local</h3>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.55">Tạo một file <strong>HTML duy nhất</strong> chứa toàn bộ tài liệu. Mở bằng Chrome/Edge là dùng được ngay.</p>
     </div>
-    <div class="field"><label>Tài liệu đưa vào website</label><div id="webDocList" style="max-height:140px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:7px 9px;display:flex;flex-direction:column;gap:5px"></div></div>
-    <!-- Image quality option -->
-    <div class="field">
-      <label>Ảnh/Video trong file xuất</label>
-      <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+    <div style="overflow-y:auto;flex:1;min-height:0;padding:0 24px">
+      <div class="field"><label>Tên website</label><input type="text" id="webTitle" placeholder="Ví dụ: Vehicle Project Docs"></div>
+      <div class="field"><label>Mau theme</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="radio" name="webTheme" value="#2563eb" checked> <span style="width:16px;height:16px;background:#2563eb;border-radius:4px;display:inline-block"></span> Blue</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="radio" name="webTheme" value="#0f766e"> <span style="width:16px;height:16px;background:#0f766e;border-radius:4px;display:inline-block"></span> Teal</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="radio" name="webTheme" value="#7c3aed"> <span style="width:16px;height:16px;background:#7c3aed;border-radius:4px;display:inline-block"></span> Purple</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="radio" name="webTheme" value="#b91c1c"> <span style="width:16px;height:16px;background:#b91c1c;border-radius:4px;display:inline-block"></span> Red</label>
+        </div>
+      </div>
+      <div class="field"><label>Tài liệu đưa vào website</label><div id="webDocList" style="max-height:110px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:7px 9px;display:flex;flex-direction:column;gap:5px"></div></div>
+      <!-- Image quality option -->
+      <div class="field">
+        <label>Ảnh/Video trong file xuất</label>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
 
-        <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;transition:.15s" id="qualOpt_original">
-          <input type="radio" name="imgQuality" value="original" style="margin-top:2px;accent-color:var(--accent)">
-          <div>
-            <div style="font-size:13px;font-weight:500;color:var(--text)">Giữ nguyên chất lượng gốc</div>
-            <div style="font-size:11.5px;color:var(--text2);margin-top:2px">Ảnh không bị thay đổi — PNG giữ transparency, ảnh RAW/TIFF giữ nguyên. File HTML có thể rất lớn với nhiều ảnh.</div>
-          </div>
-        </label>
+          <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;transition:.15s" id="qualOpt_original">
+            <input type="radio" name="imgQuality" value="original" style="margin-top:2px;accent-color:var(--accent)">
+            <div>
+              <div style="font-size:13px;font-weight:500;color:var(--text)">Giữ nguyên chất lượng gốc</div>
+              <div style="font-size:11.5px;color:var(--text2);margin-top:2px">Ảnh không bị thay đổi — PNG giữ transparency, ảnh RAW/TIFF giữ nguyên. File HTML có thể rất lớn với nhiều ảnh.</div>
+            </div>
+          </label>
 
-        <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1.5px solid var(--accent);border-radius:8px;cursor:pointer;transition:.15s;background:var(--accent-light)" id="qualOpt_compress">
-          <input type="radio" name="imgQuality" value="compress" checked style="margin-top:2px;accent-color:var(--accent)">
-          <div>
-            <div style="font-size:13px;font-weight:500;color:var(--text)">Nén ảnh tự động <span style="background:var(--accent);color:#fff;font-size:10px;padding:1px 6px;border-radius:10px;font-weight:600;vertical-align:middle;margin-left:4px">Khuyên dùng</span></div>
-            <div style="font-size:11.5px;color:var(--text2);margin-top:2px">Resize max <strong id="maxDimDisplay">1280</strong>px · JPEG <strong id="qualDisplay">82</strong>% · GIF & video giữ nguyên. File nhỏ hơn ~60%, tốc độ tải nhanh hơn.</div>
-            <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px" id="compressOptions">
-              <div style="display:flex;align-items:center;gap:10px">
-                <span style="font-size:11px;color:var(--text2);width:90px">Kích thước tối đa</span>
-                <input type="range" id="sliderMaxDim" min="640" max="3840" step="160" value="1280" style="flex:1;accent-color:var(--accent)" oninput="document.getElementById('maxDimDisplay').textContent=this.value">
-                <span style="font-size:11px;color:var(--text2);width:50px;text-align:right"><span id="maxDimDisplay2"></span>px</span>
-              </div>
-              <div style="display:flex;align-items:center;gap:10px">
-                <span style="font-size:11px;color:var(--text2);width:90px">Chất lượng JPEG</span>
-                <input type="range" id="sliderQuality" min="40" max="100" step="1" value="82" style="flex:1;accent-color:var(--accent)" oninput="document.getElementById('qualDisplay').textContent=this.value+' %'">
-                <span style="font-size:11px;color:var(--text2);width:50px;text-align:right"><span id="qualDisplay2"></span></span>
+          <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1.5px solid var(--accent);border-radius:8px;cursor:pointer;transition:.15s;background:var(--accent-light)" id="qualOpt_compress">
+            <input type="radio" name="imgQuality" value="compress" checked style="margin-top:2px;accent-color:var(--accent)">
+            <div>
+              <div style="font-size:13px;font-weight:500;color:var(--text)">Nén ảnh tự động <span style="background:var(--accent);color:#fff;font-size:10px;padding:1px 6px;border-radius:10px;font-weight:600;vertical-align:middle;margin-left:4px">Khuyên dùng</span></div>
+              <div style="font-size:11.5px;color:var(--text2);margin-top:2px">Resize max <strong id="maxDimDisplay">1280</strong>px · JPEG <strong id="qualDisplay">82</strong>% · GIF & video giữ nguyên. File nhỏ hơn ~60%, tốc độ tải nhanh hơn.</div>
+              <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px" id="compressOptions">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <span style="font-size:11px;color:var(--text2);width:90px">Kích thước tối đa</span>
+                  <input type="range" id="sliderMaxDim" min="640" max="3840" step="160" value="1280" style="flex:1;accent-color:var(--accent)" oninput="document.getElementById('maxDimDisplay').textContent=this.value">
+                  <span style="font-size:11px;color:var(--text2);width:50px;text-align:right"><span id="maxDimDisplay2"></span>px</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <span style="font-size:11px;color:var(--text2);width:90px">Chất lượng JPEG</span>
+                  <input type="range" id="sliderQuality" min="40" max="100" step="1" value="82" style="flex:1;accent-color:var(--accent)" oninput="document.getElementById('qualDisplay').textContent=this.value+' %'">
+                  <span style="font-size:11px;color:var(--text2);width:50px;text-align:right"><span id="qualDisplay2"></span></span>
+                </div>
               </div>
             </div>
-          </div>
-        </label>
+          </label>
 
+        </div>
+      </div>
+      <div id="exportSizeWarn" style="display:none;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:9px 12px;font-size:12px;color:#c2410c;margin-bottom:12px;align-items:center;gap:8px">
+        <i class="ti ti-alert-triangle" style="font-size:14px;flex-shrink:0"></i>
+        <span>Với "Giữ nguyên chất lượng", nhiều ảnh lớn có thể tạo file HTML vài trăm MB. Trình duyệt có thể gặp khó khăn khi mở.</span>
       </div>
     </div>
-    <div id="exportSizeWarn" style="display:none;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:9px 12px;font-size:12px;color:#c2410c;margin-bottom:12px;align-items:center;gap:8px">
-      <i class="ti ti-alert-triangle" style="font-size:14px;flex-shrink:0"></i>
-      <span>Với "Giữ nguyên chất lượng", nhiều ảnh lớn có thể tạo file HTML vài trăm MB. Trình duyệt có thể gặp khó khăn khi mở.</span>
-    </div>
-    <div class="modal-actions"><button class="hbtn" onclick="closeModal('exportWebModal')">Huỷ</button><button class="hbtn primary" onclick="doExportWebsite()"><i class="ti ti-download"></i> Tải xuống</button></div>
+    <div class="modal-actions" style="padding:12px 24px 18px;flex-shrink:0;border-top:1px solid var(--border);margin-top:0"><button class="hbtn" onclick="closeModal('exportWebModal')">Huỷ</button><button class="hbtn primary" onclick="doExportWebsite()"><i class="ti ti-download"></i> Tải xuống</button></div>
   </div>
 </div>
 
