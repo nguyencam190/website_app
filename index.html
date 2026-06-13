@@ -717,10 +717,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .txtbox-sw{position:absolute;left:-5px;bottom:-5px;width:10px;height:10px;border-radius:50%;background:var(--accent);cursor:sw-resize}
 /* BUBBLE TOOLBAR */
 /* ═══ SLASH COMMANDS ═══════════════════════════════════════ */
-.slash-menu{position:fixed;z-index:11000;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.18);width:280px;overflow:hidden;display:none;flex-direction:column;animation:cpFade .12s ease}
+.slash-menu{position:fixed;z-index:11000;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.18);width:300px;overflow:hidden;display:none;flex-direction:column;animation:cpFade .12s ease}
 .slash-menu.on{display:flex}
-.slash-menu-search{padding:10px 12px 6px;border-bottom:1px solid var(--border);flex-shrink:0}
-.slash-menu-inp{width:100%;background:transparent;border:none;outline:none;font-size:13px;color:var(--text);font-family:var(--font)}
+.slash-menu-header{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.slash-menu-header-icon{color:var(--text3);font-size:16px;flex-shrink:0;display:flex;align-items:center}
+.slash-menu-inp{flex:1;background:transparent;border:none;outline:none;font-size:13px;color:var(--text);font-family:var(--font)}
 .slash-menu-inp::placeholder{color:var(--text3)}
 .slash-menu-list{overflow-y:auto;max-height:320px;padding:6px}
 .slash-menu-section{padding:4px 8px 2px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-top:4px}
@@ -728,10 +729,23 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .slash-item:hover,.slash-item.active{background:var(--surface2)}
 .slash-item-icon{width:32px;height:32px;border-radius:7px;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;font-family:var(--font);color:var(--text2);flex-shrink:0;transition:background .1s,color .1s}
 .slash-item:hover .slash-item-icon,.slash-item.active .slash-item-icon{background:var(--accent-light);color:var(--accent)}
+.slash-item[data-id="info"] .slash-item-icon{background:rgba(37,99,235,.12);color:#2563eb}
+.slash-item[data-id="success"] .slash-item-icon{background:rgba(22,163,74,.12);color:#16a34a}
+.slash-item[data-id="warning"] .slash-item-icon{background:rgba(217,119,6,.12);color:#d97706}
+.slash-item[data-id="error"] .slash-item-icon{background:rgba(220,38,38,.12);color:#dc2626}
+.slash-item[data-id="note"] .slash-item-icon{background:rgba(124,58,237,.12);color:#7c3aed}
+.slash-item[data-id="callout"] .slash-item-icon{background:rgba(234,88,12,.12);color:#ea580c}
+.slash-item[data-id="code"] .slash-item-icon{background:rgba(71,85,105,.12);color:#475569}
+.slash-item[data-id="image"] .slash-item-icon{background:rgba(14,165,233,.12);color:#0ea5e9}
+.slash-item[data-id="video"] .slash-item-icon{background:rgba(99,102,241,.12);color:#6366f1}
+.slash-item[data-id="embed"] .slash-item-icon{background:rgba(239,68,68,.12);color:#ef4444}
 .slash-item-info{flex:1;min-width:0}
 .slash-item-name{font-size:13px;font-weight:500;color:var(--text)}
 .slash-item-desc{font-size:11px;color:var(--text3);margin-top:1px}
 .slash-menu-empty{padding:20px;text-align:center;color:var(--text3);font-size:13px}
+.slash-menu-footer{padding:6px 12px 8px;border-top:1px solid var(--border);flex-shrink:0}
+.slash-menu-hint{display:flex;align-items:center;gap:6px}
+.slash-menu-hint kbd{display:inline-flex;align-items:center;justify-content:center;padding:2px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;font-size:11px;color:var(--text3);font-family:var(--font);font-weight:500;line-height:1.4;min-width:20px}
 /* ═══ COLUMN LAYOUT ════════════════════════════════════════ */
 /* ═══ COLUMN LAYOUT (Confluence-style) ═══════════════════ */
 .cf-column-layout{display:flex;align-items:stretch;width:100%;margin:16px 0;position:relative;border-radius:4px;min-height:80px}
@@ -6136,7 +6150,7 @@ function slashExec(id){
   // Track recent usage
   _slashRecent=_slashRecent.filter(r=>r!==id);
   _slashRecent.unshift(id);
-  if(_slashRecent.length>3)_slashRecent.length=3;
+  if(_slashRecent.length>5)_slashRecent.length=5;
   try{localStorage.setItem('slash_recent',JSON.stringify(_slashRecent));}catch(e){}
 
   slashClose(false); // don't refocus — we restore the correct element below
