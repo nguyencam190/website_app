@@ -5574,6 +5574,9 @@ async function _tblInsertImgBlock(cell, file){
   });
   cell.appendChild(block);
   cell.classList.add('tbl-has-img');
+  // Track hover so Delete key can remove this block
+  block.addEventListener('mouseenter',()=>{_hoveredTblImg=block;});
+  block.addEventListener('mouseleave',()=>{if(_hoveredTblImg===block)_hoveredTblImg=null;});
   onContentChange();
   toast('Đã thêm hình vào ô','success');
   requestAnimationFrame(()=>_showBlockBar(block));
@@ -8325,6 +8328,11 @@ function _cfImgLoadAll(editor){
     }
     // Rewire events
     _cfImgRewireBlock(block);
+    // Track hover for Delete-key deletion when inside a table cell
+    if(block.closest('td,th')){
+      block.addEventListener('mouseenter',()=>{_hoveredTblImg=block;});
+      block.addEventListener('mouseleave',()=>{if(_hoveredTblImg===block)_hoveredTblImg=null;});
+    }
     block.addEventListener('mousedown',ev=>{
       if(ev.target.closest('.cf-img-caption'))return;
       ev.preventDefault();_cfImgSelect(block);
@@ -11591,7 +11599,15 @@ document.addEventListener('keydown',e=>{
     if(_hoveredTblImg&&document.contains(_hoveredTblImg)){
       e.preventDefault();e.stopPropagation();
       const parentCell=_hoveredTblImg.closest('td,th');
-      // Clean up IDB entries
+      // cf-img-block inserted by _tblInsertImgBlock
+      if(_hoveredTblImg.classList&&_hoveredTblImg.classList.contains('cf-img-block')){
+        const id=_hoveredTblImg.dataset.cfimgid;
+        if(id){_revokeUrl(id);_idbDel(id).catch(()=>{});}
+        _hoveredTblImg.remove();_hoveredTblImg=null;
+        if(parentCell){parentCell.classList.remove('tbl-has-img');}
+        onContentChange();toast('Đã xóa hình','info');return;
+      }
+      // Clean up IDB entries for plain <img>
       if(_hoveredTblImg.dataset&&_hoveredTblImg.dataset.tblimgid){
         _revokeUrl(_hoveredTblImg.dataset.tblimgid);
         _idbDel(_hoveredTblImg.dataset.tblimgid).catch(()=>{});
