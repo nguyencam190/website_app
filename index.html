@@ -8830,10 +8830,11 @@ function _showBlockBar(targetEl){
     container.classList.contains('cf-panel-content')||
     container.classList.contains('cf-toggle-body')||
     container.classList.contains('cf-tab-content'));
+  // Carousel and image blocks have resize handles in the left gutter — overlay instead
+  const hasGutterUI=targetEl.classList.contains('cf-carousel-block')||
+    targetEl.classList.contains('cf-img-block');
   bar.style.position='fixed';
-  if(isNested){
-    // Overlaid at top-left corner of the block — mouse stays within the cell
-    // so bar never disappears while user moves to click it
+  if(isNested||hasGutterUI){
     bar.style.top=rect.top+'px';
     bar.style.left=rect.left+'px';
     bar.classList.add('on-nested');
