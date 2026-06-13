@@ -2992,7 +2992,11 @@ function onContentChange(){
   clone.querySelectorAll('.cf-img-toolbar,.cf-img-resize-h,.cf-img-ctx,.cf-col-toolbar,.cf-panel-actions,.editor-block-bar').forEach(e=>e.remove());
   // Preserve cp-mapped spans (theme-aware colors) in saved content
   doc.content=clone.innerHTML;doc.updatedAt=new Date().toISOString();
-  fmSaveAll();tbSaveAll();markDirty();tblAttachAll();
+  fmSaveAll();tbSaveAll();markDirty();
+  const _edSc2=document.getElementById('editorScroll');
+  const _st2=_edSc2?_edSc2.scrollTop:0;
+  tblAttachAll();
+  if(_edSc2)_edSc2.scrollTop=_st2;
 }
 function renderMeta(doc){
   const el=document.getElementById('docMeta');
@@ -4219,10 +4223,10 @@ const dd=document.getElementById('bbSizeDD');if(dd&&!dd.contains(e.target)&&e.ta
 });
 
 // TOOLBAR
-function fmt(cmd){document.execCommand(cmd,false,null);document.getElementById('editor')?.focus();}
-function applyBlock(tag){document.execCommand('formatBlock',false,tag);document.getElementById('editor')?.focus();}
-function insertCode(){document.getElementById('editor')?.focus();document.execCommand('insertHTML',false,'<pre>// code here</pre><p><br></p>');}
-function insertLink(){const url=prompt('Nhap URL:');if(!url)return;const text=prompt('Nhap text:',url)||url;document.getElementById('editor')?.focus();document.execCommand('insertHTML',false,`<a href="${escH(url)}" target="_blank">${escH(text)}</a>`);}
+function fmt(cmd){document.execCommand(cmd,false,null);document.getElementById('editor')?.focus({preventScroll:true});}
+function applyBlock(tag){document.execCommand('formatBlock',false,tag);document.getElementById('editor')?.focus({preventScroll:true});}
+function insertCode(){document.getElementById('editor')?.focus({preventScroll:true});document.execCommand('insertHTML',false,'<pre>// code here</pre><p><br></p>');}
+function insertLink(){const url=prompt('Nhap URL:');if(!url)return;const text=prompt('Nhap text:',url)||url;document.getElementById('editor')?.focus({preventScroll:true});document.execCommand('insertHTML',false,`<a href="${escH(url)}" target="_blank">${escH(text)}</a>`);}
 
 // CTX IMAGE
 function ctxInsert(){const doc=currentDoc();if(!doc||ctxImgIdx===null)return;insertImageInEditor(doc.images[ctxImgIdx]);document.getElementById('ctxMenu').classList.remove('on');}
@@ -7053,7 +7057,7 @@ function _cfBuildToolbar(layout,n,dist){
       // Focus editor
       const sel=window.getSelection();const r=document.createRange();
       try{r.setStart(fallback,0);r.collapse(true);sel.removeAllRanges();sel.addRange(r);}catch(er){}
-      document.getElementById('editor')?.focus();
+      document.getElementById('editor')?.focus({preventScroll:true});
       onContentChange();
     }
   });
@@ -7109,7 +7113,7 @@ function _cfRebuildCols(layout,n,dist,existingContent){
           layout.parentElement.insertBefore(p,layout.nextSibling);
           const sel=window.getSelection();const r=document.createRange();
           r.setStart(p,0);r.collapse(true);sel.removeAllRanges();sel.addRange(r);
-          document.getElementById('editor')?.focus();
+          document.getElementById('editor')?.focus({preventScroll:true});
         }
       }
     });
@@ -8452,7 +8456,7 @@ function emojiInsert(emoji){
   _emojiInsertRange=null;
   emojiClose();
   const editor=document.getElementById('editor');
-  if(editor)editor.focus();
+  if(editor)editor.focus({preventScroll:true});
   const sel=window.getSelection();
   if(rangeToUse){try{sel.removeAllRanges();sel.addRange(rangeToUse);}catch(e){}}
   document.execCommand('insertText',false,emoji);
@@ -9332,14 +9336,14 @@ function bbFmt(cmd){
   const inBox=activeEl&&activeEl.closest&&activeEl.closest('.txtbox-body');
   const inTbl=activeEl&&activeEl.closest&&activeEl.closest('.editor-content td,.editor-content th');
   document.execCommand(cmd,false,null);
-  if(!inBox&&!inTbl)document.getElementById('editor')?.focus();
+  if(!inBox&&!inTbl)document.getElementById('editor')?.focus({preventScroll:true});
   onContentChange();bbUpdateState();setTimeout(bbShow,10);
 }
-function bbApplyBlock(val){document.execCommand('formatBlock',false,val);document.getElementById('editor')?.focus();onContentChange();setTimeout(bbShow,10);}
-function bbApplyFont(font){document.execCommand('fontName',false,font);document.getElementById('editor')?.focus();onContentChange();setTimeout(bbShow,10);}
+function bbApplyBlock(val){document.execCommand('formatBlock',false,val);document.getElementById('editor')?.focus({preventScroll:true});onContentChange();setTimeout(bbShow,10);}
+function bbApplyFont(font){document.execCommand('fontName',false,font);document.getElementById('editor')?.focus({preventScroll:true});onContentChange();setTimeout(bbShow,10);}
 function bbOpenSizeDD(e){if(e){e.stopPropagation();e.preventDefault();}clearTimeout(_sizeCloseTimer);saveRange();const dd=document.getElementById('bbSizeDD');const cur=parseInt(document.getElementById('bbSizeNum').value)||16;dd.innerHTML=BB_SIZES.map(s=>`<div class="bb-size-opt${s===cur?' active':''}" onmousedown="event.preventDefault();bbApplySize(${s})">${s}</div>`).join('');const inp=document.getElementById('bbSizeNum');const r=inp.getBoundingClientRect();dd.style.visibility='hidden';dd.classList.add('on');const ddH=dd.offsetHeight||200;let top=r.bottom+2;if(top+ddH>window.innerHeight-8)top=r.top-ddH-2;dd.style.top=top+'px';dd.style.left=r.left+'px';dd.style.visibility='';setTimeout(()=>{const a=dd.querySelector('.active');if(a)a.scrollIntoView({block:'center'});},50);}
 function bbCloseSizeDD(){_sizeCloseTimer=setTimeout(()=>document.getElementById('bbSizeDD').classList.remove('on'),120);}
-function bbApplySize(size){const editor=document.getElementById('editor');restoreRange();editor.focus();document.execCommand('fontSize',false,'7');editor.querySelectorAll('font[size="7"]').forEach(f=>{const span=document.createElement('span');span.style.fontSize=size+'px';span.innerHTML=f.innerHTML;f.replaceWith(span);});document.getElementById('bbSizeNum').value=size;document.getElementById('bbSizeDD').classList.remove('on');onContentChange();setTimeout(bbShow,10);}
+function bbApplySize(size){const editor=document.getElementById('editor');restoreRange();editor.focus({preventScroll:true});document.execCommand('fontSize',false,'7');editor.querySelectorAll('font[size="7"]').forEach(f=>{const span=document.createElement('span');span.style.fontSize=size+'px';span.innerHTML=f.innerHTML;f.replaceWith(span);});document.getElementById('bbSizeNum').value=size;document.getElementById('bbSizeDD').classList.remove('on');onContentChange();setTimeout(bbShow,10);}
 function bbTextColor(color){
   document.getElementById('bbTextBar').style.background=color;
   document.getElementById('textColorBar').style.background=color;
@@ -9713,15 +9717,15 @@ function closeAllPalettes(){
 document.addEventListener('mousedown',e=>{
   if(!e.target.closest('.color-palette')&&!e.target.closest('.bb-color-btn'))closeAllPalettes();
 });
-function applyTextColor(color){document.getElementById('textColorBar').style.background=color;document.getElementById('editor')?.focus();document.execCommand('foreColor',false,color);onContentChange();}
-function applyHighlight(color){document.getElementById('bgColorBar').style.background=color;document.getElementById('editor')?.focus();document.execCommand('hiliteColor',false,color);onContentChange();}
-function bbRemoveHighlight(){restoreRange();document.getElementById('editor')?.focus();document.execCommand('hiliteColor',false,'transparent');onContentChange();setTimeout(bbShow,10);}
+function applyTextColor(color){document.getElementById('textColorBar').style.background=color;document.getElementById('editor')?.focus({preventScroll:true});document.execCommand('foreColor',false,color);onContentChange();}
+function applyHighlight(color){document.getElementById('bgColorBar').style.background=color;document.getElementById('editor')?.focus({preventScroll:true});document.execCommand('hiliteColor',false,color);onContentChange();}
+function bbRemoveHighlight(){restoreRange();document.getElementById('editor')?.focus({preventScroll:true});document.execCommand('hiliteColor',false,'transparent');onContentChange();setTimeout(bbShow,10);}
 function bbClear(){document.execCommand('removeFormat',false,null);onContentChange();setTimeout(bbShow,10);}
 
 function bbAlign(cmd){
   // Works on collapsed cursor too — applies to whole paragraph
   document.execCommand(cmd,false,null);
-  const editor=document.getElementById('editor');if(editor)editor.focus();
+  const editor=document.getElementById('editor');if(editor)editor.focus({preventScroll:true});
   onContentChange();
   _updateAlignBtns();
   setTimeout(bbShow,10);
