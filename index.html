@@ -8301,7 +8301,7 @@ function cfGetEmbedUrl(url){
   try{
     // YouTube: watch, shorts, youtu.be, live
     let m=url.match(/(?:youtube\.com\/(?:watch\?.*v=|shorts\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-    if(m)return 'https://www.youtube.com/embed/'+m[1]+'?rel=0';
+    if(m)return 'https://www.youtube-nocookie.com/embed/'+m[1]+'?rel=0';
     // Vimeo
     m=url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
     if(m)return 'https://player.vimeo.com/video/'+m[1]+'?h=&color=ffffff';
@@ -8321,14 +8321,14 @@ function cfGetEmbedUrl(url){
     m=url.match(/dailymotion\.com\/video\/([\w]+)/);
     if(m)return 'https://www.dailymotion.com/embed/video/'+m[1];
     // Direct iframe embed URLs (already embed)
-    if(/\/embed\/|player\.(vimeo|youtube)|platform\.twitter|tiktok\.com\/embed/.test(url))return url;
+    if(/\/embed\/|player\.(vimeo|youtube)|youtube-nocookie\.com|platform\.twitter|tiktok\.com\/embed/.test(url))return url;
   }catch(e){}
   return null;
 }
 
 // Get platform name from embed URL
 function cfEmbedPlatform(embedUrl){
-  if(embedUrl.includes('youtube.com'))return 'YouTube';
+  if(embedUrl.includes('youtube.com')||embedUrl.includes('youtube-nocookie.com'))return 'YouTube';
   if(embedUrl.includes('vimeo.com'))return 'Vimeo';
   if(embedUrl.includes('tiktok.com'))return 'TikTok';
   if(embedUrl.includes('twitter.com')||embedUrl.includes('platform.twitter'))return 'Twitter/X';
