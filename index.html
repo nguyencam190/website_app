@@ -8265,20 +8265,7 @@ function _getBlockBar(){
     document.addEventListener('mouseup',onUp);
   });
 
-  // ── Delete (X) button ─────────────────────────────────────
-  const del=document.createElement('button');
-  del.className='editor-block-btn';del.title='Xóa khối';
-  del.innerHTML='<i class="ti ti-x" style="font-size:13px"></i>';
-  del.style.cssText='color:var(--text3)';
-  del.addEventListener('mousedown',e=>{
-    e.preventDefault();
-    const target=_blockBarTarget;if(!target)return;
-    if(target.classList.contains('cf-img-block')){const id=target.dataset.cfimgid;if(id){_revokeUrl(id);_idbDel(id).catch(()=>{});}}
-    else if(target.classList.contains('cf-carousel-block')){(target.dataset.carids||'').split(',').filter(Boolean).forEach(id=>{try{_idbDel(id);}catch(e){}});}
-    target.remove();_hideBlockBar();onContentChange();
-  });
-
-  _blockBar.appendChild(plus);_blockBar.appendChild(drag);_blockBar.appendChild(del);
+  _blockBar.appendChild(plus);_blockBar.appendChild(drag);
   document.body.appendChild(_blockBar);
   return _blockBar;
 }
