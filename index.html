@@ -725,7 +725,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .slash-menu-header-icon{color:var(--text3);font-size:16px;flex-shrink:0;display:flex;align-items:center}
 .slash-menu-inp{flex:1;background:transparent;border:none;outline:none;font-size:13px;color:var(--text);font-family:var(--font)}
 .slash-menu-inp::placeholder{color:var(--text3)}
-.slash-menu-list{overflow-y:auto;max-height:320px;padding:6px}
+.slash-menu-list{overflow-y:auto;max-height:min(220px,calc(100vh - 220px));padding:6px}
 .slash-menu-section{padding:4px 8px 2px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-top:4px}
 .slash-item{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:7px;cursor:pointer;transition:background .1s}
 .slash-item:hover,.slash-item.active{background:var(--surface2)}
@@ -6267,7 +6267,7 @@ function slashOpen(){
   _slashOpenRect=rect; // snapshot position while caret is valid (before text deletion)
   const menu=document.getElementById('slashMenu');
   const vw=window.innerWidth,vh=window.innerHeight;
-  const menuH=380;
+  const menuH=Math.min(320,vh-220);
   let top=rect.bottom+8, left=rect.left-4;
   if(top+menuH>vh-8)top=Math.max(8,rect.top-menuH-8);
   if(left+304>vw-8)left=Math.max(8,vw-308);
