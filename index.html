@@ -8920,11 +8920,12 @@ function _showBlockBar(targetEl){
     container.classList.contains('cf-panel-content')||
     container.classList.contains('cf-toggle-body')||
     container.classList.contains('cf-tab-content'));
-  // Carousel and image blocks have resize handles at left/right edges — overlay inside, away from handles
-  // Table outer (tbl-outer) has tbl-edge-h handles at left:-4px that the bar overlaps via z-index
-  const hasGutterUI=targetEl.classList.contains('cf-carousel-block')||
+  // fmedia / cf-img-block / cf-carousel-block → bar centered on the media
+  const hasCenterUI=targetEl.classList.contains('fmedia')||
     targetEl.classList.contains('cf-img-block')||
-    targetEl.classList.contains('tbl-outer');
+    targetEl.classList.contains('cf-carousel-block');
+  // tbl-outer keeps top-right interior (edge handles at left:-4px)
+  const hasGutterUI=targetEl.classList.contains('tbl-outer');
   bar.style.position='fixed';
   if(isNested){
     const isCellNested=container.tagName==='TD'||container.tagName==='TH';
@@ -8939,6 +8940,11 @@ function _showBlockBar(targetEl){
       bar.style.left=rect.left+'px';
       bar.classList.add('on-nested');
     }
+  } else if(hasCenterUI){
+    // Center bar on the image/video/carousel block
+    bar.style.top=(rect.top+Math.round(rect.height/2)-13)+'px';
+    bar.style.left=(rect.left+Math.round(rect.width/2)-26)+'px';
+    bar.classList.add('on-nested');
   } else if(hasGutterUI){
     // Place bar near top-right interior of block, clear of edge handles on left/right
     bar.style.top=(rect.top+8)+'px';
