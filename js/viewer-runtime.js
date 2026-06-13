@@ -419,3 +419,24 @@ document.addEventListener('keydown',function(e){
   });
   if(ov)ov.addEventListener('click',doCollapse);
 })();
+
+// ── Restore embed iframes from data-embed-url ────────────────────────────────
+// Ensures YouTube/social media iframes always have their src set correctly,
+// even if the browser stripped or lost it during serialization.
+(function(){
+  document.querySelectorAll('.cf-embed-block[data-embed-url]').forEach(function(block){
+    var url=block.dataset.embedUrl;if(!url)return;
+    var wrap=block.querySelector('.cf-embed-wrap');if(!wrap)return;
+    var iframe=block.querySelector('iframe');
+    if(!iframe){
+      iframe=document.createElement('iframe');
+      iframe.allow='accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share';
+      iframe.setAttribute('allowfullscreen','');
+      iframe.setAttribute('loading','lazy');
+      wrap.appendChild(iframe);
+    }
+    if(!iframe.src||iframe.src==='about:blank'||iframe.src===location.href)iframe.src=url;
+    // Ensure aspect ratio is applied
+    if(!wrap.style.paddingBottom)wrap.style.paddingBottom='56.25%';
+  });
+})();
