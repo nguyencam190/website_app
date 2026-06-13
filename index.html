@@ -8836,13 +8836,18 @@ function _showBlockBar(targetEl){
     container.classList.contains('cf-panel-content')||
     container.classList.contains('cf-toggle-body')||
     container.classList.contains('cf-tab-content'));
-  // Carousel and image blocks have resize handles in the left gutter — overlay instead
+  // Carousel and image blocks have resize handles at left/right edges — overlay inside, away from handles
   const hasGutterUI=targetEl.classList.contains('cf-carousel-block')||
     targetEl.classList.contains('cf-img-block');
   bar.style.position='fixed';
-  if(isNested||hasGutterUI){
+  if(isNested){
     bar.style.top=rect.top+'px';
     bar.style.left=rect.left+'px';
+    bar.classList.add('on-nested');
+  } else if(hasGutterUI){
+    // Place bar near top-right interior of block, clear of left(-12px) and right(-12px) resize handles
+    bar.style.top=(rect.top+8)+'px';
+    bar.style.left=Math.max(rect.left+8,rect.right-80)+'px';
     bar.classList.add('on-nested');
   } else {
     bar.classList.remove('on-nested');
