@@ -8920,9 +8920,20 @@ function _showBlockBar(targetEl){
     targetEl.classList.contains('tbl-outer');
   bar.style.position='fixed';
   if(isNested){
-    bar.style.top=rect.top+'px';
-    bar.style.left=rect.left+'px';
-    bar.classList.add('on-nested');
+    const isCellNested=container.tagName==='TD'||container.tagName==='TH';
+    if(isCellNested){
+      // Walk up to tbl-outer to get table's left edge, then place bar outside table (left gutter)
+      let tblOuter=container;
+      while(tblOuter&&!tblOuter.classList.contains('tbl-outer'))tblOuter=tblOuter.parentElement;
+      const tblRect=tblOuter?tblOuter.getBoundingClientRect():rect;
+      bar.style.top=(rect.top+2)+'px';
+      bar.style.left=Math.max(4,tblRect.left-56)+'px';
+      bar.classList.remove('on-nested');
+    } else {
+      bar.style.top=rect.top+'px';
+      bar.style.left=rect.left+'px';
+      bar.classList.add('on-nested');
+    }
   } else if(hasGutterUI){
     // Place bar near top-right interior of block, clear of edge handles on left/right
     bar.style.top=(rect.top+8)+'px';
