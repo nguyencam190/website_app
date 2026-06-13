@@ -8858,15 +8858,17 @@ function _showBlockBar(targetEl){
     container.classList.contains('cf-toggle-body')||
     container.classList.contains('cf-tab-content'));
   // Carousel and image blocks have resize handles at left/right edges — overlay inside, away from handles
+  // Table outer (tbl-outer) has tbl-edge-h handles at left:-4px that the bar overlaps via z-index
   const hasGutterUI=targetEl.classList.contains('cf-carousel-block')||
-    targetEl.classList.contains('cf-img-block');
+    targetEl.classList.contains('cf-img-block')||
+    targetEl.classList.contains('tbl-outer');
   bar.style.position='fixed';
   if(isNested){
     bar.style.top=rect.top+'px';
     bar.style.left=rect.left+'px';
     bar.classList.add('on-nested');
   } else if(hasGutterUI){
-    // Place bar near top-right interior of block, clear of left(-12px) and right(-12px) resize handles
+    // Place bar near top-right interior of block, clear of edge handles on left/right
     bar.style.top=(rect.top+8)+'px';
     bar.style.left=Math.max(rect.left+8,rect.right-80)+'px';
     bar.classList.add('on-nested');
