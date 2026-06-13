@@ -2899,6 +2899,7 @@ function openDoc(id){
   setTimeout(()=>{
     _cfImgLoadAll(document.getElementById('editor'));
     _cfToggleLoadAll(document.getElementById('editor'));
+    _cfFileLoadAll(document.getElementById('editor'));
     _undoSnapshot(); // initial snapshot
   },80);
   setTimeout(async()=>{const ed=document.getElementById('editor');await _cfCarLoadAll(ed);_cfEmbedLoadAll(ed);},120);
@@ -2916,7 +2917,7 @@ function onContentChange(){
   _cfRefreshTocs(editor_el);
   const clone=editor_el.cloneNode(true);
   // Strip interactive chrome (not content)
-  clone.querySelectorAll('.tbl-row-num,.tbl-col-resize-handle,.tbl-row-resize-handle,.tbl-col-sel,.tbl-row-sel,.tbl-img-btn,.tbl-cell-drop,.tbl-shadow-btn,.tbl-edge-h').forEach(e=>e.remove());
+  clone.querySelectorAll('.tbl-row-num,.tbl-col-resize-handle,.tbl-row-resize-handle,.tbl-col-sel,.tbl-row-sel,.tbl-img-btn,.tbl-cell-drop,.tbl-shadow-btn,.tbl-edge-h,.cf-file-del').forEach(e=>e.remove());
   // Save col widths to data attribute before stripping colgroup (persist across save/load)
   // Only save for user-customized colgroups (no data-auto).
   // Auto-generated calc() widths are NOT saved — tblEqualizeColumns will rebuild on reload.
@@ -10018,7 +10019,7 @@ async function doExportWebsite(){
       '.cf-img-toolbar','.cf-img-resize-h','.cf-img-ctx',
       '.cf-panel-actions','.cf-car-toolbar','.cf-embed-toolbar',
       '.cf-car-add-slide','.editor-block-bar','.slash-hint','.pab-logo-menu',
-      '.cf-toc-del'
+      '.cf-toc-del','.cf-btn-toolbar','.cf-file-del'
     ].join(',')).forEach(e=>e.remove());
 
     // ─ 3b. Clean State: strip all editor-mode attributes ───
@@ -10168,6 +10169,34 @@ async function doExportWebsite(){
       img.style.outline='';img.style.outlineOffset='';
       if(img.dataset.shadowXyb&&img.dataset.shadowLight){const col=exportDark?(img.dataset.shadowDark||img.dataset.shadowLight):img.dataset.shadowLight;img.style.filter=img.dataset.shadowXyb+' '+col+')';}
       ['shadowkey','shadowLight','shadowDark','shadowXyb'].forEach(k=>delete img.dataset[k]);
+    });
+    // ── Restore file attachment blocks ──────────────────────
+    for(const block of Array.from(tmp.querySelectorAll('.cf-file-block[data-cffileid]'))){
+      const id=block.dataset.cffileid;if(!id)continue;
+      const dlBtn=block.querySelector('.cf-file-dl');if(!dlBtn)continue;
+      try{
+        const blob=await _idbGet(id);
+        if(blob){
+          const b64=await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result);r.readAsDataURL(blob);});
+          dlBtn.href=b64;dlBtn.download=block.dataset.filename||'file';
+          block.removeAttribute('data-cffileid');
+        } else {block.remove();}
+      }catch(e){block.remove();}
+      _showExportProgress(++_cnt,_tot,'Xuất file đính kèm...');
+      if(_cnt%3===0)await new Promise(r=>setTimeout(r,0));
+    }
+    // ── Make button blocks functional in published view ─────
+    tmp.querySelectorAll('.cf-btn-block').forEach(btnBlock=>{
+      const link=btnBlock.dataset.btnlink||'';
+      const btnEl=btnBlock.querySelector('.cf-btn-el');
+      const btnTxt=btnBlock.querySelector('.cf-btn-text');
+      if(!btnEl||!btnTxt)return;
+      const a=document.createElement('a');
+      a.className='cf-btn-el';
+      a.href=link||'#';
+      if(link)a.target='_blank';a.rel='noopener';
+      a.textContent=btnTxt.textContent||'Click here';
+      btnEl.parentNode.replaceChild(a,btnEl);
     });
     // ─ Heading anchors + TOC wiring ────────────────────────
     let _hIdx=0;
@@ -10460,6 +10489,25 @@ async function doExportWebsite(){
     '.ws-canvas .cf-column-item{flex:1;padding:16px 20px;font-size:1rem;line-height:1.8;color:var(--text);word-break:break-word;background:transparent!important;min-height:0;cursor:default}',
     '.ws-canvas .cf-col-sep-line{width:0!important;overflow:hidden;flex-shrink:0}',
     '.ws-canvas .cf-col-sep-line::after{content:none!important}',
+    /* ── Button / CTA Block ── */
+    '.ws-canvas .cf-btn-block{margin:12px 0;display:block}',
+    '.ws-canvas .cf-btn-wrap{display:flex;justify-content:center}',
+    '.ws-canvas .cf-btn-block[data-align="left"] .cf-btn-wrap{justify-content:flex-start}',
+    '.ws-canvas .cf-btn-block[data-align="right"] .cf-btn-wrap{justify-content:flex-end}',
+    '.ws-canvas .cf-btn-el{display:inline-flex;align-items:center;padding:9px 24px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;transition:opacity .15s,transform .12s,box-shadow .15s;border:2px solid transparent;white-space:nowrap}',
+    '.ws-canvas .cf-btn-el:hover{opacity:.85;transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.2)}',
+    '.ws-canvas .cf-btn-block[data-btnstyle="primary"] .cf-btn-el{background:var(--accent);color:#fff;border-color:var(--accent)}',
+    '.ws-canvas .cf-btn-block[data-btnstyle="outline"] .cf-btn-el{background:transparent;color:var(--accent);border-color:var(--accent)}',
+    '.ws-canvas .cf-btn-block[data-btnstyle="ghost"] .cf-btn-el{background:var(--surface2);color:var(--text);border-color:transparent}',
+    /* ── File Attachment Block ── */
+    '.ws-canvas .cf-file-block{display:flex;align-items:center;gap:12px;padding:12px 16px;border:1px solid var(--border);border-radius:10px;margin:10px 0;background:var(--surface);transition:border-color .15s,box-shadow .15s}',
+    '.ws-canvas .cf-file-block:hover{border-color:var(--accent);box-shadow:0 2px 10px rgba(37,99,235,.1)}',
+    '.ws-canvas .cf-file-icon{width:40px;height:40px;border-radius:8px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;color:var(--text2)}',
+    '.ws-canvas .cf-file-meta{flex:1;min-width:0}',
+    '.ws-canvas .cf-file-name{font-size:13.5px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+    '.ws-canvas .cf-file-size{font-size:11.5px;color:var(--text3);margin-top:2px}',
+    '.ws-canvas .cf-file-dl{display:inline-flex;align-items:center;gap:5px;padding:5px 14px;border-radius:6px;background:var(--accent-light);color:var(--accent);font-size:12.5px;font-weight:600;text-decoration:none;transition:.12s;flex-shrink:0}',
+    '.ws-canvas .cf-file-dl:hover{background:var(--accent);color:#fff}',
     /* ── Toggle Block ── */
     '.ws-canvas .cf-toggle{border:1px solid var(--border);border-radius:8px;margin:8px 0;background:var(--surface);overflow:hidden}',
     '.ws-canvas .cf-toggle-head{display:flex;align-items:flex-start;gap:8px;padding:10px 14px;cursor:pointer;user-select:none;background:var(--surface2);transition:background .12s}',
