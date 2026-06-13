@@ -317,7 +317,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .meta-tag{background:var(--accent-light);color:var(--accent);padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
 .editor-content{outline:none;min-height:320px;font-size:16px;line-height:1.9;color:var(--text);position:relative}
 /* Empty paragraph hint — shows when cursor is on empty line */
-.editor-content p.slash-hint:empty::before{
+.editor-content p.slash-hint::before{
   content:'Gõ  /  để chèn nội dung';
   color:var(--text3);pointer-events:none;position:absolute;left:0;white-space:nowrap;font-size:.875rem;line-height:1.9
 }
@@ -8784,6 +8784,31 @@ function _getBlockBar(){
   return _blockBar;
 }
 
+/* Walk up from a node to find the nearest block that is a direct child of a
+   supported editable container: #editor, td, th, .cf-column-item, etc.
+   Returns {block, container} or null. */
+function _findBlockInContainer(node){
+  if(!node)return null;
+  if(node.nodeType===Node.TEXT_NODE)node=node.parentElement;
+  if(!node)return null;
+  const editor=document.getElementById('editor');
+  if(!editor||!editor.contains(node))return null;
+  let el=node;
+  while(el&&el!==editor){
+    const par=el.parentElement;
+    if(!par)break;
+    if(par===editor||par.tagName==='TD'||par.tagName==='TH'||
+       par.classList.contains('cf-column-item')||
+       par.classList.contains('cf-panel-content')||
+       par.classList.contains('cf-toggle-body')||
+       par.classList.contains('cf-tab-content')){
+      return {block:el,container:par};
+    }
+    el=par;
+  }
+  return null;
+}
+
 function _showBlockBar(targetEl){
   if(!targetEl)return;
   _blockBarTarget=targetEl;
@@ -8791,7 +8816,7 @@ function _showBlockBar(targetEl){
   const rect=targetEl.getBoundingClientRect();
   bar.style.position='fixed';
   bar.style.top=(rect.top+2)+'px';
-  bar.style.left=(rect.left-56)+'px';
+  bar.style.left=Math.max(4,rect.left-56)+'px';
   bar.classList.add('on');
 }
 
@@ -8806,19 +8831,16 @@ function _updateBlockBar(){
   _blockBarTimer=setTimeout(()=>{
     const sel=window.getSelection();if(!sel.rangeCount)return;
     const range=sel.getRangeAt(0);
-    let node=range.startContainer;
     const editor=document.getElementById('editor');
     if(!editor)return;
-    // Walk up to direct child of editor
-    while(node&&node.parentElement!==editor)node=node.parentElement;
-    if(!node||node===editor){_hideBlockBar();return;}
-    // Update slash hint class
+    const result=_findBlockInContainer(range.startContainer);
     editor.querySelectorAll('.slash-hint').forEach(el=>el.classList.remove('slash-hint'));
-    if(node.nodeType!==Node.TEXT_NODE&&node.tagName==='P'&&
-       !node.textContent.trim()&&node.children.length<=1){
-      node.classList.add('slash-hint');
+    if(!result){_hideBlockBar();return;}
+    const {block}=result;
+    if(block.tagName==='P'&&!block.textContent.trim()&&block.children.length<=1){
+      block.classList.add('slash-hint');
     }
-    _showBlockBar(node);
+    _showBlockBar(block);
   },50);
 }
 
@@ -8826,16 +8848,13 @@ function _onEditorMouseMove(e){
   clearTimeout(_blockBarTimer);
   _blockBarTimer=setTimeout(()=>{
     const editor=document.getElementById('editor');if(!editor)return;
-    // Find which block the mouse is hovering over
     let el=e.target;
-    if(el===editor){_hideBlockBar();return;}
-    // Walk up to find direct child of editor
-    while(el&&el.parentElement!==editor)el=el.parentElement;
-    if(!el||el===editor){return;}
-    // Don't show on table/fmedia/textbox/nested complex elements
-    if(el.tagName==='TABLE'||el.classList.contains('fmedia')||
-       el.classList.contains('txtbox')||el.classList.contains('tbl-outer'))return;
-    _showBlockBar(el);
+    if(!el||el===editor){_hideBlockBar();return;}
+    // Text boxes and dropdowns have their own drag UI
+    if(el.closest('.txtbox')||el.closest('.tbl-dropdown'))return;
+    const result=_findBlockInContainer(el);
+    if(!result){_hideBlockBar();return;}
+    _showBlockBar(result.block);
   },30);
 }
 
