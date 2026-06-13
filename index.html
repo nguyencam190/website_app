@@ -8135,9 +8135,14 @@ function _cfEmbedLoadAll(editor){
     const embedUrl=block.dataset.embedUrl;
     const origUrl=block.dataset.origUrl||embedUrl;
     if(!embedUrl)return;
-    // Ensure iframe has src
+    // Ensure iframe has src and required attributes
     const iframe=block.querySelector('iframe');
-    if(iframe&&!iframe.src)iframe.src=embedUrl;
+    if(iframe){
+      if(!iframe.src)iframe.src=embedUrl;
+      iframe.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen';
+      iframe.setAttribute('allowfullscreen','');
+      iframe.setAttribute('referrerpolicy','no-referrer-when-downgrade');
+    }
     // Rebuild toolbar
     const wrap=block.querySelector('.cf-embed-wrap');
     if(!wrap)return;
@@ -8296,7 +8301,7 @@ function cfGetEmbedUrl(url){
   try{
     // YouTube: watch, shorts, youtu.be, live
     let m=url.match(/(?:youtube\.com\/(?:watch\?.*v=|shorts\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-    if(m)return 'https://www.youtube.com/embed/'+m[1]+'?rel=0&autoplay=0';
+    if(m)return 'https://www.youtube.com/embed/'+m[1]+'?rel=0';
     // Vimeo
     m=url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
     if(m)return 'https://player.vimeo.com/video/'+m[1]+'?h=&color=ffffff';
@@ -8348,9 +8353,10 @@ function cfBuildEmbedBlock(embedUrl, origUrl){
 
   const iframe=document.createElement('iframe');
   iframe.src=embedUrl;
-  iframe.allow='accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share';
+  iframe.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen';
   iframe.setAttribute('allowfullscreen','');
   iframe.setAttribute('loading','lazy');
+  iframe.setAttribute('referrerpolicy','no-referrer-when-downgrade');
   wrap.appendChild(iframe);
 
   // Toolbar
