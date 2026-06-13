@@ -10730,8 +10730,10 @@ async function doExportWebsite(){
     '[data-theme="dark"] .ws-canvas .editor-content td{background:var(--surface)}',
     '[data-theme="dark"] .ws-canvas .editor-content tr:nth-child(even) td{background:var(--surface2)}',
     /* ── Column Layout ── */
-    '.ws-canvas .cf-column-layout{display:flex;align-items:stretch;width:100%;margin:16px 0;position:relative;min-height:0;gap:0;border:none;padding:0;border-radius:4px;overflow:hidden}',
+    '.ws-canvas .cf-column-layout{display:flex;align-items:stretch;width:100%;margin:16px 0;position:relative;min-height:0;gap:0;border:1.5px dashed var(--border);padding:0;border-radius:4px;overflow:hidden}',
+    '.ws-canvas .cf-column-layout:hover,.ws-canvas .cf-column-layout:focus-within{border-color:var(--border)!important;border-style:dashed!important}',
     '.ws-canvas .cf-column-item{flex:1;padding:16px 20px;font-size:1rem;line-height:1.8;color:var(--text);word-break:break-word;background:var(--surface);min-height:0;cursor:default}',
+    '.ws-canvas .cf-column-item:hover{background:var(--surface)!important;outline:none!important}',
     '.ws-canvas .cf-col-sep-line{width:10px;align-self:stretch;flex-shrink:0;position:relative;display:flex;align-items:center;justify-content:center;background:transparent}',
     '.ws-canvas .cf-col-sep-line::after{content:\'\';position:absolute;top:16px;bottom:16px;width:2px;background:var(--border2);border-radius:2px}',
     /* ── Button / CTA Block ── */
