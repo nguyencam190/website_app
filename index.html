@@ -8920,37 +8920,24 @@ function _showBlockBar(targetEl){
     container.classList.contains('cf-panel-content')||
     container.classList.contains('cf-toggle-body')||
     container.classList.contains('cf-tab-content'));
-  // fmedia / cf-img-block / cf-carousel-block → bar centered on the media
-  const hasCenterUI=targetEl.classList.contains('fmedia')||
-    targetEl.classList.contains('cf-img-block')||
-    targetEl.classList.contains('cf-carousel-block');
-  // tbl-outer keeps top-right interior (edge handles at left:-4px)
-  const hasGutterUI=targetEl.classList.contains('tbl-outer');
   bar.style.position='fixed';
   if(isNested){
     const isCellNested=container.tagName==='TD'||container.tagName==='TH';
     if(isCellNested){
-      // Center bar inside the cell
-      const cellRect=container.getBoundingClientRect();
-      bar.style.top=(cellRect.top+Math.round(cellRect.height/2)-13)+'px';
-      bar.style.left=(cellRect.left+Math.round(cellRect.width/2)-26)+'px';
-      bar.classList.add('on-nested');
+      // Walk up to tbl-outer, place bar in left gutter outside the table
+      let tblOuter=container;
+      while(tblOuter&&!tblOuter.classList.contains('tbl-outer'))tblOuter=tblOuter.parentElement;
+      const tblRect=tblOuter?tblOuter.getBoundingClientRect():rect;
+      bar.style.top=(rect.top+2)+'px';
+      bar.style.left=Math.max(4,tblRect.left-56)+'px';
+      bar.classList.remove('on-nested');
     } else {
       bar.style.top=rect.top+'px';
       bar.style.left=rect.left+'px';
       bar.classList.add('on-nested');
     }
-  } else if(hasCenterUI){
-    // Center bar on the image/video/carousel block
-    bar.style.top=(rect.top+Math.round(rect.height/2)-13)+'px';
-    bar.style.left=(rect.left+Math.round(rect.width/2)-26)+'px';
-    bar.classList.add('on-nested');
-  } else if(hasGutterUI){
-    // Place bar near top-right interior of block, clear of edge handles on left/right
-    bar.style.top=(rect.top+8)+'px';
-    bar.style.left=Math.max(rect.left+8,rect.right-80)+'px';
-    bar.classList.add('on-nested');
   } else {
+    // All non-nested blocks (text, fmedia, image, carousel, table…): left gutter
     bar.classList.remove('on-nested');
     bar.style.top=(rect.top+2)+'px';
     bar.style.left=Math.max(4,rect.left-56)+'px';
