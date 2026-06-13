@@ -415,7 +415,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 /* Cell with image — remove padding, image fills cell edge to edge */
 .editor-content td.tbl-has-img,
 .editor-content th.tbl-has-img{
-  padding:0;overflow:hidden;vertical-align:top;text-align:center;box-sizing:border-box;line-height:0;
+  padding:0;overflow:hidden;vertical-align:middle;text-align:center;box-sizing:border-box;line-height:0;
 }
 /* cf-img-block inside table cell — remove margin & caption gap */
 .editor-content td .cf-img-block,.editor-content th .cf-img-block{margin:0!important}
@@ -5445,7 +5445,7 @@ async function tblInsertImage(cell,file){
   const el=document.createElement('img');
   el.src=objUrl;el.alt=file.name||'image';
   el.dataset.tblimgid=imgId; // IDB reference (không lưu blob URL vào HTML)
-  el.style.cssText='display:block;width:100%;height:auto;max-width:100%;margin:0;border-radius:0;cursor:zoom-in;background:transparent';
+  el.style.cssText='display:block;width:100%;height:auto;max-width:100%;margin:0 auto;border-radius:0;cursor:zoom-in;background:transparent';
   cell.classList.add('tbl-has-img');
   if(!cell.style.height&&cell.offsetHeight<80)cell.style.height='120px';
   el.addEventListener('dblclick',()=>{const _all=Array.from(document.querySelectorAll('.fmedia img,.editor-content img'));lbOpen(Math.max(0,_all.indexOf(el)));});
