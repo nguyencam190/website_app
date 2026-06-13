@@ -415,7 +415,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 /* Cell with image — remove padding, image fills cell edge to edge */
 .editor-content td.tbl-has-img,
 .editor-content th.tbl-has-img{
-  padding:0;overflow:hidden;vertical-align:middle;text-align:center;box-sizing:border-box;line-height:0;
+  padding:0;overflow:hidden;vertical-align:middle;text-align:center;box-sizing:border-box;line-height:0;background:var(--surface2);
 }
 /* cf-img-block inside table cell — remove margin & caption gap */
 .editor-content td .cf-img-block,.editor-content th .cf-img-block{margin:0!important}
@@ -10605,7 +10605,7 @@ async function doExportWebsite(){
     '.ws-canvas .editor-content .tbl-inner-row td:last-child{border-right:none}',
     '.ws-canvas .editor-content .tbl-inner-row tr:hover td{background:var(--tbl-hover)}',
     '.ws-canvas .editor-content tr:hover td{background:var(--tbl-hover)}',
-    '.ws-canvas .editor-content td.tbl-has-img,.ws-canvas .editor-content th.tbl-has-img{padding:0;overflow:hidden;text-align:center;vertical-align:middle;line-height:0}',
+    '.ws-canvas .editor-content td.tbl-has-img,.ws-canvas .editor-content th.tbl-has-img{padding:0;overflow:hidden;text-align:center;vertical-align:middle;line-height:0;background:var(--surface2)}',
     '.ws-canvas .editor-content td.tbl-has-img img,.ws-canvas .editor-content th.tbl-has-img img{width:100%;height:auto;display:block;object-fit:cover;margin:0}',
     '.ws-canvas .editor-content td img,.ws-canvas .editor-content th img{display:block!important;width:100%!important;height:auto!important;max-width:100%!important;margin:0!important;background:transparent}',
     '.ws-canvas .editor-content td .cf-img-block,.ws-canvas .editor-content th .cf-img-block{margin:0!important}',
