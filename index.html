@@ -805,6 +805,29 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .cf-toggle-title:empty::before{content:attr(data-placeholder);color:var(--text3);pointer-events:none}
 .cf-toggle-body{padding:10px 14px 10px 34px;border-top:1px solid var(--border);display:none;min-height:36px}
 .cf-toggle[data-open="true"] .cf-toggle-body{display:block}
+/* ── Checklist Block (QA review) ── */
+.cf-checklist{border:1.5px solid var(--border);border-radius:10px;margin:10px 0;background:var(--surface);overflow:hidden;position:relative}
+.cf-checklist[data-status="minor"]{border-left:4px solid #f59e0b}
+.cf-checklist[data-status="major"]{border-left:4px solid #f97316}
+.cf-checklist[data-status="critical"]{border-left:4px solid #ef4444}
+.cf-checklist-head{display:flex;align-items:center;gap:8px;padding:8px 12px 8px 10px;cursor:pointer;user-select:none;background:var(--surface2);transition:background .12s}
+.cf-checklist-head:hover{background:var(--surface3)}
+.cf-checklist-status-btn{font-size:18px;flex-shrink:0;cursor:pointer;border:none;background:transparent;padding:2px;line-height:1;border-radius:4px;transition:transform .1s}
+.cf-checklist-status-btn:hover{transform:scale(1.25)}
+.cf-checklist-title{flex:1;font-size:14px;font-weight:500;color:var(--text);outline:none;border:none;background:transparent;padding:0;font-family:var(--font);cursor:text;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cf-checklist-title:empty::before{content:attr(data-placeholder);color:var(--text3);pointer-events:none}
+.cf-checklist-cam-btn{width:26px;height:26px;border:none;background:transparent;color:var(--text3);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;border-radius:4px;transition:.12s;flex-shrink:0}
+.cf-checklist-cam-btn:hover{background:var(--surface3);color:var(--text)}
+.cf-checklist-btn{width:22px;height:22px;border:none;background:transparent;color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;border-radius:4px;flex-shrink:0;transition:.12s}
+.cf-checklist-btn:hover{background:var(--surface3)}
+.cf-checklist-btn i{transition:transform .18s;display:block}
+.cf-checklist[data-open="true"] .cf-checklist-btn i{transform:rotate(90deg)}
+.cf-checklist-body{padding:10px 14px 12px 14px;border-top:1px solid var(--border);display:none;min-height:36px;outline:none;font-size:14px;line-height:1.7;color:var(--text)}
+.cf-checklist[data-open="true"] .cf-checklist-body{display:block}
+.cf-checklist-body:empty::before{content:'Thêm nội dung...';color:var(--text3);pointer-events:none}
+[data-theme="dark"] .cf-checklist{background:var(--surface)}
+[data-theme="dark"] .cf-checklist-head{background:var(--surface2)}
+[data-theme="dark"] .cf-checklist-head:hover{background:var(--surface3)}
 /* ═══ TOC BLOCK ═════════════════════════════════════════════ */
 .cf-toc{border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin:12px 0;background:var(--surface2);position:relative}
 .cf-toc-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
@@ -3026,6 +3049,7 @@ function openDoc(id){
   setTimeout(()=>{
     _cfImgLoadAll(document.getElementById('editor'));
     _cfToggleLoadAll(document.getElementById('editor'));
+    document.querySelectorAll('.cf-checklist').forEach(cl=>_cfWireChecklist(cl));
     _cfFileLoadAll(document.getElementById('editor'));
     _undoSnapshot(); // initial snapshot
   },80);
@@ -6320,6 +6344,7 @@ const SLASH_ITEMS=[
   {id:'col3',     icon:'<i class="ti ti-layout-board"></i>',   name:'3 Cột',        desc:'Chia bố cục thành 3 cột ngang',      cat:'Cấu trúc', alias:'column layout 3col three col3'},
   {id:'divider',  icon:'<i class="ti ti-separator"></i>',      name:'Đường kẻ ngang', desc:'Thêm đường phân cách nội dung',    cat:'Cấu trúc', alias:'divider hr separator line'},
   {id:'toggle',   icon:'<i class="ti ti-chevrons-right"></i>', name:'Toggle',          desc:'Block thu gọn có thể ẩn/hiện nội dung', cat:'Cấu trúc', alias:'toggle accordion collapse expand fold'},
+  {id:'checklist',icon:'<i class="ti ti-checklist"></i>',name:'Checklist',desc:'Block QA review — Minor/Major/Critical',cat:'Cấu trúc',alias:'checklist qa review status issue'},
   {id:'tabs',     icon:'<i class="ti ti-layout-columns"></i>',name:'Tabs',             desc:'Nội dung dạng tab có thể chuyển đổi',   cat:'Cấu trúc', alias:'tabs tab panel switch'},
   {id:'toc',      icon:'<i class="ti ti-list-details"></i>',  name:'Mục lục',         desc:'Tự động tạo từ heading trong trang', cat:'Cấu trúc', alias:'toc table of contents muc luc heading nav'},
   // ── Media ─────────────────────────────────────────────────
@@ -6856,6 +6881,18 @@ function _slashInsert(id){
     return;
   }
 
+  // ── Checklist block ──────────────────────────────────────
+  if(id==='checklist'){
+    const cl=_cfMakeChecklist();
+    _cfInsertBlockAtRange(cl,_slashSavedRange);
+    _cfWireChecklist(cl);
+    requestAnimationFrame(()=>{
+      const titleEl=cl.querySelector('.cf-checklist-title');
+      if(titleEl){titleEl.focus();const r=document.createRange();r.selectNodeContents(titleEl);r.collapse(false);const sel=window.getSelection();sel.removeAllRanges();sel.addRange(r);}
+    });
+    return;
+  }
+
   // ── Table of Contents ────────────────────────────────────
   if(id==='toc'){
     const toc=document.createElement('div');
@@ -7029,6 +7066,69 @@ function _cfFileLoadAll(editor){
       delBtn.addEventListener('click',()=>{block.remove();onContentChange();});
     }
   });
+}
+
+function _cfMakeChecklist(){
+  const cl=document.createElement('div');
+  cl.className='cf-checklist';
+  cl.dataset.status='minor';
+  cl.dataset.open='false';
+  cl.setAttribute('contenteditable','false');
+  cl.innerHTML='<div class="cf-checklist-head"><button class="cf-checklist-status-btn" title="Click để đổi trạng thái">💡</button><div class="cf-checklist-title" contenteditable="true" data-placeholder="Tiêu đề checklist..."></div><button class="cf-checklist-cam-btn" title="Thêm ảnh/screenshot"><i class="ti ti-camera"></i></button><button class="cf-checklist-btn"><i class="ti ti-chevron-right"></i></button></div><div class="cf-checklist-body" contenteditable="true"><p><br></p></div>';
+  return cl;
+}
+function _cfWireChecklist(cl){
+  const head=cl.querySelector('.cf-checklist-head');
+  const statusBtn=cl.querySelector('.cf-checklist-status-btn');
+  const camBtn=cl.querySelector('.cf-checklist-cam-btn');
+  const titleEl=cl.querySelector('.cf-checklist-title');
+  if(statusBtn){
+    statusBtn.addEventListener('click',e=>{
+      e.stopPropagation();
+      const cur=cl.dataset.status||'minor';
+      const next=cur==='minor'?'major':cur==='major'?'critical':'minor';
+      const icons={minor:'💡',major:'⚠️',critical:'❌'};
+      cl.dataset.status=next;
+      statusBtn.textContent=icons[next];
+      onContentChange();
+    });
+  }
+  if(head){
+    head.addEventListener('click',e=>{
+      if(e.target.closest('.cf-checklist-status-btn,.cf-checklist-cam-btn,.cf-checklist-title'))return;
+      cl.dataset.open=cl.dataset.open==='true'?'false':'true';
+      onContentChange();
+    });
+  }
+  if(camBtn){
+    camBtn.addEventListener('click',e=>{
+      e.stopPropagation();
+      const inp=document.createElement('input');
+      inp.type='file';inp.accept='image/*,video/*';
+      inp.onchange=async ev=>{
+        const file=ev.target.files[0];
+        if(!file)return;
+        cl.dataset.open='true';
+        const body=cl.querySelector('.cf-checklist-body');
+        if(!body)return;
+        const block=await _cfMakeImgBlock(file);
+        if(!block)return;
+        const lastChild=body.lastElementChild;
+        if(lastChild&&lastChild.tagName==='P'&&!lastChild.textContent.trim()){body.insertBefore(block,lastChild);}else{body.appendChild(block);}
+        _cfRewireImgBlock(block);
+        onContentChange();
+        requestAnimationFrame(()=>_showBlockBar(block));
+      };
+      inp.click();
+    });
+  }
+  if(titleEl){
+    titleEl.addEventListener('keydown',e=>{
+      if(e.key==='Enter'){e.preventDefault();cl.dataset.open='true';const body=cl.querySelector('.cf-checklist-body');if(body){body.focus();const r=document.createRange();r.selectNodeContents(body);r.collapse(false);const sel=window.getSelection();sel.removeAllRanges();sel.addRange(r);}}
+      if(e.key==='Escape'){e.preventDefault();cl.blur();}
+    });
+    titleEl.addEventListener('input',()=>onContentChange());
+  }
 }
 
 function _cfWireToggle(el){
@@ -10534,6 +10634,21 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .cf-toggle-title{flex:1;font-size:14px;font-weight:500;color:var(--text)}',
     '.ws-canvas .cf-toggle-body{padding:10px 14px 10px 34px;border-top:1px solid var(--border);display:none}',
     '.ws-canvas .cf-toggle[data-open="true"] .cf-toggle-body{display:block}',
+    /* ── Viewer Checklist Block ── */
+    '.ws-canvas .cf-checklist{border:1.5px solid var(--border);border-radius:10px;margin:10px 0;background:var(--surface);overflow:hidden}',
+    '.ws-canvas .cf-checklist[data-status="minor"]{border-left:4px solid #f59e0b}',
+    '.ws-canvas .cf-checklist[data-status="major"]{border-left:4px solid #f97316}',
+    '.ws-canvas .cf-checklist[data-status="critical"]{border-left:4px solid #ef4444}',
+    '.ws-canvas .cf-checklist-head{display:flex;align-items:center;gap:8px;padding:8px 12px 8px 10px;cursor:pointer;user-select:none;background:var(--surface2);transition:background .12s}',
+    '.ws-canvas .cf-checklist-head:hover{background:var(--surface3)}',
+    '.ws-canvas .cf-checklist-status-btn{font-size:18px;flex-shrink:0;cursor:pointer;border:none;background:transparent;padding:2px;line-height:1;border-radius:4px;transition:transform .1s}',
+    '.ws-canvas .cf-checklist-status-btn:hover{transform:scale(1.25)}',
+    '.ws-canvas .cf-checklist-title{flex:1;font-size:14px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+    '.ws-canvas .cf-checklist-btn{width:22px;height:22px;border:none;background:transparent;color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;border-radius:4px;flex-shrink:0}',
+    '.ws-canvas .cf-checklist-btn i{transition:transform .18s;display:block}',
+    '.ws-canvas .cf-checklist[data-open="true"] .cf-checklist-btn i{transform:rotate(90deg)}',
+    '.ws-canvas .cf-checklist-body{padding:10px 14px 12px 14px;border-top:1px solid var(--border);display:none;min-height:36px;font-size:14px;line-height:1.7;color:var(--text)}',
+    '.ws-canvas .cf-checklist[data-open="true"] .cf-checklist-body{display:block}',
     /* ── TOC Block ── */
     '.ws-canvas .cf-toc{border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin:12px 0;background:var(--surface2)}',
     '.ws-canvas .cf-toc-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;display:flex;align-items:center;gap:6px}',
