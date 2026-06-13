@@ -172,7 +172,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .layout{display:flex;flex:1;overflow:hidden}
 /* SIDEBAR */
 /* ── SIDEBAR (Confluence style) ── */
-.sidebar{width:260px;min-width:160px;max-width:520px;background:var(--sidebar-bg);border-right:1px solid var(--sb-border);display:flex;flex-direction:column;color:var(--sb-txt);font-size:14px;transition:background var(--mode-transition),border-color var(--mode-transition),width .2s ease;flex-shrink:0;position:relative;overflow:hidden}
+.sidebar{width:260px;min-width:160px;max-width:520px;background:var(--sidebar-bg);border-right:1px solid var(--sb-border);display:flex;flex-direction:column;color:var(--sb-txt);font-size:14px;transition:background var(--mode-transition),border-color var(--mode-transition),width .25s cubic-bezier(.4,0,.2,1);flex-shrink:0;position:relative;overflow:hidden;will-change:width}
 .sidebar.collapsed{min-width:0;width:0!important;border-right:none;overflow:hidden}
 /* Resize handle */
 .sb-resizer{position:absolute;top:0;right:0;bottom:0;width:5px;cursor:col-resize;z-index:50;background:transparent;transition:background .15s}
@@ -2129,8 +2129,7 @@ function sbCollapse(){
   sb.classList.add('collapsed');
   if(expBtn)expBtn.style.display='flex';
   localStorage.setItem('sb_collapsed','1');
-  // Canvas width changes after transition → reset reference so next resize scales correctly
-  setTimeout(resetCanvasWidth, 250);
+  _sbAnimCanvas(260);
 }
 function sbExpand(){
   const sb=document.getElementById('sidebar');
@@ -2140,7 +2139,18 @@ function sbExpand(){
   const savedW=localStorage.getItem('sb_width');
   if(savedW)sb.style.width=savedW+'px';
   localStorage.removeItem('sb_collapsed');
-  setTimeout(resetCanvasWidth, 250);
+  _sbAnimCanvas(260);
+}
+function _sbAnimCanvas(dur){
+  const scroll=document.getElementById('editorScroll');
+  if(!scroll)return;
+  const t0=performance.now();
+  (function loop(){
+    const newW=scroll.offsetWidth;
+    if(newW&&Math.abs(newW-_canvasW)>0.5)_applyCanvasScale(newW);
+    if(performance.now()-t0<dur)requestAnimationFrame(loop);
+    else _canvasW=scroll.offsetWidth||_canvasW;
+  })();
 }
 
 function toggleTheme(){
