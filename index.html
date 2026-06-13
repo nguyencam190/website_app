@@ -822,7 +822,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .cf-img-tb-btn.active{background:var(--accent-light);border-color:var(--accent);color:var(--accent)}
 .cf-img-tb-sep{width:1px;height:18px;background:var(--border);margin:0 2px;flex-shrink:0}
 /* Context menu (... dropdown) */
-.cf-img-ctx{position:absolute;right:0;top:calc(100% + 4px);background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.14);min-width:170px;z-index:200;overflow:hidden;display:none}
+.cf-img-ctx{position:fixed;left:0;top:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,.18);min-width:210px;z-index:9001;overflow:hidden;display:none}
 .cf-img-ctx.on{display:block;animation:cpFade .12s ease}
 .cf-img-ctx-item{display:flex;align-items:center;gap:10px;padding:9px 13px;cursor:pointer;font-size:13px;color:var(--text);transition:.1s}
 .cf-img-ctx-item:hover{background:var(--surface2)}
@@ -7054,9 +7054,25 @@ function _cfBuildImgToolbar(block){
     el.addEventListener('click',()=>{ctx.classList.remove('on');item.fn();});
     ctx.appendChild(el);
   });
-  moreBtn.addEventListener('click',e=>{e.stopPropagation();ctx.classList.toggle('on');});
+  function _posImgCtx(){
+    if(!document.body.contains(ctx))document.body.appendChild(ctx);
+    ctx.classList.add('on');
+    const r=moreBtn.getBoundingClientRect(),vw=window.innerWidth,vh=window.innerHeight;
+    const cw=ctx.offsetWidth||210,ch=ctx.offsetHeight||200;
+    let left=r.right-cw,top=r.bottom+6;
+    if(left<8)left=8;if(left+cw>vw-8)left=vw-cw-8;
+    if(top+ch>vh-8)top=r.top-ch-6;
+    ctx.style.left=left+'px';ctx.style.top=top+'px';
+  }
+  moreBtn.addEventListener('click',e=>{
+    e.stopPropagation();
+    const showing=ctx.classList.contains('on');
+    document.querySelectorAll('.cf-img-ctx.on').forEach(c=>c.classList.remove('on'));
+    if(!showing)_posImgCtx();
+  });
   document.addEventListener('click',()=>ctx.classList.remove('on'));
-  moreWrap.appendChild(moreBtn);moreWrap.appendChild(ctx);tb.appendChild(moreWrap);
+  moreWrap.appendChild(moreBtn);tb.appendChild(moreWrap);
+  tb._ctx=ctx;
   return tb;
 }
 
@@ -7199,12 +7215,14 @@ function _cfImgPositionToolbar(block){
 
 function _cfImgWireHover(block,tb){
   let _tbHide;
+  const ctx=tb._ctx;
   const _showTb=()=>{clearTimeout(_tbHide);_cfImgPositionToolbar(block);};
-  const _hideTb=()=>{_tbHide=setTimeout(()=>{if(!block.classList.contains('selected')){tb.style.display='none';}},180);};
+  const _hideTb=()=>{_tbHide=setTimeout(()=>{if(!block.classList.contains('selected')&&!(ctx&&ctx.classList.contains('on')))tb.style.display='none';},180);};
   block.addEventListener('mouseenter',_showTb);
   block.addEventListener('mouseleave',_hideTb);
   tb.addEventListener('mouseenter',()=>clearTimeout(_tbHide));
   tb.addEventListener('mouseleave',_hideTb);
+  if(ctx)ctx.addEventListener('mouseleave',_hideTb);
 }
 
 function _cfBuildCarToolbar(block){
@@ -7306,9 +7324,24 @@ function _cfBuildCarToolbar(block){
     el.addEventListener('click',()=>{ctx.classList.remove('on');item.fn();});
     ctx.appendChild(el);
   });
-  moreBtn.addEventListener('click',e=>{e.stopPropagation();ctx.classList.toggle('on');});
+  function _posCarCtx(){
+    if(!document.body.contains(ctx))document.body.appendChild(ctx);
+    ctx.classList.add('on');
+    const r=moreBtn.getBoundingClientRect(),vw=window.innerWidth,vh=window.innerHeight;
+    const cw=ctx.offsetWidth||210,ch=ctx.offsetHeight||220;
+    let left=r.right-cw,top=r.bottom+6;
+    if(left<8)left=8;if(left+cw>vw-8)left=vw-cw-8;
+    if(top+ch>vh-8)top=r.top-ch-6;
+    ctx.style.left=left+'px';ctx.style.top=top+'px';
+  }
+  moreBtn.addEventListener('click',e=>{
+    e.stopPropagation();
+    const showing=ctx.classList.contains('on');
+    document.querySelectorAll('.cf-img-ctx.on').forEach(c=>c.classList.remove('on'));
+    if(!showing)_posCarCtx();
+  });
   document.addEventListener('click',()=>ctx.classList.remove('on'));
-  moreWrap.appendChild(moreBtn);moreWrap.appendChild(ctx);tb.appendChild(moreWrap);
+  moreWrap.appendChild(moreBtn);tb.appendChild(moreWrap);
 
   // Refresh slide swatches when navigating slides
   block._carSlideSection=null;
@@ -7321,11 +7354,12 @@ function _cfBuildCarToolbar(block){
   // Wire hover show/hide for fixed-position toolbar with gap-bridging delay
   let _tbHide;
   const _showTb=()=>{clearTimeout(_tbHide);_cfCarPositionToolbar(block);};
-  const _hideTb=()=>{_tbHide=setTimeout(()=>{if(!block.classList.contains('selected'))tb.style.display='none';},180);};
+  const _hideTb=()=>{_tbHide=setTimeout(()=>{if(!block.classList.contains('selected')&&!ctx.classList.contains('on'))tb.style.display='none';},180);};
   block.addEventListener('mouseenter',_showTb);
   block.addEventListener('mouseleave',_hideTb);
   tb.addEventListener('mouseenter',()=>clearTimeout(_tbHide));
   tb.addEventListener('mouseleave',_hideTb);
+  ctx.addEventListener('mouseleave',_hideTb);
   return tb;
 }
 
