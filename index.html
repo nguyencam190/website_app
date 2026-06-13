@@ -8607,7 +8607,11 @@ function _initSlashCommands(){
   editor.addEventListener('focus',_updateBlockBar);
   editor.addEventListener('blur',()=>{setTimeout(_hideBlockBar,150);});
   editor.addEventListener('mousemove',_onEditorMouseMove);
-  editor.addEventListener('mouseleave',()=>{if(!document.activeElement?.closest('.editor-content'))_hideBlockBar();});
+  editor.addEventListener('mouseleave',(e)=>{
+    const bar=document.getElementById('editorBlockBar');
+    if(bar&&(bar===e.relatedTarget||bar.contains(e.relatedTarget)))return;
+    if(!document.activeElement?.closest('.editor-content'))_hideBlockBar();
+  });
   // Wire slash menu input handlers (replaces inline oninput/onkeydown)
   const inp=document.getElementById('slashMenuInp');
   if(inp){
@@ -8779,6 +8783,10 @@ function _getBlockBar(){
     document.addEventListener('mouseup',onUp);
   });
 
+  // ── Hover protection — keep bar visible when mouse is on it ──
+  _blockBar.addEventListener('mouseenter',()=>clearTimeout(_blockBarTimer));
+  _blockBar.addEventListener('mouseleave',()=>{_blockBarTimer=setTimeout(_hideBlockBar,200);});
+
   _blockBar.appendChild(plus);_blockBar.appendChild(drag);
   document.body.appendChild(_blockBar);
   return _blockBar;
@@ -8814,9 +8822,22 @@ function _showBlockBar(targetEl){
   _blockBarTarget=targetEl;
   const bar=_getBlockBar();
   const rect=targetEl.getBoundingClientRect();
+  const container=targetEl.parentElement;
+  const isNested=container&&(container.tagName==='TD'||container.tagName==='TH'||
+    container.classList.contains('cf-column-item')||
+    container.classList.contains('cf-panel-content')||
+    container.classList.contains('cf-toggle-body')||
+    container.classList.contains('cf-tab-content'));
   bar.style.position='fixed';
-  bar.style.top=(rect.top+2)+'px';
-  bar.style.left=Math.max(4,rect.left-56)+'px';
+  if(isNested){
+    // Inside table cell or column: show ABOVE the block within the cell's
+    // horizontal area so the user doesn't need to move outside the cell to click
+    bar.style.top=Math.max(4,rect.top-26)+'px';
+    bar.style.left=rect.left+'px';
+  } else {
+    bar.style.top=(rect.top+2)+'px';
+    bar.style.left=Math.max(4,rect.left-56)+'px';
+  }
   bar.classList.add('on');
 }
 
@@ -8854,7 +8875,16 @@ function _onEditorMouseMove(e){
     if(el.closest('.txtbox')||el.closest('.tbl-dropdown'))return;
     const result=_findBlockInContainer(el);
     if(!result){_hideBlockBar();return;}
-    _showBlockBar(result.block);
+    const {block}=result;
+    // Prevent bar from jumping when crossing from a nested block (td/column) to the
+    // outer table wrapper — the user is likely moving toward the bar above the block
+    if(_blockBarTarget&&block!==_blockBarTarget){
+      const prevPar=_blockBarTarget.parentElement;
+      const isFromNested=prevPar&&(prevPar.tagName==='TD'||prevPar.tagName==='TH'||
+        prevPar.classList.contains('cf-column-item'));
+      if(isFromNested&&(block.classList.contains('tbl-outer')||block.tagName==='TABLE'))return;
+    }
+    _showBlockBar(block);
   },30);
 }
 
