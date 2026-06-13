@@ -8225,10 +8225,13 @@ function _cfEmbedLoadAll(editor){
     // Ensure iframe has src and required attributes
     const iframe=block.querySelector('iframe');
     if(iframe){
-      if(!iframe.src)iframe.src=embedUrl;
+      // Migrate legacy youtube-nocookie.com URLs to youtube.com
+      const migratedUrl=embedUrl.replace('youtube-nocookie.com','youtube.com');
+      if(migratedUrl!==embedUrl)block.dataset.embedUrl=migratedUrl;
+      if(!iframe.src||iframe.src.includes('youtube-nocookie.com'))iframe.src=migratedUrl;
       iframe.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen';
       iframe.setAttribute('allowfullscreen','');
-      iframe.setAttribute('referrerpolicy','no-referrer-when-downgrade');
+      iframe.setAttribute('referrerpolicy','strict-origin-when-cross-origin');
     }
     // Rebuild toolbar
     const wrap=block.querySelector('.cf-embed-wrap');
@@ -8393,7 +8396,7 @@ function cfGetEmbedUrl(url){
   try{
     // YouTube: watch, shorts, youtu.be, live
     let m=url.match(/(?:youtube\.com\/(?:watch\?.*v=|shorts\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-    if(m)return 'https://www.youtube-nocookie.com/embed/'+m[1]+'?rel=0';
+    if(m)return 'https://www.youtube.com/embed/'+m[1]+'?rel=0';
     // Vimeo
     m=url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
     if(m)return 'https://player.vimeo.com/video/'+m[1]+'?h=&color=ffffff';
@@ -8413,14 +8416,14 @@ function cfGetEmbedUrl(url){
     m=url.match(/dailymotion\.com\/video\/([\w]+)/);
     if(m)return 'https://www.dailymotion.com/embed/video/'+m[1];
     // Direct iframe embed URLs (already embed)
-    if(/\/embed\/|player\.(vimeo|youtube)|youtube-nocookie\.com|platform\.twitter|tiktok\.com\/embed/.test(url))return url;
+    if(/\/embed\/|player\.(vimeo|youtube)|youtube(?:-nocookie)?\.com\/embed|platform\.twitter|tiktok\.com\/embed/.test(url))return url;
   }catch(e){}
   return null;
 }
 
 // Get platform name from embed URL
 function cfEmbedPlatform(embedUrl){
-  if(embedUrl.includes('youtube.com')||embedUrl.includes('youtube-nocookie.com'))return 'YouTube';
+  if(embedUrl.includes('youtube.com'))return 'YouTube';
   if(embedUrl.includes('vimeo.com'))return 'Vimeo';
   if(embedUrl.includes('tiktok.com'))return 'TikTok';
   if(embedUrl.includes('twitter.com')||embedUrl.includes('platform.twitter'))return 'Twitter/X';
@@ -8448,7 +8451,7 @@ function cfBuildEmbedBlock(embedUrl, origUrl){
   iframe.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen';
   iframe.setAttribute('allowfullscreen','');
   iframe.setAttribute('loading','lazy');
-  iframe.setAttribute('referrerpolicy','no-referrer-when-downgrade');
+  iframe.setAttribute('referrerpolicy','strict-origin-when-cross-origin');
   wrap.appendChild(iframe);
 
   // Toolbar
@@ -10485,9 +10488,30 @@ async function doExportWebsite(){
     // Make all images dblclick → lightbox (zoom-in cursor as hint)
     tmp.querySelectorAll('.cf-img-block img').forEach(img=>{img.setAttribute('ondblclick','wsImgLb(this.src)');img.style.cursor='zoom-in';});
     tmp.querySelectorAll('.cf-car-slide img,.cf-carousel-slide img').forEach(img=>{img.setAttribute('ondblclick','wsImgLb(this.src)');img.style.cursor='zoom-in';});
-    // Fix embed block: set padding-bottom for 16:9 aspect ratio
-    tmp.querySelectorAll('.cf-embed-wrap').forEach(wrap=>{
-      if(!wrap.style.paddingBottom)wrap.style.paddingBottom='56.25%';
+    // Restore embed iframes: set src from data-embed-url (survives serialization gaps),
+    // migrate legacy youtube-nocookie → youtube.com, and standardize attributes
+    tmp.querySelectorAll('.cf-embed-block[data-embed-url]').forEach(block=>{
+      let embedUrl=block.dataset.embedUrl||'';
+      // Migrate old youtube-nocookie.com URLs
+      embedUrl=embedUrl.replace('youtube-nocookie.com','youtube.com');
+      block.dataset.embedUrl=embedUrl;
+      const wrap=block.querySelector('.cf-embed-wrap');
+      if(wrap&&!wrap.style.paddingBottom){
+        const isPortrait=embedUrl.includes('tiktok.com')||/instagram\.com\/(reel|p)\//.test(embedUrl);
+        const isTwitter=embedUrl.includes('twitter.com')||embedUrl.includes('platform.twitter');
+        wrap.style.paddingBottom=isPortrait?'177.78%':isTwitter?'75%':'56.25%';
+      }
+      // Ensure iframe exists with correct src and attributes
+      let iframe=block.querySelector('iframe');
+      if(!iframe){
+        iframe=document.createElement('iframe');
+        if(wrap)wrap.appendChild(iframe);else block.appendChild(iframe);
+      }
+      iframe.src=embedUrl;
+      iframe.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen';
+      iframe.setAttribute('allowfullscreen','');
+      iframe.setAttribute('referrerpolicy','strict-origin-when-cross-origin');
+      iframe.setAttribute('loading','lazy');
     });
     // Remove drag cursor from column separators (viewer mode)
     tmp.querySelectorAll('.cf-col-sep-line').forEach(el=>{el.style.cursor='default';});
@@ -11516,6 +11540,7 @@ async function doExportWebsite(){
     '<head>',
     '<meta charset="UTF-8">',
     '<meta name="viewport" content="width=device-width,initial-scale=1">',
+    '<meta http-equiv="Content-Security-Policy" content="default-src \'self\' \'unsafe-inline\' \'unsafe-eval\' data: blob:; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://www.tiktok.com https://platform.twitter.com https://www.instagram.com https://www.facebook.com https://www.dailymotion.com; img-src * data: blob:; media-src * data: blob:; font-src * data:; style-src \'unsafe-inline\' https://fonts.googleapis.com https://cdn.jsdelivr.net; connect-src *;">',
     '<title>'+escH(title)+'</title>',
     '<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">',
     '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.10.0/dist/tabler-icons.min.css">',
