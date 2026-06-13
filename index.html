@@ -4570,11 +4570,11 @@ function _tblAttachInnerRow(innerTbl){
     cell.addEventListener('drop',async e=>{
       e.preventDefault();e.stopPropagation();dropOv.classList.remove('on');
       const files=Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith('image/'));
-      if(files.length)await tblInsertImages(cell,files);
+      if(files.length)await _tblInsertImgBlock(cell,files[0]);
     });
     cell.addEventListener('paste',async e=>{
-      const imgs=Array.from(e.clipboardData?.items||[]).filter(i=>i.type.startsWith('image/'));
-      if(imgs.length){e.preventDefault();await tblInsertImages(cell,imgs.map(i=>i.getAsFile()));}
+      const imgItem=Array.from(e.clipboardData?.items||[]).find(i=>i.type.startsWith('image/'));
+      if(imgItem){e.preventDefault();e.stopPropagation();await _tblInsertImgBlock(cell,imgItem.getAsFile());}
     });
   });
 
@@ -5350,6 +5350,25 @@ async function tblInsertImage(cell,file){
   }
   onContentChange();toast('Đã thêm hình vào ô','success');
 }
+
+// Insert a .cf-img-block (with full editing toolbar) into a table cell
+// Used by paste and drop handlers so images get the same toolbar as slash-inserted images.
+async function _tblInsertImgBlock(cell, file){
+  const block=await _cfMakeImgBlock(file);if(!block)return;
+  // Clear existing content, keep UI overlays
+  Array.from(cell.childNodes).forEach(node=>{
+    if(node.nodeType===Node.TEXT_NODE||
+       (node.nodeType===Node.ELEMENT_NODE&&
+        !node.classList.contains('tbl-cell-drop')&&
+        !node.classList.contains('tbl-row-resize-handle')&&
+        !node.classList.contains('tbl-row-sel')))
+      node.remove();
+  });
+  cell.appendChild(block);
+  cell.classList.add('tbl-has-img');
+  onContentChange();
+  toast('Đã thêm hình vào ô','success');
+}
 // Mini color swatch for table cell bg
 // Apply color to cell(s) based on scope
 function _tblApplyCellColor(color,r,c,scope){
@@ -5690,13 +5709,13 @@ function tblAttachTable(table){
     cell.addEventListener('drop',async e=>{
       e.preventDefault();e.stopPropagation();dropOv.classList.remove('on');
       const files=Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith('image/'));
-      await tblInsertImages(cell,files);
+      if(files.length)await _tblInsertImgBlock(cell,files[0]);
     });
 
-    // Paste image handler
+    // Paste image handler — creates .cf-img-block with full editing toolbar
     cell.addEventListener('paste',async e=>{
-      const imgs=Array.from(e.clipboardData?.items||[]).filter(i=>i.type.startsWith('image/'));
-      if(imgs.length){e.preventDefault();await tblInsertImages(cell,imgs.map(i=>i.getAsFile()));}
+      const imgItem=Array.from(e.clipboardData?.items||[]).find(i=>i.type.startsWith('image/'));
+      if(imgItem){e.preventDefault();e.stopPropagation();await _tblInsertImgBlock(cell,imgItem.getAsFile());}
     });
 
     // Mark cells with images/carousels
@@ -6636,11 +6655,11 @@ function _cfRebuildCols(layout,n,dist,existingContent){
       }
       if(files.length)onContentChange();
     });
-    // Paste image into column
+    // Paste image into column — creates .cf-img-block with full editing toolbar
     col.addEventListener('paste',async e=>{
       const items=Array.from(e.clipboardData?.items||[]);
       const imgItem=items.find(it=>it.type.startsWith('image/'));
-      if(imgItem){e.preventDefault();const f=imgItem.getAsFile();if(f){const b=await _cfMakeImgBlock(f);if(b){col.appendChild(b);onContentChange();}}}
+      if(imgItem){e.preventDefault();e.stopPropagation();const f=imgItem.getAsFile();if(f){const b=await _cfMakeImgBlock(f);if(b){col.appendChild(b);onContentChange();setTimeout(()=>b.scrollIntoView({block:'nearest',behavior:'smooth'}),60);}}}
     });
     cols.push(col);
     layout.appendChild(col);
