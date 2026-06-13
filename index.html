@@ -3206,10 +3206,14 @@ async function loadMedia(file){
   // 2. Store raw Blob in IndexedDB asynchronously
   try{ await _idbPut(id,file); }
   catch(e){ toast('Luu media that bai','error'); }
-  // 3. Register in doc (no base64 in src — just marker)
+  // 3. Register in doc — for images ≤500KB also store base64 so they survive IDB clearing
   const doc=currentDoc();if(!doc)return;
   if(!doc.images)doc.images=[];
-  const media={id,name:file.name||'media',type,size:file.size};
+  let b64src='';
+  if(!isVideo(file)&&file.size<=512*1024){
+    try{b64src=await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=e=>res(e.target.result);fr.onerror=rej;fr.readAsDataURL(file);});}catch(e){}
+  }
+  const media={id,name:file.name||'media',type,size:file.size,...(b64src?{src:b64src}:{})};
   doc.images.push(media);
   insertMediaInEditor({...media,src:objUrl});
   doc.updatedAt=new Date().toISOString();markDirty();
@@ -3712,11 +3716,10 @@ function createFloatingMedia(media,x,y,w,h){
   fm.style.left=x+'px';fm.style.top=y+'px';fm.style.width=w+'px';fm.style.height=h+'px';
   const isVid=media.type==='video';
   const hasSrc=!!(media.src&&media.src.length>0);
-  const mediaEl=!hasSrc
-    ?`<div class="fmedia-placeholder"><i class="ti ti-photo-off" style="font-size:28px"></i><span>Media khong co san</span></div>`
-    :isVid
-      ?`<video src="${media.src}" style="width:100%;height:100%;border-radius:8px;display:block;background:#000;object-fit:contain"></video>`
-      :`<img src="${media.src}" alt="${escH(media.name)}" style="width:100%;height:100%;border-radius:8px;display:block;object-fit:contain;background:transparent" onload="_fmAutoHeight(this)">`;
+  // Always create img/video so _fmLoadSrc can set src from IDB after reload
+  const mediaEl=isVid
+    ?`<video ${hasSrc?`src="${media.src}"`:''}  style="width:100%;height:100%;border-radius:8px;display:block;background:#000;object-fit:contain"></video>`
+    :`<img ${hasSrc?`src="${media.src}"`:''}  alt="${escH(media.name)}" style="width:100%;height:100%;border-radius:8px;display:block;object-fit:contain;background:transparent" onload="_fmAutoHeight(this)">`;
   fm.innerHTML=`
     <div class="fmedia-bar">
       <i class="ti ti-grip-horizontal fmedia-ibtn" style="cursor:move;color:#475569" title="Di chuyen"></i>
@@ -4135,12 +4138,20 @@ async function _fmLoadSrc(fm){
       if(blob){src=URL.createObjectURL(blob);_cacheUrl(mid,src);}
     }catch(e){}
   }
-  if(!src)return;
   const isVid=fm.dataset.mtype==='video';
   const el=fm.querySelector(isVid?'video':'img');
+  if(!src){
+    // Blob not in IDB — show placeholder so user knows media is missing
+    if(el)el.remove();
+    if(!fm.querySelector('.fmedia-placeholder')){
+      const ph=document.createElement('div');ph.className='fmedia-placeholder';
+      ph.innerHTML='<i class="ti ti-photo-off" style="font-size:28px"></i><span>Media không khả dụng</span>';
+      fm.appendChild(ph);
+    }
+    return;
+  }
   if(el&&!el.src){
     el.src=src;
-    // Remove placeholder if present
     const ph=fm.querySelector('.fmedia-placeholder');if(ph)ph.remove();
   }
 }
@@ -4165,7 +4176,8 @@ async function fmLoadAll(doc){
 
     const w=media.fmw!=null?media.fmw:(media.type==='video'?480:320);
     const h=media.fmh!=null?media.fmh:(media.type==='video'?270:220);
-    const cachedSrc=_objUrls[media.id]||'';
+    // Use cached blob URL → fallback to saved base64 → fallback to IDB lazy load
+    const cachedSrc=_objUrls[media.id]||media.src||'';
     const fm=createFloatingMedia({...media,src:cachedSrc},x,y,w,h);
     if(!fm)continue;
     if(cachedSrc){fm.dataset.loaded='1';}
