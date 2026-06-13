@@ -749,6 +749,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .slash-item[data-id="callout"]:hover .slash-item-icon,.slash-item[data-id="callout"].active .slash-item-icon{box-shadow:0 3px 10px rgba(234,88,12,.28)}
 .slash-item[data-id="image"]:hover .slash-item-icon,.slash-item[data-id="image"].active .slash-item-icon{box-shadow:0 3px 10px rgba(14,165,233,.28)}
 .slash-item[data-id="video"]:hover .slash-item-icon,.slash-item[data-id="video"].active .slash-item-icon{box-shadow:0 3px 10px rgba(99,102,241,.28)}
+.slash-item-shortcut{padding:1px 5px;background:var(--surface3);border:1px solid var(--border);border-radius:4px;font-size:10px;color:var(--text3);font-family:var(--mono);white-space:nowrap;flex-shrink:0;opacity:0;transition:opacity .12s;line-height:1.6}
+.slash-item:hover .slash-item-shortcut,.slash-item.active .slash-item-shortcut{opacity:1}
+.slash-item-pin{background:none;border:none;cursor:pointer;color:var(--text3);font-size:13px;width:22px;height:22px;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0;transition:opacity .1s,color .1s,background .1s;margin-left:2px}
+.slash-item:hover .slash-item-pin{opacity:1}
+.slash-item-pin.pinned{opacity:1;color:var(--accent)}
+.slash-item-pin:hover{background:var(--surface3);color:var(--accent)}
 .slash-item-info{flex:1;min-width:0}
 .slash-item-name{font-size:13px;font-weight:500;color:var(--text)}
 .slash-item-desc{font-size:11px;color:var(--text3);margin-top:1px}
@@ -6015,17 +6021,17 @@ function tgInsert(rows,cols){
 // ═══════════════════════════════════════════════════════════
 const SLASH_ITEMS=[
   // ── Văn bản ─────────────────────────────────────────────
-  {id:'paragraph',icon:'<i class="ti ti-align-left"></i>',    name:'Đoạn văn bản', desc:'Chuyển về văn bản thông thường',     cat:'Văn bản', alias:'p text normal'},
-  {id:'h1',       icon:'<span class="si-text">H1</span>',     name:'Tiêu đề 1',    desc:'Heading lớn nhất',                   cat:'Văn bản', alias:'heading1 h1'},
-  {id:'h2',       icon:'<span class="si-text">H2</span>',     name:'Tiêu đề 2',    desc:'Heading cấp 2',                      cat:'Văn bản', alias:'heading2 h2'},
-  {id:'h3',       icon:'<span class="si-text">H3</span>',     name:'Tiêu đề 3',    desc:'Heading cấp 3',                      cat:'Văn bản', alias:'heading3 h3'},
+  {id:'paragraph',icon:'<i class="ti ti-align-left"></i>',    name:'Đoạn văn bản', desc:'Chuyển về văn bản thông thường',     cat:'Văn bản', alias:'p text normal',                shortcut:'p'},
+  {id:'h1',       icon:'<span class="si-text">H1</span>',     name:'Tiêu đề 1',    desc:'Heading lớn nhất',                   cat:'Văn bản', alias:'heading1 h1',                  shortcut:'#'},
+  {id:'h2',       icon:'<span class="si-text">H2</span>',     name:'Tiêu đề 2',    desc:'Heading cấp 2',                      cat:'Văn bản', alias:'heading2 h2',                  shortcut:'##'},
+  {id:'h3',       icon:'<span class="si-text">H3</span>',     name:'Tiêu đề 3',    desc:'Heading cấp 3',                      cat:'Văn bản', alias:'heading3 h3',                  shortcut:'###'},
   {id:'h4',       icon:'<span class="si-text">H4</span>',     name:'Tiêu đề 4',    desc:'Heading cấp 4',                      cat:'Văn bản', alias:'heading4 h4'},
   {id:'h5',       icon:'<span class="si-text">H5</span>',     name:'Tiêu đề 5',    desc:'Heading cấp 5',                      cat:'Văn bản', alias:'heading5 h5'},
   {id:'h6',       icon:'<span class="si-text">H6</span>',     name:'Tiêu đề 6',    desc:'Heading cấp 6',                      cat:'Văn bản', alias:'heading6 h6'},
-  {id:'quote',    icon:'<i class="ti ti-quote"></i>',          name:'Trích dẫn',    desc:'Blockquote có viền bên trái',        cat:'Văn bản', alias:'blockquote cite quote'},
-  {id:'ul',       icon:'<i class="ti ti-list"></i>',           name:'Danh sách chấm', desc:'Bullet list không có thứ tự',      cat:'Văn bản', alias:'bullet ul list'},
-  {id:'ol',       icon:'<i class="ti ti-list-numbers"></i>',   name:'Danh sách số', desc:'Numbered list có thứ tự',           cat:'Văn bản', alias:'numbered ol list 1'},
-  {id:'task',     icon:'<i class="ti ti-checkbox"></i>',       name:'Danh sách việc', desc:'Checkbox todo list',               cat:'Văn bản', alias:'todo checkbox task check'},
+  {id:'quote',    icon:'<i class="ti ti-quote"></i>',          name:'Trích dẫn',    desc:'Blockquote có viền bên trái',        cat:'Văn bản', alias:'blockquote cite quote',         shortcut:'>'},
+  {id:'ul',       icon:'<i class="ti ti-list"></i>',           name:'Danh sách chấm', desc:'Bullet list không có thứ tự',      cat:'Văn bản', alias:'bullet ul list',               shortcut:'-'},
+  {id:'ol',       icon:'<i class="ti ti-list-numbers"></i>',   name:'Danh sách số', desc:'Numbered list có thứ tự',           cat:'Văn bản', alias:'numbered ol list 1',           shortcut:'1.'},
+  {id:'task',     icon:'<i class="ti ti-checkbox"></i>',       name:'Danh sách việc', desc:'Checkbox todo list',               cat:'Văn bản', alias:'todo checkbox task check',     shortcut:'[]'},
   // ── Cấu trúc ─────────────────────────────────────────────
   {id:'table',    icon:'<i class="ti ti-table"></i>',          name:'Bảng',         desc:'Chèn bảng dữ liệu tùy chỉnh',       cat:'Cấu trúc', alias:'table grid'},
   {id:'col2',     icon:'<i class="ti ti-layout-columns"></i>', name:'2 Cột',        desc:'Chia bố cục thành 2 cột ngang',      cat:'Cấu trúc', alias:'column layout 2col two col2'},
@@ -6037,10 +6043,12 @@ const SLASH_ITEMS=[
   {id:'image',    icon:'<i class="ti ti-photo"></i>',           name:'Hình ảnh / GIF / Carousel', desc:'1 ảnh → chèn riêng; nhiều ảnh → chọn Carousel hoặc riêng lẻ', cat:'Media', alias:'image photo picture img gif carousel slider gallery slideshow'},
   {id:'video',    icon:'<i class="ti ti-video"></i>',           name:'Video',        desc:'Tải file video từ máy tính',        cat:'Media',    alias:'video mp4 film'},
   {id:'embed',    icon:'<i class="ti ti-brand-youtube"></i>',   name:'Nhúng video',  desc:'YouTube, TikTok, Vimeo, Facebook',  cat:'Media',    alias:'embed youtube tiktok vimeo'},
+  {id:'file',     icon:'<i class="ti ti-paperclip"></i>',       name:'File đính kèm', desc:'Đính kèm PDF, DOCX, ZIP và các file khác', cat:'Media', alias:'file attach pdf docx zip download'},
   {id:'emoji',    icon:'<i class="ti ti-mood-smile"></i>',      name:'Emoji',        desc:'Chèn biểu tượng cảm xúc',          cat:'Media',    alias:'emoji icon smiley'},
   // ── Định dạng ─────────────────────────────────────────────
-  {id:'code',     icon:'<i class="ti ti-code"></i>',            name:'Code Block',   desc:'Khối code với font mono',           cat:'Định dạng', alias:'code pre block monospace'},
+  {id:'code',     icon:'<i class="ti ti-code"></i>',            name:'Code Block',   desc:'Khối code với font mono',           cat:'Định dạng', alias:'code pre block monospace',   shortcut:'```'},
   {id:'callout',  icon:'<i class="ti ti-bulb"></i>',            name:'Callout',      desc:'Hộp văn bản nổi bật có màu',       cat:'Định dạng', alias:'callout highlight box'},
+  {id:'button',   icon:'<i class="ti ti-cursor-text"></i>',     name:'Nút bấm',      desc:'Nút CTA với link và màu tùy chỉnh', cat:'Định dạng', alias:'button cta link btn click'},
   // ── Panel ─────────────────────────────────────────────────
   {id:'info',     icon:'<i class="ti ti-info-circle"></i>',     name:'Info Panel',   desc:'Hộp thông tin nền xanh',            cat:'Panel', alias:'info tip blue'},
   {id:'success',  icon:'<i class="ti ti-circle-check"></i>',    name:'Success Panel', desc:'Hộp thành công nền xanh lá',      cat:'Panel', alias:'success done ok green'},
@@ -6052,6 +6060,8 @@ const SLASH_ITEMS=[
 // Recently used command IDs (max 3, persisted in localStorage)
 let _slashRecent=[];
 try{_slashRecent=JSON.parse(localStorage.getItem('slash_recent')||'[]');}catch(e){_slashRecent=[];}
+let _slashPinned=[];
+try{_slashPinned=JSON.parse(localStorage.getItem('slash_pinned')||'[]');}catch(e){_slashPinned=[];}
 
 let _slashVisible=false, _slashActiveIdx=0, _slashFiltered=[], _slashSavedRange=null, _slashOpenRect=null;
 
