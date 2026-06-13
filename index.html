@@ -5401,6 +5401,7 @@ async function tblInsertCarousel(cell,files){
   cell.appendChild(car);
   onContentChange();
   toast('Đã tạo carousel '+srcs.length+' ảnh trong ô','success');
+  requestAnimationFrame(()=>_showBlockBar(car));
 }
 
 // ── Compress image for table cell (max 800px, 85%) ──────────────
@@ -5551,6 +5552,7 @@ async function tblInsertImage(cell,file){
     cell2.appendChild(sb);
   }
   onContentChange();toast('Đã thêm hình vào ô','success');
+  requestAnimationFrame(()=>_showBlockBar(el));
 }
 
 // Insert a .cf-img-block (with full editing toolbar) into a table cell
@@ -5570,6 +5572,7 @@ async function _tblInsertImgBlock(cell, file){
   cell.classList.add('tbl-has-img');
   onContentChange();
   toast('Đã thêm hình vào ô','success');
+  requestAnimationFrame(()=>_showBlockBar(block));
 }
 // Mini color swatch for table cell bg
 // Apply color to cell(s) based on scope
@@ -8922,13 +8925,11 @@ function _showBlockBar(targetEl){
   if(isNested){
     const isCellNested=container.tagName==='TD'||container.tagName==='TH';
     if(isCellNested){
-      // Walk up to tbl-outer to get table's left edge, then place bar outside table (left gutter)
-      let tblOuter=container;
-      while(tblOuter&&!tblOuter.classList.contains('tbl-outer'))tblOuter=tblOuter.parentElement;
-      const tblRect=tblOuter?tblOuter.getBoundingClientRect():rect;
-      bar.style.top=(rect.top+2)+'px';
-      bar.style.left=Math.max(4,tblRect.left-56)+'px';
-      bar.classList.remove('on-nested');
+      // Center bar inside the cell
+      const cellRect=container.getBoundingClientRect();
+      bar.style.top=(cellRect.top+Math.round(cellRect.height/2)-13)+'px';
+      bar.style.left=(cellRect.left+Math.round(cellRect.width/2)-26)+'px';
+      bar.classList.add('on-nested');
     } else {
       bar.style.top=rect.top+'px';
       bar.style.left=rect.left+'px';
