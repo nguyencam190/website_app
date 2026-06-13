@@ -324,8 +324,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 /* Floating block action bar (+ and drag handle) */
 .editor-block-bar{position:fixed;display:none;align-items:center;gap:2px;z-index:500}
 .editor-block-bar.on{display:flex}
-/* Nested mode: overlaid inside cell — shows with background so it's visible over content */
-.editor-block-bar.on-nested{background:var(--surface);border:1px solid var(--border);border-radius:5px;box-shadow:0 1px 6px rgba(0,0,0,.14);padding:1px}
+/* Nested mode: overlaid inside cell — visible only on hover, not while typing */
+.editor-block-bar.on-nested{background:color-mix(in srgb,var(--surface) 88%,transparent);border:1px solid var(--border);border-radius:5px;box-shadow:0 1px 4px rgba(0,0,0,.1);padding:1px;backdrop-filter:blur(3px)}
 .editor-block-btn{width:24px;height:24px;border:none;background:transparent;border-radius:5px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text3);font-size:15px;transition:background .12s,color .12s;flex-shrink:0}
 .editor-block-btn:hover{background:var(--surface2);color:var(--text)}
 .editor-block-drag{cursor:grab;font-size:13px;letter-spacing:-1px;color:var(--text3)}
@@ -8861,10 +8861,15 @@ function _updateBlockBar(){
     const result=_findBlockInContainer(range.startContainer);
     editor.querySelectorAll('.slash-hint').forEach(el=>el.classList.remove('slash-hint'));
     if(!result){_hideBlockBar();return;}
-    const {block}=result;
+    const {block,container}=result;
     if(block.tagName==='P'&&!block.textContent.trim()&&block.children.length<=1){
       block.classList.add('slash-hint');
     }
+    // For nested containers (td, column) with content: don't show bar while typing —
+    // it would overlay text and make content appear at the wrong position.
+    // Bar is still available on mouse hover.
+    const isNested=container!==editor;
+    if(isNested&&block.textContent.trim()){_hideBlockBar();return;}
     _showBlockBar(block);
   },50);
 }
