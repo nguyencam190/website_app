@@ -1680,7 +1680,8 @@ td.tbl-inner-container{padding:0!important;overflow:visible!important;vertical-a
 
     <div class="sb-search-row">
       <div class="sb-search"><i class="ti ti-search"></i><input type="text" placeholder="Search pages..." id="searchInput" oninput="filterDocs()"></div>
-      <button class="sb-new-btn" onclick="_quickNewRootDoc()" title="New page"><i class="ti ti-plus"></i></button>
+      <button class="sb-new-btn" onclick="_quickNewRootDoc()" title="Trang mới"><i class="ti ti-plus"></i></button>
+      <button class="sb-new-btn" onclick="importPageJson()" title="Nhập trang từ JSON"><i class="ti ti-file-import"></i></button>
     </div>
 
     <!-- Nav tree -->
@@ -1767,6 +1768,7 @@ td.tbl-inner-container{padding:0!important;overflow:visible!important;vertical-a
             <div class="hdr-dd" id="pabMoreDd" style="right:0;top:36px">
               <div class="hdr-dd-item" onclick="hdrCopyLink();hdrCloseAll()"><i class="ti ti-link"></i> Copy link trang</div>
               <div class="hdr-dd-item" onclick="hdrDuplicatePage();hdrCloseAll()"><i class="ti ti-copy"></i> Sao chép trang</div>
+              <div class="hdr-dd-item" onclick="hdrExportCurrentJson();hdrCloseAll()"><i class="ti ti-file-export"></i> Xuất JSON (backup ảnh)</div>
               <div class="hdr-dd-sep"></div>
               <div class="hdr-dd-item danger" onclick="hdrDeletePage()"><i class="ti ti-trash"></i> Xóa trang</div>
             </div>
@@ -1815,6 +1817,7 @@ td.tbl-inner-container{padding:0!important;overflow:visible!important;vertical-a
 <div class="ctx" id="docCtxMenu">
   <div class="ctx-item" onclick="docCtxRename()"><i class="ti ti-pencil"></i> Đổi tên</div>
   <div class="ctx-item" onclick="docCtxDuplicate()"><i class="ti ti-copy"></i> Nhân bản</div>
+  <div class="ctx-item" onclick="docCtxExportJson()"><i class="ti ti-file-export"></i> Xuất JSON (backup)</div>
   <div class="ctx-sep"></div>
   <div class="ctx-item red" onclick="docCtxDelete()"><i class="ti ti-trash"></i> Xoá tài liệu</div>
 </div>
@@ -2690,6 +2693,11 @@ Thao tác này không thể hoàn tác.`))return;
   else{document.getElementById('editor').innerHTML='<p><br></p>';updatePageActionBar();}
   toast('Đã xóa trang','info');
 }
+function hdrExportCurrentJson(){
+  const doc=currentDoc();if(!doc)return;
+  docCtxId=doc.id;
+  docCtxExportJson();
+}
 function openShareModal(){
   hdrCloseAll();
   const doc=currentDoc();
@@ -3168,6 +3176,96 @@ function openDocCtx(e,id){docCtxId=id;const m=document.getElementById('docCtxMen
 function docCtxRename(){const doc=state.docs.find(d=>d.id===docCtxId);if(!doc)return;const name=prompt('Doi ten:',doc.title);if(name!==null){doc.title=name||doc.title;persist();renderSidebar();if(state.currentDocId===docCtxId)document.getElementById('docTitleInput').value=doc.title;}document.getElementById('docCtxMenu')?.classList.remove('on');}
 function docCtxDuplicate(){const doc=state.docs.find(d=>d.id===docCtxId);if(!doc)return;const copy=JSON.parse(JSON.stringify(doc));copy.id=uid();copy.title+=' (copy)';copy.parentId=doc.parentId||null;copy.createdAt=new Date().toISOString();copy.updatedAt=new Date().toISOString();state.docs.push(copy);persist();renderSidebar();toast('Đã nhân bản','success');document.getElementById('docCtxMenu')?.classList.remove('on');}
 function docCtxDelete(){const doc=state.docs.find(d=>d.id===docCtxId);if(!doc)return;if(!confirm(`Xoá "${doc.title}"?`)){document.getElementById('docCtxMenu')?.classList.remove('on');return;}_purgeDocTree(docCtxId);if(state.currentDocId===docCtxId){state.currentDocId=null;document.getElementById('emptyState').style.display='';document.getElementById('editorPanel').style.display='none';}persistNow();renderSidebar();toast('Đã xoá','info');document.getElementById('docCtxMenu')?.classList.remove('on');}
+
+// ─── JSON EXPORT / IMPORT ────────────────────────────────────
+async function docCtxExportJson(){
+  const docId=docCtxId;
+  document.getElementById('docCtxMenu')?.classList.remove('on');
+  const doc=state.docs.find(d=>d.id===docId);
+  if(!doc){toast('Không tìm thấy trang','error');return;}
+  toast('Đang chuẩn bị JSON...','info');
+
+  // Collect all media IDs referenced in this page
+  const mediaIds=new Set();
+  (doc.images||[]).forEach(m=>{if(m&&m.id)mediaIds.add(m.id);});
+  const tmp=document.createElement('div');tmp.innerHTML=doc.content||'';
+  tmp.querySelectorAll('[data-cfimgid]').forEach(el=>mediaIds.add(el.dataset.cfimgid));
+  tmp.querySelectorAll('[data-tblimgid]').forEach(el=>mediaIds.add(el.dataset.tblimgid));
+  tmp.querySelectorAll('[data-carid]').forEach(el=>mediaIds.add(el.dataset.carid));
+  tmp.querySelectorAll('[data-cfcarids]').forEach(el=>(el.dataset.cfcarids||'').split(',').filter(Boolean).forEach(id=>mediaIds.add(id)));
+  tmp.querySelectorAll('[data-slideids]').forEach(el=>(el.dataset.slideids||'').split(',').filter(Boolean).forEach(id=>mediaIds.add(id)));
+
+  // Build base64 map — prefer already-stored src from doc.images, else load from IDB
+  const imgMap={};
+  (doc.images||[]).forEach(m=>{if(m&&m.id&&m.src&&m.src.startsWith('data:'))imgMap[m.id]=m.src;});
+  const media={};
+  for(const id of mediaIds){
+    if(!id)continue;
+    if(imgMap[id]){media[id]=imgMap[id];continue;}
+    // Try cached blob URL first, then IDB
+    const cached=_objUrls&&_objUrls[id];
+    if(cached){try{const r=await fetch(cached);const b=await r.blob();media[id]=await _blobToB64(b);continue;}catch(e){}}
+    try{const b=await _idbGet(id);if(b)media[id]=await _blobToB64(b);}catch(e){}
+  }
+
+  // Deep-copy doc, strip session-only blob URLs
+  const docCopy=JSON.parse(JSON.stringify(doc));
+  (docCopy.images||[]).forEach(m=>{if(m.src&&m.src.startsWith('blob:'))delete m.src;});
+
+  const payload=JSON.stringify({version:1,type:'camnguyen-page',exportedAt:new Date().toISOString(),doc:docCopy,media},null,2);
+  const blob=new Blob([payload],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;
+  a.download=(doc.title||'page').replace(/[\/\\?%*:|"<>]/g,'_')+'.camnguyen.json';
+  a.click();setTimeout(()=>URL.revokeObjectURL(url),5000);
+  toast('Đã xuất JSON thành công','success');
+}
+
+async function importPageJson(){
+  document.getElementById('docCtxMenu')?.classList.remove('on');
+  const input=document.createElement('input');
+  input.type='file';input.accept='.json';
+  input.onchange=async e=>{
+    const file=e.target.files[0];if(!file)return;
+    try{
+      toast('Đang nhập trang...','info');
+      const text=await file.text();
+      const data=JSON.parse(text);
+      if(data.type!=='camnguyen-page'||!data.doc){toast('File không hợp lệ (phải là file .camnguyen.json)','error');return;}
+      const importDoc=JSON.parse(JSON.stringify(data.doc));
+      const media=data.media||{};
+
+      // Re-store all blobs into IndexedDB
+      for(const[id,b64] of Object.entries(media)){
+        if(!b64)continue;
+        try{const r=await fetch(b64);const blob=await r.blob();await _idbPut(id,blob);}catch(e){}
+      }
+
+      // Give a new ID to avoid collision with existing docs
+      const newId=uid();
+      // Update content: replace old doc id references (breadcrumb links etc.)
+      importDoc.content=(importDoc.content||'').replace(new RegExp(importDoc.id,'g'),newId);
+      importDoc.id=newId;
+      importDoc.parentId=null;
+      importDoc.createdAt=importDoc.createdAt||new Date().toISOString();
+      importDoc.updatedAt=new Date().toISOString();
+
+      // Re-attach base64 src for small images into doc.images
+      (importDoc.images||[]).forEach(m=>{
+        if(media[m.id]&&(!m.src||m.src.startsWith('blob:'))){
+          // Only re-attach if small (≤500KB) to match persist() logic
+          if((m.size||0)<=512*1024)m.src=media[m.id];
+          else delete m.src;
+        }
+      });
+
+      state.docs.push(importDoc);
+      persist();renderSidebar();openDoc(newId);
+      toast(`Đã nhập "${importDoc.title||'Untitled'}"  ✓`,'success');
+    }catch(ex){toast('Lỗi nhập file: '+ex.message,'error');}
+  };
+  input.click();
+}
 
 // MEDIA (image/video/gif)
 // ─── INDEXEDDB BLOB STORE ─────────────────────────────────
