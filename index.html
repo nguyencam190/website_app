@@ -3085,14 +3085,11 @@ function _renderDocNodes(container,sec,parentId,depth,filter){
     item.appendChild(starBtn);
     item.appendChild(addChildBtn);item.appendChild(acts);
     item.onclick=()=>{
+      // Set before openDoc — openDoc calls renderSidebar() which re-renders the sidebar,
+      // so DOM refs (indicator/childContainer) become stale. Setting _nodeCollapsed first
+      // means the re-render already shows children expanded on first click.
+      if(hasKids&&_nodeCollapsed[doc.id]!==false) _nodeCollapsed[doc.id]=false;
       openDoc(doc.id);
-      // Expand direct children on click (one level only — grandchildren stay collapsed)
-      if(hasKids&&_nodeCollapsed[doc.id]!==false){
-        _nodeCollapsed[doc.id]=false;
-        const ic=indicator.querySelector('i');
-        if(ic)ic.style.transform='rotate(90deg)';
-        if(childContainer)childContainer.style.display='';
-      }
     };
 
     row.appendChild(indicator);row.appendChild(item);
@@ -6872,8 +6869,10 @@ function slashExec(id){
       const anchorEl=anchor.nodeType===Node.TEXT_NODE?anchor.parentElement:anchor;
       const td=anchorEl?.closest('td:not(.tbl-row-num),th:not(.tbl-row-num)');
       const colItem=!td&&anchorEl?.closest('.cf-column-item');
+      const nestedEditable=!td&&!colItem&&anchorEl?.closest('.cf-checklist-body,.cf-panel-content,.cf-tab-panel');
       if(td)td.focus({preventScroll:true});
       else if(colItem)colItem.focus({preventScroll:true});
+      else if(nestedEditable)nestedEditable.focus({preventScroll:true});
       else document.getElementById('editor')?.focus({preventScroll:true});
       sel.removeAllRanges();sel.addRange(_slashSavedRange);
     }catch(e){}
@@ -6961,7 +6960,9 @@ function _slashInsert(id,execRange){
     while(node&&node.parentElement!==ed&&
           !['TD','TH'].includes(node.parentElement?.tagName)&&
           !node.parentElement?.classList.contains('cf-column-item')&&
-          !node.parentElement?.classList.contains('cf-checklist-body'))
+          !node.parentElement?.classList.contains('cf-checklist-body')&&
+          !node.parentElement?.classList.contains('cf-panel-content')&&
+          !node.parentElement?.classList.contains('cf-tab-panel'))
       node=node.parentElement;
     return (node&&node!==ed)?node:null;
   }
@@ -6986,7 +6987,7 @@ function _slashInsert(id,execRange){
         r.setStart(focusTarget,0);r.collapse(true);
         sel2.removeAllRanges();sel2.addRange(r);
         // Focus the correct container without scrolling; then scroll block into view
-        const focusEl=(focusTarget.nodeType===Node.TEXT_NODE?focusTarget.parentElement:focusTarget)?.closest?.('td,th,.cf-checklist-body')||editor;
+        const focusEl=(focusTarget.nodeType===Node.TEXT_NODE?focusTarget.parentElement:focusTarget)?.closest?.('td,th,.cf-checklist-body,.cf-panel-content,.cf-tab-panel')||editor;
         focusEl.focus({preventScroll:true});
       }catch(e){}
     }
@@ -7926,6 +7927,7 @@ function _cfInsertBlockAtRange(block, savedRange){
         if(par.classList?.contains('cf-column-item')||
            par.classList?.contains('cf-panel-content')||
            par.classList?.contains('cf-checklist-body')||
+           par.classList?.contains('cf-tab-panel')||
            par.tagName==='TD'||par.tagName==='TH'||
            par===editor){
           // Found the container — insert after current node
