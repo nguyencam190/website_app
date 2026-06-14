@@ -3186,53 +3186,60 @@ async function docCtxExportJson(){
   document.getElementById('docCtxMenu')?.classList.remove('on');
   const doc=state.docs.find(d=>d.id===docId);
   if(!doc){toast('Không tìm thấy trang','error');return;}
+  // Flush unsaved editor content for the currently-open page before exporting
+  if(docId===state.currentDocId)onContentChange();
   toast('Đang chuẩn bị JSON...','info');
+  try{
+    // Collect all media IDs referenced in this page
+    const mediaIds=new Set();
+    (doc.images||[]).forEach(m=>{
+      if(!m)return;
+      if(m.id)mediaIds.add(m.id);
+      // Floating carousel: individual slide blobs are under slides[i].id, not m.id
+      if(m.type==='carousel'&&m.slides)(m.slides).forEach(sl=>{if(sl&&sl.id)mediaIds.add(sl.id);});
+    });
+    const tmp=document.createElement('div');tmp.innerHTML=doc.content||'';
+    tmp.querySelectorAll('[data-cfimgid]').forEach(el=>mediaIds.add(el.dataset.cfimgid));
+    tmp.querySelectorAll('[data-tblimgid]').forEach(el=>mediaIds.add(el.dataset.tblimgid));
+    tmp.querySelectorAll('[data-carid]').forEach(el=>mediaIds.add(el.dataset.carid));
+    tmp.querySelectorAll('[data-carids]').forEach(el=>(el.dataset.carids||'').split(',').filter(Boolean).forEach(id=>mediaIds.add(id)));
+    tmp.querySelectorAll('[data-slideids]').forEach(el=>(el.dataset.slideids||'').split(',').filter(Boolean).forEach(id=>mediaIds.add(id)));
 
-  // Collect all media IDs referenced in this page
-  const mediaIds=new Set();
-  (doc.images||[]).forEach(m=>{
-    if(!m)return;
-    if(m.id)mediaIds.add(m.id);
-    // Floating carousel: individual slide blobs are under slides[i].id, not m.id
-    if(m.type==='carousel'&&m.slides)(m.slides).forEach(sl=>{if(sl&&sl.id)mediaIds.add(sl.id);});
-  });
-  const tmp=document.createElement('div');tmp.innerHTML=doc.content||'';
-  tmp.querySelectorAll('[data-cfimgid]').forEach(el=>mediaIds.add(el.dataset.cfimgid));
-  tmp.querySelectorAll('[data-tblimgid]').forEach(el=>mediaIds.add(el.dataset.tblimgid));
-  tmp.querySelectorAll('[data-carid]').forEach(el=>mediaIds.add(el.dataset.carid));
-  tmp.querySelectorAll('[data-carids]').forEach(el=>(el.dataset.carids||'').split(',').filter(Boolean).forEach(id=>mediaIds.add(id)));
-  tmp.querySelectorAll('[data-slideids]').forEach(el=>(el.dataset.slideids||'').split(',').filter(Boolean).forEach(id=>mediaIds.add(id)));
-
-  // Build base64 map — prefer already-stored src from doc.images, else load from IDB
-  const imgMap={};
-  (doc.images||[]).forEach(m=>{if(m&&m.id&&m.src&&m.src.startsWith('data:'))imgMap[m.id]=m.src;});
-  const media={};
-  for(const id of mediaIds){
-    if(!id)continue;
-    if(imgMap[id]){media[id]=imgMap[id];continue;}
-    // IDB is the primary source (reliable across sessions and file:// pages)
-    let blob=null;
-    try{blob=await _idbGet(id);}catch(e){}
-    // Fallback: cached blob URL from current session (for images not yet flushed to IDB)
-    if(!blob){
-      const cached=_objUrls&&_objUrls[id];
-      if(cached){try{const r=await fetch(cached);if(r.ok){const b=await r.blob();if(b&&b.size>0)blob=b;}}catch(e){}}
+    // Build base64 map — prefer already-stored src from doc.images, else load from IDB
+    const imgMap={};
+    (doc.images||[]).forEach(m=>{if(m&&m.id&&m.src&&m.src.startsWith('data:'))imgMap[m.id]=m.src;});
+    const media={};
+    for(const id of mediaIds){
+      if(!id)continue;
+      if(imgMap[id]){media[id]=imgMap[id];continue;}
+      // IDB is the primary source (reliable across sessions and file:// pages)
+      let blob=null;
+      try{blob=await _idbGet(id);}catch(e){}
+      // Fallback: cached blob URL from current session (for images not yet flushed to IDB)
+      if(!blob){
+        const cached=_objUrls&&_objUrls[id];
+        if(cached){try{const r=await fetch(cached);if(r.ok){const b=await r.blob();if(b&&b.size>0)blob=b;}}catch(e){}}
+      }
+      if(blob){try{media[id]=await _blobToB64(blob);}catch(e){console.warn('[export] _blobToB64 failed for',id,e);}}
+      else{console.warn('[export] No blob found for media id',id);}
     }
-    if(blob){try{media[id]=await _blobToB64(blob);}catch(e){console.warn('[export] _blobToB64 failed for',id,e);}}
-    else{console.warn('[export] No blob found for media id',id);}
+
+    // Deep-copy doc, strip session-only blob URLs
+    const docCopy=JSON.parse(JSON.stringify(doc));
+    (docCopy.images||[]).forEach(m=>{if(m&&m.src&&m.src.startsWith('blob:'))delete m.src;});
+
+    const payload=JSON.stringify({version:1,type:'camnguyen-page',exportedAt:new Date().toISOString(),doc:docCopy,media},null,2);
+    const dlBlob=new Blob([payload],{type:'application/json'});
+    const url=URL.createObjectURL(dlBlob);
+    const a=document.createElement('a');a.href=url;
+    a.download=(doc.title||'page').replace(/[\/\\?%*:|"<>]/g,'_')+'.camnguyen.json';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),5000);
+    toast('Đã xuất JSON thành công','success');
+  }catch(err){
+    toast('Lỗi xuất JSON: '+err.message,'error');
+    console.error('[export] docCtxExportJson error:',err);
   }
-
-  // Deep-copy doc, strip session-only blob URLs
-  const docCopy=JSON.parse(JSON.stringify(doc));
-  (docCopy.images||[]).forEach(m=>{if(m.src&&m.src.startsWith('blob:'))delete m.src;});
-
-  const payload=JSON.stringify({version:1,type:'camnguyen-page',exportedAt:new Date().toISOString(),doc:docCopy,media},null,2);
-  const blob=new Blob([payload],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;
-  a.download=(doc.title||'page').replace(/[\/\\?%*:|"<>]/g,'_')+'.camnguyen.json';
-  a.click();setTimeout(()=>URL.revokeObjectURL(url),5000);
-  toast('Đã xuất JSON thành công','success');
 }
 
 async function importPageJson(){
