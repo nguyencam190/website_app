@@ -7511,8 +7511,16 @@ function _cfWireChecklist(cl){
         if(!body)return;
         const block=await _cfMakeImgBlock(file);
         if(!block)return;
-        const lastChild=body.lastElementChild;
-        if(lastChild&&lastChild.tagName==='P'&&!lastChild.textContent.trim()){body.insertBefore(block,lastChild);}else{body.appendChild(block);}
+        // Replace existing image if present; otherwise insert before trailing empty <p>
+        const existingImg=body.querySelector('.cf-img-block');
+        if(existingImg){
+          existingImg.parentElement.insertBefore(block,existingImg);
+          existingImg.remove();
+        } else {
+          const lastChild=body.lastElementChild;
+          if(lastChild&&lastChild.tagName==='P'&&!lastChild.textContent.trim()){body.insertBefore(block,lastChild);}
+          else{body.appendChild(block);}
+        }
         _cfRewireImgBlock(block);
         onContentChange();
         requestAnimationFrame(()=>_showBlockBar(block));
@@ -7837,6 +7845,8 @@ function _cfInitLayout(layout){
   const oldTb=layout.querySelector('.cf-col-toolbar');if(oldTb)oldTb.remove();
   layout.insertBefore(_cfBuildToolbar(layout,n,dist),layout.firstChild);
   _cfRebuildCols(layout,n,dist,existing);
+  // Re-wire any checklists that were inside the cloned column items
+  layout.querySelectorAll('.cf-checklist').forEach(cl=>_cfWireChecklist(cl));
 }
 
 function slashAddCol(btn){
@@ -9396,6 +9406,9 @@ function _showBlkCtx(x,y,block){
   item('ti-copy','Nhân bản',()=>{
     const clone=block.cloneNode(true);
     if(clone.classList.contains('cf-img-block'))_cfImgRewireBlock(clone);
+    // Re-wire all checklists in the clone (cloneNode doesn't copy JS event listeners)
+    if(clone.classList.contains('cf-checklist'))_cfWireChecklist(clone);
+    else clone.querySelectorAll('.cf-checklist').forEach(cl=>_cfWireChecklist(cl));
     container.insertBefore(clone,block.nextSibling);onContentChange();
   });
   sep();
