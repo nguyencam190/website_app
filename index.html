@@ -7553,6 +7553,88 @@ function _cfWireToggle(el){
   });
 }
 
+// Re-wire tabs block after cloneNode (listeners are lost; replace buttons with fresh clones)
+function _cfTabsRewire(block){
+  const hdr=block.querySelector('.cf-tabs-header');if(!hdr)return;
+  block.querySelectorAll('.cf-tab-btn').forEach((btn,i)=>{
+    const fresh=btn.cloneNode(true);btn.parentNode.replaceChild(fresh,btn);
+    fresh.addEventListener('click',e=>{
+      if(!e.target.isContentEditable||window.getSelection().toString())return;
+      _cfTabsActivate(block,i);
+    });
+  });
+  const addBtn=hdr.querySelector('.cf-tab-add');
+  if(addBtn){
+    const fresh=addBtn.cloneNode(true);addBtn.parentNode.replaceChild(fresh,addBtn);
+    fresh.addEventListener('mousedown',e=>{e.preventDefault();_cfTabsAddTab(block);});
+  }
+}
+
+// Re-wire progress bar after cloneNode
+function _cfProgressRewire(block){
+  const track=block.querySelector('.cf-progress-track');
+  const pctEl=block.querySelector('.cf-progress-pct');
+  if(track){
+    const fresh=track.cloneNode(true);track.parentNode.replaceChild(fresh,track);
+    fresh.addEventListener('click',e=>{
+      const r=fresh.getBoundingClientRect();
+      const newPct=Math.round(Math.max(0,Math.min(100,(e.clientX-r.left)/r.width*100)));
+      const fill=fresh.querySelector('.cf-progress-fill');
+      if(fill)fill.style.width=newPct+'%';
+      if(pctEl)pctEl.textContent=newPct+'%';
+      onContentChange();
+    });
+  }
+  const delBtn=block.querySelector('.cf-progress-del');
+  if(delBtn){
+    const fresh=delBtn.cloneNode(true);delBtn.parentNode.replaceChild(fresh,delBtn);
+    fresh.addEventListener('mousedown',e=>{e.preventDefault();block.remove();onContentChange();});
+  }
+}
+
+// Re-wire status badge (inline span) after cloneNode — returns the fresh element
+function _cfStatusRewire(el){
+  const fresh=el.cloneNode(true);el.parentNode.replaceChild(fresh,el);
+  fresh.addEventListener('click',()=>{
+    const cur=fresh.dataset.state;
+    const idx=CF_STATUS_STATES.findIndex(s=>s.key===cur);
+    const next=CF_STATUS_STATES[(idx+1)%CF_STATUS_STATES.length];
+    fresh.dataset.state=next.key;
+    fresh.innerHTML=`${next.icon} ${escH(next.label)}`;
+    onContentChange();
+  });
+  return fresh;
+}
+
+// Universal rewire after any block duplication (cloneNode loses all JS event listeners)
+function _cfRewireBlock(block){
+  if(!block)return;
+  const cl=block.classList;
+  const editor=document.getElementById('editor')||block.parentElement;
+  // ── Top-level block ─────────────────────────────
+  if(cl.contains('cf-img-block'))        {_cfImgRewireBlock(block);}
+  else if(cl.contains('cf-column-layout')){_cfInitLayout(block);}
+  else if(cl.contains('cf-checklist'))   {_cfWireChecklist(block);}
+  else if(cl.contains('cf-toggle'))      {_cfWireToggle(block);}
+  else if(cl.contains('cf-tabs'))        {_cfTabsRewire(block);}
+  else if(cl.contains('cf-progress'))    {_cfProgressRewire(block);}
+  else if(cl.contains('tbl-outer'))      {const t=block.querySelector('table');if(t)tblAttachTable(t);}
+  else if(cl.contains('cf-carousel-block')){setTimeout(async()=>await _cfCarLoadAll(editor),30);}
+  else if(cl.contains('cf-embed-block')) {_cfEmbedLoadAll(editor);}
+  else if(cl.contains('cf-file-block'))  {_cfFileLoadAll(editor);}
+  // ── Nested blocks inside containers ─────────────
+  block.querySelectorAll('.cf-checklist').forEach(el=>_cfWireChecklist(el));
+  block.querySelectorAll('.cf-toggle').forEach(el=>_cfWireToggle(el));
+  block.querySelectorAll('.cf-tabs').forEach(b=>_cfTabsRewire(b));
+  block.querySelectorAll('.cf-progress').forEach(b=>_cfProgressRewire(b));
+  block.querySelectorAll('.cf-status').forEach(el=>_cfStatusRewire(el));
+  block.querySelectorAll('.cf-img-block').forEach(b=>_cfImgRewireBlock(b));
+  block.querySelectorAll('.tbl-outer').forEach(o=>{const t=o.querySelector('table');if(t)tblAttachTable(t);});
+  if(block.querySelector('.cf-carousel-block[data-carids]'))setTimeout(async()=>await _cfCarLoadAll(editor),30);
+  if(block.querySelector('.cf-embed-block[data-embed-url]'))_cfEmbedLoadAll(editor);
+  if(block.querySelector('.cf-file-block[data-cffileid]'))_cfFileLoadAll(editor);
+}
+
 function _cfToggleLoadAll(editor){
   editor.querySelectorAll('.cf-toggle').forEach(el=>{
     const btn=el.querySelector('.cf-toggle-btn');
@@ -9405,11 +9487,9 @@ function _showBlkCtx(x,y,block){
   sep();
   item('ti-copy','Nhân bản',()=>{
     const clone=block.cloneNode(true);
-    if(clone.classList.contains('cf-img-block'))_cfImgRewireBlock(clone);
-    // Re-wire all checklists in the clone (cloneNode doesn't copy JS event listeners)
-    if(clone.classList.contains('cf-checklist'))_cfWireChecklist(clone);
-    else clone.querySelectorAll('.cf-checklist').forEach(cl=>_cfWireChecklist(cl));
-    container.insertBefore(clone,block.nextSibling);onContentChange();
+    container.insertBefore(clone,block.nextSibling);
+    _cfRewireBlock(clone);
+    onContentChange();
   });
   sep();
   item('ti-trash','Xóa khối',()=>{
