@@ -133,6 +133,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .pab-more-btn:hover{background:var(--surface2);border-color:var(--border)}
 .pab-status{font-size:11px;padding:2px 8px;border-radius:3px;font-weight:600;background:#e3fcef;color:#006644}
 .pab-status.editing{background:#fff0b3;color:#7f5f01}
+[data-theme="dark"] .pab-status{background:rgba(63,185,80,.15);color:#3fb950;border:1px solid rgba(63,185,80,.25)}
+[data-theme="dark"] .pab-status.editing{background:rgba(210,153,34,.15);color:#d29922;border:1px solid rgba(210,153,34,.25)}
 [data-theme="dark"] .pab-status{background:rgba(0,212,170,.15);color:#00d4aa}
 [data-theme="dark"] .pab-status.editing{background:rgba(245,158,11,.15);color:#f59e0b}
 /* User / notif dropdown in header */
@@ -283,7 +285,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .new-doc-btn{display:none}
 /* Footer */
 .sb-footer{padding:8px 10px;display:flex;align-items:center;gap:0;flex-shrink:0;transition:border-color var(--mode-transition)}
-.sb-tools-btn{display:flex;align-items:center;gap:7px;flex:1;padding:6px 8px;border-radius:5px;border:none;background:transparent;color:var(--sb-txt2);cursor:pointer;font-size:13.5px;font-family:var(--font);font-weight:500;transition:.15s;text-align:left}
+.sb-tools-btn{display:flex;align-items:center;gap:7px;flex:1;padding:6px 8px;border-radius:5px;border:none;background:transparent;color:var(--text2);cursor:pointer;font-size:13.5px;font-family:var(--font);font-weight:500;transition:.15s;text-align:left}
 .sb-tools-btn:hover{background:var(--sb-active-bg);color:var(--sb-txt)}
 .sb-collapse-btn{width:28px;height:28px;border:none;background:transparent;color:var(--sb-txt3);cursor:pointer;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:14px;transition:.15s;flex-shrink:0}
 .sb-collapse-btn:hover{background:var(--sb-active-bg);color:var(--sb-txt)}
@@ -316,6 +318,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .meta-chip{display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text3)}
 .meta-tag{background:var(--accent-light);color:var(--accent);padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
 .editor-content{outline:none;min-height:320px;font-size:16px;line-height:1.9;color:var(--text);position:relative}
+/* Placeholder shown when editor has only an empty <p><br></p> */
+.editor-content>p:only-child:has(>br:only-child)::before{content:'Gõ / để chèn block, hoặc bắt đầu viết...';color:var(--text3);pointer-events:none;display:block;font-size:15px;font-style:italic}
 /* Empty paragraph hint — shows when cursor is on empty line */
 .editor-content p.slash-hint::before{
   content:'Gõ  /  để chèn nội dung';
@@ -345,8 +349,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .editor-blk-ctx-sep{height:1px;background:var(--border);margin:3px 4px}
 .editor-content h1{font-size:1.5rem;font-weight:600;line-height:28px;margin:28px 0 10px;letter-spacing:-.02em}
 .editor-content h2{font-size:1.25rem;font-weight:600;line-height:24px;margin:22px 0 9px;padding-bottom:6px;border-bottom:1px solid var(--border);letter-spacing:-.015em}
-.editor-content h3{font-size:1rem;font-weight:600;line-height:20px;margin:18px 0 7px}
-.editor-content h4{font-size:0.875rem;font-weight:600;line-height:18px;margin:14px 0 6px}
+.editor-content h3{font-size:1.0625rem;font-weight:700;line-height:22px;margin:20px 0 8px;letter-spacing:-.01em;padding-left:10px;border-left:3px solid var(--accent)}
+.editor-content h4{font-size:0.9375rem;font-weight:600;line-height:20px;margin:16px 0 6px;color:var(--text2)}
 .editor-content h5{font-size:0.75rem;font-weight:600;line-height:16px;margin:12px 0 5px;letter-spacing:.01em}
 .editor-content h6{font-size:0.6875rem;font-weight:600;line-height:14px;margin:10px 0 4px;text-transform:uppercase;letter-spacing:.04em;color:var(--text2)}
 .editor-content p{margin-bottom:12px;font-size:1rem;line-height:1.8}.editor-content [style*="text-align"]{display:block}
@@ -366,16 +370,17 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .tbl-edge-h.tbl-edge-right{right:-4px}
 .editor-content th,.editor-content td{padding:8px 12px;position:relative;word-break:break-word;overflow-wrap:break-word;white-space:normal;vertical-align:top;min-width:40px;transition:var(--mode-transition)}
 /* Column dividers */
-.editor-content th{border-right:1px solid var(--tbl-border);border-bottom:2px solid var(--tbl-border);background:var(--tbl-header-bg);font-weight:600;text-align:left;color:var(--tbl-header-text)}
+.editor-content th{border-right:1px solid var(--tbl-border);border-bottom:2px solid var(--accent);background:var(--tbl-header-bg);font-weight:600;text-align:left;color:var(--tbl-header-text)}
 .editor-content td{border-right:1px solid var(--tbl-border);border-bottom:1px solid var(--tbl-border);color:var(--text);background:var(--surface)}
 /* Last column — no right divider */
 .editor-content th:last-child,.editor-content td:last-child{border-right:1px solid var(--tbl-border)}
 /* Last row — no bottom divider */
 .editor-content tr:last-child td,.editor-content tr:last-child th{border-bottom:none}
-.editor-content tr:hover td{background:var(--tbl-row-hover)}
-/* Dark-mode zebra striping — even rows slightly lighter than odd */
-[data-theme="dark"] .editor-content tr:nth-child(even) td:not(.tbl-row-num){background:var(--tbl-stripe)}
-[data-theme="dark"] .editor-content tr:hover td:not(.tbl-row-num){background:var(--tbl-row-hover)}
+/* Zebra striping — both light + dark (CSS vars handle values per theme) */
+.editor-content tr:nth-child(even) td:not(.tbl-row-num){background:var(--tbl-stripe)}
+/* Hover comes after stripe with equal specificity → wins */
+.editor-content tr:hover td:not(.tbl-row-num){background:var(--tbl-row-hover)}
+.editor-content tr:hover .tbl-row-num{background:var(--tbl-row-hover)}
 /* ── Multi-cell selection (Shift+click) ─────────────────── */
 .editor-content td.tbl-cell-sel,.editor-content th.tbl-cell-sel{
   outline:2px solid var(--accent)!important;background:rgba(37,99,235,.12)!important
@@ -498,7 +503,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .tbl-row-resize-handle::after{content:'';position:absolute;bottom:3px;left:10%;right:10%;height:2px;background:transparent;border-radius:1px;transition:background .15s}
 .tbl-row-resize-handle:hover::after,.tbl-row-resize-handle.dragging::after{background:var(--accent)}
 .tbl-row-resize-handle.dragging{background:rgba(37,99,235,.1)}
-.editor-content pre{background:#0f172a;color:#a5f3c4;border-radius:10px;padding:16px 20px;font-size:13px;margin:14px 0;overflow-x:auto;font-family:var(--mono);line-height:1.65;max-width:100%;box-sizing:border-box;white-space:pre-wrap;word-break:break-all}
+.editor-content pre{background:#0f172a;color:#a5f3c4;border-radius:10px;padding:16px 20px 16px 20px;font-size:13px;margin:14px 0;overflow-x:auto;font-family:var(--mono);line-height:1.65;max-width:100%;box-sizing:border-box;white-space:pre-wrap;word-break:break-all;position:relative}
+.cf-code-copy{position:absolute;top:8px;right:10px;padding:3px 9px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.65);border:1px solid rgba(255,255,255,.15);border-radius:5px;font-size:11px;cursor:pointer;font-family:var(--font);transition:.15s;opacity:0;pointer-events:none;contenteditable:false}
+.editor-content pre:hover .cf-code-copy{opacity:1;pointer-events:auto}
+.cf-code-copy:hover{background:rgba(255,255,255,.22);color:#fff}
 .editor-content img{max-width:100%;width:auto;height:auto;border-radius:10px;cursor:pointer;border:2px solid transparent;transition:.15s;display:block;margin:12px auto;box-shadow:var(--shadow-sm);object-fit:contain;box-sizing:border-box}
 .editor-content img:hover{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
 /* ── Responsive content rules — no overflow, no layout break ── */
@@ -1390,7 +1398,7 @@ td.tbl-inner-container{padding:0!important;overflow:visible!important;vertical-a
   <div class="header-center">
     <div class="header-search-wrap" id="hdrSearchWrap">
       <i class="ti ti-search header-search-icon"></i>
-      <input class="header-search-inp" id="hdrSearchInp" type="text" placeholder="Search"
+      <input class="header-search-inp" id="hdrSearchInp" type="text" placeholder="Tìm trang, nội dung..."
         autocomplete="off" onfocus="hdrOpenSearch()" oninput="hdrHandleSearch(this.value)">
       <div class="header-search-drop" id="hdrSearchDrop">
         <div class="hsd-section">Gần đây</div>
@@ -1746,6 +1754,8 @@ td.tbl-inner-container{padding:0!important;overflow:visible!important;vertical-a
           <button class="pab-icon-btn" id="pabStarBtn" onclick="hdrToggleStar()" title="Đánh dấu yêu thích">
             <i class="ti ti-star"></i>
           </button>
+          <button class="pab-icon-btn" id="pabUndoBtn" onclick="editorUndo()" title="Hoàn tác (Ctrl+Z)" style="display:none"><i class="ti ti-arrow-back-up"></i></button>
+          <button class="pab-icon-btn" id="pabRedoBtn" onclick="editorRedo()" title="Làm lại (Ctrl+Y)" style="display:none"><i class="ti ti-arrow-forward-up"></i></button>
           <span class="pab-status" id="pabStatus" onclick="openExportWebsiteModal()" title="Click để xuất Website" style="cursor:pointer;display:flex;align-items:center;gap:4px"><i class="ti ti-world-upload" style="font-size:11px"></i>Published</span>
           <button class="pab-btn" onclick="openShareModal()">
             <i class="ti ti-share" style="font-size:13px"></i> Share
@@ -2619,15 +2629,21 @@ function hdrToggleEdit(){
   const status=document.getElementById('pabStatus');
   const banner=document.getElementById('editBanner');
   const editor=document.getElementById('editor');
+  const undoBtn=document.getElementById('pabUndoBtn');
+  const redoBtn=document.getElementById('pabRedoBtn');
   if(_hdrIsEditing){
     if(btn){btn.innerHTML='<i class="ti ti-device-floppy" style="font-size:13px"></i> Save';}
     if(status){status.innerHTML='<i class="ti ti-pencil" style="font-size:11px"></i>Editing';status.classList.add('editing');status.onclick=null;status.style.cursor='default';}
     if(banner)banner.classList.add('on');
+    if(undoBtn)undoBtn.style.display='';
+    if(redoBtn)redoBtn.style.display='';
     if(editor)editor.focus();
   } else {
     if(btn){btn.innerHTML='<i class="ti ti-pencil" style="font-size:13px"></i> Edit';}
     if(status){status.innerHTML='<i class="ti ti-world-upload" style="font-size:11px"></i>Published';status.classList.remove('editing');status.onclick=openExportWebsiteModal;status.style.cursor='pointer';}
     if(banner)banner.classList.remove('on');
+    if(undoBtn)undoBtn.style.display='none';
+    if(redoBtn)redoBtn.style.display='none';
     onContentChange();toast('Đã lưu','success');
   }
 }
@@ -2830,7 +2846,11 @@ function updatePageActionBar(){
   _updatePabStar();
   if(!doc){if(dateEl)dateEl.textContent='';return;}
   const d=new Date(doc.updatedAt||doc.createdAt||Date.now());
-  if(dateEl)dateEl.textContent='Edited '+d.toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'});
+  if(dateEl){
+    const now=Date.now(),diff=now-d.getTime(),sec=Math.floor(diff/1000),min=Math.floor(sec/60),hr=Math.floor(min/60),day=Math.floor(hr/24);
+    const rel=sec<60?'vừa xong':min<60?min+' phút trước':hr<24?hr+' giờ trước':day<7?day+' ngày trước':d.toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'});
+    dateEl.textContent='Edited '+rel;dateEl.title=d.toLocaleString('vi-VN');
+  }
   if(statusEl){const editing=typeof _hdrIsEditing!=='undefined'&&_hdrIsEditing;statusEl.innerHTML=(editing?'<i class="ti ti-pencil" style="font-size:11px"></i>Editing':'<i class="ti ti-world-upload" style="font-size:11px"></i>Published');statusEl.className='pab-status'+(editing?' editing':'');statusEl.onclick=editing?null:openExportWebsiteModal;statusEl.style.cursor=editing?'default':'pointer';}
   const sl=document.getElementById('shareLink');
   if(sl&&doc)sl.value=window.location.href.split('?')[0]+'?doc='+doc.id;
@@ -2951,6 +2971,20 @@ function _renderDocNodes(container,sec,parentId,depth,filter){
     const icon=document.createElement('span');icon.className='doc-item-icon';
     icon.innerHTML=hasKids?'<i class="ti ti-file-text" style="font-size:12px"></i>':'<i class="ti ti-file" style="font-size:12px"></i>';
     const titleEl=document.createElement('span');titleEl.className='doc-title';titleEl.textContent=doc.title||'Untitled';
+    titleEl.addEventListener('dblclick',e=>{
+      e.stopPropagation();
+      titleEl.contentEditable='true';titleEl.focus();
+      const r=document.createRange();r.selectNodeContents(titleEl);const s=window.getSelection();s.removeAllRanges();s.addRange(r);
+      const finish=()=>{
+        titleEl.contentEditable='false';
+        const nd=state.docs.find(dd=>dd.id===doc.id);
+        if(nd){nd.title=titleEl.textContent.trim()||nd.title;nd.updatedAt=new Date().toISOString();markDirty();}
+        if(state.currentDocId===doc.id){const ti=document.getElementById('docTitleInput');if(ti)ti.value=titleEl.textContent;}
+        renderSidebar(document.getElementById('searchInput')?.value||'');updatePageActionBar();
+      };
+      titleEl.addEventListener('blur',finish,{once:true});
+      titleEl.addEventListener('keydown',e2=>{if(e2.key==='Enter'){e2.preventDefault();titleEl.blur();}if(e2.key==='Escape'){titleEl.textContent=doc.title;titleEl.blur();}},{once:true});
+    });
 
     // Actions row: [title] [+add-child] [⋯menu]
     // + button is OUTSIDE doc-actions so it's always visible on hover/active
@@ -3054,6 +3088,7 @@ function openDoc(id){
     _cfToggleLoadAll(document.getElementById('editor'));
     document.querySelectorAll('.cf-checklist').forEach(cl=>_cfWireChecklist(cl));
     _cfFileLoadAll(document.getElementById('editor'));
+    _cfAddCodeCopyBtns(document.getElementById('editor'));
     _undoSnapshot(); // initial snapshot
   },80);
   setTimeout(async()=>{const ed=document.getElementById('editor');await _cfCarLoadAll(ed);_cfEmbedLoadAll(ed);},120);
@@ -3071,7 +3106,7 @@ function onContentChange(){
   _cfRefreshTocs(editor_el);
   const clone=editor_el.cloneNode(true);
   // Strip interactive chrome (not content)
-  clone.querySelectorAll('.tbl-row-num,.tbl-col-resize-handle,.tbl-row-resize-handle,.tbl-col-sel,.tbl-row-sel,.tbl-img-btn,.tbl-cell-drop,.tbl-shadow-btn,.tbl-edge-h,.cf-file-del').forEach(e=>e.remove());
+  clone.querySelectorAll('.tbl-row-num,.tbl-col-resize-handle,.tbl-row-resize-handle,.tbl-col-sel,.tbl-row-sel,.tbl-img-btn,.tbl-cell-drop,.tbl-shadow-btn,.tbl-edge-h,.cf-file-del,.cf-code-copy').forEach(e=>e.remove());
   // Save col widths to data attribute before stripping colgroup (persist across save/load)
   // Only save for user-customized colgroups (no data-auto).
   // Auto-generated calc() widths are NOT saved — tblEqualizeColumns will rebuild on reload.
@@ -3101,7 +3136,7 @@ function onContentChange(){
     img.removeAttribute('src');
   });
   // Strip cf-embed-toolbar from saved content (UI elements only)
-  clone.querySelectorAll('.cf-embed-toolbar,.cf-img-toolbar,.cf-img-resize-h,.cf-col-toolbar,.cf-panel-actions').forEach(e=>e.remove());
+  clone.querySelectorAll('.cf-embed-toolbar,.cf-img-toolbar,.cf-img-resize-h,.cf-col-toolbar,.cf-panel-actions,.cf-code-copy').forEach(e=>e.remove());
   // Strip carousel slide blob URLs
   clone.querySelectorAll('.cf-carousel-block [data-slideid]').forEach(media=>{
     if(media.src&&!media.src.startsWith('data:'))media.removeAttribute('src');
@@ -3112,7 +3147,7 @@ function onContentChange(){
     if(media.src&&!media.src.startsWith('data:'))media.removeAttribute('src');
   });
   // Strip cf-img-block toolbar/handles from saved content
-  clone.querySelectorAll('.cf-img-toolbar,.cf-img-resize-h,.cf-img-ctx,.cf-col-toolbar,.cf-panel-actions,.editor-block-bar').forEach(e=>e.remove());
+  clone.querySelectorAll('.cf-img-toolbar,.cf-img-resize-h,.cf-img-ctx,.cf-col-toolbar,.cf-panel-actions,.editor-block-bar,.cf-code-copy').forEach(e=>e.remove());
   // Preserve cp-mapped spans (theme-aware colors) in saved content
   doc.content=clone.innerHTML;doc.updatedAt=new Date().toISOString();
   fmSaveAll();tbSaveAll();markDirty();
@@ -4360,7 +4395,31 @@ const dd=document.getElementById('bbSizeDD');if(dd&&!dd.contains(e.target)&&e.ta
 // TOOLBAR
 function fmt(cmd){document.execCommand(cmd,false,null);document.getElementById('editor')?.focus({preventScroll:true});}
 function applyBlock(tag){document.execCommand('formatBlock',false,tag);document.getElementById('editor')?.focus({preventScroll:true});}
-function insertCode(){document.getElementById('editor')?.focus({preventScroll:true});document.execCommand('insertHTML',false,'<pre>// code here</pre><p><br></p>');}
+function insertCode(savedRange){
+  const editor=document.getElementById('editor');if(!editor)return;
+  const pre=document.createElement('pre');
+  const codeNode=document.createTextNode('// code here');pre.appendChild(codeNode);
+  const btn=document.createElement('button');
+  btn.className='cf-code-copy';btn.setAttribute('contenteditable','false');btn.textContent='Copy';
+  pre.appendChild(btn);
+  _cfInsertBlockAtRange(pre,savedRange!==undefined?savedRange:_slashSavedRange);
+  onContentChange();
+}
+function _cfAddCodeCopyBtns(container){
+  (container||document.getElementById('editor'))?.querySelectorAll('pre:not(:has(.cf-code-copy))').forEach(pre=>{
+    const btn=document.createElement('button');
+    btn.className='cf-code-copy';btn.setAttribute('contenteditable','false');btn.textContent='Copy';
+    pre.appendChild(btn);
+  });
+}
+document.addEventListener('click',e=>{
+  const btn=e.target.closest('.cf-code-copy');if(!btn)return;
+  e.preventDefault();e.stopPropagation();
+  const pre=btn.closest('pre');if(!pre)return;
+  const tmp=pre.cloneNode(true);tmp.querySelectorAll('.cf-code-copy').forEach(b=>b.remove());
+  const code=tmp.textContent;
+  navigator.clipboard?.writeText(code).then(()=>{btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',1500)}).catch(()=>{});
+});
 function insertLink(){const url=prompt('Nhap URL:');if(!url)return;const text=prompt('Nhap text:',url)||url;document.getElementById('editor')?.focus({preventScroll:true});document.execCommand('insertHTML',false,`<a href="${escH(url)}" target="_blank">${escH(text)}</a>`);}
 
 // CTX IMAGE
@@ -6943,7 +7002,7 @@ function _slashInsert(id,execRange){
   }
 
   // ── Code Block ───────────────────────────────────────────
-  if(id==='code'){insertCode();onContentChange();return;}
+  if(id==='code'){insertCode(savedRange);return;}
 
   // ── Column Layouts ───────────────────────────────────────
   if(id==='col2'||id==='col3'){
@@ -10502,7 +10561,7 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .editor-content p{margin-bottom:12px}',
     '.ws-canvas .editor-content h1{font-size:1.5rem;font-weight:600;margin:24px 0 10px}',
     '.ws-canvas .editor-content h2{font-size:1.25rem;font-weight:600;margin:20px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border)}',
-    '.ws-canvas .editor-content h3{font-size:1rem;font-weight:600;margin:16px 0 7px}',
+    '.ws-canvas .editor-content h3{font-size:1.0625rem;font-weight:700;margin:18px 0 8px;padding-left:10px;border-left:3px solid var(--accent)}',
     '.ws-canvas .editor-content h4,.ws-canvas .editor-content h5,.ws-canvas .editor-content h6{font-size:.875rem;font-weight:600;margin:14px 0 6px}',
     '.ws-canvas .editor-content ul,.ws-canvas .editor-content ol{padding-left:24px;margin-bottom:12px}',
     '.ws-canvas .editor-content li{margin-bottom:4px}',
@@ -10518,7 +10577,7 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .editor-content .tbl-outer{display:block;margin:14px 0;width:100%;overflow-x:auto;overflow-y:visible}',
     '.ws-canvas .editor-content table{border-collapse:collapse;width:max-content;max-width:none;min-width:100%;font-size:.875rem;table-layout:fixed !important;word-break:break-word;border:1px solid var(--tbl-border);box-sizing:border-box}',
     '.ws-canvas .editor-content th,.ws-canvas .editor-content td{padding:8px 12px;word-break:break-word;overflow-wrap:break-word;white-space:normal;vertical-align:top;min-width:40px}',
-    '.ws-canvas .editor-content th{border-right:1px solid var(--tbl-border);border-bottom:2px solid var(--tbl-border);background:var(--tbl-hbg);font-weight:600;text-align:left;color:var(--tbl-htxt)}',
+    '.ws-canvas .editor-content th{border-right:1px solid var(--tbl-border);border-bottom:2px solid var(--accent);background:var(--tbl-hbg);font-weight:600;text-align:left;color:var(--tbl-htxt)}',
     '.ws-canvas .editor-content td{border-right:1px solid var(--tbl-border);border-bottom:1px solid var(--tbl-border);background:var(--surface);color:var(--text);position:relative}',
     '.ws-canvas .editor-content .tbl-row-num{width:36px!important;min-width:36px!important;max-width:36px!important;text-align:center!important;padding:8px 2px!important;font-size:11px;font-weight:600;background:var(--tbl-hbg)!important;color:var(--text3);border-right:2px solid var(--tbl-border)!important;user-select:none;cursor:default}',
     '.ws-canvas .editor-content th.tbl-row-num{font-size:10px;text-transform:uppercase;letter-spacing:.5px}',
@@ -10603,6 +10662,10 @@ function _buildViewerShellCss(accent){
     '[data-theme="dark"] .ws-canvas .editor-content pre{background:#0d1117;border:1px solid var(--border)}',
     '[data-theme="dark"] .ws-canvas .editor-content blockquote{background:rgba(77,138,255,.08)}',
     '[data-theme="dark"] .ws-canvas .editor-content td{background:var(--surface)}',
+    /* Zebra striping for all modes — both viewer rules use CSS vars */
+    '.ws-canvas .editor-content tr:nth-child(even) td:not(.tbl-row-num){background:var(--tbl-stripe)}',
+    '.ws-canvas .editor-content tr:hover td:not(.tbl-row-num){background:var(--tbl-hover)}',
+    '.ws-canvas .editor-content tr:hover .tbl-row-num{background:var(--tbl-hover)}',
     '[data-theme="dark"] .ws-canvas .editor-content tr:nth-child(even) td:not(.tbl-row-num){background:var(--tbl-stripe)}',
     '[data-theme="dark"] .ws-canvas .editor-content tr:hover td:not(.tbl-row-num){background:var(--tbl-hover)}',
     /* ── Column Layout ── */
@@ -10873,7 +10936,7 @@ async function doExportWebsite(){
       '.tbl-col-sel','.tbl-row-sel','.tbl-img-btn','.tbl-shadow-btn',
       '.tbl-cell-drop','.tbl-edge-h','.cf-img-toolbar','.cf-img-resize-h',
       '.cf-col-toolbar','.cf-panel-actions','.cf-car-toolbar','.editor-block-bar','.slash-hint',
-      '.cf-checklist-cam-btn'
+      '.cf-checklist-cam-btn','.cf-code-copy'
     ].join(',')).forEach(e=>e.remove());
     clone.querySelectorAll('.cf-img-block img,.cf-img-block video').forEach(el=>{if(el.src&&!el.src.startsWith('data:'))el.removeAttribute('src');});
     clone.querySelectorAll('colgroup').forEach(e=>e.remove());
@@ -11043,7 +11106,7 @@ async function doExportWebsite(){
       '.cf-panel-actions','.cf-car-toolbar','.cf-embed-toolbar',
       '.cf-car-add-slide','.editor-block-bar','.slash-hint','.pab-logo-menu',
       '.cf-toc-del','.cf-btn-toolbar','.cf-file-del',
-      '.cf-tab-add','.cf-progress-del','.cf-checklist-cam-btn'
+      '.cf-tab-add','.cf-progress-del','.cf-checklist-cam-btn','.cf-code-copy'
     ].join(',')).forEach(e=>e.remove());
 
     // ─ 3b. Clean State: strip all editor-mode attributes ───
@@ -11843,7 +11906,7 @@ async function doExportOptimized(){
       '.tbl-col-sel','.tbl-row-sel','.tbl-img-btn','.tbl-shadow-btn',
       '.tbl-cell-drop','.tbl-edge-h','.cf-img-toolbar','.cf-img-resize-h',
       '.cf-col-toolbar','.cf-panel-actions','.cf-car-toolbar','.editor-block-bar','.slash-hint',
-      '.cf-checklist-cam-btn'
+      '.cf-checklist-cam-btn','.cf-code-copy'
     ].join(',')).forEach(e=>e.remove());
     clone.querySelectorAll('.cf-img-block img,.cf-img-block video').forEach(el=>{if(el.src&&!el.src.startsWith('data:'))el.removeAttribute('src');});
     clone.querySelectorAll('colgroup').forEach(e=>e.remove());
