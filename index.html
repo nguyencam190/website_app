@@ -1794,6 +1794,7 @@ td.tbl-inner-container{padding:0!important;overflow:visible!important;vertical-a
               <div class="hdr-dd-item" onclick="hdrCopyLink();hdrCloseAll()"><i class="ti ti-link"></i> Copy link trang</div>
               <div class="hdr-dd-item" onclick="hdrDuplicatePage();hdrCloseAll()"><i class="ti ti-copy"></i> Sao chép trang</div>
               <div class="hdr-dd-item" onclick="hdrExportCurrentJson();hdrCloseAll()"><i class="ti ti-file-export"></i> Xuất JSON (backup ảnh)</div>
+              <div class="hdr-dd-item" onclick="reloadAllMedia();hdrCloseAll()"><i class="ti ti-refresh"></i> Reload lại tất cả ảnh/video</div>
               <div class="hdr-dd-sep"></div>
               <div class="hdr-dd-item danger" onclick="hdrDeletePage()"><i class="ti ti-trash"></i> Xóa trang</div>
             </div>
@@ -4550,6 +4551,18 @@ async function _fmLoadSrc(fm){
     el.src=src;
     const ph=fm.querySelector('.fmedia-placeholder');if(ph)ph.remove();
   }
+}
+
+async function reloadAllMedia(){
+  const doc=currentDoc();if(!doc)return;
+  // Clear cached blob URLs for this doc so IDB is re-fetched
+  (doc.images||[]).forEach(m=>{
+    if(_objUrls[m.id]){try{URL.revokeObjectURL(_objUrls[m.id]);}catch(e){}delete _objUrls[m.id];const i=_objUrlOrder.indexOf(m.id);if(i>=0)_objUrlOrder.splice(i,1);}
+    // Also clear slides
+    (m.slides||[]).forEach(s=>{if(_objUrls[s.id]){try{URL.revokeObjectURL(_objUrls[s.id]);}catch(e){}delete _objUrls[s.id];const j=_objUrlOrder.indexOf(s.id);if(j>=0)_objUrlOrder.splice(j,1);}});
+  });
+  await fmLoadAll(doc);
+  showToast('Đã reload tất cả media','success');
 }
 
 async function fmLoadAll(doc){
