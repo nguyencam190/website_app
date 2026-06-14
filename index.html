@@ -6805,7 +6805,21 @@ function slashExec(id){
   }
   _slashDeleteSlash();
   try{
-    if(sel.rangeCount)_slashSavedRange=sel.getRangeAt(0).cloneRange();
+    if(sel.rangeCount){
+      const r=sel.getRangeAt(0).cloneRange();
+      // Chrome removes empty text nodes on editor blur (focus moves to popup/dialog).
+      // Re-anchor to parent element when cursor is in an empty text node so the range
+      // survives DOM normalization and popups (embed, emoji, etc.) can restore it.
+      const sc=r.startContainer;
+      if(sc.nodeType===Node.TEXT_NODE&&sc.textContent===''){
+        const par=sc.parentElement;
+        if(par&&document.contains(par)){
+          const off=Math.max(0,Array.from(par.childNodes).indexOf(sc));
+          const nr=document.createRange();nr.setStart(par,off);nr.collapse(true);
+          _slashSavedRange=nr;
+        }else{_slashSavedRange=r;}
+      }else{_slashSavedRange=r;}
+    }
   }catch(e){}
   const _execRange=_slashSavedRange; // capture before 10ms delay so concurrent slashes don't clobber it
   setTimeout(()=>_slashInsert(id,_execRange),10);
