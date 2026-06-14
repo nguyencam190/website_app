@@ -3200,6 +3200,8 @@ function openDoc(id){
   },80);
   setTimeout(async()=>{const ed=document.getElementById('editor');await _cfCarLoadAll(ed);_cfEmbedLoadAll(ed);},120);
   setTimeout(tblAttachAll,50);setTimeout(()=>tbLoadAll(doc),60);setTimeout(()=>fmLoadAll(doc),80);
+  // Auto-reload: after fmLoadAll + observer have had time to run, force-load any still-missing media from IDB
+  setTimeout(async()=>{const unloaded=document.querySelectorAll('.fmedia:not([data-loaded="1"])');for(const fm of unloaded){await _fmLoadSrc(fm);fm.dataset.loaded='1';}},1500);
   // Re-apply theme colors, then reset canvas width reference
   setTimeout(swapThemeColors,100);
   setTimeout(resetCanvasWidth,150);
