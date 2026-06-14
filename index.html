@@ -79,6 +79,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .header-icon-btn:hover{background:rgba(255,255,255,.12);color:#fff}
 .header-logo{display:flex;align-items:center;gap:9px;text-decoration:none;flex-shrink:0;font-weight:700;font-size:15px;color:var(--accent)}
 .logo-box{width:30px;height:30px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;box-shadow:0 2px 8px var(--accent-glow);overflow:hidden;cursor:pointer;flex-shrink:0}
+.hdr-logo-menu{position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.16);min-width:200px;z-index:900;overflow:hidden;display:none}
+.hdr-logo-menu.on{display:block;animation:cpFade .12s ease}
+.hdr-logo-menu-item{display:flex;align-items:center;gap:9px;padding:9px 13px;cursor:pointer;font-size:13px;color:var(--text);transition:.1s}
+.hdr-logo-menu-item:hover{background:var(--surface2)}
+.hdr-logo-colors{display:flex;gap:6px;padding:10px 13px;flex-wrap:wrap;border-top:1px solid var(--border)}
 .logo-label{color:#fff;font-size:13.5px;font-weight:700;letter-spacing:.2px}
 .header-center{position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;z-index:10}
 .header-search-wrap{width:560px;position:relative;z-index:10}
@@ -1391,7 +1396,27 @@ td.tbl-inner-container{padding:0!important;overflow:visible!important;vertical-a
   <!-- Logo -->
   <div class="header-logo" id="headerLogoWrap" onclick="hdrLogoClick()" title="Click để thay đổi logo" style="cursor:pointer">
     <div class="logo-box" id="hdrLogoBox"><span id="hdrLogoText">P</span></div>
-    <input type="file" accept="image/*" id="hdrLogoFile" style="display:none" onchange="pabLogoUpload(event)">
+    <input type="file" accept="image/*" id="hdrLogoFile" style="display:none" onchange="hdrLogoUpload(event)">
+  </div>
+  <!-- Header logo dropdown menu (independent from workspace logo) -->
+  <div class="hdr-logo-menu" id="hdrLogoMenu">
+    <label class="hdr-logo-menu-item" style="cursor:pointer">
+      <i class="ti ti-upload" style="font-size:14px;color:var(--text2)"></i> Upload logo image
+      <input type="file" accept="image/*" style="display:none" onchange="hdrLogoUpload(event)">
+    </label>
+    <div class="hdr-logo-menu-item" onclick="hdrLogoReset()">
+      <i class="ti ti-refresh" style="font-size:14px;color:var(--text2)"></i> Use initial letter
+    </div>
+    <div class="hdr-logo-colors">
+      <div class="pab-logo-color" style="background:#2563eb" onclick="hdrLogoColor('#2563eb')"></div>
+      <div class="pab-logo-color" style="background:#7c3aed" onclick="hdrLogoColor('#7c3aed')"></div>
+      <div class="pab-logo-color" style="background:#db2777" onclick="hdrLogoColor('#db2777')"></div>
+      <div class="pab-logo-color" style="background:#dc2626" onclick="hdrLogoColor('#dc2626')"></div>
+      <div class="pab-logo-color" style="background:#d97706" onclick="hdrLogoColor('#d97706')"></div>
+      <div class="pab-logo-color" style="background:#16a34a" onclick="hdrLogoColor('#16a34a')"></div>
+      <div class="pab-logo-color" style="background:#0891b2" onclick="hdrLogoColor('#0891b2')"></div>
+      <div class="pab-logo-color" style="background:#475569" onclick="hdrLogoColor('#475569')"></div>
+    </div>
   </div>
 
   <!-- Search + Create — absolutely centered in header -->
@@ -2332,6 +2357,7 @@ function init(){
   _sbInitResize();
   _initSlashCommands();
   _pabLogoInit();
+  _hdrLogoInit();
   _initSmartPab();
   initCanvasScaling();
   // Update fixed-position toolbars on editor scroll
@@ -2714,7 +2740,44 @@ function hdrCopyShareLink(){
 }
 
 
-function hdrLogoClick(){document.getElementById('hdrLogoFile')?.click();}
+function hdrLogoClick(){
+  const menu=document.getElementById('hdrLogoMenu');
+  const wrap=document.getElementById('headerLogoWrap');
+  if(!menu||!wrap)return;
+  if(menu.classList.contains('on')){menu.classList.remove('on');return;}
+  const r=wrap.getBoundingClientRect();
+  menu.style.top=(r.bottom+6)+'px';
+  menu.style.left=r.left+'px';
+  menu.classList.add('on');
+  setTimeout(()=>document.addEventListener('click',function once(e){
+    if(!e.target.closest('#hdrLogoMenu')&&!e.target.closest('#headerLogoWrap')){
+      menu.classList.remove('on');document.removeEventListener('click',once);
+    }
+  }),50);
+}
+function hdrLogoUpload(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    if(!state.headerLogo)state.headerLogo={};
+    state.headerLogo.imgDataUrl=ev.target.result;
+    persistNow();_hdrLogoInit();document.getElementById('hdrLogoMenu')?.classList.remove('on');
+  };
+  reader.readAsDataURL(file);
+  e.target.value='';
+}
+function hdrLogoColor(color){
+  if(!state.headerLogo)state.headerLogo={};
+  state.headerLogo.color=color;
+  delete state.headerLogo.imgDataUrl;
+  persistNow();_hdrLogoInit();document.getElementById('hdrLogoMenu')?.classList.remove('on');
+}
+function hdrLogoReset(){
+  if(!state.headerLogo)state.headerLogo={};
+  delete state.headerLogo.imgDataUrl;
+  delete state.headerLogo.color;
+  persistNow();_hdrLogoInit();document.getElementById('hdrLogoMenu')?.classList.remove('on');
+}
 
 // ── PAB Logo ─────────────────────────────────────────────────
 function _pabLogoInit(){
@@ -2754,20 +2817,22 @@ function _pabLogoInit(){
       if(sbTxt){sbTxt.style.display='';sbTxt.textContent=initial;}
     }
   }
-  // Sync header logo box
+}
+function _hdrLogoInit(){
+  const H=state.headerLogo||{};
+  const initial=(state.projectName||'P')[0].toUpperCase();
   const hdrBox=document.getElementById('hdrLogoBox');const hdrTxt=document.getElementById('hdrLogoText');
   if(hdrBox&&hdrTxt){
-    if(L.imgDataUrl){
-      // Natural size — only shrink if taller than bar
+    if(H.imgDataUrl){
       hdrBox.style.cssText='max-height:36px;height:auto;width:auto;min-width:0;background:transparent;box-shadow:none;border-radius:4px;overflow:hidden;display:flex;align-items:center;cursor:pointer;flex-shrink:0';
       hdrTxt.style.display='none';
       let img=hdrBox.querySelector('img');
       if(!img){img=document.createElement('img');hdrBox.insertBefore(img,hdrBox.firstChild);}
-      img.src=L.imgDataUrl;
+      img.src=H.imgDataUrl;
       img.style.cssText='max-height:36px;height:auto;width:auto;object-fit:contain;display:block;max-width:240px';
     } else {
       hdrBox.style.cssText='';
-      hdrBox.style.background=L.color||'var(--accent)';
+      hdrBox.style.background=H.color||'var(--accent)';
       hdrBox.querySelectorAll('img').forEach(i=>i.remove());
       hdrTxt.style.display='';hdrTxt.textContent=initial;
     }
@@ -2798,7 +2863,7 @@ function pabLogoToggle(){
     }
   }),50);
 }
-function _closeLogoMenus(){document.getElementById('pabLogoMenu')?.classList.remove('on');document.getElementById('sbLogoMenu')?.classList.remove('on');}
+function _closeLogoMenus(){document.getElementById('pabLogoMenu')?.classList.remove('on');document.getElementById('sbLogoMenu')?.classList.remove('on');document.getElementById('hdrLogoMenu')?.classList.remove('on');}
 function pabLogoColor(color){
   if(!state.projectLogo)state.projectLogo={};
   state.projectLogo.color=color;
@@ -2847,6 +2912,7 @@ function _updatePabStar(){
 }
 function updatePageActionBar(){
   try{_pabLogoInit();}catch(e){}
+  try{_hdrLogoInit();}catch(e){}
   const doc=currentDoc();
   const dateEl=document.getElementById('pabDate');
   const statusEl=document.getElementById('pabStatus');
@@ -4606,7 +4672,7 @@ function updateUserUI(){
   const nameEl=document.getElementById('sbUsernameEl');if(nameEl)nameEl.textContent=state.username;
   const avatarEl=document.getElementById('sbAvatarEl');if(avatarEl)avatarEl.textContent=(state.username||'U').charAt(0).toUpperCase();
 }
-function editProjectName(){const name=prompt('Doi ten du an:',state.projectName);if(name!==null&&name.trim()){state.projectName=name.trim();persist();const el=document.getElementById('projectNameEl');if(el)el.textContent=state.projectName;const spTxt=document.getElementById('sbSpaceIconText');if(spTxt&&!(state.projectLogo&&state.projectLogo.imgDataUrl))spTxt.textContent=state.projectName.charAt(0).toUpperCase();_pabLogoInit();}}
+function editProjectName(){const name=prompt('Doi ten du an:',state.projectName);if(name!==null&&name.trim()){state.projectName=name.trim();persist();const el=document.getElementById('projectNameEl');if(el)el.textContent=state.projectName;const spTxt=document.getElementById('sbSpaceIconText');if(spTxt&&!(state.projectLogo&&state.projectLogo.imgDataUrl))spTxt.textContent=state.projectName.charAt(0).toUpperCase();_pabLogoInit();_hdrLogoInit();}}
 function editUser(){const name=prompt('Doi ten:',state.username);if(name!==null){state.username=name||state.username;persist();updateUserUI();}}
 
 // MODALS
