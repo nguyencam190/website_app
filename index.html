@@ -834,7 +834,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .cf-checklist[data-status="critical"] .cf-checklist-head:hover{background:rgba(239,68,68,0.52)}
 .cf-checklist-head{display:flex;align-items:center;gap:8px;padding:8px 12px 8px 10px;cursor:pointer;user-select:none;background:var(--surface2);transition:background .12s}
 .cf-checklist-head:hover{background:var(--surface3)}
-.cf-cl-badge{display:none;align-items:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:2px 8px;border-radius:10px;flex-shrink:0;white-space:nowrap}
+.cf-cl-badge{display:none;align-items:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:2px 8px;border-radius:10px;flex-shrink:0;white-space:nowrap;cursor:pointer;transition:filter .12s}
+.cf-cl-badge:hover{filter:brightness(1.15)}
 .cf-checklist-head:hover .cf-cl-badge{display:inline-flex}
 .cf-checklist[data-status="minor"] .cf-cl-badge{background:rgba(59,130,246,0.22);color:#1d4ed8}
 .cf-checklist[data-status="major"] .cf-cl-badge{background:rgba(249,115,22,0.28);color:#9a3412}
@@ -7477,21 +7478,23 @@ function _cfWireChecklist(cl){
   let badge=cl.querySelector('.cf-cl-badge');
   if(!badge){badge=document.createElement('span');badge.className='cf-cl-badge';const cam=cl.querySelector('.cf-checklist-cam-btn');if(cam)cam.before(badge);else cl.querySelector('.cf-checklist-head').appendChild(badge);}
   badge.textContent=_clLabels[cl.dataset.status||'minor']||'Minor';
-  if(statusBtn){
-    statusBtn.addEventListener('click',e=>{
-      e.stopPropagation();
-      const cur=cl.dataset.status||'minor';
-      const next=cur==='minor'?'major':cur==='major'?'critical':'minor';
-      const icons={minor:'💡',major:'⚠️',critical:'❌'};
-      cl.dataset.status=next;
-      statusBtn.textContent=icons[next];
-      badge.textContent=_clLabels[next];
-      onContentChange();
-    });
+  // Shared status cycle logic
+  function _cycleStatus(){
+    const cur=cl.dataset.status||'minor';
+    const next=cur==='minor'?'major':cur==='major'?'critical':'minor';
+    const icons={minor:'💡',major:'⚠️',critical:'❌'};
+    cl.dataset.status=next;
+    if(statusBtn)statusBtn.textContent=icons[next];
+    badge.textContent=_clLabels[next];
+    onContentChange();
   }
+  if(statusBtn){
+    statusBtn.addEventListener('click',e=>{e.stopPropagation();_cycleStatus();});
+  }
+  badge.addEventListener('click',e=>{e.stopPropagation();_cycleStatus();});
   if(head){
     head.addEventListener('click',e=>{
-      if(e.target.closest('.cf-checklist-status-btn,.cf-checklist-cam-btn,.cf-checklist-title'))return;
+      if(e.target.closest('.cf-checklist-status-btn,.cf-checklist-cam-btn,.cf-checklist-title,.cf-cl-badge'))return;
       const _opening=cl.dataset.open!=='true';
       if(_opening){document.querySelectorAll('.cf-checklist[data-open="true"]').forEach(o=>{if(o!==cl)o.dataset.open='false';});}
       cl.dataset.open=_opening?'true':'false';
