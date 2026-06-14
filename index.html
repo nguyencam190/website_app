@@ -3190,7 +3190,12 @@ async function docCtxExportJson(){
 
   // Collect all media IDs referenced in this page
   const mediaIds=new Set();
-  (doc.images||[]).forEach(m=>{if(m&&m.id)mediaIds.add(m.id);});
+  (doc.images||[]).forEach(m=>{
+    if(!m)return;
+    if(m.id)mediaIds.add(m.id);
+    // Floating carousel: individual slide blobs are under slides[i].id, not m.id
+    if(m.type==='carousel'&&m.slides)(m.slides).forEach(sl=>{if(sl&&sl.id)mediaIds.add(sl.id);});
+  });
   const tmp=document.createElement('div');tmp.innerHTML=doc.content||'';
   tmp.querySelectorAll('[data-cfimgid]').forEach(el=>mediaIds.add(el.dataset.cfimgid));
   tmp.querySelectorAll('[data-tblimgid]').forEach(el=>mediaIds.add(el.dataset.tblimgid));
@@ -3238,11 +3243,20 @@ async function importPageJson(){
       const importDoc=JSON.parse(JSON.stringify(data.doc));
       const media=data.media||{};
 
-      // Re-store all blobs into IndexedDB
+      // Re-store all blobs into IndexedDB and populate obj URL cache
+      let _importOk=0,_importFail=0;
       for(const[id,b64] of Object.entries(media)){
         if(!b64)continue;
-        try{const r=await fetch(b64);const blob=await r.blob();await _idbPut(id,blob);}catch(e){}
+        try{
+          const blob=_dataUrlToBlob(b64);
+          if(!blob){_importFail++;continue;}
+          await _idbPut(id,blob);
+          // Pre-cache blob URL so idbToZipAsset finds it without IDB roundtrip during publish
+          if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}
+          _importOk++;
+        }catch(e){_importFail++;}
       }
+      if(_importFail>0)console.warn('[import] Failed to restore',_importFail,'media items;',_importOk,'ok');
 
       // Give a new ID to avoid collision with existing docs
       const newId=uid();
@@ -3253,12 +3267,23 @@ async function importPageJson(){
       importDoc.createdAt=importDoc.createdAt||new Date().toISOString();
       importDoc.updatedAt=new Date().toISOString();
 
-      // Re-attach base64 src for small images into doc.images
+      // Re-attach base64 src for small floating images; clear stale blob: srcs
       (importDoc.images||[]).forEach(m=>{
+        if(!m)return;
+        // Outer entry
         if(media[m.id]&&(!m.src||m.src.startsWith('blob:'))){
-          // Only re-attach if small (≤500KB) to match persist() logic
           if((m.size||0)<=512*1024)m.src=media[m.id];
           else delete m.src;
+        }else if(m.src&&m.src.startsWith('blob:'))delete m.src;
+        // Carousel slides
+        if(m.type==='carousel'&&m.slides){
+          m.slides.forEach(sl=>{
+            if(!sl)return;
+            if(media[sl.id]&&(!sl.src||sl.src.startsWith('blob:'))){
+              if((sl.size||0)<=512*1024)sl.src=media[sl.id];
+              else delete sl.src;
+            }else if(sl.src&&sl.src.startsWith('blob:'))delete sl.src;
+          });
         }
       });
 
@@ -3329,6 +3354,19 @@ function _blobToB64(blob){
     r.onload=e=>res(e.target.result);
     r.readAsDataURL(blob);
   });
+}
+
+// base64 DataURL → Blob (used for JSON import — avoids fetch('data:...') which fails on file:// for large media)
+function _dataUrlToBlob(dataUrl){
+  if(!dataUrl||!dataUrl.startsWith('data:'))return null;
+  const idx=dataUrl.indexOf(',');if(idx<0)return null;
+  const mime=dataUrl.slice(5,idx).split(';')[0]||'application/octet-stream';
+  try{
+    const bytes=atob(dataUrl.slice(idx+1));
+    const arr=new Uint8Array(bytes.length);
+    for(let i=0;i<bytes.length;i++)arr[i]=bytes.charCodeAt(i);
+    return new Blob([arr],{type:mime});
+  }catch(e){return null;}
 }
 
 // Compress image blob trước khi export (giảm kích thước file HTML)
