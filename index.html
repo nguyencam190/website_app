@@ -858,6 +858,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 [data-theme="dark"] .cf-checklist{background:var(--surface)}
 [data-theme="dark"] .cf-checklist-head{background:var(--surface2)}
 [data-theme="dark"] .cf-checklist-head:hover{background:var(--surface3)}
+/* Checklist inside table cell or column item */
+td .cf-checklist,th .cf-checklist,.cf-column-item .cf-checklist{margin:4px 0;font-size:13px}
+td .cf-checklist-head,.cf-column-item .cf-checklist-head{padding:6px 10px 6px 8px}
+td .cf-checklist-body,.cf-column-item .cf-checklist-body{padding:8px 10px 10px 10px}
 /* ═══ TOC BLOCK ═════════════════════════════════════════════ */
 .cf-toc{border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin:12px 0;background:var(--surface2);position:relative}
 .cf-toc-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
@@ -7970,29 +7974,44 @@ function _cfInsertBlockAtRange(block, savedRange){
       let node=range.startContainer;
       // Guard: node may be detached after DOM mutations (e.g. _slashDeleteSlash removed it)
       if(!node||!document.contains(node)){throw new Error('detached');}
-      // Climb up DOM to find a direct-child-of-editor or valid container
-      while(node&&node!==document){
-        const par=node.parentElement||node.parentNode;
-        if(!par)break;
-        if(par.classList?.contains('cf-column-item')||
-           par.classList?.contains('cf-panel-content')||
-           par.classList?.contains('cf-checklist-body')||
-           par.classList?.contains('cf-tab-panel')||
-           par.tagName==='TD'||par.tagName==='TH'||
-           par===editor){
-          // Found the container — insert after current node
-          insertParent=par;
-          // If node is an empty block, replace it; otherwise insert after
-          const isEmptyBlock=(node.tagName==='P'||node.tagName==='DIV')&&
-                             !node.textContent.trim()&&(node.children.length<=1);
-          if(isEmptyBlock){
-            insertBefore=node;
-          } else {
-            insertBefore=node.nextSibling||null;
-          }
-          break;
+      // Cursor at element level of a supported container (e.g. after slash deletion in empty cell/column)
+      if(node.nodeType===Node.ELEMENT_NODE){
+        const tag=node.tagName?.toUpperCase();
+        if(tag==='TD'||tag==='TH'||
+           node.classList?.contains('cf-column-item')||
+           node.classList?.contains('cf-panel-content')||
+           node.classList?.contains('cf-checklist-body')||
+           node.classList?.contains('cf-tab-panel')||
+           node===editor){
+          insertParent=node;
+          insertBefore=node.childNodes[range.startOffset]||null;
         }
-        node=par;
+      }
+      if(!insertParent){
+        // Climb up DOM to find a direct-child-of-editor or valid container
+        while(node&&node!==document){
+          const par=node.parentElement||node.parentNode;
+          if(!par)break;
+          if(par.classList?.contains('cf-column-item')||
+             par.classList?.contains('cf-panel-content')||
+             par.classList?.contains('cf-checklist-body')||
+             par.classList?.contains('cf-tab-panel')||
+             par.tagName==='TD'||par.tagName==='TH'||
+             par===editor){
+            // Found the container — insert after current node
+            insertParent=par;
+            // If node is an empty block, replace it; otherwise insert after
+            const isEmptyBlock=(node.tagName==='P'||node.tagName==='DIV')&&
+                               !node.textContent.trim()&&(node.children.length<=1);
+            if(isEmptyBlock){
+              insertBefore=node;
+            } else {
+              insertBefore=node.nextSibling||null;
+            }
+            break;
+          }
+          node=par;
+        }
       }
     }catch(e){}
   }
@@ -9409,11 +9428,20 @@ function _getBlockBar(){
     const target=_blockBarTarget;
     const editor=document.getElementById('editor');
     if(target&&(editor.contains(target)||target.closest('[contenteditable]'))){
-      // Insert a new <p> after the target block and set cursor there
-      const container=target.parentElement||editor;
-      const p=document.createElement('p');p.innerHTML='<br>';
-      container.insertBefore(p,target.nextSibling);
+      // If cursor is currently inside a table cell or column item, prefer that container
+      // (covers the case where block bar shows at table/layout level for an empty cell)
       const sel=window.getSelection();
+      let useContainer=null;
+      if(sel&&sel.rangeCount){
+        const anch=sel.getRangeAt(0).startContainer;
+        const anchEl=anch.nodeType===Node.TEXT_NODE?anch.parentElement:anch;
+        const cellOrCol=anchEl?.closest?.('td:not(.tbl-row-num),th:not(.tbl-row-num),.cf-column-item');
+        if(cellOrCol&&editor.contains(cellOrCol))useContainer=cellOrCol;
+      }
+      const container=useContainer||target.parentElement||editor;
+      const insertAfter=useContainer?null:target.nextSibling;
+      const p=document.createElement('p');p.innerHTML='<br>';
+      container.insertBefore(p,insertAfter);
       const range=document.createRange();
       range.selectNodeContents(p);range.collapse(true);
       sel.removeAllRanges();sel.addRange(range);
