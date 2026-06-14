@@ -10649,6 +10649,7 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .cf-checklist[data-open="true"] .cf-checklist-btn i{transform:rotate(90deg)}',
     '.ws-canvas .cf-checklist-body{padding:10px 14px 12px 14px;border-top:1px solid var(--border);display:none;min-height:36px;font-size:14px;line-height:1.7;color:var(--text)}',
     '.ws-canvas .cf-checklist[data-open="true"] .cf-checklist-body{display:block}',
+    '.ws-canvas .cf-checklist-cam-btn{display:none!important}',
     /* ── TOC Block ── */
     '.ws-canvas .cf-toc{border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin:12px 0;background:var(--surface2)}',
     '.ws-canvas .cf-toc-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;display:flex;align-items:center;gap:6px}',
@@ -10863,7 +10864,8 @@ async function doExportWebsite(){
       '.tbl-row-num','.tbl-col-resize-handle','.tbl-row-resize-handle',
       '.tbl-col-sel','.tbl-row-sel','.tbl-img-btn','.tbl-shadow-btn',
       '.tbl-cell-drop','.tbl-edge-h','.cf-img-toolbar','.cf-img-resize-h',
-      '.cf-col-toolbar','.cf-panel-actions','.cf-car-toolbar','.editor-block-bar','.slash-hint'
+      '.cf-col-toolbar','.cf-panel-actions','.cf-car-toolbar','.editor-block-bar','.slash-hint',
+      '.cf-checklist-cam-btn'
     ].join(',')).forEach(e=>e.remove());
     clone.querySelectorAll('.cf-img-block img,.cf-img-block video').forEach(el=>{if(el.src&&!el.src.startsWith('data:'))el.removeAttribute('src');});
     clone.querySelectorAll('colgroup').forEach(e=>e.remove());
@@ -11033,7 +11035,7 @@ async function doExportWebsite(){
       '.cf-panel-actions','.cf-car-toolbar','.cf-embed-toolbar',
       '.cf-car-add-slide','.editor-block-bar','.slash-hint','.pab-logo-menu',
       '.cf-toc-del','.cf-btn-toolbar','.cf-file-del',
-      '.cf-tab-add','.cf-progress-del'
+      '.cf-tab-add','.cf-progress-del','.cf-checklist-cam-btn'
     ].join(',')).forEach(e=>e.remove());
 
     // ─ 3b. Clean State: strip all editor-mode attributes ───
@@ -11832,7 +11834,8 @@ async function doExportOptimized(){
       '.tbl-row-num','.tbl-col-resize-handle','.tbl-row-resize-handle',
       '.tbl-col-sel','.tbl-row-sel','.tbl-img-btn','.tbl-shadow-btn',
       '.tbl-cell-drop','.tbl-edge-h','.cf-img-toolbar','.cf-img-resize-h',
-      '.cf-col-toolbar','.cf-panel-actions','.cf-car-toolbar','.editor-block-bar','.slash-hint'
+      '.cf-col-toolbar','.cf-panel-actions','.cf-car-toolbar','.editor-block-bar','.slash-hint',
+      '.cf-checklist-cam-btn'
     ].join(',')).forEach(e=>e.remove());
     clone.querySelectorAll('.cf-img-block img,.cf-img-block video').forEach(el=>{if(el.src&&!el.src.startsWith('data:'))el.removeAttribute('src');});
     clone.querySelectorAll('colgroup').forEach(e=>e.remove());
@@ -11930,7 +11933,7 @@ async function doExportOptimized(){
     tmp.querySelectorAll('.tbl-outer').forEach(w=>{w.querySelectorAll('.tbl-edge-h').forEach(e=>e.remove());w.style.marginLeft='';w.style.cssText='display:block;margin:14px 0;width:100%;overflow-x:auto;overflow-y:visible';});
     tmp.querySelectorAll('table.tbl-inner-row').forEach(innerTbl=>{const cg=innerTbl.querySelector('colgroup');if(!cg)return;const w=Array.from(cg.querySelectorAll('col')).map(c=>c.style.width||'').join(',');if(w.replace(/,/g,'').trim())innerTbl.dataset.innerwidths=w;});
     tmp.querySelectorAll('.tbl-inner-resize,.tbl-inner-add-btn').forEach(e=>e.remove());
-    tmp.querySelectorAll(['.tbl-row-num','.tbl-col-resize-handle','.tbl-row-resize-handle','.tbl-col-sel','.tbl-row-sel','.tbl-img-btn','.tbl-shadow-btn','.tbl-cell-drop','.tbl-merge-bar','colgroup','.fmedia','.txtbox','script','style','.cf-col-toolbar','.cf-col-count-dd','.cf-col-more-dd','.cf-img-toolbar','.cf-img-resize-h','.cf-img-ctx','.cf-panel-actions','.cf-car-toolbar','.cf-embed-toolbar','.cf-car-add-slide','.editor-block-bar','.slash-hint','.pab-logo-menu','.cf-toc-del','.cf-btn-toolbar','.cf-file-del','.cf-tab-add','.cf-progress-del'].join(',')).forEach(e=>e.remove());
+    tmp.querySelectorAll(['.tbl-row-num','.tbl-col-resize-handle','.tbl-row-resize-handle','.tbl-col-sel','.tbl-row-sel','.tbl-img-btn','.tbl-shadow-btn','.tbl-cell-drop','.tbl-merge-bar','colgroup','.fmedia','.txtbox','script','style','.cf-col-toolbar','.cf-col-count-dd','.cf-col-more-dd','.cf-img-toolbar','.cf-img-resize-h','.cf-img-ctx','.cf-panel-actions','.cf-car-toolbar','.cf-embed-toolbar','.cf-car-add-slide','.editor-block-bar','.slash-hint','.pab-logo-menu','.cf-toc-del','.cf-btn-toolbar','.cf-file-del','.cf-tab-add','.cf-progress-del','.cf-checklist-cam-btn'].join(',')).forEach(e=>e.remove());
     tmp.querySelectorAll('[contenteditable]').forEach(el=>el.removeAttribute('contenteditable'));
     tmp.querySelectorAll('[spellcheck]').forEach(el=>el.removeAttribute('spellcheck'));
     tmp.querySelectorAll('[oninput],[onfocus],[onblur],[onkeydown]').forEach(el=>{['oninput','onfocus','onblur','onkeydown'].forEach(a=>el.removeAttribute(a));});
