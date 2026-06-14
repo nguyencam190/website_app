@@ -3084,7 +3084,16 @@ function _renderDocNodes(container,sec,parentId,depth,filter){
     starBtn.onclick=(e)=>{e.stopPropagation();toggleStar(doc.id,starBtn);};
     item.appendChild(starBtn);
     item.appendChild(addChildBtn);item.appendChild(acts);
-    item.onclick=()=>openDoc(doc.id);
+    item.onclick=()=>{
+      openDoc(doc.id);
+      // Expand direct children on click (one level only — grandchildren stay collapsed)
+      if(hasKids&&_nodeCollapsed[doc.id]!==false){
+        _nodeCollapsed[doc.id]=false;
+        const ic=indicator.querySelector('i');
+        if(ic)ic.style.transform='rotate(90deg)';
+        if(childContainer)childContainer.style.display='';
+      }
+    };
 
     row.appendChild(indicator);row.appendChild(item);
     container.appendChild(row);
