@@ -3047,6 +3047,7 @@ function _renderDocNodes(container,sec,parentId,depth,filter){
     icon.innerHTML=hasKids?'<i class="ti ti-file-text" style="font-size:12px"></i>':'<i class="ti ti-file" style="font-size:12px"></i>';
     const titleEl=document.createElement('span');titleEl.className='doc-title';titleEl.textContent=doc.title||'Untitled';
     titleEl.addEventListener('dblclick',e=>{
+      if(hasKids){e.stopPropagation();e.preventDefault();return;}
       e.stopPropagation();
       titleEl.contentEditable='true';titleEl.focus();
       const r=document.createRange();r.selectNodeContents(titleEl);const s=window.getSelection();s.removeAllRanges();s.addRange(r);
@@ -3085,6 +3086,9 @@ function _renderDocNodes(container,sec,parentId,depth,filter){
     starBtn.onclick=(e)=>{e.stopPropagation();toggleStar(doc.id,starBtn);};
     item.appendChild(starBtn);
     item.appendChild(addChildBtn);item.appendChild(acts);
+    item.addEventListener('mousedown',e=>{
+      if(hasKids&&_sbLastClickId===doc.id&&Date.now()-_sbLastClickTime<400)e.preventDefault();
+    });
     item.onclick=()=>{
       const _now=Date.now();
       const _isDbl=(_sbLastClickId===doc.id&&_now-_sbLastClickTime<400);
