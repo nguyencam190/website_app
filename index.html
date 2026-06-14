@@ -1217,7 +1217,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .bb-spacing-opt:hover{background:#334155;color:#fff}
 .bb-spacing-opt.active{background:#2563eb;color:#fff;font-weight:600}
 /* LIGHTBOX */
-.lightbox{display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.92);align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+.lightbox{display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.97);align-items:center;justify-content:center}
 .lightbox.on{display:flex;animation:lbIn .2s ease}
 @keyframes lbIn{from{opacity:0}to{opacity:1}}
 .lb-img{max-width:90vw;max-height:84vh;border-radius:10px;object-fit:contain;box-shadow:0 24px 80px rgba(0,0,0,.5);transition:opacity .2s;user-select:none}
@@ -4498,7 +4498,7 @@ function _videoLbKey(e){if(e.key==='Escape')closeVideoLightbox();}
 // LIGHTBOX
 let lbIndex=0,lbImages=[];
 function lbOpen(startIdx){
-  const domImgs=Array.from(document.querySelectorAll('.fmedia img,.editor-content img'));
+  const domImgs=Array.from(document.querySelectorAll('.fmedia img,.editor-content img')).filter(img=>!img.closest('.tcc-thumb')&&!img.closest('.tcc-thumbs'));
   if(!domImgs.length)return;
   const doc=currentDoc();
   lbImages=domImgs.map(el=>{const id=el.dataset.imgid||(el.closest('.fmedia')?el.closest('.fmedia').dataset.mediaid:'');const stored=(doc&&doc.images||[]).find(i=>i.id===id);return{src:el.src,name:stored?stored.name:(el.alt||'image')};});
@@ -6214,19 +6214,42 @@ function tblAttachTable(table){
     if(existingCar){
       existingCar.addEventListener('mouseenter',()=>{_hoveredTblImg=existingCar;});
       existingCar.addEventListener('mouseleave',()=>{if(_hoveredTblImg===existingCar)_hoveredTblImg=null;});
-      // Restore slide images
+      // Restore slide images from IDB
       const slideIds=(existingCar.dataset.slideids||'').split(',').filter(Boolean);
+      const slideNames=(existingCar.dataset.slidenames||'').split('|');
       const slideImgs=existingCar.querySelectorAll('.tcc-slide img');
+      const thumbImgs=existingCar.querySelectorAll('.tcc-thumb img');
       slideIds.forEach(async(sid,i)=>{
         if(!slideImgs[i])return;
         let src=_objUrls[sid]||'';
         if(!src){try{const b=await _idbGet(sid);if(b){src=URL.createObjectURL(b);_cacheUrl(sid,src);}}catch(e){}}
-        if(src)slideImgs[i].src=src;
+        if(src){slideImgs[i].src=src;if(thumbImgs[i])thumbImgs[i].src=src;}
       });
+      // Re-attach interactive handlers (lost on page reload since set via JS, not HTML attributes)
+      const carInner=existingCar.querySelector('.tcc-inner');
+      const carBadge=existingCar.querySelector('.tcc-badge');
+      const carThumbs=existingCar.querySelector('.tcc-thumbs');
+      const carStage=existingCar.querySelector('.tcc-stage');
+      const _getLbSrcs=()=>Array.from(existingCar.querySelectorAll('.tcc-slide img')).map((im,i)=>({src:im.src,name:slideNames[i]||''}));
+      const prevBtn=existingCar.querySelector('.tcc-btn.prev');
+      const nextBtn=existingCar.querySelector('.tcc-btn.next');
+      if(prevBtn){prevBtn.onmousedown=e=>e.preventDefault();prevBtn.onclick=e=>{e.stopPropagation();_tccNav(existingCar,-1,carInner,carBadge,carThumbs);};}
+      if(nextBtn){nextBtn.onmousedown=e=>e.preventDefault();nextBtn.onclick=e=>{e.stopPropagation();_tccNav(existingCar,1,carInner,carBadge,carThumbs);};}
+      existingCar.querySelectorAll('.tcc-thumb').forEach((th,i)=>{
+        th.onmousedown=e=>e.preventDefault();
+        th.onclick=e=>{e.stopPropagation();_tccGoTo(existingCar,i,carInner,carBadge,carThumbs);};
+      });
+      const fsBtn=existingCar.querySelector('.tcc-fs');
+      if(fsBtn){fsBtn.onmousedown=e=>e.preventDefault();fsBtn.onclick=e=>{e.stopPropagation();_tccFullscreen(existingCar,_getLbSrcs());};}
+      if(carStage){
+        let mx=0,mdrag=false,mmoved=false;
+        carStage.addEventListener('mousedown',e=>{mx=e.clientX;mdrag=true;mmoved=false;e.preventDefault();});
+        carStage.addEventListener('mousemove',e=>{if(mdrag&&Math.abs(e.clientX-mx)>5)mmoved=true;});
+        carStage.addEventListener('mouseup',e=>{if(!mdrag)return;mdrag=false;if(mmoved){const d=e.clientX-mx;if(Math.abs(d)>30)_tccNav(existingCar,d<0?1:-1,carInner,carBadge,carThumbs);}else _tccFullscreen(existingCar,_getLbSrcs());});
+      }
     }
-    cell.querySelectorAll('img').forEach(img=>{
+    cell.querySelectorAll('img[data-tblimgid]').forEach(img=>{
       img.style.cssText='display:block;width:100%;height:auto;max-width:100%;margin:0 auto;border-radius:0;cursor:zoom-in;background:transparent';
-      img.addEventListener('dblclick',()=>{const _all=Array.from(document.querySelectorAll('.fmedia img,.editor-content img'));lbOpen(Math.max(0,_all.indexOf(img)));});
       img.addEventListener('mouseenter',()=>{_hoveredTblImg=img;img.style.outline='2px solid var(--accent)';img.style.outlineOffset='2px';});
       img.addEventListener('mouseleave',()=>{if(_hoveredTblImg===img){_hoveredTblImg=null;}img.style.outline='';img.style.outlineOffset='';});
     });
