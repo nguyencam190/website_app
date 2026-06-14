@@ -8897,9 +8897,25 @@ const EMOJI_NAMES={
 };
 
 let _emojiInsertRange=null;
+let _emojiInsertBlock=null; // fallback: nearest block element in case Range becomes detached
 function _slashShowEmoji(){
   // Save the slash range for correct insertion
   _emojiInsertRange=_slashSavedRange||(window.getSelection()?.rangeCount?window.getSelection().getRangeAt(0).cloneRange():null);
+  // Also save the nearest block ancestor — when the editor loses focus Chrome can remove
+  // empty text nodes, detaching the saved Range. The block element stays in the DOM.
+  _emojiInsertBlock=null;
+  if(_emojiInsertRange){
+    const editor=document.getElementById('editor');
+    let n=_emojiInsertRange.startContainer;
+    if(n.nodeType===Node.TEXT_NODE)n=n.parentElement;
+    while(n&&n!==editor){
+      const tag=n.tagName?.toLowerCase();
+      if(['p','h1','h2','h3','h4','h5','h6','li','td','th','blockquote','div','pre'].includes(tag)){
+        _emojiInsertBlock=n;break;
+      }
+      n=n.parentElement;
+    }
+  }
   const rect=_slashOpenRect||_slashGetCaretRect();
   const picker=document.getElementById('emojiPicker');
   const vw=window.innerWidth,vh=window.innerHeight;
@@ -8942,12 +8958,28 @@ function emojiFilter(q){
 }
 function emojiInsert(emoji){
   const rangeToUse=_emojiInsertRange;
-  _emojiInsertRange=null;
+  const insertBlock=_emojiInsertBlock;
+  _emojiInsertRange=null;_emojiInsertBlock=null;
   emojiClose();
   const editor=document.getElementById('editor');
   if(editor)editor.focus({preventScroll:true});
   const sel=window.getSelection();
-  if(rangeToUse){try{sel.removeAllRanges();sel.addRange(rangeToUse);}catch(e){}}
+  // Try saved Range first; if the startContainer was detached (Chrome removed the
+  // empty text node on editor blur), fall back to inserting at end of the block element.
+  let restored=false;
+  if(rangeToUse){
+    try{
+      if(document.contains(rangeToUse.startContainer)){
+        sel.removeAllRanges();sel.addRange(rangeToUse);restored=true;
+      }
+    }catch(e){}
+  }
+  if(!restored&&insertBlock&&document.contains(insertBlock)){
+    try{
+      const r=document.createRange();r.selectNodeContents(insertBlock);r.collapse(false);
+      sel.removeAllRanges();sel.addRange(r);restored=true;
+    }catch(e){}
+  }
   document.execCommand('insertText',false,emoji);
   onContentChange();
 }
