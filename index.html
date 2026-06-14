@@ -6960,7 +6960,8 @@ function _slashInsert(id,execRange){
     }
     while(node&&node.parentElement!==ed&&
           !['TD','TH'].includes(node.parentElement?.tagName)&&
-          !node.parentElement?.classList.contains('cf-column-item'))
+          !node.parentElement?.classList.contains('cf-column-item')&&
+          !node.parentElement?.classList.contains('cf-checklist-body'))
       node=node.parentElement;
     return (node&&node!==ed)?node:null;
   }
@@ -6985,7 +6986,7 @@ function _slashInsert(id,execRange){
         r.setStart(focusTarget,0);r.collapse(true);
         sel2.removeAllRanges();sel2.addRange(r);
         // Focus the correct container without scrolling; then scroll block into view
-        const focusEl=(focusTarget.nodeType===Node.TEXT_NODE?focusTarget.parentElement:focusTarget)?.closest?.('td,th')||editor;
+        const focusEl=(focusTarget.nodeType===Node.TEXT_NODE?focusTarget.parentElement:focusTarget)?.closest?.('td,th,.cf-checklist-body')||editor;
         focusEl.focus({preventScroll:true});
       }catch(e){}
     }
@@ -7924,6 +7925,7 @@ function _cfInsertBlockAtRange(block, savedRange){
         if(!par)break;
         if(par.classList?.contains('cf-column-item')||
            par.classList?.contains('cf-panel-content')||
+           par.classList?.contains('cf-checklist-body')||
            par.tagName==='TD'||par.tagName==='TH'||
            par===editor){
           // Found the container — insert after current node
@@ -9133,6 +9135,8 @@ function _isInNestedEditable(node){
     if(tag==='td'||tag==='th')return false;
     // Text box body: block slash menu (has its own UI)
     if(el.classList?.contains('txtbox-body'))return true;
+    // Checklist title: single-line field, slash menu would target wrong element
+    if(el.classList?.contains('cf-checklist-title'))return true;
     el=el.parentElement;
   }
   return false;
