@@ -7471,13 +7471,20 @@ function _cfWireChecklist(cl){
   if(cl._clWired)return;cl._clWired=true;
   const head=cl.querySelector('.cf-checklist-head');
   const statusBtn=cl.querySelector('.cf-checklist-status-btn');
-  const camBtn=cl.querySelector('.cf-checklist-cam-btn');
   const titleEl=cl.querySelector('.cf-checklist-title');
   const _clLabels={minor:'Minor',major:'Major',critical:'Critical'};
-  // Ensure badge exists (for checklists created before this feature)
+  // Ensure badge exists (for checklists created before badge feature)
   let badge=cl.querySelector('.cf-cl-badge');
-  if(!badge){badge=document.createElement('span');badge.className='cf-cl-badge';const cam=cl.querySelector('.cf-checklist-cam-btn');if(cam)cam.before(badge);else cl.querySelector('.cf-checklist-head').appendChild(badge);}
+  if(!badge){badge=document.createElement('span');badge.className='cf-cl-badge';const chev=cl.querySelector('.cf-checklist-btn');if(chev)chev.before(badge);else head?.appendChild(badge);}
   badge.textContent=_clLabels[cl.dataset.status||'minor']||'Minor';
+  // Ensure camera button exists (for checklists saved before camera was added)
+  let camBtn=cl.querySelector('.cf-checklist-cam-btn');
+  if(!camBtn&&head){
+    camBtn=document.createElement('button');camBtn.className='cf-checklist-cam-btn';camBtn.title='Thêm ảnh/screenshot';
+    camBtn.innerHTML='<i class="ti ti-camera"></i>';
+    const chev=head.querySelector('.cf-checklist-btn');
+    if(chev)chev.before(camBtn);else head.appendChild(camBtn);
+  }
   // Shared status cycle logic
   function _cycleStatus(){
     const cur=cl.dataset.status||'minor';
