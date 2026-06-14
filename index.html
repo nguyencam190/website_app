@@ -6228,6 +6228,7 @@ function tblAttachTable(table){
       const thumbImgs=existingCar.querySelectorAll('.tcc-thumb img');
       slideIds.forEach(async(sid,i)=>{
         if(!slideImgs[i])return;
+        if(slideImgs[i].src&&slideImgs[i].src.startsWith('blob:'))slideImgs[i].src='';
         let src=_objUrls[sid]||'';
         if(!src){try{const b=await _idbGet(sid);if(b){src=URL.createObjectURL(b);_cacheUrl(sid,src);}}catch(e){}}
         if(src){slideImgs[i].src=src;if(thumbImgs[i])thumbImgs[i].src=src;}
@@ -8638,6 +8639,7 @@ async function _cfCarLoadAll(editor){
     for(let i=0;i<ids.length;i++){
       const id=ids[i];const img2=imgs[i];
       if(!img2)continue;
+      if(img2.src&&img2.src.startsWith('blob:'))img2.src=''; // clear stale blob URL
       let src=(_objUrls&&_objUrls[id])||'';
       if(!src){try{const b=await _idbGet(id);if(b){src=URL.createObjectURL(b);_cacheUrl&&_cacheUrl(id,src);}}catch(e){}}
       if(src&&img2)img2.src=src;
