@@ -7430,6 +7430,7 @@ function _cfMakeChecklist(){
   return cl;
 }
 function _cfWireChecklist(cl){
+  if(cl._clWired)return;cl._clWired=true;
   const head=cl.querySelector('.cf-checklist-head');
   const statusBtn=cl.querySelector('.cf-checklist-status-btn');
   const camBtn=cl.querySelector('.cf-checklist-cam-btn');
