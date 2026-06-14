@@ -2819,7 +2819,9 @@ function _pabLogoInit(){
   }
 }
 function _hdrLogoInit(){
-  const H=state.headerLogo||{};
+  // Use headerLogo if explicitly set; otherwise fall back to projectLogo (mirrors workspace logo)
+  const _hl=state.headerLogo||{};
+  const H=(_hl.imgDataUrl||_hl.color)?_hl:(state.projectLogo||{});
   const initial=(state.projectName||'P')[0].toUpperCase();
   const hdrBox=document.getElementById('hdrLogoBox');const hdrTxt=document.getElementById('hdrLogoText');
   if(hdrBox&&hdrTxt){
