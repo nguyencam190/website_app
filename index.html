@@ -839,6 +839,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .cf-checklist[data-status="minor"] .cf-cl-badge{background:rgba(59,130,246,0.22);color:#1d4ed8}
 .cf-checklist[data-status="major"] .cf-cl-badge{background:rgba(249,115,22,0.28);color:#9a3412}
 .cf-checklist[data-status="critical"] .cf-cl-badge{background:rgba(239,68,68,0.28);color:#991b1b}
+[data-theme="dark"] .cf-checklist[data-status="minor"] .cf-cl-badge{color:#93c5fd}
+[data-theme="dark"] .cf-checklist[data-status="major"] .cf-cl-badge{color:#fdba74}
+[data-theme="dark"] .cf-checklist[data-status="critical"] .cf-cl-badge{color:#fca5a5}
 .cf-checklist-status-btn{font-size:18px;flex-shrink:0;cursor:pointer;border:none;background:transparent;padding:2px;line-height:1;border-radius:4px;transition:transform .1s}
 .cf-checklist-status-btn:hover{transform:scale(1.25)}
 .cf-checklist-title{flex:1;font-size:14px;font-weight:500;color:var(--text);outline:none;border:none;background:transparent;padding:0;font-family:var(--font);cursor:text;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -11090,6 +11093,9 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .cf-checklist[data-status="minor"] .cf-cl-badge{background:rgba(59,130,246,0.22);color:#1d4ed8}',
     '.ws-canvas .cf-checklist[data-status="major"] .cf-cl-badge{background:rgba(249,115,22,0.28);color:#9a3412}',
     '.ws-canvas .cf-checklist[data-status="critical"] .cf-cl-badge{background:rgba(239,68,68,0.28);color:#991b1b}',
+    '[data-theme="dark"] .ws-canvas .cf-checklist[data-status="minor"] .cf-cl-badge{color:#93c5fd}',
+    '[data-theme="dark"] .ws-canvas .cf-checklist[data-status="major"] .cf-cl-badge{color:#fdba74}',
+    '[data-theme="dark"] .ws-canvas .cf-checklist[data-status="critical"] .cf-cl-badge{color:#fca5a5}',
     '.ws-canvas .cf-checklist-status-btn{font-size:18px;flex-shrink:0;cursor:default;border:none;background:transparent;padding:2px;line-height:1;border-radius:4px;position:relative}',
     '.ws-canvas .cf-checklist-status-btn::after{content:attr(data-label);position:absolute;bottom:calc(100% + 5px);left:50%;transform:translateX(-50%);background:rgba(0,0,0,.78);color:#fff;font-size:11px;font-weight:500;padding:3px 7px;border-radius:4px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;font-family:sans-serif}',
     '.ws-canvas .cf-checklist-status-btn:hover::after{opacity:1}',
