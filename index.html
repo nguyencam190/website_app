@@ -11413,6 +11413,7 @@ async function doExportWebsite(){
       for(let i=0;i<ids.length;i++){const b64=await idbToB64(ids[i]);if(imgs[i]&&b64)imgs[i].src=b64;_showExportProgress(++_cnt,_tot,'Xuất carousel bảng...');}
     }
     tmp.querySelectorAll('img').forEach(img=>{
+      img.removeAttribute('alt');
       img.style.outline='';img.style.outlineOffset='';
       if(img.dataset.shadowXyb&&img.dataset.shadowLight){const col=exportDark?(img.dataset.shadowDark||img.dataset.shadowLight):img.dataset.shadowLight;img.style.filter=img.dataset.shadowXyb+' '+col+')';}
       ['shadowkey','shadowLight','shadowDark','shadowXyb'].forEach(k=>delete img.dataset[k]);
@@ -12208,7 +12209,9 @@ async function doExportOptimized(){
       const ids=(car.dataset.slideids||'').split(',').filter(Boolean);const imgs=car.querySelectorAll('.tcc-slide img');const thumbImgs=car.querySelectorAll('.tcc-thumb img');
       for(let i=0;i<ids.length;i++){const path=await idbToZipAsset(ids[i]);if(path){if(imgs[i]){imgs[i].setAttribute('src',path);imgs[i].setAttribute('loading','lazy');}if(thumbImgs[i])thumbImgs[i].setAttribute('src',path);}}_showExportProgress(++_cnt,_tot,'Xuất carousel bảng...');
     }
+    // Final sweep — remove alt from ALL images so browsers don't show filename text on broken images
     tmp.querySelectorAll('img').forEach(img=>{
+      img.removeAttribute('alt');
       img.style.outline='';img.style.outlineOffset='';
       if(img.dataset.shadowXyb&&img.dataset.shadowLight){const col=exportDark?(img.dataset.shadowDark||img.dataset.shadowLight):img.dataset.shadowLight;img.style.filter=img.dataset.shadowXyb+' '+col+')';}
       ['shadowkey','shadowLight','shadowDark','shadowXyb'].forEach(k=>delete img.dataset[k]);
