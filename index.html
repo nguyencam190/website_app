@@ -3336,7 +3336,19 @@ function _idbDel(id){
 }
 function _purgeDocMedia(doc){
   if(!doc)return;
-  (doc.images||[]).forEach(m=>{if(m&&m.id)_idbDel(m.id);});
+  // Build set of all floating media IDs still used by OTHER pages (e.g. after JSON import)
+  const stillUsed=new Set();
+  state.docs.filter(d=>d.id!==doc.id).forEach(d=>{
+    (d.images||[]).forEach(m=>{
+      if(m&&m.id)stillUsed.add(m.id);
+      if(m&&m.type==='carousel'&&m.slides)m.slides.forEach(sl=>{if(sl&&sl.id)stillUsed.add(sl.id);});
+    });
+  });
+  (doc.images||[]).forEach(m=>{
+    if(!m)return;
+    if(m.id&&!stillUsed.has(m.id))_idbDel(m.id);
+    if(m.type==='carousel'&&m.slides)m.slides.forEach(sl=>{if(sl&&sl.id&&!stillUsed.has(sl.id))_idbDel(sl.id);});
+  });
 }
 function _purgeDocTree(docId){
   const doc=state.docs.find(d=>d.id===docId);
@@ -11408,9 +11420,8 @@ async function doExportWebsite(){
       if(_cnt%3===0)await new Promise(r=>setTimeout(r,0));
     }
     for(const car of Array.from(tmp.querySelectorAll('.tbl-cell-car'))){
-      const ids=(car.dataset.slideids||'').split(',').filter(Boolean);
-      const imgs=car.querySelectorAll('.tcc-slide img');
-      for(let i=0;i<ids.length;i++){const b64=await idbToB64(ids[i]);if(imgs[i]&&b64)imgs[i].src=b64;_showExportProgress(++_cnt,_tot,'Xuất carousel bảng...');}
+      const ids=(car.dataset.slideids||'').split(',').filter(Boolean);const imgs=car.querySelectorAll('.tcc-slide img');const thumbImgs=car.querySelectorAll('.tcc-thumb img');
+      for(let i=0;i<ids.length;i++){const b64=await idbToB64(ids[i]);if(b64){if(imgs[i])imgs[i].src=b64;if(thumbImgs[i])thumbImgs[i].src=b64;}_showExportProgress(++_cnt,_tot,'Xuất carousel bảng...');}
     }
     tmp.querySelectorAll('img').forEach(img=>{
       img.removeAttribute('alt');
