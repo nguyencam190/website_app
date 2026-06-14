@@ -823,20 +823,20 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .cf-toggle[data-open="true"] .cf-toggle-body{display:block}
 /* ── Checklist Block (QA review) ── */
 .cf-checklist{border:1.5px solid var(--border);border-radius:10px;margin:10px 0;background:var(--surface);overflow:hidden;position:relative}
-.cf-checklist[data-status="minor"]{border-left:4px solid #f59e0b}
+.cf-checklist[data-status="minor"]{border-left:4px solid #3b82f6}
 .cf-checklist[data-status="major"]{border-left:4px solid #f97316}
 .cf-checklist[data-status="critical"]{border-left:4px solid #ef4444}
-.cf-checklist[data-status="minor"] .cf-checklist-head{background:rgba(245,158,11,0.25)}
+.cf-checklist[data-status="minor"] .cf-checklist-head{background:rgba(59,130,246,0.18)}
 .cf-checklist[data-status="major"] .cf-checklist-head{background:rgba(249,115,22,0.35)}
 .cf-checklist[data-status="critical"] .cf-checklist-head{background:rgba(239,68,68,0.38)}
-.cf-checklist[data-status="minor"] .cf-checklist-head:hover{background:rgba(245,158,11,0.38)}
+.cf-checklist[data-status="minor"] .cf-checklist-head:hover{background:rgba(59,130,246,0.30)}
 .cf-checklist[data-status="major"] .cf-checklist-head:hover{background:rgba(249,115,22,0.50)}
 .cf-checklist[data-status="critical"] .cf-checklist-head:hover{background:rgba(239,68,68,0.52)}
 .cf-checklist-head{display:flex;align-items:center;gap:8px;padding:8px 12px 8px 10px;cursor:pointer;user-select:none;background:var(--surface2);transition:background .12s}
 .cf-checklist-head:hover{background:var(--surface3)}
 .cf-cl-badge{display:none;align-items:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:2px 8px;border-radius:10px;flex-shrink:0;white-space:nowrap}
 .cf-checklist-head:hover .cf-cl-badge{display:inline-flex}
-.cf-checklist[data-status="minor"] .cf-cl-badge{background:rgba(245,158,11,0.28);color:#92400e}
+.cf-checklist[data-status="minor"] .cf-cl-badge{background:rgba(59,130,246,0.22);color:#1d4ed8}
 .cf-checklist[data-status="major"] .cf-cl-badge{background:rgba(249,115,22,0.28);color:#9a3412}
 .cf-checklist[data-status="critical"] .cf-cl-badge{background:rgba(239,68,68,0.28);color:#991b1b}
 .cf-checklist-status-btn{font-size:18px;flex-shrink:0;cursor:pointer;border:none;background:transparent;padding:2px;line-height:1;border-radius:4px;transition:transform .1s}
@@ -11074,20 +11074,20 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .cf-toggle[data-open="true"] .cf-toggle-body{display:block}',
     /* ── Viewer Checklist Block ── */
     '.ws-canvas .cf-checklist{border:1.5px solid var(--border);border-radius:10px;margin:10px 0;background:var(--surface);overflow:hidden}',
-    '.ws-canvas .cf-checklist[data-status="minor"]{border-left:4px solid #f59e0b}',
+    '.ws-canvas .cf-checklist[data-status="minor"]{border-left:4px solid #3b82f6}',
     '.ws-canvas .cf-checklist[data-status="major"]{border-left:4px solid #f97316}',
     '.ws-canvas .cf-checklist[data-status="critical"]{border-left:4px solid #ef4444}',
-    '.ws-canvas .cf-checklist[data-status="minor"] .cf-checklist-head{background:rgba(245,158,11,0.25)}',
+    '.ws-canvas .cf-checklist[data-status="minor"] .cf-checklist-head{background:rgba(59,130,246,0.18)}',
     '.ws-canvas .cf-checklist[data-status="major"] .cf-checklist-head{background:rgba(249,115,22,0.35)}',
     '.ws-canvas .cf-checklist[data-status="critical"] .cf-checklist-head{background:rgba(239,68,68,0.38)}',
-    '.ws-canvas .cf-checklist[data-status="minor"] .cf-checklist-head:hover{background:rgba(245,158,11,0.38)}',
+    '.ws-canvas .cf-checklist[data-status="minor"] .cf-checklist-head:hover{background:rgba(59,130,246,0.30)}',
     '.ws-canvas .cf-checklist[data-status="major"] .cf-checklist-head:hover{background:rgba(249,115,22,0.50)}',
     '.ws-canvas .cf-checklist[data-status="critical"] .cf-checklist-head:hover{background:rgba(239,68,68,0.52)}',
     '.ws-canvas .cf-checklist-head{display:flex;align-items:center;gap:8px;padding:8px 12px 8px 10px;cursor:pointer;user-select:none;background:var(--surface2);transition:background .12s}',
     '.ws-canvas .cf-checklist-head:hover{background:var(--surface3)}',
     '.ws-canvas .cf-cl-badge{display:none;align-items:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:2px 8px;border-radius:10px;flex-shrink:0;white-space:nowrap}',
     '.ws-canvas .cf-checklist-head:hover .cf-cl-badge{display:inline-flex}',
-    '.ws-canvas .cf-checklist[data-status="minor"] .cf-cl-badge{background:rgba(245,158,11,0.28);color:#92400e}',
+    '.ws-canvas .cf-checklist[data-status="minor"] .cf-cl-badge{background:rgba(59,130,246,0.22);color:#1d4ed8}',
     '.ws-canvas .cf-checklist[data-status="major"] .cf-cl-badge{background:rgba(249,115,22,0.28);color:#9a3412}',
     '.ws-canvas .cf-checklist[data-status="critical"] .cf-cl-badge{background:rgba(239,68,68,0.28);color:#991b1b}',
     '.ws-canvas .cf-checklist-status-btn{font-size:18px;flex-shrink:0;cursor:default;border:none;background:transparent;padding:2px;line-height:1;border-radius:4px;position:relative}',
