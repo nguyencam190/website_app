@@ -3143,6 +3143,9 @@ function onContentChange(){
   clone.querySelectorAll('.tbl-cell-car .tcc-slide img').forEach(img=>{
     img.removeAttribute('src');
   });
+  clone.querySelectorAll('.tbl-cell-car .tcc-thumb img').forEach(img=>{
+    img.removeAttribute('src');
+  });
   // Strip cf-embed-toolbar from saved content (UI elements only)
   clone.querySelectorAll('.cf-embed-toolbar,.cf-img-toolbar,.cf-img-resize-h,.cf-col-toolbar,.cf-panel-actions,.cf-code-copy').forEach(e=>e.remove());
   // Strip carousel slide blob URLs
@@ -12102,7 +12105,7 @@ async function doExportOptimized(){
     tmp.querySelectorAll('.tbl-outer').forEach(w=>{w.querySelectorAll('.tbl-edge-h').forEach(e=>e.remove());w.style.marginLeft='';w.style.cssText='display:block;margin:14px 0;width:100%;overflow-x:auto;overflow-y:visible';});
     tmp.querySelectorAll('table.tbl-inner-row').forEach(innerTbl=>{const cg=innerTbl.querySelector('colgroup');if(!cg)return;const w=Array.from(cg.querySelectorAll('col')).map(c=>c.style.width||'').join(',');if(w.replace(/,/g,'').trim())innerTbl.dataset.innerwidths=w;});
     tmp.querySelectorAll('.tbl-inner-resize,.tbl-inner-add-btn').forEach(e=>e.remove());
-    tmp.querySelectorAll(['.tbl-row-num','.tbl-col-resize-handle','.tbl-row-resize-handle','.tbl-col-sel','.tbl-row-sel','.tbl-img-btn','.tbl-shadow-btn','.tbl-cell-drop','.tbl-merge-bar','colgroup','.fmedia','.txtbox','script','style','.cf-col-toolbar','.cf-col-count-dd','.cf-col-more-dd','.cf-img-toolbar','.cf-img-resize-h','.cf-img-ctx','.cf-panel-actions','.cf-car-toolbar','.cf-embed-toolbar','.cf-car-add-slide','.editor-block-bar','.slash-hint','.pab-logo-menu','.cf-toc-del','.cf-btn-toolbar','.cf-file-del','.cf-tab-add','.cf-progress-del','.cf-checklist-cam-btn'].join(',')).forEach(e=>e.remove());
+    tmp.querySelectorAll(['.tbl-row-num','.tbl-col-resize-handle','.tbl-row-resize-handle','.tbl-col-sel','.tbl-row-sel','.tbl-img-btn','.tbl-shadow-btn','.tbl-cell-drop','.tbl-merge-bar','colgroup','.fmedia','.txtbox','script','style','.cf-col-toolbar','.cf-col-count-dd','.cf-col-more-dd','.cf-img-toolbar','.cf-img-resize-h','.cf-img-ctx','.cf-panel-actions','.cf-car-toolbar','.cf-embed-toolbar','.cf-car-add-slide','.editor-block-bar','.slash-hint','.pab-logo-menu','.cf-toc-del','.cf-btn-toolbar','.cf-file-del','.cf-tab-add','.cf-progress-del','.cf-checklist-cam-btn','.cf-code-copy'].join(',')).forEach(e=>e.remove());
     tmp.querySelectorAll('[contenteditable]').forEach(el=>el.removeAttribute('contenteditable'));
     tmp.querySelectorAll('[spellcheck]').forEach(el=>el.removeAttribute('spellcheck'));
     tmp.querySelectorAll('[oninput],[onfocus],[onblur],[onkeydown]').forEach(el=>{['oninput','onfocus','onblur','onkeydown'].forEach(a=>el.removeAttribute(a));});
@@ -12138,7 +12141,7 @@ async function doExportOptimized(){
       const media=block.querySelector('img,video');const path=await idbToZipAsset(id);
       if(path&&media){
         media.setAttribute('src',path);
-        if(media.tagName==='VIDEO'){media.style.cssText='display:block;max-width:100%;height:auto;border-radius:4px;pointer-events:auto;cursor:default';media.setAttribute('controls','');media.setAttribute('muted','');media.setAttribute('loop','');media.setAttribute('playsinline','');}
+        if(media.tagName==='VIDEO'){media.style.cssText='display:block;max-width:100%;height:auto;border-radius:4px;pointer-events:auto;cursor:default';media.setAttribute('controls','');media.setAttribute('muted','');media.setAttribute('loop','');media.setAttribute('playsinline','');media.setAttribute('preload','auto');}
         else{media.style.cssText='display:block;max-width:100%;height:auto;border-radius:4px;cursor:zoom-in';media.setAttribute('loading','lazy');}
         block.removeAttribute('data-cfimgid');
       }else{block.remove();}
@@ -12160,12 +12163,12 @@ async function doExportOptimized(){
     for(const img of Array.from(tmp.querySelectorAll('img[data-tblimgid]'))){
       const id=img.dataset.tblimgid;if(!id)continue;
       const path=await idbToZipAsset(id);
-      if(path){img.setAttribute('src',path);img.setAttribute('loading','lazy');img.removeAttribute('data-tblimgid');}else img.remove();
+      if(path){img.setAttribute('src',path);img.setAttribute('loading','lazy');img.removeAttribute('alt');img.removeAttribute('data-tblimgid');}else img.remove();
       _showExportProgress(++_cnt,_tot,'Xuất ảnh bảng...');if(_cnt%3===0)await new Promise(r=>setTimeout(r,0));
     }
     for(const car of Array.from(tmp.querySelectorAll('.tbl-cell-car'))){
-      const ids=(car.dataset.slideids||'').split(',').filter(Boolean);const imgs=car.querySelectorAll('.tcc-slide img');
-      for(let i=0;i<ids.length;i++){const path=await idbToZipAsset(ids[i]);if(imgs[i]&&path){imgs[i].setAttribute('src',path);imgs[i].setAttribute('loading','lazy');}}_showExportProgress(++_cnt,_tot,'Xuất carousel bảng...');
+      const ids=(car.dataset.slideids||'').split(',').filter(Boolean);const imgs=car.querySelectorAll('.tcc-slide img');const thumbImgs=car.querySelectorAll('.tcc-thumb img');
+      for(let i=0;i<ids.length;i++){const path=await idbToZipAsset(ids[i]);if(path){if(imgs[i]){imgs[i].setAttribute('src',path);imgs[i].setAttribute('loading','lazy');}if(thumbImgs[i])thumbImgs[i].setAttribute('src',path);}}_showExportProgress(++_cnt,_tot,'Xuất carousel bảng...');
     }
     tmp.querySelectorAll('img').forEach(img=>{
       img.style.outline='';img.style.outlineOffset='';
@@ -12203,7 +12206,7 @@ async function doExportOptimized(){
         carEl.appendChild(inner);carEl.appendChild(prev);carEl.appendChild(next);carEl.appendChild(badge);fm.appendChild(carEl);
       }else if(m.type==='video'){
         const path=await idbToZipAsset(m.id);_showExportProgress(++_cnt,_tot,'Xuất video...');if(!path)continue;
-        const v=document.createElement('video');v.setAttribute('src',path);v.controls=true;v.style.cssText='width:100%;height:100%;object-fit:contain;background:#000;display:block';fm.appendChild(v);
+        const v=document.createElement('video');v.setAttribute('src',path);v.controls=true;v.setAttribute('preload','auto');v.setAttribute('playsinline','');v.style.cssText='width:100%;height:100%;object-fit:contain;background:#000;display:block';fm.appendChild(v);
       }else{
         const path=await idbToZipAsset(m.id);_showExportProgress(++_cnt,_tot,'Xuất ảnh...');if(!path)continue;
         const img=document.createElement('img');img.setAttribute('src',path);img.setAttribute('loading','lazy');img.style.cssText='width:100%;height:100%;object-fit:contain;display:block;cursor:zoom-in';img.setAttribute('ondblclick','wsImgLb(this.src)');fm.appendChild(img);
