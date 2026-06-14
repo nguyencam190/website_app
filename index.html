@@ -3253,7 +3253,7 @@ function onContentChange(){
     img.removeAttribute('src');
   });
   // Strip cf-embed-toolbar from saved content (UI elements only)
-  clone.querySelectorAll('.cf-embed-toolbar,.cf-img-toolbar,.cf-img-resize-h,.cf-col-toolbar,.cf-panel-actions,.cf-code-copy').forEach(e=>e.remove());
+  clone.querySelectorAll('.cf-embed-toolbar,.cf-img-toolbar,.cf-img-resize-h,.cf-col-toolbar,.cf-panel-actions,.cf-code-copy,.cf-checklist-cam-btn').forEach(e=>e.remove());
   // Strip carousel slide blob URLs
   clone.querySelectorAll('.cf-carousel-block img[data-carid]').forEach(media=>{
     if(media.src&&!media.src.startsWith('data:'))media.removeAttribute('src');
@@ -7477,14 +7477,11 @@ function _cfWireChecklist(cl){
   let badge=cl.querySelector('.cf-cl-badge');
   if(!badge){badge=document.createElement('span');badge.className='cf-cl-badge';const chev=cl.querySelector('.cf-checklist-btn');if(chev)chev.before(badge);else head?.appendChild(badge);}
   badge.textContent=_clLabels[cl.dataset.status||'minor']||'Minor';
-  // Ensure camera button exists (for checklists saved before camera was added)
-  let camBtn=cl.querySelector('.cf-checklist-cam-btn');
-  if(!camBtn&&head){
-    camBtn=document.createElement('button');camBtn.className='cf-checklist-cam-btn';camBtn.title='Thêm ảnh/screenshot';
-    camBtn.innerHTML='<i class="ti ti-camera"></i>';
-    const chev=head.querySelector('.cf-checklist-btn');
-    if(chev)chev.before(camBtn);else head.appendChild(camBtn);
-  }
+  // Always rebuild camera button (never saved to HTML content; always injected at load)
+  cl.querySelector('.cf-checklist-cam-btn')?.remove();
+  const camBtn=document.createElement('button');camBtn.className='cf-checklist-cam-btn';camBtn.title='Thêm ảnh/screenshot';
+  camBtn.innerHTML='<i class="ti ti-camera"></i>';
+  if(head){const chev=head.querySelector('.cf-checklist-btn');if(chev)chev.before(camBtn);else head.appendChild(camBtn);}
   // Shared status cycle logic
   function _cycleStatus(){
     const cur=cl.dataset.status||'minor';
