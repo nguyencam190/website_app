@@ -6556,7 +6556,8 @@ function slashExec(id){
   try{
     if(sel.rangeCount)_slashSavedRange=sel.getRangeAt(0).cloneRange();
   }catch(e){}
-  setTimeout(()=>_slashInsert(id),10);
+  const _execRange=_slashSavedRange; // capture before 10ms delay so concurrent slashes don't clobber it
+  setTimeout(()=>_slashInsert(id,_execRange),10);
 }
 
 // Walk backwards from cursor to find '/' and delete from there to cursor.
@@ -6597,9 +6598,11 @@ function _slashDeleteSlash(){
   }
 }
 
-function _slashInsert(id){
+function _slashInsert(id,execRange){
   const editor=document.getElementById('editor');
   const sel=window.getSelection();
+  // Use the range captured synchronously in slashExec; fall back to live global if called directly
+  const savedRange=execRange!==undefined?execRange:_slashSavedRange;
 
   // Helper: find nearest block ancestor (direct child of editor or container)
   function _nearestBlock(sel2,ed){
@@ -6671,12 +6674,11 @@ function _slashInsert(id){
     inp.type='file';inp.accept='image/*,image/gif';inp.multiple=true;
     inp.style.cssText='position:fixed;top:-9999px;left:-9999px;opacity:0';
     document.body.appendChild(inp);
-    const savedRange=_slashSavedRange;
     inp.addEventListener('change',async function(){
       const files=Array.from(this.files);
       document.body.removeChild(inp);
       if(!files.length)return;
-      if(files.length===1){await cfInsertImageBlock(files[0]);return;}
+      if(files.length===1){await cfInsertImageBlock(files[0],savedRange);return;}
       _cfShowImageModeDialog(files,savedRange);
     });
     inp.click();return;
@@ -6690,7 +6692,7 @@ function _slashInsert(id){
       const files=Array.from(this.files);
       document.body.removeChild(inp);
       if(!files.length)return;
-      for(const f of files)await cfInsertImageBlock(f);
+      for(const f of files)await cfInsertImageBlock(f,savedRange);
     });
     inp.click();return;
   }
@@ -6761,7 +6763,7 @@ function _slashInsert(id){
   if(id==='divider'){
     const hr=document.createElement('hr');
     hr.className='cf-divider';hr.contentEditable='false';
-    _cfInsertBlockAtRange(hr,_slashSavedRange);
+    _cfInsertBlockAtRange(hr,savedRange);
     onContentChange();return;
   }
 
@@ -6813,7 +6815,7 @@ function _slashInsert(id){
     tb.insertBefore(linkInp,tb.firstChild);tb.insertBefore(sep1,tb.children[1]);
     tb.appendChild(sep2);tb.appendChild(sep3);tb.appendChild(delBtn);
     wrap.appendChild(btnWrap);wrap.appendChild(tb);
-    _cfInsertBlockAtRange(wrap,_slashSavedRange);
+    _cfInsertBlockAtRange(wrap,savedRange);
     onContentChange();
     setTimeout(()=>btnTxt.focus(),30);
     return;
@@ -6852,7 +6854,7 @@ function _slashInsert(id){
       delBtn.innerHTML='<i class="ti ti-x"></i>';
       delBtn.addEventListener('click',()=>{block.remove();onContentChange();});
       block.appendChild(iconEl);block.appendChild(meta);block.appendChild(dlBtn);block.appendChild(delBtn);
-      _cfInsertBlockAtRange(block,_slashSavedRange);
+      _cfInsertBlockAtRange(block,savedRange);
       onContentChange();
       toast('Đã đính kèm '+file.name,'success');
     });
@@ -6875,7 +6877,7 @@ function _slashInsert(id){
     body.appendChild(bodyP);
     toggle.appendChild(head);toggle.appendChild(body);
     _cfWireToggle(toggle);
-    _cfInsertBlockAtRange(toggle,_slashSavedRange);
+    _cfInsertBlockAtRange(toggle,savedRange);
     onContentChange();
     setTimeout(()=>title.focus(),30);
     return;
@@ -6884,7 +6886,7 @@ function _slashInsert(id){
   // ── Checklist block ──────────────────────────────────────
   if(id==='checklist'){
     const cl=_cfMakeChecklist();
-    _cfInsertBlockAtRange(cl,_slashSavedRange);
+    _cfInsertBlockAtRange(cl,savedRange);
     _cfWireChecklist(cl);
     requestAnimationFrame(()=>{
       const titleEl=cl.querySelector('.cf-checklist-title');
@@ -6904,7 +6906,7 @@ function _slashInsert(id){
     tocDel.innerHTML='<i class="ti ti-x"></i>';tocDel.title='Xóa mục lục';
     tocDel.addEventListener('click',()=>{toc.remove();onContentChange();});
     toc.appendChild(tocTitleEl);toc.appendChild(tocList);toc.appendChild(tocDel);
-    _cfInsertBlockAtRange(toc,_slashSavedRange);
+    _cfInsertBlockAtRange(toc,savedRange);
     _cfRefreshTocs(document.getElementById('editor'));
     onContentChange();
     return;
@@ -6913,7 +6915,7 @@ function _slashInsert(id){
   // ── Tabs block ───────────────────────────────────────────
   if(id==='tabs'){
     const block=cfBuildTabsBlock();
-    _cfInsertBlockAtRange(block,_slashSavedRange);
+    _cfInsertBlockAtRange(block,savedRange);
     onContentChange();
     setTimeout(()=>{const firstPanel=block.querySelector('.cf-tab-panel.active');if(firstPanel)firstPanel.focus();},30);
     return;
@@ -6924,7 +6926,7 @@ function _slashInsert(id){
     const sp=document.createElement('span');
     sp.appendChild(cfBuildStatus('todo'));
     sp.appendChild(document.createTextNode(' '));
-    _cfInsertBlockAtRange(sp,_slashSavedRange);
+    _cfInsertBlockAtRange(sp,savedRange);
     onContentChange();
     return;
   }
@@ -6932,7 +6934,7 @@ function _slashInsert(id){
   // ── Progress bar ─────────────────────────────────────────
   if(id==='progress'){
     const block=cfBuildProgress(0);
-    _cfInsertBlockAtRange(block,_slashSavedRange);
+    _cfInsertBlockAtRange(block,savedRange);
     onContentChange();
     return;
   }
@@ -6944,7 +6946,7 @@ function _slashInsert(id){
   if(id==='col2'||id==='col3'){
     const n=id==='col2'?2:3;
     const layout=_cfBuildColumnLayout(n);
-    _cfInsertBlockAtRange(layout,_slashSavedRange);
+    _cfInsertBlockAtRange(layout,savedRange);
     onContentChange();
     setTimeout(()=>{const first=layout.querySelector('.cf-column-item');if(first)first.focus();},30);
     return;
@@ -7530,7 +7532,7 @@ function _cfShowImageModeDialog(files,savedRange){
   document.addEventListener('keydown',function esc(e){if(e.key==='Escape'){close();document.removeEventListener('keydown',esc);}});
 }
 
-async function cfInsertImageBlock(file){
+async function cfInsertImageBlock(file,rangeOverride){
   if(!file)return;
   // Store in IDB
   const id=uid();
@@ -7557,7 +7559,7 @@ async function cfInsertImageBlock(file){
   _cacheUrl(id,objUrl);
   const block=_cfBuildImgBlock(id,objUrl,isVid,file.name||'image');
   // Use saved slash range to insert at correct position (column OR main editor)
-  _cfInsertBlockAtRange(block,_slashSavedRange);
+  _cfInsertBlockAtRange(block,rangeOverride!==undefined?rangeOverride:_slashSavedRange);
   onContentChange();
   setTimeout(()=>_cfImgSelect(block),30);
 }
@@ -7574,6 +7576,8 @@ function _cfInsertBlockAtRange(block, savedRange){
   if(range){
     try{
       let node=range.startContainer;
+      // Guard: node may be detached after DOM mutations (e.g. _slashDeleteSlash removed it)
+      if(!node||!document.contains(node)){throw new Error('detached');}
       // Climb up DOM to find a direct-child-of-editor or valid container
       while(node&&node!==document){
         const par=node.parentElement||node.parentNode;
