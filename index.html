@@ -3149,7 +3149,7 @@ function onContentChange(){
   // Strip cf-embed-toolbar from saved content (UI elements only)
   clone.querySelectorAll('.cf-embed-toolbar,.cf-img-toolbar,.cf-img-resize-h,.cf-col-toolbar,.cf-panel-actions,.cf-code-copy').forEach(e=>e.remove());
   // Strip carousel slide blob URLs
-  clone.querySelectorAll('.cf-carousel-block [data-slideid]').forEach(media=>{
+  clone.querySelectorAll('.cf-carousel-block img[data-carid]').forEach(media=>{
     if(media.src&&!media.src.startsWith('data:'))media.removeAttribute('src');
   });
   clone.querySelectorAll('.cf-car-toolbar,.cf-car-add-slide,.cf-car-slide-resize-h,.cf-car-block-resize-h').forEach(e=>e.remove());
@@ -3200,7 +3200,7 @@ async function docCtxExportJson(){
   tmp.querySelectorAll('[data-cfimgid]').forEach(el=>mediaIds.add(el.dataset.cfimgid));
   tmp.querySelectorAll('[data-tblimgid]').forEach(el=>mediaIds.add(el.dataset.tblimgid));
   tmp.querySelectorAll('[data-carid]').forEach(el=>mediaIds.add(el.dataset.carid));
-  tmp.querySelectorAll('[data-cfcarids]').forEach(el=>(el.dataset.cfcarids||'').split(',').filter(Boolean).forEach(id=>mediaIds.add(id)));
+  tmp.querySelectorAll('[data-carids]').forEach(el=>(el.dataset.carids||'').split(',').filter(Boolean).forEach(id=>mediaIds.add(id)));
   tmp.querySelectorAll('[data-slideids]').forEach(el=>(el.dataset.slideids||'').split(',').filter(Boolean).forEach(id=>mediaIds.add(id)));
 
   // Build base64 map — prefer already-stored src from doc.images, else load from IDB
@@ -3210,10 +3210,16 @@ async function docCtxExportJson(){
   for(const id of mediaIds){
     if(!id)continue;
     if(imgMap[id]){media[id]=imgMap[id];continue;}
-    // Try cached blob URL first, then IDB
-    const cached=_objUrls&&_objUrls[id];
-    if(cached){try{const r=await fetch(cached);const b=await r.blob();media[id]=await _blobToB64(b);continue;}catch(e){}}
-    try{const b=await _idbGet(id);if(b)media[id]=await _blobToB64(b);}catch(e){}
+    // IDB is the primary source (reliable across sessions and file:// pages)
+    let blob=null;
+    try{blob=await _idbGet(id);}catch(e){}
+    // Fallback: cached blob URL from current session (for images not yet flushed to IDB)
+    if(!blob){
+      const cached=_objUrls&&_objUrls[id];
+      if(cached){try{const r=await fetch(cached);if(r.ok){const b=await r.blob();if(b&&b.size>0)blob=b;}}catch(e){}}
+    }
+    if(blob){try{media[id]=await _blobToB64(blob);}catch(e){console.warn('[export] _blobToB64 failed for',id,e);}}
+    else{console.warn('[export] No blob found for media id',id);}
   }
 
   // Deep-copy doc, strip session-only blob URLs
@@ -3361,9 +3367,10 @@ function _purgeDocTree(docId){
 }
 // Blob → base64 DataURL (only used for export)
 function _blobToB64(blob){
-  return new Promise(res=>{
+  return new Promise((res,rej)=>{
     const r=new FileReader();
     r.onload=e=>res(e.target.result);
+    r.onerror=e=>rej(r.error||e);
     r.readAsDataURL(blob);
   });
 }
@@ -11133,7 +11140,6 @@ async function doExportWebsite(){
     _tot+=tmp.querySelectorAll('img[data-tblimgid]').length;
     _tot+=tmp.querySelectorAll('.cf-img-block[data-cfimgid]').length;
     _tot+=tmp.querySelectorAll('.cf-carousel-block img[data-carid]').length;
-    tmp.querySelectorAll('.cf-carousel-block[data-cfcarids]').forEach(b=>{_tot+=(b.dataset.cfcarids||'').split(',').filter(Boolean).length;});
     tmp.querySelectorAll('.tbl-cell-car[data-slideids]').forEach(c=>{_tot+=(c.dataset.slideids||'').split(',').filter(Boolean).length;});
   });
   if(_tot>0)_showExportProgress(0,_tot,'Chuẩn bị xuất...');
@@ -12104,7 +12110,6 @@ async function doExportOptimized(){
     const tmp=document.createElement('div');tmp.innerHTML=d.content||'';
     _tot+=tmp.querySelectorAll('img[data-tblimgid]').length;
     _tot+=tmp.querySelectorAll('.cf-img-block[data-cfimgid]').length;
-    tmp.querySelectorAll('.cf-carousel-block[data-cfcarids]').forEach(b=>{_tot+=(b.dataset.cfcarids||'').split(',').filter(Boolean).length;});
     tmp.querySelectorAll('.cf-carousel-block[data-carids]').forEach(b=>{_tot+=(b.dataset.carids||'').split(',').filter(Boolean).length;});
     tmp.querySelectorAll('.tbl-cell-car[data-slideids]').forEach(c=>{_tot+=(c.dataset.slideids||'').split(',').filter(Boolean).length;});
     tmp.querySelectorAll('.cf-file-block[data-cffileid]').forEach(()=>_tot++);
