@@ -1503,7 +1503,7 @@ td.tbl-inner-container{padding:0!important;overflow:visible!important;vertical-a
 
 
 <!-- ═══ EMBED VIDEO POPUP ══════════════════════════════════ -->
-<div class="cf-embed-popup" id="cfEmbedPopup" onclick="event.target===this&&cfEmbedClose()">
+<div class="cf-embed-popup" id="cfEmbedPopup">
   <h3>▶️ Nhúng video từ mạng xã hội</h3>
   <div class="cf-embed-popup-platforms">
     <span class="cf-ep-chip">🎬 YouTube</span>
@@ -8734,6 +8734,7 @@ function _cfImgLoadAll(editor){
 function cfEmbedOpen(){
   const popup=document.getElementById('cfEmbedPopup');
   if(!popup)return;
+  _cfEmbedOpenTime=Date.now();
   // Position near caret
   const rect=_slashGetCaretRect?.()??{top:200,bottom:220,left:200};
   const vw=window.innerWidth,vh=window.innerHeight;
@@ -8765,7 +8766,7 @@ function cfEmbedInsert(){
   if(!inp)return;
   const url=inp.value.trim();if(!url)return;
   const embedUrl=cfGetEmbedUrl(url);
-  if(!embedUrl){{const _e=document.getElementById('cfEmbedErr');if(_e)_estyle.display='block';}return;}
+  if(!embedUrl){{const _e=document.getElementById('cfEmbedErr');if(_e)_e.style.display='block';}return;}
   cfEmbedClose();
   const block=cfBuildEmbedBlock(embedUrl,url);
   _cfInsertBlockAtRange(block,_slashSavedRange);
@@ -8866,11 +8867,15 @@ function cfBuildEmbedBlock(embedUrl, origUrl){
   return block;
 }
 
-// Close embed popup on outside click
+// Close embed popup on outside click (or clicking popup background)
+// Guard: ignore mousedown that arrives within 300ms of the popup opening,
+// since the slash-menu mousedown re-fires as a click after the popup appears.
+let _cfEmbedOpenTime=0;
 document.addEventListener('mousedown',e=>{
   const popup=document.getElementById('cfEmbedPopup');
-  if(popup?.classList.contains('on')&&!popup.contains(e.target)&&!e.target.closest('#cfEmbedPopup'))
-    cfEmbedClose();
+  if(!popup?.classList.contains('on'))return;
+  const outsidePopup=!popup.contains(e.target)||e.target===popup;
+  if(outsidePopup&&Date.now()-_cfEmbedOpenTime>300)cfEmbedClose();
 });
 
 // ═══ EMOJI DATA — CamNguyen style ══════════════════════════
