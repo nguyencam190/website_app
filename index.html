@@ -9281,20 +9281,22 @@ function _updateBlockBar(){
 
 function _onEditorMouseMove(e){
   clearTimeout(_blockBarTimer);
-  // Immediately hide when mouse is inside a table row — prevents bar from covering
-  // the row selector (tbl-row-sel) buttons before the 30ms timer fires
-  if(e.target&&e.target.closest('tr')){_hideBlockBar();}
+  // Immediately hide when mouse is on row selector or row-num cell — prevents bar
+  // from covering the tbl-row-sel buttons before the 30ms timer fires
+  const _el=e.target;
+  if(_el&&(_el.closest('.tbl-row-sel')||_el.closest('.tbl-row-num'))){_hideBlockBar();}
   _blockBarTimer=setTimeout(()=>{
     const editor=document.getElementById('editor');if(!editor)return;
     let el=e.target;
     if(!el||el===editor){_hideBlockBar();return;}
     // Text boxes and dropdowns have their own drag UI
     if(el.closest('.txtbox')||el.closest('.tbl-dropdown'))return;
+    // Hide bar when mouse is on row selector area (immediate path already did this,
+    // but handle the timer path too)
+    if(el.closest('.tbl-row-sel')||el.closest('.tbl-row-num')){_hideBlockBar();return;}
     const result=_findBlockInContainer(el);
     if(!result){_hideBlockBar();return;}
     const {block}=result;
-    // Hide bar when mouse is inside a table row — prevents covering row selector dots
-    if(el.closest('tr')){_hideBlockBar();return;}
     // Prevent bar from jumping when crossing from a nested block (td/column) to the
     // outer table wrapper — the user is likely moving toward the bar above the block
     if(_blockBarTarget&&block!==_blockBarTarget){
