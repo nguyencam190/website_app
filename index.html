@@ -7508,10 +7508,16 @@ function _cfWireChecklist(cl){
   if(camBtn){
     camBtn.addEventListener('click',e=>{
       e.stopPropagation();
+      e.preventDefault();
       const inp=document.createElement('input');
       inp.type='file';inp.accept='image/*,video/*';
-      inp.onchange=async ev=>{
-        const file=ev.target.files[0];
+      inp.style.cssText='position:fixed;top:-9999px;left:-9999px;opacity:0';
+      document.body.appendChild(inp);
+      const _cleanup=()=>{if(inp.parentNode)inp.parentNode.removeChild(inp);};
+      inp.addEventListener('cancel',_cleanup);
+      inp.addEventListener('change',async function(){
+        _cleanup();
+        const file=this.files[0];
         if(!file)return;
         cl.dataset.open='true';
         const body=cl.querySelector('.cf-checklist-body');
@@ -7531,7 +7537,7 @@ function _cfWireChecklist(cl){
         _cfRewireImgBlock(block);
         onContentChange();
         requestAnimationFrame(()=>_showBlockBar(block));
-      };
+      });
       inp.click();
     });
   }
