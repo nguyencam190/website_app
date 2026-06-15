@@ -4885,11 +4885,6 @@ function _openSelPanel(title,type,idx,table,triggerEl){
       actWrap.appendChild(mkBtn('row-insert-top','Thêm hàng phía trên',false,tblAddRowAbove));
       actWrap.appendChild(mkBtn('row-insert-bottom','Thêm hàng phía dưới',false,tblAddRowBelow));
       actWrap.appendChild(mkBtn('trash','Xóa hàng này',true,tblDelRow));
-      // Divider + Custom Layout Row converter
-      const div=document.createElement('div');div.style.cssText='border-top:1px solid #1e293b;margin:3px 0';actWrap.appendChild(div);
-      // Convert to Nested Row button
-      actWrap.appendChild(mkBtn('layout-board-split','Chuyển thành hàng tùy biến',false,
-        ()=>tblConvertRowToInner(idx,table)));
       // Toggle row numbers
       const hasNums=table&&table.dataset.rownums!=='0';
       actWrap.appendChild(mkBtn(hasNums?'eye-off':'list-numbers',
