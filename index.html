@@ -482,17 +482,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 /* Column selected state */
 .editor-content th.tbl-col-selected{background:rgba(37,99,235,.12)!important;outline:2px solid var(--accent);outline-offset:-1px}
 .editor-content td.tbl-col-selected{background:rgba(37,99,235,.06)!important;outline:1px solid rgba(37,99,235,.25);outline-offset:-1px}
-/* Row selector handle (left bar on row-num cell) */
-/* Row selector — fully inside the #-cell, no overflow clipping issue */
-.tbl-row-sel{position:absolute;left:0;top:50%;transform:translateY(-50%);width:14px;padding:5px 0;background:var(--accent);border-radius:0 5px 5px 0;display:none;align-items:center;justify-content:center;cursor:pointer;z-index:25;flex-direction:column;gap:2px;box-shadow:2px 0 8px rgba(37,99,235,.4)}
+/* Row selector handle — fixed outside table, no overflow clipping */
+.tbl-row-sel{position:fixed;width:14px;padding:5px 0;background:var(--accent);border-radius:5px 0 0 5px;display:none;align-items:center;justify-content:center;cursor:pointer;z-index:600;flex-direction:column;gap:2px;box-shadow:-2px 0 8px rgba(37,99,235,.4)}
 .tbl-row-sel-dot{width:3px;height:3px;border-radius:50%;background:#fff;display:block}
-/* Show on ALL rows when hovering anywhere in that row */
-.editor-content tr:hover .tbl-row-num .tbl-row-sel,
-.editor-content tr.tbl-row-selected .tbl-row-num .tbl-row-sel,
-.editor-content tr:hover td:first-child .tbl-row-sel,
-.editor-content tr:hover th:first-child .tbl-row-sel,
-.editor-content tr.tbl-row-selected td:first-child .tbl-row-sel,
-.editor-content tr.tbl-row-selected th:first-child .tbl-row-sel{display:flex}
+.tbl-row-sel.on{display:flex}
 .tbl-row-sel:hover{background:#1d4ed8}
 /* Row selected state */
 .editor-content tr.tbl-row-selected td,.editor-content tr.tbl-row-selected th{background:rgba(37,99,235,.06)!important;outline:1px solid rgba(37,99,235,.2);outline-offset:-1px}
@@ -2367,6 +2360,8 @@ function init(){
       const tb=b.querySelector('.cf-img-toolbar');
       if(tb&&tb.style.display==='flex')_cfImgPositionToolbar(b);
     });
+    // Hide any visible row selector on scroll
+    document.querySelectorAll('.tbl-row-sel.on').forEach(s=>s.classList.remove('on'));
   });
   // Restore saved width
   const savedW=localStorage.getItem('sb_width');
@@ -3195,6 +3190,8 @@ function onContentChange(){
   if(typeof _undoSnapshotDebounced==='function')_undoSnapshotDebounced();
   const editor_el=document.getElementById('editor');if(!editor_el)return;
   _cfRefreshTocs(editor_el);
+  // Remove orphaned fixed-position row selectors (table was deleted)
+  document.querySelectorAll('body>.tbl-row-sel').forEach(sel=>{if(!sel._activeRow||!editor_el.contains(sel._activeRow)){sel.remove();}});
   const clone=editor_el.cloneNode(true);
   // Strip interactive chrome (not content)
   clone.querySelectorAll('.tbl-row-num,.tbl-col-resize-handle,.tbl-row-resize-handle,.tbl-col-sel,.tbl-row-sel,.tbl-img-btn,.tbl-cell-drop,.tbl-shadow-btn,.tbl-edge-h,.cf-file-del,.cf-code-copy').forEach(e=>e.remove());
@@ -5830,16 +5827,13 @@ function tblAttachTable(table){
   });
 
   // 3. ── Row resize handles + row selector ──────────────────
-  // Row selector goes in: .tbl-row-num cell (if shown) OR first data cell (if hidden)
+  // Row selector: ONE shared fixed-position element per table, positioned outside via JS
   table.querySelectorAll('tr').forEach(row=>{
     // Remove stale handles/selectors from any cell in this row
     row.querySelectorAll('.tbl-row-resize-handle,.tbl-row-sel').forEach(e=>e.remove());
 
-    // ── Decide which cell hosts the selector ──────────────
     const numCell=row.querySelector('.tbl-row-num');
-    // First non-row-num cell in the row
     const firstDataCell=Array.from(row.cells).find(c=>!c.classList.contains('tbl-row-num'))||null;
-    // Host = row-num cell if it exists (row numbers ON), else first data cell
     const hostCell=numCell||firstDataCell;
     if(!hostCell)return;
     hostCell.style.position='relative';
@@ -5847,7 +5841,6 @@ function tblAttachTable(table){
     // ── Row resize handle — on LAST cell of every row (always visible) ──
     const lastCell=row.cells[row.cells.length-1];
     if(lastCell){
-      // Remove existing
       lastCell.querySelectorAll('.tbl-row-resize-handle').forEach(e=>e.remove());
       lastCell.style.position='relative';
       const rh=document.createElement('div');
@@ -5865,19 +5858,46 @@ function tblAttachTable(table){
       rh2.addEventListener('mousedown',e=>{e.preventDefault();e.stopPropagation();tblRowResizeStart(e,row);});
       numCell.appendChild(rh2);
     }
+  });
 
-    // ── Row selector handle (⁞) — moves to hostCell ──────
-    const rowSel=document.createElement('div');rowSel.className='tbl-row-sel';
-    rowSel.contentEditable='false';
-    rowSel.title='Chọn cả hàng · Tô màu';
-    [0,1,2].forEach(()=>{const d=document.createElement('span');d.className='tbl-row-sel-dot';rowSel.appendChild(d);});
-    rowSel.addEventListener('mousedown',e=>e.preventDefault());
-    rowSel.addEventListener('click',e=>{
-      e.stopPropagation();
-      const rowIdx=Array.from(table.rows).indexOf(row);
-      tblSelectRow(table,rowIdx,rowSel);
+  // ── Shared fixed-position row selector for this table ──────────────
+  // Remove any existing one tied to this table
+  if(table._tblRowSel){try{table._tblRowSel.remove();}catch(e){}}
+  const sharedRowSel=document.createElement('div');
+  sharedRowSel.className='tbl-row-sel';
+  sharedRowSel.contentEditable='false';
+  sharedRowSel.title='Chọn cả hàng · Tô màu';
+  [0,1,2].forEach(()=>{const d=document.createElement('span');d.className='tbl-row-sel-dot';sharedRowSel.appendChild(d);});
+  sharedRowSel.addEventListener('mousedown',e=>e.preventDefault());
+  sharedRowSel.addEventListener('click',e=>{
+    e.stopPropagation();
+    if(sharedRowSel._activeRow){
+      const rowIdx=Array.from(table.rows).indexOf(sharedRowSel._activeRow);
+      tblSelectRow(table,rowIdx,sharedRowSel);
+    }
+  });
+  // Keep selector visible when mouse is over it
+  sharedRowSel.addEventListener('mouseenter',()=>{sharedRowSel._pinned=true;});
+  sharedRowSel.addEventListener('mouseleave',()=>{sharedRowSel._pinned=false;sharedRowSel.classList.remove('on');});
+  document.body.appendChild(sharedRowSel);
+  table._tblRowSel=sharedRowSel;
+
+  // Wire each row: show/position the shared selector on mouseenter
+  Array.from(table.rows).forEach(row=>{
+    row.addEventListener('mouseenter',()=>{
+      const outerRect=table.closest('.tbl-outer');
+      const tableEl=outerRect||table;
+      const tableRect=tableEl.getBoundingClientRect();
+      const rowRect=row.getBoundingClientRect();
+      sharedRowSel._activeRow=row;
+      sharedRowSel.style.left=(tableRect.left-16)+'px';
+      sharedRowSel.style.top=(rowRect.top+rowRect.height/2-16)+'px';
+      sharedRowSel.classList.add('on');
     });
-    hostCell.appendChild(rowSel);
+    row.addEventListener('mouseleave',e=>{
+      // Hide only if not moving to the selector itself
+      if(!sharedRowSel._pinned){sharedRowSel.classList.remove('on');}
+    });
   });
 
   // 4. ── Per-cell setup: ensure editability, drag&drop + paste ────
