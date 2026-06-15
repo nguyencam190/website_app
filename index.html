@@ -1702,7 +1702,7 @@ kbd{background:var(--surface2);border:1px solid var(--border2);border-radius:4px
         <i class="ti ti-chevron-right sb-primary-arrow"></i>
       </div>
       
-      <div class="sb-primary-item active">
+      <div class="sb-primary-item active" id="sbPagesHomeBtn" onclick="openPagesHome()" style="cursor:pointer" title="Trang giới thiệu dự án">
         <i class="ti ti-files"></i> Pages
       </div>
     </div>
@@ -2555,8 +2555,9 @@ function _isDescendant(ancestorId,nodeId){let cur=state.docs.find(d=>d.id===node
 function _sbDrop(dragId,targetId,pos){if(dragId===targetId||_isDescendant(dragId,targetId))return;const dragged=state.docs.find(d=>d.id===dragId);const target=state.docs.find(d=>d.id===targetId);if(!dragged||!target)return;state.docs=state.docs.filter(d=>d.id!==dragId);if(pos==='child'){dragged.parentId=targetId;_nodeCollapsed[targetId]=false;state.docs.push(dragged);}else{dragged.parentId=target.parentId||null;const idx=state.docs.findIndex(d=>d.id===targetId);state.docs.splice(pos==='before'?idx:idx+1,0,dragged);}persistNow();_expandAncestors(dragId);renderSidebar();}
 
 // Helpers
+function _esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function _getChildren(sec,parentId){
-  return state.docs.filter(d=>(d.parentId||null)===(parentId||null));
+  return state.docs.filter(d=>!d.isHomePage&&(d.parentId||null)===(parentId||null));
 }
 function _hasChildren(sec,docId){
   return state.docs.some(d=>d.parentId===docId);
@@ -3004,6 +3005,20 @@ function hdrBuildNotif(){
 function renderSidebar(filter=''){
   const nav=document.getElementById('sbNav');nav.innerHTML='';
 
+  // HOME PAGE item (if exists)
+  const home=state.docs.find(d=>d.isHomePage);
+  if(home&&(!filter||home.title.toLowerCase().includes(filter))){
+    const homeRow=document.createElement('div');
+    homeRow.className='doc-item'+(state.currentDocId===home.id?' active':'');
+    homeRow.style.cssText='margin:2px 6px 0 8px;font-weight:600';
+    homeRow.innerHTML='<span style="width:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-home" style="font-size:13px;color:var(--accent)"></i></span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-left:4px">'+_esc(home.title||'Giới thiệu dự án')+'</span>';
+    homeRow.onclick=()=>openDoc(home.id);
+    nav.appendChild(homeRow);
+    // divider
+    const sep=document.createElement('div');sep.style.cssText='height:1px;background:var(--border);margin:6px 14px 2px';
+    nav.appendChild(sep);
+  }
+
   // PAGE TREE label
   const treeLabel=document.createElement('div');treeLabel.className='sb-section-label';
   treeLabel.innerHTML='<span>Page Tree</span>';
@@ -3232,6 +3247,24 @@ function createDoc(tpl){
   state.docs.push(doc);persist();closeModal('newDocModal');renderSidebar();openDoc(doc.id);
   if(tpl==='blank'){setTimeout(()=>{const t=document.getElementById('docTitleInput');if(t){t.focus();t.select();}},100);}
   toast('Đã tạo trang mới','success');
+}
+function openPagesHome(){
+  // Find existing home page or create one
+  let home=state.docs.find(d=>d.isHomePage);
+  if(!home){
+    home={
+      id:'__pages_home__',
+      isHomePage:true,
+      title:'Giới thiệu dự án',
+      section:state.sections[0]||'default',
+      parentId:null,
+      content:'<h2>Giới thiệu dự án</h2><p>Viết thông tin giới thiệu dự án của bạn tại đây.</p>',
+      images:[],textBoxes:[],
+      createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()
+    };
+    state.docs.unshift(home);persist();renderSidebar();
+  }
+  openDoc(home.id);
 }
 function _expandAncestors(id){
   const doc=state.docs.find(d=>d.id===id);if(!doc)return;
