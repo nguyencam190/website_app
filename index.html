@@ -7663,6 +7663,18 @@ async function cfInsertImageBlock(file,rangeOverride){
   // Use saved slash range to insert at correct position (column OR main editor)
   _cfInsertBlockAtRange(block,rangeOverride!==undefined?rangeOverride:_slashSavedRange);
   onContentChange();
+  // Restore focus after file picker steals it — place cursor in the element after the block
+  // so the user can immediately type (e.g. /) without having to click first.
+  try{
+    const after=block.nextSibling;
+    const focusEl=block.closest('td,th,.cf-column-item,.cf-panel-content,.cf-checklist-body,.cf-tab-panel')||document.getElementById('editor');
+    if(focusEl)focusEl.focus({preventScroll:true});
+    if(after&&after.nodeType===Node.ELEMENT_NODE){
+      const r=document.createRange();
+      r.selectNodeContents(after);r.collapse(true);
+      window.getSelection().removeAllRanges();window.getSelection().addRange(r);
+    }
+  }catch(e){}
   setTimeout(()=>_cfImgSelect(block),30);
 }
 
