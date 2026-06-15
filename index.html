@@ -9213,7 +9213,8 @@ function _findBlockInContainer(node){
        par.classList.contains('cf-column-item')||
        par.classList.contains('cf-panel-content')||
        par.classList.contains('cf-toggle-body')||
-       par.classList.contains('cf-tab-content')){
+       par.classList.contains('cf-tab-content')||
+       par.classList.contains('cf-checklist-body')){
       return {block:el,container:par};
     }
     el=par;
@@ -9231,7 +9232,8 @@ function _showBlockBar(targetEl){
     container.classList.contains('cf-column-item')||
     container.classList.contains('cf-panel-content')||
     container.classList.contains('cf-toggle-body')||
-    container.classList.contains('cf-tab-content'));
+    container.classList.contains('cf-tab-content')||
+    container.classList.contains('cf-checklist-body'));
   bar.style.position='fixed';
   if(isNested){
     const isCellNested=container.tagName==='TD'||container.tagName==='TH';
