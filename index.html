@@ -8646,8 +8646,8 @@ function cfEmbedInsert(){
 // Parse URL → embed URL
 function cfGetEmbedUrl(url){
   try{
-    // YouTube: watch, shorts, youtu.be, live
-    let m=url.match(/(?:youtube\.com\/(?:watch\?.*v=|shorts\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    // YouTube: watch, shorts, youtu.be, live, or direct embed URL
+    let m=url.match(/(?:youtube(?:-nocookie)?\.com\/(?:watch\?.*v=|shorts\/|live\/|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
     if(m)return 'https://www.youtube-nocookie.com/embed/'+m[1]+'?rel=0';
     // Vimeo
     m=url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
