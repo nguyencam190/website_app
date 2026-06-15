@@ -320,6 +320,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .doc-title-edit{width:100%;border:none;outline:none;font-size:30px;font-weight:700;color:var(--text2);background:transparent;font-family:var(--font);letter-spacing:-.5px;line-height:1.2;margin-bottom:8px;text-align:center}
 .doc-title-edit::placeholder{color:#cbd5e1;text-align:center}
 .doc-meta{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:24px;padding-bottom:18px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+/* Blank page hint — shown when editor has no content */
+.doc-blank-hint{display:none;flex-direction:column;align-items:flex-start;padding:12px 2px 0;cursor:text;user-select:none}
+.doc-blank-hint.on{display:flex}
+.doc-blank-hint-icon{font-size:36px;color:var(--border2);margin-bottom:10px}
+.doc-blank-hint-text{font-size:14px;color:var(--text3);font-style:italic;margin-bottom:4px}
+.doc-blank-hint-sub{font-size:12.5px;color:var(--text3)}
+.doc-blank-hint-sub kbd{display:inline-block;background:var(--surface2);border:1px solid var(--border2);border-radius:4px;padding:0 5px;font-size:11px;font-family:var(--font);color:var(--text2);line-height:18px}
 .meta-chip{display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text3)}
 .meta-tag{background:var(--accent-light);color:var(--accent);padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
 .editor-content{outline:none;min-height:320px;font-size:16px;line-height:1.9;color:var(--text);position:relative}
@@ -1825,6 +1832,11 @@ kbd{background:var(--surface2);border:1px solid var(--border2);border-radius:4px
             <input class="doc-title-edit" id="docTitleInput" placeholder="Tiêu đề tài liệu..." oninput="onTitleChange()">
             <div class="doc-meta" id="docMeta"></div>
             <div class="editor-content" id="editor" contenteditable="true" spellcheck="true" oninput="onContentChange()"></div>
+            <div class="doc-blank-hint" id="docBlankHint">
+              <div class="doc-blank-hint-icon"><i class="ti ti-file-text"></i></div>
+              <div class="doc-blank-hint-text">Trang này chưa có nội dung.</div>
+              <div class="doc-blank-hint-sub">Bấm vào đây để bắt đầu gõ, hoặc nhấn <kbd>/</kbd> để chọn định dạng</div>
+            </div>
           </div>
         </div>
       </div>
@@ -2405,6 +2417,11 @@ function init(){
   _hdrLogoInit();
   _initSmartPab();
   initCanvasScaling();
+  // Click on blank hint → focus editor
+  document.getElementById('docBlankHint')?.addEventListener('click',()=>{
+    const ed=document.getElementById('editor');
+    if(ed){ed.focus();const r=document.createRange();r.selectNodeContents(ed);r.collapse(true);const sel=window.getSelection();sel.removeAllRanges();sel.addRange(r);}
+  });
   // Update fixed-position toolbars on editor scroll
   document.getElementById('editorScroll')?.addEventListener('scroll',()=>{
     document.querySelectorAll('.cf-carousel-block').forEach(b=>{
@@ -3234,6 +3251,7 @@ function openDoc(id){
   _resetSmartPab();
   document.getElementById('docTitleInput').value=doc.title||'';
   document.getElementById('editor').innerHTML=doc.content||'';
+  _updateBlankHint();
   _expandAncestors(id);
   // Reset watch button per-page (watch state is session-only)
   const _wb=document.getElementById('pabWatchBtn');
@@ -3259,10 +3277,17 @@ function openDoc(id){
 }
 function currentDoc(){return state.docs.find(d=>d.id===state.currentDocId);}
 function onTitleChange(){const doc=currentDoc();if(!doc)return;doc.title=document.getElementById('docTitleInput').value;doc.updatedAt=new Date().toISOString();markDirty();renderSidebar(document.getElementById('searchInput').value.toLowerCase());updatePageActionBar();}
+function _updateBlankHint(){
+  const hint=document.getElementById('docBlankHint');if(!hint)return;
+  const ed=document.getElementById('editor');if(!ed)return;
+  const hasContent=ed.textContent.trim()||ed.querySelector('img,video,.cf-img-block,.cf-carousel-block,.tbl-outer,.cf-column-layout,.cf-panel,.cf-checklist,.cf-toggle,.cf-tabs,.cf-code-block,.cf-file-block');
+  hint.classList.toggle('on',!hasContent);
+}
 function onContentChange(){
   const doc=currentDoc();if(!doc)return;
   if(typeof _undoSnapshotDebounced==='function')_undoSnapshotDebounced();
   const editor_el=document.getElementById('editor');if(!editor_el)return;
+  _updateBlankHint();
   _cfRefreshTocs(editor_el);
   const clone=editor_el.cloneNode(true);
   // Strip interactive chrome (not content)
