@@ -3248,17 +3248,43 @@ function createDoc(tpl){
   if(tpl==='blank'){setTimeout(()=>{const t=document.getElementById('docTitleInput');if(t){t.focus();t.select();}},100);}
   toast('Đã tạo trang mới','success');
 }
+function _pagesHomeTemplate(){
+  const proj=state.projectName||'Dự án của tôi';
+  const user=state.username||'Nhóm phát triển';
+  const today=new Date().toLocaleDateString('vi-VN',{year:'numeric',month:'long',day:'numeric'});
+  return `<h1>${proj}</h1>`
+    +`<p style="font-size:15px;color:var(--text2);margin-top:-8px;margin-bottom:20px">Tài liệu giới thiệu và thông tin tổng quan dự án.</p>`
+    +`<table style="width:100%;border-collapse:collapse;margin-bottom:24px;font-size:13px">`
+      +`<thead><tr>`
+        +`<th style="padding:8px 12px;background:var(--tbl-header-bg);border:1px solid var(--tbl-border);text-align:left;font-weight:600;color:var(--text2)">Trạng thái</th>`
+        +`<th style="padding:8px 12px;background:var(--tbl-header-bg);border:1px solid var(--tbl-border);text-align:left;font-weight:600;color:var(--text2)">Phiên bản</th>`
+        +`<th style="padding:8px 12px;background:var(--tbl-header-bg);border:1px solid var(--tbl-border);text-align:left;font-weight:600;color:var(--text2)">Chủ sở hữu</th>`
+        +`<th style="padding:8px 12px;background:var(--tbl-header-bg);border:1px solid var(--tbl-border);text-align:left;font-weight:600;color:var(--text2)">Cập nhật</th>`
+      +`</tr></thead><tbody><tr>`
+        +`<td style="padding:8px 12px;border:1px solid var(--tbl-border)">🟢 Đang phát triển</td>`
+        +`<td style="padding:8px 12px;border:1px solid var(--tbl-border)">v1.0.0</td>`
+        +`<td style="padding:8px 12px;border:1px solid var(--tbl-border)">${user}</td>`
+        +`<td style="padding:8px 12px;border:1px solid var(--tbl-border)">${today}</td>`
+      +`</tr></tbody></table>`
+    +`<h2>📌 Tổng quan</h2>`
+    +`<p>Mô tả mục tiêu, phạm vi và ý nghĩa của dự án tại đây.</p>`
+    +`<h2>✨ Tính năng chính</h2>`
+    +`<ul><li>Tính năng 1 — mô tả ngắn</li><li>Tính năng 2 — mô tả ngắn</li><li>Tính năng 3 — mô tả ngắn</li></ul>`
+    +`<h2>👥 Thành viên</h2>`
+    +`<ul><li><strong>${user}</strong> — Quản lý dự án</li><li>Thêm thành viên...</li></ul>`
+    +`<h2>🔗 Tài nguyên</h2>`
+    +`<ul><li>Tài liệu kỹ thuật</li><li>Repository / Source code</li><li>Kênh liên lạc</li></ul>`;
+}
 function openPagesHome(){
-  // Find existing home page or create one
   let home=state.docs.find(d=>d.isHomePage);
   if(!home){
     home={
       id:'__pages_home__',
       isHomePage:true,
-      title:'Giới thiệu dự án',
+      title:state.projectName||'Giới thiệu dự án',
       section:state.sections[0]||'default',
       parentId:null,
-      content:'<h2>Giới thiệu dự án</h2><p>Viết thông tin giới thiệu dự án của bạn tại đây.</p>',
+      content:_pagesHomeTemplate(),
       images:[],textBoxes:[],
       createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()
     };
