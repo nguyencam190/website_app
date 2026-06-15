@@ -9228,10 +9228,8 @@ function _showBlockBar(targetEl){
   const bar=_getBlockBar();
   const rect=targetEl.getBoundingClientRect();
   const container=targetEl.parentElement;
-  // Don't show block bar inside any table cell (conflicts with row/col selectors)
-  if(container&&(container.tagName==='TD'||container.tagName==='TH')){_hideBlockBar();return;}
-  // Don't show block bar for table wrapper block (tbl-outer)
-  if(targetEl.classList&&targetEl.classList.contains('tbl-outer')){_hideBlockBar();return;}
+  // Don't show block bar for anything inside or that is a table (tbl-outer)
+  if(targetEl.closest('.tbl-outer')||targetEl.classList.contains('tbl-outer')){_hideBlockBar();return;}
   const isNested=container&&(container.tagName==='TD'||container.tagName==='TH'||
     container.classList.contains('cf-column-item')||
     container.classList.contains('cf-panel-content')||
