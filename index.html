@@ -9230,6 +9230,9 @@ function _showBlockBar(targetEl){
   const container=targetEl.parentElement;
   // Don't show block bar inside row-number cells
   if(container&&container.classList.contains('tbl-row-num')){_hideBlockBar();return;}
+  // In table cells, only show block bar for non-text blocks (images, media, carousels)
+  const isCellContainer=container&&(container.tagName==='TD'||container.tagName==='TH');
+  if(isCellContainer&&targetEl.tagName==='P'){_hideBlockBar();return;}
   const isNested=container&&(container.tagName==='TD'||container.tagName==='TH'||
     container.classList.contains('cf-column-item')||
     container.classList.contains('cf-panel-content')||
