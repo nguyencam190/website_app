@@ -7992,20 +7992,26 @@ document.addEventListener('keydown',e=>{
 });
 
 // Rewire event handlers after clone
-function _cfImgRewireBlock(block){
-  const id=uid();block.dataset.cfimgid=id;
+function _cfImgRewireEvents(block){
+  // Rewire resize handles, toolbar, and hover — WITHOUT changing data-cfimgid.
+  // Use this after undo/redo so existing IDB references are preserved.
   const inner=block.querySelector('.cf-img-inner');
-  let lh=block.querySelector('.cf-img-resize-h.left');
-  let rh=block.querySelector('.cf-img-resize-h.right');
-  if(inner&&!lh){lh=document.createElement('div');lh.className='cf-img-resize-h left';inner.appendChild(lh);}
-  if(inner&&!rh){rh=document.createElement('div');rh.className='cf-img-resize-h right';inner.appendChild(rh);}
-  if(inner&&lh)_cfImgInitResize(inner,lh,'left');
-  if(inner&&rh)_cfImgInitResize(inner,rh,'right');
+  // Replace resize handles with fresh clones to clear any stale mousedown listeners
+  ['left','right'].forEach(side=>{
+    let h=block.querySelector(`.cf-img-resize-h.${side}`);
+    if(inner&&!h){h=document.createElement('div');h.className=`cf-img-resize-h ${side}`;inner.appendChild(h);}
+    if(inner&&h){const nh=h.cloneNode(false);h.parentNode.replaceChild(nh,h);_cfImgInitResize(inner,nh,side);}
+  });
   // Replace toolbar + rewire hover
   block.querySelector('.cf-img-toolbar')?.remove();
   const _rTb=_cfBuildImgToolbar(block);
   block.appendChild(_rTb);
   _cfImgWireHover(block,_rTb);
+}
+function _cfImgRewireBlock(block){
+  // Assign a NEW id (for cloning) then rewire events.
+  const id=uid();block.dataset.cfimgid=id;
+  _cfImgRewireEvents(block);
 }
 
 // Load saved inline image blocks from IDB
@@ -8580,21 +8586,23 @@ async function _cfCarLoadAll(editor){
 function _cfImgLoadAll(editor){
   editor.querySelectorAll('.cf-img-block[data-cfimgid]').forEach(async block=>{
     const id=block.dataset.cfimgid;if(!id)return;
-    const media=block.querySelector('img,video');if(!media||media.src)return;
-    let src=_objUrls[id]||'';
-    if(!src){try{const b=await _idbGet(id);if(b){src=URL.createObjectURL(b);_cacheUrl(id,src);}}catch(e){}}
-    if(src){
-      media.src=src;
-      // Auto-play restored videos
-      if(media.tagName==='VIDEO'){
-        media.muted=true;media.loop=true;media.autoplay=true;
-        media.controls=true;media.setAttribute('playsinline','');
-        media.play().catch(()=>{}); // ignore autoplay policy errors
+    const media=block.querySelector('img,video');if(!media)return;
+    // Load src from IDB/cache only if not already set (e.g. first load or src was revoked)
+    if(!media.src){
+      let src=_objUrls[id]||'';
+      if(!src){try{const b=await _idbGet(id);if(b){src=URL.createObjectURL(b);_cacheUrl(id,src);}}catch(e){}}
+      if(src){
+        media.src=src;
+        if(media.tagName==='VIDEO'){
+          media.muted=true;media.loop=true;media.autoplay=true;
+          media.controls=true;media.setAttribute('playsinline','');
+          media.play().catch(()=>{});
+        }
       }
     }
-    // Rewire events
-    _cfImgRewireBlock(block);
-    // Track hover for Delete-key deletion when inside a table cell
+    // Always rewire events — after undo/redo the DOM is rebuilt from HTML so
+    // all event listeners are lost even though media.src may still be set.
+    _cfImgRewireEvents(block);
     if(block.closest('td,th')){
       block.addEventListener('mouseenter',()=>{_hoveredTblImg=block;});
       block.addEventListener('mouseleave',()=>{if(_hoveredTblImg===block)_hoveredTblImg=null;});
