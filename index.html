@@ -9228,8 +9228,9 @@ function _showBlockBar(targetEl){
   const bar=_getBlockBar();
   const rect=targetEl.getBoundingClientRect();
   const container=targetEl.parentElement;
-  // Don't show block bar inside table cells (conflicts with row/col selector dots)
-  if(targetEl.closest('td,th')){_hideBlockBar();return;}
+  // Don't show block bar inside table cells (conflicts with row/col selector dots),
+  // unless slash menu is open — then show so user can see the current block.
+  if(targetEl.closest('td,th')&&!_slashVisible){_hideBlockBar();return;}
   const isNested=container&&(
     container.classList.contains('cf-column-item')||
     container.classList.contains('cf-panel-content')||
@@ -9271,10 +9272,9 @@ function _updateBlockBar(){
       block.classList.add('slash-hint');
     }
     // For nested containers (td, column) with content: don't show bar while typing —
-    // it would overlay text and make content appear at the wrong position.
-    // Bar is still available on mouse hover.
+    // unless slash menu is open (user typed /), then always show so bar is visible.
     const isNested=container!==editor;
-    if(isNested&&block.textContent.trim()){_hideBlockBar();return;}
+    if(isNested&&block.textContent.trim()&&!_slashVisible){_hideBlockBar();return;}
     _showBlockBar(block);
   },50);
 }
