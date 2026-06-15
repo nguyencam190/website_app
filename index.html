@@ -946,7 +946,7 @@ td .cf-checklist-body,.cf-column-item .cf-checklist-body{padding:8px 10px 10px 1
 /* Vertical separator between columns */
 .cf-col-sep-line{width:10px;background:transparent;align-self:stretch;flex-shrink:0;cursor:col-resize;position:relative;display:flex;align-items:center;justify-content:center;margin:0 2px}
 .cf-col-sep-line::after{content:'';position:absolute;top:16px;bottom:16px;width:2px;background:var(--border2);border-radius:2px;transition:background .15s}
-.cf-col-sep-line:hover::after{background:var(--accent);width:3px}
+.cf-col-sep-line:hover::after{background:var(--border2);width:2px}
 .cf-column-layout:hover .cf-col-sep-line,.cf-column-layout:focus-within .cf-col-sep-line{background:var(--border2)}
 /* Layout outer area — clearer boundary */
 .cf-column-layout{display:flex;align-items:stretch;width:100%;margin:16px 0;position:relative;border-radius:4px;min-height:160px;border:1.5px dashed var(--border);transition:border-color .15s;padding:0;background:transparent;overflow:visible}
@@ -11194,8 +11194,8 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .cf-column-item{flex:1;padding:16px 20px;font-size:1rem;line-height:1.8;color:var(--text);word-break:break-word;background:var(--surface);min-height:0;cursor:default}',
     '.ws-canvas .cf-column-item:hover{background:var(--surface)!important;outline:none!important}',
     '.ws-canvas .cf-col-sep-line{width:10px;align-self:stretch;flex-shrink:0;position:relative;display:flex;align-items:center;justify-content:center;background:transparent;cursor:default}',
-    '.ws-canvas .cf-col-sep-line::after{content:none!important}',
-    '.ws-canvas .cf-col-sep-line:hover::after{content:none!important}',
+    '.ws-canvas .cf-col-sep-line::after{content:\'\';position:absolute;top:16px;bottom:16px;width:2px;background:var(--border2);border-radius:2px}',
+    '.ws-canvas .cf-col-sep-line:hover::after{background:var(--border2)!important;width:2px!important}',
     '.ws-canvas .cf-column-layout:hover .cf-col-sep-line{background:transparent!important}',
     /* ── Button / CTA Block ── */
     '.ws-canvas .cf-btn-block{margin:12px 0;display:block}',
