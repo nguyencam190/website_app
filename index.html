@@ -6365,6 +6365,13 @@ function slashOpen(){
   const inp=document.getElementById('slashMenuInp');
   inp.value='';
   slashBuild('');
+  // Show block bar at the block where / was typed — especially needed inside table cells
+  // because focusing the search input below kills window.getSelection(), so _updateBlockBar
+  // can no longer find the block after the 50ms timer fires.
+  try{
+    const _nr=_slashSavedRange&&_findBlockInContainer(_slashSavedRange.startContainer);
+    if(_nr)_showBlockBar(_nr.block);
+  }catch(e){}
   // Save scroll position and use preventScroll so focusing the menu input
   // doesn't cause #editorScroll to jump away from the "/" position
   const _edSc=document.getElementById('editorScroll');
