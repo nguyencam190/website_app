@@ -1266,29 +1266,6 @@ td .cf-checklist-body,.cf-column-item .cf-checklist-body{padding:8px 10px 10px 1
 .save-ok{color:var(--success);display:flex;align-items:center;gap:4px;font-weight:500}
 .save-dirty{color:var(--warning);display:flex;align-items:center;gap:4px;font-weight:500}
 kbd{background:var(--surface2);border:1px solid var(--border2);border-radius:4px;padding:1px 5px;font-family:var(--mono);font-size:10px;color:var(--text2)}
-/* ═══ NESTED ROW — CamNguyen-style Custom Layout Row ═══════════════════
-   Architecture: outer td.tbl-inner-container spans ALL data cols,
-   houses a transparent inner table that blends seamlessly with outer borders.
-   Users see "row with free-form cells", not a nested table.
-   ════════════════════════════════════════════════════════════════════════ */
-/* Container cell: zero-padding so inner table touches outer border exactly */
-td.tbl-inner-container{padding:0!important;overflow:visible!important;vertical-align:top;background:transparent}
-/* Inner table: zero border, fills container 100% */
-.tbl-inner-row{width:100%;table-layout:fixed;border-collapse:collapse;border:none;margin:0;background:transparent;display:table;position:relative}
-/* Inner cells — only right dividers (left/top/bottom merged with outer table) */
-.tbl-inner-row td{padding:8px 12px;border-right:1px solid var(--tbl-border);border-top:none;border-bottom:none;border-left:none;position:relative;vertical-align:top;word-break:break-word;min-width:40px;transition:background var(--tr)}
-.tbl-inner-row td:last-child{border-right:none}
-.tbl-inner-row tr:hover td{background:var(--tbl-row-hover)}
-[data-theme="dark"] .tbl-inner-row td{border-color:var(--tbl-border)}
-/* Inner cell resize handle (same style as outer) */
-.tbl-inner-resize{position:absolute;top:0;right:-3px;bottom:0;width:6px;cursor:col-resize;z-index:22;background:transparent}
-.tbl-inner-resize:hover,.tbl-inner-resize.dragging{background:rgba(37,99,235,.35);border-radius:2px}
-/* Add-cell button — appears on hover at right end of inner row */
-.tbl-inner-add-btn{position:absolute;right:-14px;top:50%;transform:translateY(-50%);width:24px;height:24px;background:var(--accent);color:#fff;border:none;border-radius:50%;cursor:pointer;font-size:17px;line-height:1;display:none;align-items:center;justify-content:center;z-index:30;box-shadow:0 2px 6px var(--accent-glow);transition:.12s}
-.tbl-inner-add-btn:hover{transform:translateY(-50%) scale(1.12)}
-.tbl-inner-row:hover .tbl-inner-add-btn,.tbl-inner-row:focus-within .tbl-inner-add-btn{display:flex}
-/* Context menu for inner cells (reuses .tbl-dropdown style) */
-#tblInnerCellMenu{position:fixed;z-index:650}
 /* CONTEXT MENU */
 .ctx{display:none;position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:11px;box-shadow:var(--shadow-lg);padding:5px;z-index:300;min-width:176px}
 .ctx.on{display:block}
@@ -3233,13 +3210,6 @@ function onContentChange(){
     if(widths.replace(/,/g,'').trim())tbl.dataset.colwidths=widths;
     else tbl.removeAttribute('data-colwidths');
   });
-  // Save inner-row table widths BEFORE stripping colgroups
-  clone.querySelectorAll('table.tbl-inner-row').forEach(innerTbl=>{
-    const cg=innerTbl.querySelector('colgroup');if(!cg)return;
-    const w=Array.from(cg.querySelectorAll('col')).map(c=>c.style.width||'').join(',');
-    if(w.replace(/,/g,'').trim())innerTbl.dataset.innerwidths=w;
-    else innerTbl.removeAttribute('data-innerwidths');
-  });
   clone.querySelectorAll('colgroup').forEach(e=>e.remove());
   // Strip blob URLs from table cell images (only save data-tblimgid)
   clone.querySelectorAll('img[data-tblimgid]').forEach(img=>{
@@ -4828,59 +4798,7 @@ function _openSelPanel(title,type,idx,table,triggerEl){
     actWrap.appendChild(mkBtn('layout-distribute-horizontal','Chia đều độ rộng các cột',false,
       ()=>tblDistributeColumns(table)));
   } else {
-    // ── Check if this row is a Custom Layout Row ──────────────
-    const currentRow=table&&idx>=0?table.rows[idx]:null;
-    const isInnerRow=currentRow&&currentRow.dataset.innerrow==='1';
-    const innerTbl=currentRow?.querySelector('table.tbl-inner-row');
-
-    if(isInnerRow&&innerTbl){
-      // ── Số ô hiện tại ─────────────────────────────────────
-      const curCells=innerTbl.querySelectorAll('tr td').length;
-
-      // ── Quick-set số ô: [1][2][3][4][5][6] ───────────────
-      const cellCountWrap=document.createElement('div');
-      cellCountWrap.style.cssText='margin-bottom:6px';
-      const cellCountLbl=document.createElement('div');
-      cellCountLbl.style.cssText='font-size:10px;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px';
-      cellCountLbl.textContent='Số ô ('+ curCells +' hiện tại)';
-      cellCountWrap.appendChild(cellCountLbl);
-      const presetRow=document.createElement('div');
-      presetRow.style.cssText='display:flex;gap:4px;flex-wrap:wrap';
-      [1,2,3,4,5,6].forEach(n=>{
-        const btn=document.createElement('button');
-        btn.textContent=n;
-        btn.title=n+' ô';
-        const isActive=n===curCells;
-        btn.style.cssText='flex:1;min-width:28px;padding:5px 2px;border-radius:5px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);border:1px solid '+(isActive?'var(--accent)':'#334155')+';background:'+(isActive?'var(--accent)':'transparent')+';color:'+(isActive?'#fff':'#94a3b8')+';transition:.1s';
-        btn.onmouseenter=()=>{if(!isActive)btn.style.background='rgba(255,255,255,.07)';};
-        btn.onmouseleave=()=>{if(!isActive)btn.style.background='transparent';};
-        btn.onclick=()=>{tblClearSel();tblInnerSetCellCount(innerTbl,n);};
-        presetRow.appendChild(btn);
-      });
-      cellCountWrap.appendChild(presetRow);
-      actWrap.appendChild(cellCountWrap);
-
-      // ── Divider ────────────────────────────────────────────
-      const divI0=document.createElement('div');divI0.style.cssText='border-top:1px solid #1e293b;margin:3px 0 5px';actWrap.appendChild(divI0);
-
-      // ── Thêm / Xóa ô thủ công ────────────────────────────
-      actWrap.appendChild(mkBtn('layout-columns-insert-right','Thêm 1 ô vào hàng',false,
-        ()=>tblInnerAddCell(innerTbl)));
-      actWrap.appendChild(mkBtn('column-remove-right','Xóa ô cuối cùng',false,()=>{
-        const cells=innerTbl.querySelectorAll('tr td');
-        if(cells.length>1)tblInnerDeleteCell(cells[cells.length-1],innerTbl);
-        else toast('Đã là 1 ô, không thể xóa thêm','error');
-      }));
-
-      // ── Divider ────────────────────────────────────────────
-      const divI=document.createElement('div');divI.style.cssText='border-top:1px solid #1e293b;margin:5px 0 3px';actWrap.appendChild(divI);
-      actWrap.appendChild(mkBtn('row-insert-top','Thêm hàng thường phía trên',false,tblAddRowAbove));
-      actWrap.appendChild(mkBtn('row-insert-bottom','Thêm hàng thường phía dưới',false,tblAddRowBelow));
-      const divI2=document.createElement('div');divI2.style.cssText='border-top:1px solid #1e293b;margin:3px 0';actWrap.appendChild(divI2);
-      actWrap.appendChild(mkBtn('table','Hoàn nguyên về hàng thường',false,
-        ()=>tblRevertInnerRow(idx,table)));
-      actWrap.appendChild(mkBtn('trash','Xóa hàng này',true,tblDelRow));
-    } else {
+    {
       // ── Normal row controls ───────────────────────────────
       actWrap.appendChild(mkBtn('row-insert-top','Thêm hàng phía trên',false,tblAddRowAbove));
       actWrap.appendChild(mkBtn('row-insert-bottom','Thêm hàng phía dưới',false,tblAddRowBelow));
@@ -5004,321 +4922,6 @@ function tblToggleRowNums(){
   tblAttachTable(table);
   onContentChange();
   toast(current?'Da an cot so thu tu':'Da hien cot so thu tu','info');
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// NESTED ROW ENGINE — CamNguyen-style Custom Layout Row
-// ═══════════════════════════════════════════════════════════════════════
-const INNER_ROW_DEFAULT_CELLS=3;
-
-// ── Count DATA columns of outer table (excludes row-num col) ─────────────
-function _tblDataCols(table){
-  // Use a non-inner-row row to count true data cols
-  let dataCols=0;
-  for(const row of Array.from(table.rows)){
-    if(row.dataset.innerrow==='1')continue; // skip custom rows
-    let n=0;
-    Array.from(row.cells).forEach(c=>{
-      if(!c.classList.contains('tbl-row-num'))n+=(c.colSpan||1);
-    });
-    if(n>dataCols)dataCols=n;
-  }
-  if(!dataCols){
-    // Fallback: use colgroup minus row-num col
-    const cg=table.querySelector('colgroup');
-    const showNums=table.dataset.rownums!=='0';
-    dataCols=(cg?cg.querySelectorAll('col').length:1)-(showNums?1:0);
-  }
-  return Math.max(1,dataCols);
-}
-
-// ── Convert a normal row → Custom Layout Row ─────────────────────────────
-function tblConvertRowToInner(rowIdx,table){
-  const row=table.rows[rowIdx];
-  if(!row||row.dataset.innerrow==='1')return;
-
-  // Gather current data cells (excluding row-num)
-  const dataCells=Array.from(row.cells).filter(c=>!c.classList.contains('tbl-row-num'));
-  let colSpanSum=0;dataCells.forEach(c=>colSpanSum+=(c.colSpan||1));
-  if(colSpanSum<1)colSpanSum=_tblDataCols(table);
-
-  // Remove all data cells from this row
-  dataCells.forEach(c=>c.remove());
-
-  // Create container cell spanning all data columns
-  const container=document.createElement('td');
-  container.className='tbl-inner-container';
-  container.setAttribute('colspan',colSpanSum);
-  container.contentEditable='false'; // container itself is NOT editable
-  row.appendChild(container);
-  row.dataset.innerrow='1';
-  row.dataset.innercols=colSpanSum; // remember original span for revert
-
-  // Build inner table with default cells
-  const innerTbl=_tblBuildInnerTable(INNER_ROW_DEFAULT_CELLS);
-  container.appendChild(innerTbl);
-  _tblAttachInnerRow(innerTbl);
-
-  onContentChange();
-  toast('Đã chuyển sang hàng tùy biến ('+INNER_ROW_DEFAULT_CELLS+' ô)','success');
-}
-
-// ── Revert Custom Layout Row → normal row ────────────────────────────────
-function tblRevertInnerRow(rowIdx,table){
-  const row=table.rows[rowIdx];
-  if(!row||row.dataset.innerrow!=='1')return;
-
-  // Remove container + inner table
-  Array.from(row.cells).forEach(c=>{if(!c.classList.contains('tbl-row-num'))c.remove();});
-  delete row.dataset.innerrow;
-
-  // Restore normal data cells from outer table data-cols count
-  const dataCols=_tblDataCols(table);
-  for(let i=0;i<dataCols;i++){
-    const td=document.createElement('td');
-    td.contentEditable='true';
-    row.appendChild(td);
-  }
-
-  // Re-attach full outer table
-  tblAttachTable(table);
-  onContentChange();
-  toast('Đã khôi phục hàng thông thường','info');
-}
-
-// ── Build inner table DOM ─────────────────────────────────────────────────
-function _tblBuildInnerTable(cellCount,savedWidths){
-  const innerTbl=document.createElement('table');
-  innerTbl.className='tbl-inner-row';
-  innerTbl.dataset.innercells=cellCount;
-
-  // Colgroup: equal widths by default, or restored from saved data
-  const cg=document.createElement('colgroup');
-  const wArr=savedWidths?(savedWidths.split(',')):[]; // may be empty
-  for(let i=0;i<cellCount;i++){
-    const col=document.createElement('col');
-    const w=wArr[i]||(Math.round(100/cellCount)+'%');
-    col.style.width=w;
-    cg.appendChild(col);
-  }
-  innerTbl.appendChild(cg);
-
-  // Single data row
-  const tr=document.createElement('tr');
-  for(let i=0;i<cellCount;i++){
-    const td=document.createElement('td');
-    td.contentEditable='true';
-    tr.appendChild(td);
-  }
-  innerTbl.appendChild(tr);
-
-  // Add-cell button at the right end
-  const addBtn=document.createElement('button');
-  addBtn.className='tbl-inner-add-btn';
-  addBtn.contentEditable='false';
-  addBtn.title='Thêm ô vào hàng tùy biến';
-  addBtn.innerHTML='+';
-  addBtn.addEventListener('mousedown',e=>e.preventDefault());
-  addBtn.addEventListener('click',e=>{e.stopPropagation();tblInnerAddCell(innerTbl);});
-  innerTbl.appendChild(addBtn);
-
-  return innerTbl;
-}
-
-// ── Attach full interactivity to inner table ──────────────────────────────
-function _tblAttachInnerRow(innerTbl){
-  if(!innerTbl)return;
-  const cells=Array.from(innerTbl.querySelectorAll('tr td'));
-  const cellCount=cells.length;
-  if(!cellCount)return;
-
-  // Rebuild colgroup to match current cells
-  let cg=innerTbl.querySelector('colgroup');
-  if(!cg){cg=document.createElement('colgroup');innerTbl.insertBefore(cg,innerTbl.firstChild);}
-  while(cg.children.length<cellCount)cg.appendChild(document.createElement('col'));
-  while(cg.children.length>cellCount)cg.removeChild(cg.lastChild);
-  // Restore from data-innerwidths if present
-  const wArr=(innerTbl.dataset.innerwidths||'').split(',');
-  Array.from(cg.children).forEach((col,i)=>{
-    if(!col.style.width)col.style.width=wArr[i]||(Math.round(100/cellCount)+'%');
-  });
-
-  cells.forEach((cell,ci)=>{
-    // Ensure editability — critical for text input and slash menu
-    cell.contentEditable='true';
-    cell.style.position='relative';
-
-    // Remove stale resize handles and drop overlays
-    cell.querySelectorAll('.tbl-inner-resize,.tbl-cell-drop').forEach(e=>e.remove());
-
-    // ── Column resize handle (on all except last cell) ────
-    if(ci<cells.length-1){
-      const rh=document.createElement('div');
-      rh.className='tbl-inner-resize';
-      rh.contentEditable='false';
-      rh.addEventListener('mousedown',e=>{
-        e.preventDefault();e.stopPropagation();
-        _tblInnerResizeStart(e,innerTbl,cell,ci);
-      });
-      cell.appendChild(rh);
-    }
-
-    // ── Click: set _activeTd so slash menu context is correct ──
-    cell.addEventListener('click',()=>{_activeTd=cell;});
-
-    // ── Drag & drop image support ─────────────────────────────
-    const dropOv=document.createElement('div');dropOv.className='tbl-cell-drop';
-    dropOv.contentEditable='false';
-    dropOv.innerHTML='<i class="ti ti-photo-up"></i>';
-    cell.appendChild(dropOv);
-    cell.addEventListener('dragover',e=>{
-      if(Array.from(e.dataTransfer.types).includes('Files')){e.preventDefault();e.stopPropagation();dropOv.classList.add('on');}
-    });
-    cell.addEventListener('dragleave',e=>{if(!cell.contains(e.relatedTarget))dropOv.classList.remove('on');});
-    cell.addEventListener('drop',async e=>{
-      e.preventDefault();e.stopPropagation();dropOv.classList.remove('on');
-      const files=Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith('image/'));
-      if(files.length)await _tblInsertImgBlock(cell,files[0]);
-    });
-    cell.addEventListener('paste',async e=>{
-      const imgItem=Array.from(e.clipboardData?.items||[]).find(i=>i.type.startsWith('image/'));
-      if(imgItem){e.preventDefault();e.stopPropagation();await _tblInsertImgBlock(cell,imgItem.getAsFile());}
-    });
-  });
-
-  innerTbl.dataset.innercells=cellCount;
-}
-
-// ── Inner column resize (pixel → renormalise to % after drag) ────────────
-function _tblInnerResizeStart(e,innerTbl,cell,colIdx){
-  const handle=e.currentTarget;handle.classList.add('dragging');
-  const startX=e.clientX;
-  const cg=innerTbl.querySelector('colgroup');
-  const cgCols=cg?Array.from(cg.querySelectorAll('col')):[];
-  const thisCol=cgCols[colIdx];
-  const nextCol=cgCols[colIdx+1];
-  const startPx=cell.offsetWidth;
-  const nextStartPx=innerTbl.querySelectorAll('tr td')[colIdx+1]?.offsetWidth||100;
-  const minPx=40;
-
-  const overlay=document.createElement('div');
-  overlay.style.cssText='position:fixed;inset:0;cursor:col-resize;z-index:9999';
-  document.body.appendChild(overlay);
-
-  function move(e2){
-    const dx=e2.clientX-startX;
-    const newPx=Math.max(minPx,startPx+dx);
-    if(thisCol)thisCol.style.width=newPx+'px';
-    // Don't touch other columns — inner table uses max-content-like behaviour
-  }
-  function up(){
-    handle.classList.remove('dragging');
-    overlay.remove();
-    document.removeEventListener('mousemove',move);
-    document.removeEventListener('mouseup',up);
-    // Normalise ALL cols to % so resize is proportional on window resize
-    const cells=Array.from(innerTbl.querySelectorAll('tr td'));
-    const totalRendered=innerTbl.offsetWidth||400;
-    if(cg&&totalRendered>0){
-      Array.from(cg.children).forEach((col,i)=>{
-        const w=cells[i]?.offsetWidth||0;
-        col.style.width=Math.max(10,Math.round(w/totalRendered*100))+'%';
-      });
-    }
-    onContentChange();
-  }
-  document.addEventListener('mousemove',move);
-  document.addEventListener('mouseup',up);
-}
-
-// ── Add cell to inner table ───────────────────────────────────────────────
-function tblInnerAddCell(innerTbl){
-  if(!innerTbl)return;
-  const tr=innerTbl.querySelector('tr');if(!tr)return;
-  const td=document.createElement('td');td.contentEditable='true';
-  tr.appendChild(td);
-  _tblAttachInnerRow(innerTbl);
-  onContentChange();
-  toast('Đã thêm ô','success');
-}
-
-// ── Set exact number of cells in inner table ─────────────────────────────
-function tblInnerSetCellCount(innerTbl,n){
-  if(!innerTbl||n<1||n>20)return;
-  const tr=innerTbl.querySelector('tr');if(!tr)return;
-  const current=tr.cells.length;
-  if(n===current)return; // nothing to do
-
-  if(n>current){
-    // Add cells
-    for(let i=current;i<n;i++){
-      const td=document.createElement('td');td.contentEditable='true';tr.appendChild(td);
-    }
-  } else {
-    // Remove trailing cells (keep content of remaining ones)
-    while(tr.cells.length>n)tr.cells[tr.cells.length-1].remove();
-  }
-
-  // Equalise colgroup to new count with equal % widths
-  let cg=innerTbl.querySelector('colgroup');
-  if(!cg){cg=document.createElement('colgroup');innerTbl.insertBefore(cg,innerTbl.firstChild);}
-  while(cg.children.length<n)cg.appendChild(document.createElement('col'));
-  while(cg.children.length>n)cg.removeChild(cg.lastChild);
-  Array.from(cg.children).forEach(col=>{col.style.width=Math.round(100/n)+'%';});
-
-  _tblAttachInnerRow(innerTbl);
-  onContentChange();
-  toast('Đã đặt '+n+' ô','success');
-}
-
-// ── Delete a specific cell from inner table ───────────────────────────────
-function tblInnerDeleteCell(cell,innerTbl){
-  if(!cell||!innerTbl)return;
-  const tr=innerTbl.querySelector('tr');
-  if(!tr||tr.cells.length<=1){toast('Phải giữ ít nhất 1 ô','error');return;}
-  cell.remove();
-  _tblAttachInnerRow(innerTbl);
-  onContentChange();
-  toast('Đã xoá ô','info');
-}
-
-// ── Context menu for inner cell (right-click) ─────────────────────────────
-function _openInnerCellMenu(x,y,cell,innerTbl){
-  let menu=document.getElementById('tblInnerCellMenu');
-  if(!menu){
-    menu=document.createElement('div');menu.id='tblInnerCellMenu';
-    menu.className='tbl-dropdown';document.body.appendChild(menu);
-  }
-  // Store refs on window for onclick handlers
-  window._innerCell=cell;window._innerTbl=innerTbl;
-  menu.innerHTML=
-    '<div class="tbl-label">Ô tùy biến</div>'+
-    '<button class="tbl-item" onclick="tblInnerAddCell(window._innerTbl);document.getElementById(\'tblInnerCellMenu\').classList.remove(\'on\')">'+
-      '<i class="ti ti-layout-columns-insert-right" style="font-size:15px;color:var(--text3)"></i> Thêm ô bên phải</button>'+
-    '<div class="tbl-divider"></div>'+
-    '<button class="tbl-item danger" onclick="tblInnerDeleteCell(window._innerCell,window._innerTbl);document.getElementById(\'tblInnerCellMenu\').classList.remove(\'on\')">'+
-      '<i class="ti ti-trash"></i> Xoá ô này</button>'+
-    '<div class="tbl-divider"></div>'+
-    '<button class="tbl-item" onclick="_activeTd=window._innerCell.closest(\'table.tbl-inner-row\')?.closest(\'td.tbl-inner-container\')?.closest(\'tr\');tblRevertInnerRowFromCell(window._innerCell);document.getElementById(\'tblInnerCellMenu\').classList.remove(\'on\')">'+
-      '<i class="ti ti-table" style="font-size:15px;color:var(--text3)"></i> Hoàn nguyên hàng thường</button>';
-  const vw=window.innerWidth,vh=window.innerHeight;
-  menu.style.left=Math.min(x,vw-240)+'px';
-  menu.style.top=Math.min(y,vh-120)+'px';
-  menu.classList.add('on');
-  setTimeout(()=>document.addEventListener('mousedown',function once(e2){
-    if(!menu.contains(e2.target)){menu.classList.remove('on');document.removeEventListener('mousedown',once);}
-  }),60);
-}
-
-// ── Helper: revert inner row from a reference cell inside it ─────────────
-function tblRevertInnerRowFromCell(innerCell){
-  const innerTbl=innerCell?.closest('table.tbl-inner-row');
-  const container=innerTbl?.closest('td.tbl-inner-container');
-  const row=container?.closest('tr');
-  const outerTable=row?.closest('table');
-  if(!row||!outerTable)return;
-  const rowIdx=Array.from(outerTable.rows).indexOf(row);
-  tblRevertInnerRow(rowIdx,outerTable);
 }
 
 // ── Wrap table in .tbl-outer (for edge resize) ──────────────
@@ -6137,8 +5740,6 @@ function tblShowDropdown(td,triggerEl){
 
 function tblAttachAll(){
   document.querySelectorAll('.editor-content table').forEach(table=>{
-    // Skip inner tables — they are handled by _tblAttachInnerRow, not tblAttachTable
-    if(table.classList.contains('tbl-inner-row'))return;
     tblAttachTable(table);
   });
 }
@@ -6279,16 +5880,8 @@ function tblAttachTable(table){
     hostCell.appendChild(rowSel);
   });
 
-  // 4a. ── Re-attach inner row interactivity for existing inner-row rows ──
-  table.querySelectorAll('tr[data-innerrow="1"]').forEach(row=>{
-    const innerTbl=row.querySelector('table.tbl-inner-row');
-    if(innerTbl)_tblAttachInnerRow(innerTbl);
-  });
-
   // 4. ── Per-cell setup: ensure editability, drag&drop + paste ────
   table.querySelectorAll('td:not(.tbl-row-num),th:not(.tbl-row-num)').forEach(cell=>{
-    // Skip inner-row container cells — their inner table handles everything
-    if(cell.classList.contains('tbl-inner-container'))return;
     cell.querySelectorAll('.tbl-img-btn,.tbl-cell-drop').forEach(e=>e.remove());
     cell.style.position='relative';
     // Explicitly ensure every data cell is editable (row-num cells are false, data cells must be true)
@@ -6410,7 +6003,7 @@ function tblAttachTable(table){
   // 6. ── Drag-to-select cells ──────────────────────────────────
   table.addEventListener('mouseover',e=>{
     if(e.buttons!==1||!_tblDragStart||_tblDragStart.closest('table')!==table)return;
-    const td=e.target.closest('td:not(.tbl-row-num):not(.tbl-inner-container),th:not(.tbl-row-num)');
+    const td=e.target.closest('td:not(.tbl-row-num),th:not(.tbl-row-num)');
     if(!td||td.closest('table')!==table||td===_tblDragStart)return;
     if(_mergeTable!==table){_mergeTable=table;table.querySelectorAll('.tbl-cell-sel').forEach(c=>c.classList.remove('tbl-cell-sel'));}
     _activeTd=_tblDragStart;
@@ -11101,12 +10694,6 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .editor-content th.tbl-row-num{font-size:10px;text-transform:uppercase;letter-spacing:.5px}',
     '.ws-canvas .editor-content th:last-child,.ws-canvas .editor-content td:last-child{border-right:1px solid var(--tbl-border)}',
     '.ws-canvas .editor-content tr:last-child td,.ws-canvas .editor-content tr:last-child th{border-bottom:none}',
-    /* ── Nested Row styles for published pages ── */
-    '.ws-canvas .editor-content td.tbl-inner-container{padding:0!important;overflow:visible!important;vertical-align:top;background:transparent}',
-    '.ws-canvas .editor-content .tbl-inner-row{width:100%;table-layout:fixed;border-collapse:collapse;border:none;margin:0;background:transparent;display:table}',
-    '.ws-canvas .editor-content .tbl-inner-row td{padding:9px 14px;border-right:1px solid var(--tbl-border);border-top:none;border-bottom:none;border-left:none;position:relative;vertical-align:top;word-break:break-word}',
-    '.ws-canvas .editor-content .tbl-inner-row td:last-child{border-right:none}',
-    '.ws-canvas .editor-content .tbl-inner-row tr:hover td{background:var(--tbl-hover)}',
     '.ws-canvas .editor-content tr:hover td{background:var(--tbl-hover)}',
     '.ws-canvas .editor-content td.tbl-has-img,.ws-canvas .editor-content th.tbl-has-img{padding:0;overflow:hidden;text-align:center;vertical-align:middle;line-height:0}',
     '.ws-canvas .editor-content table:has(td.tbl-has-img) th{border-bottom:none!important}',
@@ -11622,14 +11209,6 @@ async function doExportWebsite(){
       // Fix scroll container for fixed table layout
       w.style.cssText='display:block;margin:14px 0;width:100%;overflow-x:auto;overflow-y:visible';
     });
-    // Save inner table widths BEFORE stripping colgroups
-    tmp.querySelectorAll('table.tbl-inner-row').forEach(innerTbl=>{
-      const cg=innerTbl.querySelector('colgroup');if(!cg)return;
-      const w=Array.from(cg.querySelectorAll('col')).map(c=>c.style.width||'').join(',');
-      if(w.replace(/,/g,'').trim())innerTbl.dataset.innerwidths=w;
-    });
-    // Remove editor-only UI: inner resize handles + add button from inner rows
-    tmp.querySelectorAll('.tbl-inner-resize,.tbl-inner-add-btn').forEach(e=>e.remove());
     tmp.querySelectorAll([
       '.tbl-row-num','.tbl-col-resize-handle','.tbl-row-resize-handle',
       '.tbl-col-sel','.tbl-row-sel','.tbl-img-btn','.tbl-shadow-btn',
@@ -11657,7 +11236,7 @@ async function doExportWebsite(){
 
     // ─ 3c. Fixed Table Layout: rebuild colgroup + lock sizes ─
     // Outer tables: rebuild from data-colwidths + lock fixed layout
-    tmp.querySelectorAll('table:not(.tbl-inner-row)').forEach(tbl=>{
+    tmp.querySelectorAll('table').forEach(tbl=>{
       const showRN=tbl.dataset.rownums!=='0';
       const savedW=tbl.dataset.colwidths;
       if(savedW){
@@ -11692,24 +11271,6 @@ async function doExportWebsite(){
       }
       tbl.style.setProperty('table-layout','fixed','important');
       tbl.style.borderCollapse='collapse';
-    });
-    // Inner tables: rebuild from data-innerwidths + stay 100% of container
-    tmp.querySelectorAll('table.tbl-inner-row').forEach(innerTbl=>{
-      const savedW=innerTbl.dataset.innerwidths;
-      if(savedW){
-        const wArr=savedW.split(',');
-        const cells=innerTbl.querySelectorAll('tr td');
-        const cg=document.createElement('colgroup');
-        for(let i=0;i<cells.length;i++){
-          const col=document.createElement('col');
-          col.style.width=wArr[i]||(Math.round(100/cells.length)+'%');
-          cg.appendChild(col);
-        }
-        innerTbl.insertBefore(cg,innerTbl.firstChild);
-      }
-      innerTbl.style.setProperty('table-layout','fixed','important');
-      innerTbl.style.width='100%';
-      innerTbl.style.borderCollapse='collapse';
     });
     // ── Restore carousel blocks from IDB ───────────────────
     for(const block of Array.from(tmp.querySelectorAll('.cf-carousel-block[data-cfcarids]'))){
@@ -12553,8 +12114,6 @@ async function doExportOptimized(){
     const tmp=document.createElement('div');tmp.innerHTML=d.content||'';
     // Strip editor-only UI
     tmp.querySelectorAll('.tbl-outer').forEach(w=>{w.querySelectorAll('.tbl-edge-h').forEach(e=>e.remove());w.style.marginLeft='';w.style.cssText='display:block;margin:14px 0;width:100%;overflow-x:auto;overflow-y:visible';});
-    tmp.querySelectorAll('table.tbl-inner-row').forEach(innerTbl=>{const cg=innerTbl.querySelector('colgroup');if(!cg)return;const w=Array.from(cg.querySelectorAll('col')).map(c=>c.style.width||'').join(',');if(w.replace(/,/g,'').trim())innerTbl.dataset.innerwidths=w;});
-    tmp.querySelectorAll('.tbl-inner-resize,.tbl-inner-add-btn').forEach(e=>e.remove());
     tmp.querySelectorAll(['.tbl-row-num','.tbl-col-resize-handle','.tbl-row-resize-handle','.tbl-col-sel','.tbl-row-sel','.tbl-img-btn','.tbl-shadow-btn','.tbl-cell-drop','.tbl-merge-bar','colgroup','.fmedia','.txtbox','script','style','.cf-col-toolbar','.cf-col-count-dd','.cf-col-more-dd','.cf-img-toolbar','.cf-img-resize-h','.cf-img-ctx','.cf-panel-actions','.cf-car-toolbar','.cf-embed-toolbar','.cf-car-add-slide','.editor-block-bar','.slash-hint','.pab-logo-menu','.cf-toc-del','.cf-btn-toolbar','.cf-file-del','.cf-tab-add','.cf-progress-del','.cf-checklist-cam-btn','.cf-code-copy'].join(',')).forEach(e=>e.remove());
     tmp.querySelectorAll('[contenteditable]').forEach(el=>el.removeAttribute('contenteditable'));
     tmp.querySelectorAll('[spellcheck]').forEach(el=>el.removeAttribute('spellcheck'));
@@ -12562,15 +12121,10 @@ async function doExportOptimized(){
     tmp.querySelectorAll('.cf-col-empty').forEach(el=>el.classList.remove('cf-col-empty'));
     tmp.querySelectorAll('[data-placeholder]').forEach(el=>el.removeAttribute('data-placeholder'));
     // Table colgroup rebuild
-    tmp.querySelectorAll('table:not(.tbl-inner-row)').forEach(tbl=>{
+    tmp.querySelectorAll('table').forEach(tbl=>{
       const showRN=tbl.dataset.rownums!=='0';const savedW=tbl.dataset.colwidths;
       if(savedW){const cg=document.createElement('colgroup');savedW.split(',').forEach((w,i)=>{if(showRN&&i===0)return;const col=document.createElement('col');col.style.width=w;cg.appendChild(col);});tbl.prepend(cg);}
       tbl.style.tableLayout='fixed';tbl.style.borderCollapse='collapse';tbl.querySelectorAll('.tbl-row-num').forEach(e=>e.remove());
-    });
-    tmp.querySelectorAll('table.tbl-inner-row').forEach(innerTbl=>{
-      const ws=innerTbl.dataset.innerwidths;
-      if(ws){const cg=document.createElement('colgroup');ws.split(',').forEach(w=>{const col=document.createElement('col');col.style.width=w;cg.appendChild(col);});innerTbl.prepend(cg);delete innerTbl.dataset.innerwidths;}
-      innerTbl.style.tableLayout='fixed';innerTbl.style.borderCollapse='collapse';
     });
     // Carousels → zip
     for(const block of Array.from(tmp.querySelectorAll('.cf-carousel-block[data-cfcarids]'))){
