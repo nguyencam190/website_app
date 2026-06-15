@@ -9228,9 +9228,9 @@ function _showBlockBar(targetEl){
   const bar=_getBlockBar();
   const rect=targetEl.getBoundingClientRect();
   const container=targetEl.parentElement;
-  // Don't show block bar for anything inside or that is a table (tbl-outer)
-  if(targetEl.closest('.tbl-outer')||targetEl.classList.contains('tbl-outer')){_hideBlockBar();return;}
-  const isNested=container&&(container.tagName==='TD'||container.tagName==='TH'||
+  // Don't show block bar inside table cells (conflicts with row/col selector dots)
+  if(targetEl.closest('td,th')){_hideBlockBar();return;}
+  const isNested=container&&(
     container.classList.contains('cf-column-item')||
     container.classList.contains('cf-panel-content')||
     container.classList.contains('cf-toggle-body')||
@@ -9238,15 +9238,8 @@ function _showBlockBar(targetEl){
     container.classList.contains('cf-checklist-body'));
   bar.style.position='fixed';
   if(isNested){
-    const isCellNested=container.tagName==='TD'||container.tagName==='TH';
-    if(isCellNested){
-      const cellRect=container.getBoundingClientRect();
-      bar.style.top=rect.top+'px';
-      bar.style.left=cellRect.left+'px';
-    } else {
-      bar.style.top=rect.top+'px';
-      bar.style.left=rect.left+'px';
-    }
+    bar.style.top=rect.top+'px';
+    bar.style.left=rect.left+'px';
     bar.classList.add('on-nested');
   } else {
     // All non-nested blocks (text, fmedia, image, carousel, table…): left gutter
