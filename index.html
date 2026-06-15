@@ -4665,6 +4665,19 @@ ew.addEventListener('dragover',e=>{e.preventDefault();if(state.currentDocId)ov.c
 ew.addEventListener('dragleave',e=>{if(!ew.contains(e.relatedTarget))ov.classList.remove('on');});
 ew.addEventListener('drop',e=>{e.preventDefault();ov.classList.remove('on');if(!state.currentDocId)return;Array.from(e.dataTransfer.files).forEach(f=>{if(f.type.startsWith('image/')||f.type.startsWith('video/'))loadMedia(f);});});
 document.addEventListener('paste',e=>{if(!state.currentDocId)return;const item=Array.from(e.clipboardData.items||[]).find(i=>i.type.startsWith('image/')||i.type.startsWith('video/'));if(item){e.preventDefault();loadMedia(item.getAsFile());}});
+document.getElementById('editor')?.addEventListener('paste',e=>{
+  const html=e.clipboardData?.getData('text/html');
+  if(!html||!html.includes('background'))return;
+  e.preventDefault();
+  const tmp=document.createElement('div');
+  tmp.innerHTML=html;
+  tmp.querySelectorAll('[style]').forEach(el=>{
+    el.style.backgroundColor='';
+    el.style.background='';
+    if(!(el.getAttribute('style')||'').trim())el.removeAttribute('style');
+  });
+  document.execCommand('insertHTML',false,tmp.innerHTML);
+},false);
 document.addEventListener('click',e=>{
   document.getElementById('ctxMenu').classList.remove('on');
   document.getElementById('docCtxMenu')?.classList.remove('on');
