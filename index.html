@@ -9228,8 +9228,8 @@ function _showBlockBar(targetEl){
   const bar=_getBlockBar();
   const rect=targetEl.getBoundingClientRect();
   const container=targetEl.parentElement;
-  // Don't show block bar inside table cells (conflicts with row/col selector dots)
-  if(targetEl.closest('td,th')){_hideBlockBar();return;}
+  // Don't show block bar inside or on the table (conflicts with row/col selector dots)
+  if(targetEl.closest('td,th')||targetEl.classList.contains('tbl-outer')){_hideBlockBar();return;}
   const isNested=container&&(
     container.classList.contains('cf-column-item')||
     container.classList.contains('cf-panel-content')||
@@ -9296,7 +9296,7 @@ function _onEditorMouseMove(e){
       const prevPar=_blockBarTarget.parentElement;
       const isFromNested=prevPar&&(prevPar.tagName==='TD'||prevPar.tagName==='TH'||
         prevPar.classList.contains('cf-column-item'));
-      if(isFromNested&&(block.classList.contains('tbl-outer')||block.tagName==='TABLE'))return;
+      if(isFromNested&&(block.classList.contains('tbl-outer')||block.tagName==='TABLE')){_hideBlockBar();return;}
     }
     _showBlockBar(block);
   },30);
