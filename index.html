@@ -1297,6 +1297,24 @@ kbd{background:var(--surface2);border:1px solid var(--border2);border-radius:4px
 .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 .modal-row{display:flex;gap:10px}
 .modal-row .field{flex:1}
+/* New page template picker */
+.ndoc-modal{width:520px;max-width:96vw;padding:0;overflow:hidden}
+.ndoc-modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px}
+.ndoc-modal-title{font-size:15px;font-weight:600;color:var(--text)}
+.ndoc-search-row{padding:0 20px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
+.ndoc-search-row i{color:var(--text3);font-size:15px;flex-shrink:0}
+.ndoc-search-row input{flex:1;background:transparent;border:none;outline:none;font-size:13px;color:var(--text);font-family:var(--font)}
+.ndoc-search-row input::placeholder{color:var(--text3)}
+.ndoc-body{padding:16px 20px 20px}
+.ndoc-section-lbl{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
+.ndoc-templates{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
+.ndoc-tpl{border:1.5px solid var(--border);border-radius:10px;padding:14px 8px 12px;cursor:pointer;text-align:center;transition:all .15s;background:var(--surface2)}
+.ndoc-tpl:hover,.ndoc-tpl.active{border-color:var(--accent);background:rgba(37,99,235,.07);transform:translateY(-1px);box-shadow:0 2px 8px rgba(37,99,235,.15)}
+.ndoc-tpl-icon{font-size:26px;color:var(--text2);margin-bottom:6px;line-height:1}
+.ndoc-tpl.active .ndoc-tpl-icon{color:var(--accent)}
+.ndoc-tpl-name{font-size:11px;font-weight:500;color:var(--text2)}
+.ndoc-tpl.active .ndoc-tpl-name{color:var(--accent);font-weight:600}
+.ndoc-footer{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:14px 20px;border-top:1px solid var(--border)}
 /* TOAST */
 .toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:500;pointer-events:none}
 .toast{display:flex;align-items:center;gap:9px;padding:11px 16px;border-radius:10px;font-size:13px;color:#fff;box-shadow:var(--shadow-lg);animation:slideIn .25s cubic-bezier(.34,1.56,.64,1);pointer-events:auto;font-weight:500}
@@ -1858,10 +1876,41 @@ kbd{background:var(--surface2);border:1px solid var(--border2);border-radius:4px
 
 <!-- NEW DOC MODAL -->
 <div class="modal-bg" id="newDocModal" onclick="closeModal('newDocModal',event)">
-  <div class="modal" onclick="event.stopPropagation()">
-    <h3>Tạo tài liệu mới</h3>
-    <div class="field"><label>Tiêu đề</label><input type="text" id="newDocTitle" placeholder="Tiêu đề tài liệu..."></div>
-    <div class="modal-actions"><button class="hbtn" onclick="closeModal('newDocModal')">Huỷ</button><button class="hbtn primary" onclick="createDoc()">Tạo</button></div>
+  <div class="modal ndoc-modal" onclick="event.stopPropagation()">
+    <div class="ndoc-modal-header">
+      <div class="ndoc-modal-title">Tạo trang mới</div>
+      <button class="modal-close" onclick="closeModal('newDocModal')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="ndoc-search-row">
+      <i class="ti ti-pencil"></i>
+      <input type="text" id="newDocTitle" placeholder="Nhập tên trang..." autocomplete="off"
+        onkeydown="if(event.key==='Enter')createDoc(_ndocTpl)">
+    </div>
+    <div class="ndoc-body">
+      <div class="ndoc-section-lbl">Chọn loại trang</div>
+      <div class="ndoc-templates">
+        <div class="ndoc-tpl active" id="ndocTplBlank" onclick="_ndocSelect('blank',this)">
+          <div class="ndoc-tpl-icon"><i class="ti ti-file"></i></div>
+          <div class="ndoc-tpl-name">Trang trống</div>
+        </div>
+        <div class="ndoc-tpl" id="ndocTplNote" onclick="_ndocSelect('note',this)">
+          <div class="ndoc-tpl-icon"><i class="ti ti-notes"></i></div>
+          <div class="ndoc-tpl-name">Ghi chú</div>
+        </div>
+        <div class="ndoc-tpl" id="ndocTplChecklist" onclick="_ndocSelect('checklist',this)">
+          <div class="ndoc-tpl-icon"><i class="ti ti-checkbox"></i></div>
+          <div class="ndoc-tpl-name">Danh sách</div>
+        </div>
+        <div class="ndoc-tpl" id="ndocTplMeeting" onclick="_ndocSelect('meeting',this)">
+          <div class="ndoc-tpl-icon"><i class="ti ti-users"></i></div>
+          <div class="ndoc-tpl-name">Họp nhóm</div>
+        </div>
+      </div>
+    </div>
+    <div class="ndoc-footer">
+      <button class="hbtn" onclick="closeModal('newDocModal')">Huỷ</button>
+      <button class="hbtn primary" onclick="createDoc(_ndocTpl)"><i class="ti ti-plus" style="margin-right:4px"></i>Tạo trang</button>
+    </div>
   </div>
 </div>
 
@@ -3136,15 +3185,36 @@ function filterDocs(){renderSidebar(document.getElementById('searchInput').value
 
 // DOCS
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+let _ndocTpl='blank';
+function _ndocSelect(tpl,el){
+  _ndocTpl=tpl;
+  document.querySelectorAll('.ndoc-tpl').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+}
 function newDoc(){
+  _ndocTpl='blank';
+  document.querySelectorAll('.ndoc-tpl').forEach(t=>t.classList.remove('active'));
+  document.getElementById('ndocTplBlank')?.classList.add('active');
   document.getElementById('newDocTitle').value='';
   openModal('newDocModal');setTimeout(()=>document.getElementById('newDocTitle').focus(),100);
 }
-function createDoc(){
-  const title=document.getElementById('newDocTitle').value.trim()||'Untitled';
+function _ndocTemplateContent(tpl){
+  if(tpl==='note') return '<h2>Ghi chú</h2><p></p>';
+  if(tpl==='checklist') return '<h2>Danh sách công việc</h2><ul><li>Công việc 1</li><li>Công việc 2</li><li>Công việc 3</li></ul>';
+  if(tpl==='meeting') return '<h2>Cuộc họp</h2><p><strong>Ngày:</strong> '+new Date().toLocaleDateString('vi-VN')+'</p><p><strong>Tham gia:</strong> </p><h3>Nội dung thảo luận</h3><p></p><h3>Kết luận &amp; Hành động</h3><p></p>';
+  return ''; // blank
+}
+function createDoc(tpl){
+  tpl=tpl||_ndocTpl||'blank';
+  const rawTitle=document.getElementById('newDocTitle').value.trim();
+  const defaultTitles={blank:'Trang trống',note:'Ghi chú',checklist:'Danh sách',meeting:'Cuộc họp'};
+  const title=rawTitle||(defaultTitles[tpl]||'Untitled');
   const section=state.sections[0]||'default';
-  const doc={id:uid(),title,section,parentId:null,content:'',images:[],textBoxes:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
-  state.docs.push(doc);persist();closeModal('newDocModal');renderSidebar();openDoc(doc.id);toast('Đã tạo tài liệu mới','success');
+  const content=_ndocTemplateContent(tpl);
+  const doc={id:uid(),title,section,parentId:null,content,images:[],textBoxes:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
+  state.docs.push(doc);persist();closeModal('newDocModal');renderSidebar();openDoc(doc.id);
+  if(tpl==='blank'){setTimeout(()=>{const t=document.getElementById('docTitleInput');if(t){t.focus();t.select();}},100);}
+  toast('Đã tạo trang mới','success');
 }
 function _expandAncestors(id){
   const doc=state.docs.find(d=>d.id===id);if(!doc)return;
