@@ -9228,6 +9228,8 @@ function _showBlockBar(targetEl){
   const bar=_getBlockBar();
   const rect=targetEl.getBoundingClientRect();
   const container=targetEl.parentElement;
+  // Don't show block bar inside row-number cells
+  if(container&&container.classList.contains('tbl-row-num')){_hideBlockBar();return;}
   const isNested=container&&(container.tagName==='TD'||container.tagName==='TH'||
     container.classList.contains('cf-column-item')||
     container.classList.contains('cf-panel-content')||
