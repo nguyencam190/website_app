@@ -9228,8 +9228,8 @@ function _showBlockBar(targetEl){
   const bar=_getBlockBar();
   const rect=targetEl.getBoundingClientRect();
   const container=targetEl.parentElement;
-  // Don't show block bar inside or on the table (conflicts with row/col selector dots)
-  if(targetEl.closest('td,th')||targetEl.classList.contains('tbl-outer')){_hideBlockBar();return;}
+  // Don't show block bar inside table cells (conflicts with row/col selector dots)
+  if(targetEl.closest('td,th')){_hideBlockBar();return;}
   const isNested=container&&(
     container.classList.contains('cf-column-item')||
     container.classList.contains('cf-panel-content')||
@@ -9281,6 +9281,9 @@ function _updateBlockBar(){
 
 function _onEditorMouseMove(e){
   clearTimeout(_blockBarTimer);
+  // Immediately hide when mouse is inside a table row — prevents bar from covering
+  // the row selector (tbl-row-sel) buttons before the 30ms timer fires
+  if(e.target&&e.target.closest('tr')){_hideBlockBar();}
   _blockBarTimer=setTimeout(()=>{
     const editor=document.getElementById('editor');if(!editor)return;
     let el=e.target;
@@ -9290,6 +9293,8 @@ function _onEditorMouseMove(e){
     const result=_findBlockInContainer(el);
     if(!result){_hideBlockBar();return;}
     const {block}=result;
+    // Hide bar when mouse is inside a table row — prevents covering row selector dots
+    if(el.closest('tr')){_hideBlockBar();return;}
     // Prevent bar from jumping when crossing from a nested block (td/column) to the
     // outer table wrapper — the user is likely moving toward the bar above the block
     if(_blockBarTarget&&block!==_blockBarTarget){
