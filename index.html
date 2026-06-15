@@ -9236,8 +9236,15 @@ function _showBlockBar(targetEl){
     container.classList.contains('cf-checklist-body'));
   bar.style.position='fixed';
   if(isNested){
-    bar.style.top=rect.top+'px';
-    bar.style.left=rect.left+'px';
+    const isCellNested=container.tagName==='TD'||container.tagName==='TH';
+    if(isCellNested){
+      const cellRect=container.getBoundingClientRect();
+      bar.style.top=rect.top+'px';
+      bar.style.left=cellRect.left+'px';
+    } else {
+      bar.style.top=rect.top+'px';
+      bar.style.left=rect.left+'px';
+    }
     bar.classList.add('on-nested');
   } else {
     // All non-nested blocks (text, fmedia, image, carousel, table…): left gutter
