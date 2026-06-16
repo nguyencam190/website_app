@@ -3370,7 +3370,8 @@ function _updateRelatedContent(){
   const cur=currentDoc();if(!cur){box.innerHTML='';return;}
   const id=cur.id,pid=cur.parentId||null;
   const children=state.docs.filter(d=>!d._deleted&&d.parentId===id);
-  const siblings=state.docs.filter(d=>!d._deleted&&d.parentId===pid&&d.id!==id);
+  // Only show siblings when there IS a parent (root-level siblings could be huge)
+  const siblings=pid?state.docs.filter(d=>!d._deleted&&d.parentId===pid&&d.id!==id):[];
   const parent=pid?state.docs.find(d=>d.id===pid&&!d._deleted):null;
   if(!children.length&&!siblings.length&&!parent){box.innerHTML='';return;}
   function mkCard(d,sub){
@@ -11894,7 +11895,7 @@ async function doExportWebsite(){
     // Related content section
     const relDiv=document.createElement('div');relDiv.className='ws-related';
     const relChildren=docs.filter(x=>!x._deleted&&x.parentId===d.id);
-    const relSiblings=docs.filter(x=>!x._deleted&&x.parentId===d.parentId&&x.id!==d.id);
+    const relSiblings=d.parentId?docs.filter(x=>!x._deleted&&x.parentId===d.parentId&&x.id!==d.id):[];
     const relParent=d.parentId?docs.find(x=>x.id===d.parentId&&!x._deleted):null;
     if(relChildren.length||relSiblings.length||relParent){
       const relH=document.createElement('div');relH.className='ws-related-heading';relH.innerHTML='<span>&#128279;</span> Nội dung liên quan';relDiv.appendChild(relH);
@@ -12675,7 +12676,7 @@ async function doExportOptimized(){
     for(const tb of (d.textBoxes||[])){const box=document.createElement('div');box.style.cssText=`position:absolute;left:${tb.x}px;top:${tb.y}px;width:${tb.w}px;min-height:${tb.h||80}px;border:${tb.bdw||1.5}px solid ${tb.bd||'var(--accent)'};border-radius:6px;background:${tb.bg||'var(--surface)'};box-shadow:${tb.shadow?'0 4px 8px rgba(0,0,0,.24)':'none'};box-sizing:border-box;overflow:auto;padding:10px 12px;font-size:14px;line-height:1.7;color:var(--text)`;const tbT=document.createElement('div');tbT.innerHTML=tb.content||'';tbT.querySelectorAll('.txtbox-handle-bar,.rh,script,[contenteditable]').forEach(e=>{if(e.tagName==='SCRIPT'||e.classList.contains('txtbox-handle-bar')||e.classList.contains('rh'))e.remove();else e.removeAttribute('contenteditable');});box.innerHTML=tbT.innerHTML;canvas.appendChild(box);}
     canvasWrap.appendChild(canvas);
     const relDiv2=document.createElement('div');relDiv2.className='ws-related';
-    const relC2=docs.filter(x=>!x._deleted&&x.parentId===d.id);const relS2=docs.filter(x=>!x._deleted&&x.parentId===d.parentId&&x.id!==d.id);const relP2=d.parentId?docs.find(x=>x.id===d.parentId&&!x._deleted):null;
+    const relC2=docs.filter(x=>!x._deleted&&x.parentId===d.id);const relS2=d.parentId?docs.filter(x=>!x._deleted&&x.parentId===d.parentId&&x.id!==d.id):[];const relP2=d.parentId?docs.find(x=>x.id===d.parentId&&!x._deleted):null;
     if(relC2.length||relS2.length||relP2){const relH2=document.createElement('div');relH2.className='ws-related-heading';relH2.innerHTML='<span>&#128279;</span> Nội dung liên quan';relDiv2.appendChild(relH2);function _wsRelSec2(label,items,sub){if(!items.length)return;const s=document.createElement('div');s.className='ws-related-section';const sl=document.createElement('div');sl.className='ws-related-section-label';sl.textContent=label;const g=document.createElement('div');g.className='ws-related-grid';items.forEach(x=>{const a=document.createElement('a');a.className='ws-related-card';a.href='#';a.setAttribute('onclick','showDoc(\''+x.id+'\');return false;');a.innerHTML='<span class="ws-related-card-icon">&#128196;</span><div class="ws-related-card-info"><div class="ws-related-card-name">'+x.title+'</div><div class="ws-related-card-sub">'+sub+'</div></div>';g.appendChild(a);});s.appendChild(sl);s.appendChild(g);relDiv2.appendChild(s);}
     if(relP2)_wsRelSec2('Trang cha',[relP2],'Trang cha');_wsRelSec2('Trang con',relC2,'Trang con');_wsRelSec2('Trang liên quan',relS2,'Cùng cấp');}
     docDiv.appendChild(h1);docDiv.appendChild(meta);docDiv.appendChild(canvasWrap);docDiv.appendChild(relDiv2);pageRoot.appendChild(docDiv);
