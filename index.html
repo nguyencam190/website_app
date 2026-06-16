@@ -373,6 +373,16 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .editor-content table{border-collapse:collapse;width:max-content;max-width:none;min-width:100%;margin:0;font-size:0.875rem;table-layout:fixed !important;border:1px solid var(--tbl-border);box-sizing:border-box;word-break:break-word}
 /* Table outer wrapper — scroll container: table keeps real size, sidebar cant crush it */
 .tbl-outer{position:relative;display:block;margin:14px 0;width:100%;overflow-x:auto;overflow-y:visible}
+/* Table width scaling */
+.tbl-outer[data-tblwidth="25"]{width:25%}
+.tbl-outer[data-tblwidth="50"]{width:50%}
+.tbl-outer[data-tblwidth="75"]{width:75%}
+/* Table alignment — only meaningful when width < 100% */
+.tbl-outer[data-align="left"]{margin-left:0!important;margin-right:auto!important}
+.tbl-outer[data-align="center"]{margin-left:auto!important;margin-right:auto!important}
+.tbl-outer[data-align="right"]{margin-left:auto!important;margin-right:0!important}
+/* Active state for align/width buttons in dropdown */
+.tbl-item.tbl-active{background:rgba(37,99,235,.1);color:var(--accent);font-weight:600}
 /* Edge drag handles */
 .tbl-edge-h{position:absolute;top:0;bottom:0;width:8px;cursor:ew-resize;z-index:35;border-radius:3px;background:transparent;transition:background .15s}
 .tbl-edge-h:hover,.tbl-edge-h.dragging{background:rgba(37,99,235,.35)}
@@ -5870,7 +5880,20 @@ function tblShowDropdown(td,triggerEl){
   // Rebuild content every time (reflects current table state)
   const _tbl=td.closest('table');
   const _hasRowNums=_tbl&&_tbl.dataset.rownums!=='0';
-  dd.innerHTML='<div class="tbl-label">Hang</div>'
+  const _outer=_tbl&&_tbl.closest('.tbl-outer');
+  const _curW=_outer&&_outer.dataset.tblwidth||'100';
+  const _curA=_outer&&_outer.dataset.align||'';
+  const _btnS='flex:1;width:auto;justify-content:center;padding:6px 4px;font-size:12px';
+  const _wBtn=w=>`<button class="tbl-item${_curW===String(w)?' tbl-active':''}" style="${_btnS}" onclick="tblSetWidth(${w})">${w}%</button>`;
+  const _aBtn=(a,icon,label)=>`<button class="tbl-item${_curA===a?' tbl-active':''}" style="${_btnS}" onclick="tblSetAlign('${a}')" title="${label}"><i class="ti ti-align-${icon}" style="width:auto;font-size:14px"></i></button>`;
+  dd.innerHTML='<div class="tbl-label">Kích thước</div>'
+    +'<div style="display:flex;gap:4px;padding:2px 8px 6px">'+_wBtn(25)+_wBtn(50)+_wBtn(75)+_wBtn(100)+'</div>'
+    +'<div class="tbl-label">Căn lề</div>'
+    +'<div style="display:flex;gap:4px;padding:2px 8px 6px">'
+      +_aBtn('left','left','Trái')+_aBtn('center','center','Giữa')+_aBtn('right','right','Phải')
+    +'</div>'
+    +'<div class="tbl-divider"></div>'
+    +'<div class="tbl-label">Hang</div>'
     +'<button class="tbl-item" onclick="tblAddRowAbove()"><i class="ti ti-row-insert-top"></i> Them hang phia tren</button>'
     +'<button class="tbl-item" onclick="tblAddRowBelow()"><i class="ti ti-row-insert-bottom"></i> Them hang phia duoi</button>'
     +'<button class="tbl-item danger" onclick="tblDelRow()"><i class="ti ti-trash"></i> Xoa hang nay</button>'
@@ -5894,6 +5917,30 @@ function tblShowDropdown(td,triggerEl){
   let top=r.bottom+4,left=r.right-ddW;
   if(top+ddH>window.innerHeight-8)top=r.top-ddH-4;if(left<8)left=8;
   dd.style.top=top+'px';dd.style.left=left+'px';dd.style.visibility='';
+}
+
+function tblSetWidth(pct){
+  const td=_activeTd;if(!td)return;
+  const outer=td.closest('table')&&td.closest('table').closest('.tbl-outer');if(!outer)return;
+  if(pct===100){
+    delete outer.dataset.tblwidth;
+    outer.style.width='';
+  } else {
+    outer.dataset.tblwidth=String(pct);
+    outer.style.width='';
+  }
+  tblHideDropdown();onContentChange();
+}
+
+function tblSetAlign(align){
+  const td=_activeTd;if(!td)return;
+  const outer=td.closest('table')&&td.closest('table').closest('.tbl-outer');if(!outer)return;
+  if(outer.dataset.align===align){
+    delete outer.dataset.align;
+  } else {
+    outer.dataset.align=align;
+  }
+  tblHideDropdown();onContentChange();
 }
 
 function tblAttachAll(){
@@ -11392,9 +11439,13 @@ async function doExportWebsite(){
     // ─ 3a. Remove ALL editor-only UI nodes ─────────────────
     tmp.querySelectorAll('.tbl-outer').forEach(w=>{
       w.querySelectorAll('.tbl-edge-h').forEach(e=>e.remove());
-      w.style.marginLeft='';
-      // Fix scroll container for fixed table layout
-      w.style.cssText='display:block;margin:14px 0;width:100%;overflow-x:auto;overflow-y:visible';
+      // Preserve data-tblwidth and data-align; only strip inline styles that override CSS attribute selectors
+      const tw=w.dataset.tblwidth,al=w.dataset.align;
+      w.style.cssText='display:block;margin:14px 0;overflow-x:auto;overflow-y:visible';
+      if(tw&&tw!=='100'){w.style.width=tw+'%';}else{w.style.width='100%';}
+      if(al==='left'){w.style.marginLeft='0';w.style.marginRight='auto';}
+      else if(al==='center'){w.style.marginLeft='auto';w.style.marginRight='auto';}
+      else if(al==='right'){w.style.marginLeft='auto';w.style.marginRight='0';}
     });
     tmp.querySelectorAll([
       '.tbl-row-num','.tbl-col-resize-handle','.tbl-row-resize-handle',
@@ -12296,7 +12347,15 @@ async function doExportOptimized(){
     const ec=document.createElement('div');ec.className='editor-content';
     const tmp=document.createElement('div');tmp.innerHTML=d.content||'';
     // Strip editor-only UI
-    tmp.querySelectorAll('.tbl-outer').forEach(w=>{w.querySelectorAll('.tbl-edge-h').forEach(e=>e.remove());w.style.marginLeft='';w.style.cssText='display:block;margin:14px 0;width:100%;overflow-x:auto;overflow-y:visible';});
+    tmp.querySelectorAll('.tbl-outer').forEach(w=>{
+      w.querySelectorAll('.tbl-edge-h').forEach(e=>e.remove());
+      const tw=w.dataset.tblwidth,al=w.dataset.align;
+      w.style.cssText='display:block;margin:14px 0;overflow-x:auto;overflow-y:visible';
+      if(tw&&tw!=='100'){w.style.width=tw+'%';}else{w.style.width='100%';}
+      if(al==='left'){w.style.marginLeft='0';w.style.marginRight='auto';}
+      else if(al==='center'){w.style.marginLeft='auto';w.style.marginRight='auto';}
+      else if(al==='right'){w.style.marginLeft='auto';w.style.marginRight='0';}
+    });
     tmp.querySelectorAll(['.tbl-row-num','.tbl-col-resize-handle','.tbl-row-resize-handle','.tbl-col-sel','.tbl-row-sel','.tbl-img-btn','.tbl-shadow-btn','.tbl-cell-drop','.tbl-merge-bar','colgroup','.fmedia','.txtbox','script','style','.cf-col-toolbar','.cf-col-count-dd','.cf-col-more-dd','.cf-img-toolbar','.cf-img-resize-h','.cf-img-ctx','.cf-panel-actions','.cf-car-toolbar','.cf-embed-toolbar','.cf-car-add-slide','.editor-block-bar','.slash-hint','.pab-logo-menu','.cf-toc-del','.cf-btn-toolbar','.cf-file-del','.cf-tab-add','.cf-progress-del','.cf-checklist-cam-btn','.cf-code-copy'].join(',')).forEach(e=>e.remove());
     tmp.querySelectorAll('[contenteditable]').forEach(el=>el.removeAttribute('contenteditable'));
     tmp.querySelectorAll('[spellcheck]').forEach(el=>el.removeAttribute('spellcheck'));
