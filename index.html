@@ -388,6 +388,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .tbl-frame.tbl-selected .tbl-edge-h,.tbl-edge-h:hover,.tbl-edge-h.dragging{opacity:1}
 .tbl-edge-h.tbl-edge-left{left:-12px}
 .tbl-edge-h.tbl-edge-right{right:-12px}
+.tbl-options-btn{position:absolute;top:-30px;right:0;background:var(--accent);color:#fff;border:none;border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;opacity:0;transition:opacity .15s;z-index:36;display:flex;align-items:center;gap:4px;white-space:nowrap;pointer-events:auto}
+.tbl-frame.tbl-selected .tbl-options-btn,.tbl-options-btn:hover{opacity:1}
 .editor-content th,.editor-content td{padding:8px 12px;position:relative;word-break:break-word;overflow-wrap:break-word;white-space:normal;vertical-align:top;min-width:40px;transition:var(--mode-transition)}
 /* Column dividers */
 .editor-content th{border-right:1px solid var(--tbl-border);border-bottom:2px solid var(--accent);background:var(--tbl-header-bg);font-weight:600;text-align:left;color:var(--tbl-header-text)}
@@ -3363,7 +3365,7 @@ function onContentChange(){
   _cfRefreshTocs(editor_el);
   const clone=editor_el.cloneNode(true);
   // Strip interactive chrome (not content)
-  clone.querySelectorAll('.tbl-row-num,.tbl-col-resize-handle,.tbl-row-resize-handle,.tbl-col-sel,.tbl-row-sel,.tbl-img-btn,.tbl-cell-drop,.tbl-shadow-btn,.tbl-edge-h,.cf-file-del,.cf-code-copy').forEach(e=>e.remove());
+  clone.querySelectorAll('.tbl-row-num,.tbl-col-resize-handle,.tbl-row-resize-handle,.tbl-col-sel,.tbl-row-sel,.tbl-img-btn,.tbl-cell-drop,.tbl-shadow-btn,.tbl-edge-h,.tbl-options-btn,.cf-file-del,.cf-code-copy').forEach(e=>e.remove());
   // Save col widths to data attribute before stripping colgroup (persist across save/load)
   // Only save for user-customized colgroups (no data-auto).
   // Auto-generated calc() widths are NOT saved — tblEqualizeColumns will rebuild on reload.
@@ -5115,7 +5117,7 @@ function _tblAddEdgeHandles(table){
   if(!outer?.classList.contains('tbl-outer'))return;
   const frame=outer.parentElement;
   if(!frame?.classList.contains('tbl-frame'))return;
-  frame.querySelectorAll('.tbl-edge-h').forEach(e=>e.remove());
+  frame.querySelectorAll('.tbl-edge-h,.tbl-options-btn').forEach(e=>e.remove());
   ['left','right'].forEach(side=>{
     const h=document.createElement('div');
     h.className='tbl-edge-h tbl-edge-'+side;
@@ -5126,6 +5128,18 @@ function _tblAddEdgeHandles(table){
     });
     frame.appendChild(h);
   });
+  // Options button — visible when frame is .tbl-selected
+  const optBtn=document.createElement('button');
+  optBtn.className='tbl-options-btn tbl-trigger';
+  optBtn.title='Tùy chọn bảng';
+  optBtn.innerHTML='<i class="ti ti-dots"></i> Tùy chọn';
+  optBtn.addEventListener('mousedown',e=>e.stopPropagation());
+  optBtn.addEventListener('click',e=>{
+    e.stopPropagation();
+    const td=_activeTd||table.querySelector('td,th');
+    if(td)tblShowDropdown(td,optBtn);
+  });
+  frame.appendChild(optBtn);
 }
 
 function _tblEdgeDragStart(e,frame,table,side){
@@ -5538,7 +5552,7 @@ function tblClearCellSel(){
 document.addEventListener('mousedown',e=>{
   if(!e.target.closest('#tblMergeBar')&&!e.target.closest('.editor-content td')&&!e.target.closest('.editor-content th')&&!e.target.closest('#tblSelPanel')){
     tblClearCellSel();
-    if(!e.target.closest('.editor-content table')&&!e.target.closest('.tbl-edge-h')&&!e.target.closest('#tblDropdown')){
+    if(!e.target.closest('.editor-content table')&&!e.target.closest('.tbl-edge-h')&&!e.target.closest('#tblDropdown')&&!e.target.closest('.tbl-options-btn')){
       _activeTd=null;_updateMergeBar();
       document.querySelectorAll('.tbl-frame.tbl-selected').forEach(f=>f.classList.remove('tbl-selected'));
     }
@@ -11477,7 +11491,7 @@ async function doExportWebsite(){
     // ─ 3a. Remove ALL editor-only UI nodes ─────────────────
     // New structure: .tbl-frame > .tbl-outer > table
     tmp.querySelectorAll('.tbl-frame').forEach(fr=>{
-      fr.querySelectorAll('.tbl-edge-h').forEach(e=>e.remove());
+      fr.querySelectorAll('.tbl-edge-h,.tbl-options-btn').forEach(e=>e.remove());
       const tw=fr.dataset.tblwidth,al=fr.dataset.align;
       const savedFrW=fr.style.width; // read before cssText clears inline styles
       fr.style.cssText='display:block;margin:14px 0;overflow:visible';
@@ -11493,7 +11507,7 @@ async function doExportWebsite(){
     // Old structure: bare .tbl-outer (backward compat with saved content before this change)
     tmp.querySelectorAll('.tbl-outer').forEach(w=>{
       if(w.parentElement?.classList.contains('tbl-frame'))return;
-      w.querySelectorAll('.tbl-edge-h').forEach(e=>e.remove());
+      w.querySelectorAll('.tbl-edge-h,.tbl-options-btn').forEach(e=>e.remove());
       w.style.cssText='display:block;margin:14px 0;width:100%;overflow-x:auto;overflow-y:visible';
     });
     tmp.querySelectorAll([
@@ -12397,7 +12411,7 @@ async function doExportOptimized(){
     const tmp=document.createElement('div');tmp.innerHTML=d.content||'';
     // Strip editor-only UI
     tmp.querySelectorAll('.tbl-frame').forEach(fr=>{
-      fr.querySelectorAll('.tbl-edge-h').forEach(e=>e.remove());
+      fr.querySelectorAll('.tbl-edge-h,.tbl-options-btn').forEach(e=>e.remove());
       const tw=fr.dataset.tblwidth,al=fr.dataset.align;
       const savedFrW=fr.style.width; // read before cssText clears inline styles
       fr.style.cssText='display:block;margin:14px 0;overflow:visible';
@@ -12412,7 +12426,7 @@ async function doExportOptimized(){
     });
     tmp.querySelectorAll('.tbl-outer').forEach(w=>{
       if(w.parentElement?.classList.contains('tbl-frame'))return;
-      w.querySelectorAll('.tbl-edge-h').forEach(e=>e.remove());
+      w.querySelectorAll('.tbl-edge-h,.tbl-options-btn').forEach(e=>e.remove());
       w.style.cssText='display:block;margin:14px 0;width:100%;overflow-x:auto;overflow-y:visible';
     });
     tmp.querySelectorAll(['.tbl-row-num','.tbl-col-resize-handle','.tbl-row-resize-handle','.tbl-col-sel','.tbl-row-sel','.tbl-img-btn','.tbl-shadow-btn','.tbl-cell-drop','.tbl-merge-bar','colgroup','.fmedia','.txtbox','script','style','.cf-col-toolbar','.cf-col-count-dd','.cf-col-more-dd','.cf-img-toolbar','.cf-img-resize-h','.cf-img-ctx','.cf-panel-actions','.cf-car-toolbar','.cf-embed-toolbar','.cf-car-add-slide','.editor-block-bar','.slash-hint','.pab-logo-menu','.cf-toc-del','.cf-btn-toolbar','.cf-file-del','.cf-tab-add','.cf-progress-del','.cf-checklist-cam-btn','.cf-code-copy'].join(',')).forEach(e=>e.remove());
