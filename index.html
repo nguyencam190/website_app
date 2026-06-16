@@ -6989,21 +6989,29 @@ function _slashInsert(id,execRange){
     const cur=_nearestBlock(sel,editor);
     const bq=document.createElement('blockquote');
     bq.innerHTML=(cur&&cur.textContent.trim()?cur.innerHTML:'')||'<br>';
-    _insertAfterCurrent(bq,bq);
+    if(cur&&cur!==editor&&cur.parentElement){cur.parentElement.replaceChild(bq,cur);}
+    else{_cfInsertBlockAtRange(bq,savedRange);}
+    try{const r=document.createRange();r.selectNodeContents(bq);r.collapse(false);sel.removeAllRanges();sel.addRange(r);}catch(e){}
     onContentChange();return;
   }
 
   // ── Lists ────────────────────────────────────────────────
   if(id==='ul'||id==='ol'){
+    const cur=_nearestBlock(sel,editor);
     const list=document.createElement(id);
-    const li=document.createElement('li');li.innerHTML='<br>';
+    const li=document.createElement('li');
+    const hasText=cur&&cur!==editor&&cur.textContent.trim()&&cur.tagName!=='UL'&&cur.tagName!=='OL';
+    li.innerHTML=hasText?cur.innerHTML:'<br>';
     list.appendChild(li);
-    _insertAfterCurrent(list,li);
+    if(hasText){cur.parentElement.replaceChild(list,cur);}
+    else{_insertAfterCurrent(list,li);}
+    try{const r=document.createRange();r.setStart(li,0);r.collapse(true);sel.removeAllRanges();sel.addRange(r);}catch(e){}
     onContentChange();return;
   }
 
   // ── Task list (checkbox) ─────────────────────────────────
   if(id==='task'){
+    const cur=_nearestBlock(sel,editor);
     const ul=document.createElement('ul');
     ul.className='task-list';ul.style.listStyle='none';ul.style.paddingLeft='4px';
     const li=document.createElement('li');
@@ -7011,10 +7019,14 @@ function _slashInsert(id,execRange){
     const cb=document.createElement('input');
     cb.type='checkbox';cb.contentEditable='false';cb.style.cssText='flex-shrink:0;margin-top:4px;cursor:pointer;accent-color:var(--accent)';
     cb.addEventListener('change',()=>onContentChange());
-    const span=document.createElement('span');span.contentEditable='true';span.innerHTML='<br>';
+    const span=document.createElement('span');span.contentEditable='true';
+    const hasText=cur&&cur!==editor&&cur.textContent.trim();
+    span.innerHTML=hasText?cur.innerHTML:'<br>';
     span.style.flex='1';
     li.appendChild(cb);li.appendChild(span);ul.appendChild(li);
-    _insertAfterCurrent(ul,span);
+    if(hasText){cur.parentElement.replaceChild(ul,cur);}
+    else{_insertAfterCurrent(ul,span);}
+    try{const r=document.createRange();r.setStart(span,0);r.collapse(true);sel.removeAllRanges();sel.addRange(r);}catch(e){}
     onContentChange();return;
   }
 
@@ -7147,6 +7159,7 @@ function _slashInsert(id,execRange){
     const cl=_cfMakeChecklist();
     _cfInsertBlockAtRange(cl,savedRange);
     _cfWireChecklist(cl);
+    onContentChange();
     requestAnimationFrame(()=>{
       const titleEl=cl.querySelector('.cf-checklist-title');
       if(titleEl){titleEl.focus();const r=document.createRange();r.selectNodeContents(titleEl);r.collapse(false);const sel=window.getSelection();sel.removeAllRanges();sel.addRange(r);}
@@ -7218,13 +7231,13 @@ function _slashInsert(id,execRange){
     const panel=document.createElement('div');
     panel.className='cf-panel '+type;panel.contentEditable='false';
     const iconEl=document.createElement('span');iconEl.className='cf-panel-icon';iconEl.textContent=icons[id];
-    const content=document.createElement('div');content.className='cf-panel-content';content.contentEditable='true';
+    const content=document.createElement('div');content.className='cf-panel-content';content.contentEditable='true';content.innerHTML='<br>';
     const actions=document.createElement('div');actions.className='cf-panel-actions';
     actions.innerHTML='<button class="cf-panel-type-btn" onclick="cfPanelChangeType(this)" title="Đổi loại">⚙️</button><button class="cf-panel-del" onclick="this.closest(\'.cf-panel\').remove();onContentChange()" title="Xóa">✕</button>';
     panel.appendChild(iconEl);panel.appendChild(content);panel.appendChild(actions);
-    _insertAfterCurrent(panel,null);
+    _cfInsertBlockAtRange(panel,savedRange);
     onContentChange();
-    setTimeout(()=>{content.focus();},30);
+    setTimeout(()=>{content.focus();const r=document.createRange();r.setStart(content,0);r.collapse(true);window.getSelection().removeAllRanges();window.getSelection().addRange(r);},30);
     return;
   }
 }
@@ -9280,10 +9293,47 @@ function _editorSlashInput(){
 }
 
 // Wire keyboard hooks into editor on init
+// ── Markdown autoformat: # → h1, > → quote, - → ul, 1. → ol, [] → task, ``` → code ──
+function _mdAutoFormat(e){
+  if(_slashVisible)return; // let slash menu handle keys
+  if(e.key!==' '&&e.key!=='Enter')return;
+  const sel=window.getSelection();if(!sel||!sel.rangeCount)return;
+  const range=sel.getRangeAt(0);
+  const node=range.startContainer;
+  if(node.nodeType!==Node.TEXT_NODE)return;
+  if(_isInNestedEditable(node))return;
+  const txt=node.textContent;
+  const off=range.startOffset;
+  const before=txt.slice(0,off); // text on current line up to cursor
+  // Only trigger if the pattern is the ENTIRE content before cursor (start-of-block)
+  const MD=[
+    {key:' ',re:/^#{1}$/,id:'h1'},{key:' ',re:/^#{2}$/,id:'h2'},{key:' ',re:/^#{3}$/,id:'h3'},
+    {key:' ',re:/^#{4}$/,id:'h4'},{key:' ',re:/^-$/,id:'ul'},{key:' ',re:/^\*$/,id:'ul'},
+    {key:' ',re:/^>$/,id:'quote'},{key:' ',re:/^1\.$/,id:'ol'},
+    {key:' ',re:/^\[\]$|^\[ \]$/,id:'task'},
+    {key:'Enter',re:/^```$/,id:'code'},
+  ];
+  for(const m of MD){
+    if(e.key===m.key&&m.re.test(before)){
+      e.preventDefault();
+      // Delete the trigger characters from the text node
+      const delRange=document.createRange();
+      delRange.setStart(node,0);delRange.setEnd(node,off);
+      delRange.deleteContents();
+      // Capture range after deletion for insertion
+      const curRange=sel.rangeCount?sel.getRangeAt(0).cloneRange():range;
+      _slashSavedRange=curRange;
+      _slashInsert(m.id,curRange);
+      return;
+    }
+  }
+}
+
 function _initSlashCommands(){
   const editor=document.getElementById('editor');
   if(!editor)return;
   editor.addEventListener('keydown',_editorSlashKeydown);
+  editor.addEventListener('keydown',_mdAutoFormat);
   editor.addEventListener('input',_editorSlashInput);
   editor.addEventListener('keyup',_updateBlockBar);
   editor.addEventListener('mouseup',_updateBlockBar);
