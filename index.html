@@ -371,25 +371,23 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .editor-content blockquote{border-left:3px solid var(--accent);background:var(--accent-light);padding:12px 18px;border-radius:0 8px 8px 0;margin:14px 0;color:var(--text2);font-style:italic}
 /* TABLE — Fixed-layout: width = sum of cols, never shrinks with sidebar */
 .editor-content table{border-collapse:collapse;width:max-content;max-width:none;min-width:100%;margin:0;font-size:0.875rem;table-layout:fixed !important;border:1px solid var(--tbl-border);box-sizing:border-box;word-break:break-word}
-/* Table outer wrapper — scroll container: table keeps real size, sidebar cant crush it */
-.tbl-outer{position:relative;display:block;margin:14px 0;width:100%;overflow-x:auto;overflow-y:visible}
-/* Table width scaling */
-.tbl-outer[data-tblwidth="25"]{width:25%}
-.tbl-outer[data-tblwidth="50"]{width:50%}
-.tbl-outer[data-tblwidth="75"]{width:75%}
-/* Table alignment — only meaningful when width < 100% */
-.tbl-outer[data-align="left"]{margin-left:0!important;margin-right:auto!important}
-.tbl-outer[data-align="center"]{margin-left:auto!important;margin-right:auto!important}
-.tbl-outer[data-align="right"]{margin-left:auto!important;margin-right:0!important}
+/* tbl-frame: block container (holds width/align attrs + edge handles) */
+.tbl-frame{position:relative;display:block;margin:14px 0;width:100%;overflow:visible}
+.tbl-frame[data-tblwidth="25"]{width:25%}
+.tbl-frame[data-tblwidth="50"]{width:50%}
+.tbl-frame[data-tblwidth="75"]{width:75%}
+.tbl-frame[data-align="left"]{margin-left:0!important;margin-right:auto!important}
+.tbl-frame[data-align="center"]{margin-left:auto!important;margin-right:auto!important}
+.tbl-frame[data-align="right"]{margin-left:auto!important;margin-right:0!important}
+/* tbl-outer: scroll container inside frame */
+.tbl-outer{position:relative;width:100%;overflow-x:auto;overflow-y:visible}
 /* Active state for align/width buttons in dropdown */
 .tbl-item.tbl-active{background:rgba(37,99,235,.1);color:var(--accent);font-weight:600}
-/* Edge drag handles */
-.tbl-edge-h{position:absolute;top:0;bottom:0;width:8px;cursor:ew-resize;z-index:35;border-radius:3px;background:transparent;transition:background .15s}
-.tbl-edge-h:hover,.tbl-edge-h.dragging{background:rgba(37,99,235,.35)}
-.tbl-edge-h::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:3px;height:28px;border-left:1.5px solid rgba(37,99,235,.6);border-right:1.5px solid rgba(37,99,235,.6);border-radius:2px;opacity:0;transition:opacity .15s}
-.tbl-edge-h:hover::after,.tbl-edge-h.dragging::after{opacity:1}
-.tbl-edge-h.tbl-edge-left{left:-4px}
-.tbl-edge-h.tbl-edge-right{right:-4px}
+/* Edge drag handles — solid blue bars, visible on focus (like carousel block) */
+.tbl-edge-h{position:absolute;top:50%;transform:translateY(-50%);width:8px;height:60px;cursor:ew-resize;z-index:35;border-radius:4px;background:var(--accent);opacity:0;transition:opacity .15s;pointer-events:auto}
+.tbl-frame:focus-within .tbl-edge-h,.tbl-edge-h:hover,.tbl-edge-h.dragging{opacity:1}
+.tbl-edge-h.tbl-edge-left{left:-12px}
+.tbl-edge-h.tbl-edge-right{right:-12px}
 .editor-content th,.editor-content td{padding:8px 12px;position:relative;word-break:break-word;overflow-wrap:break-word;white-space:normal;vertical-align:top;min-width:40px;transition:var(--mode-transition)}
 /* Column dividers */
 .editor-content th{border-right:1px solid var(--tbl-border);border-bottom:2px solid var(--accent);background:var(--tbl-header-bg);font-weight:600;text-align:left;color:var(--tbl-header-text)}
@@ -3354,7 +3352,7 @@ function onTitleChange(){const doc=currentDoc();if(!doc)return;doc.title=documen
 function _updateBlankHint(){
   const hint=document.getElementById('docBlankHint');if(!hint)return;
   const ed=document.getElementById('editor');if(!ed)return;
-  const hasContent=ed.textContent.trim()||ed.querySelector('img,video,.cf-img-block,.cf-carousel-block,.tbl-outer,.cf-column-layout,.cf-panel,.cf-checklist,.cf-toggle,.cf-tabs,.cf-code-block,.cf-file-block');
+  const hasContent=ed.textContent.trim()||ed.querySelector('img,video,.cf-img-block,.cf-carousel-block,.tbl-frame,.tbl-outer,.cf-column-layout,.cf-panel,.cf-checklist,.cf-toggle,.cf-tabs,.cf-code-block,.cf-file-block');
   hint.classList.toggle('on',!hasContent);
 }
 function onContentChange(){
@@ -5094,33 +5092,46 @@ function tblToggleRowNums(){
 
 // ── Wrap table in .tbl-outer (for edge resize) ──────────────
 function _tblWrapOuter(table){
-  if(table.parentElement&&table.parentElement.classList.contains('tbl-outer'))return;
-  const wrap=document.createElement('div');wrap.className='tbl-outer';
-  table.parentNode.insertBefore(wrap,table);wrap.appendChild(table);
-  // Do NOT force table.style.width='100%' — CSS width:max-content locks actual column sizes
+  const par=table.parentElement;if(!par)return;
+  // Already in correct new structure
+  if(par.classList.contains('tbl-outer')&&par.parentElement?.classList.contains('tbl-frame'))return;
+  // Old structure: .tbl-outer without .tbl-frame — migrate data attrs and add frame
+  if(par.classList.contains('tbl-outer')){
+    const frame=document.createElement('div');frame.className='tbl-frame';
+    if(par.dataset.tblwidth){frame.dataset.tblwidth=par.dataset.tblwidth;delete par.dataset.tblwidth;}
+    if(par.dataset.align){frame.dataset.align=par.dataset.align;delete par.dataset.align;}
+    par.parentNode.insertBefore(frame,par);frame.appendChild(par);
+    return;
+  }
+  // No wrapper at all — create frame + outer
+  const frame=document.createElement('div');frame.className='tbl-frame';
+  const outer=document.createElement('div');outer.className='tbl-outer';
+  par.insertBefore(frame,table);frame.appendChild(outer);outer.appendChild(table);
   table.style.width='';
 }
 
 function _tblAddEdgeHandles(table){
-  const wrap=table.parentElement;
-  if(!wrap||!wrap.classList.contains('tbl-outer'))return;
-  wrap.querySelectorAll('.tbl-edge-h').forEach(e=>e.remove());
+  const outer=table.parentElement;
+  if(!outer?.classList.contains('tbl-outer'))return;
+  const frame=outer.parentElement;
+  if(!frame?.classList.contains('tbl-frame'))return;
+  frame.querySelectorAll('.tbl-edge-h').forEach(e=>e.remove());
   ['left','right'].forEach(side=>{
     const h=document.createElement('div');
     h.className='tbl-edge-h tbl-edge-'+side;
     h.title=side==='left'?'Kéo để thay đổi vị trí/độ rộng':'Kéo để thay đổi độ rộng';
     h.addEventListener('mousedown',e=>{
       e.preventDefault();e.stopPropagation();
-      _tblEdgeDragStart(e,wrap,table,side);
+      _tblEdgeDragStart(e,frame,table,side);
     });
-    wrap.appendChild(h);
+    frame.appendChild(h);
   });
 }
 
-function _tblEdgeDragStart(e,wrap,table,side){
+function _tblEdgeDragStart(e,frame,table,side){
   const startX=e.clientX;
-  const startW=wrap.offsetWidth;
-  const startL=parseFloat(wrap.style.marginLeft)||0;
+  const startW=frame.offsetWidth;
+  const startL=parseFloat(frame.style.marginLeft)||0;
   const handle=e.target;handle.classList.add('dragging');
   const overlay=document.createElement('div');
   overlay.style.cssText='position:fixed;inset:0;cursor:ew-resize;z-index:9999';
@@ -5130,13 +5141,13 @@ function _tblEdgeDragStart(e,wrap,table,side){
     const dx=e2.clientX-startX;
     if(side==='right'){
       const nw=Math.max(160,startW+dx);
-      wrap.style.width=nw+'px';
+      frame.style.width=nw+'px';
     } else {
       // Left edge: move left boundary → resize from left
       const nw=Math.max(160,startW-dx);
       const nl=startL+dx;
-      wrap.style.width=nw+'px';
-      wrap.style.marginLeft=nl+'px';
+      frame.style.width=nw+'px';
+      frame.style.marginLeft=nl+'px';
     }
   }
   function up(){
@@ -5281,9 +5292,9 @@ function tblDelTable(){
   const td=_activeTd;if(!td)return;
   const table=td.closest('table');if(!table)return;
   if(!confirm('Xóa bảng này?'))return;
-  // Remove .tbl-outer wrapper if exists, else just the table
-  const wrapper=table.closest('.tbl-outer');
-  if(wrapper)wrapper.remove();else table.remove();
+  // Remove .tbl-frame wrapper if exists, else .tbl-outer or just the table
+  const frame=table.closest('.tbl-frame');
+  if(frame)frame.remove();else{const outer=table.closest('.tbl-outer');if(outer)outer.remove();else table.remove();}
   _activeTd=null;
   tblHideDropdown();
   onContentChange();
@@ -5880,9 +5891,9 @@ function tblShowDropdown(td,triggerEl){
   // Rebuild content every time (reflects current table state)
   const _tbl=td.closest('table');
   const _hasRowNums=_tbl&&_tbl.dataset.rownums!=='0';
-  const _outer=_tbl&&_tbl.closest('.tbl-outer');
-  const _curW=_outer&&_outer.dataset.tblwidth||'100';
-  const _curA=_outer&&_outer.dataset.align||'';
+  const _frame=_tbl&&_tbl.closest('.tbl-outer')?.parentElement;
+  const _curW=(_frame?.classList.contains('tbl-frame')&&_frame.dataset.tblwidth)||'100';
+  const _curA=(_frame?.classList.contains('tbl-frame')&&_frame.dataset.align)||'';
   const _btnS='flex:1;width:auto;justify-content:center;padding:6px 4px;font-size:12px';
   const _wBtn=w=>`<button class="tbl-item${_curW===String(w)?' tbl-active':''}" style="${_btnS}" onclick="tblSetWidth(${w})">${w}%</button>`;
   const _aBtn=(a,icon,label)=>`<button class="tbl-item${_curA===a?' tbl-active':''}" style="${_btnS}" onclick="tblSetAlign('${a}')" title="${label}"><i class="ti ti-align-${icon}" style="width:auto;font-size:14px"></i></button>`;
@@ -5921,25 +5932,18 @@ function tblShowDropdown(td,triggerEl){
 
 function tblSetWidth(pct){
   const td=_activeTd;if(!td)return;
-  const outer=td.closest('table')&&td.closest('table').closest('.tbl-outer');if(!outer)return;
-  if(pct===100){
-    delete outer.dataset.tblwidth;
-    outer.style.width='';
-  } else {
-    outer.dataset.tblwidth=String(pct);
-    outer.style.width='';
-  }
+  const frame=td.closest('table')?.closest('.tbl-outer')?.parentElement;
+  if(!frame?.classList.contains('tbl-frame'))return;
+  if(pct===100)delete frame.dataset.tblwidth;else frame.dataset.tblwidth=String(pct);
+  frame.style.width='';
   tblHideDropdown();onContentChange();
 }
 
 function tblSetAlign(align){
   const td=_activeTd;if(!td)return;
-  const outer=td.closest('table')&&td.closest('table').closest('.tbl-outer');if(!outer)return;
-  if(outer.dataset.align===align){
-    delete outer.dataset.align;
-  } else {
-    outer.dataset.align=align;
-  }
+  const frame=td.closest('table')?.closest('.tbl-outer')?.parentElement;
+  if(!frame?.classList.contains('tbl-frame'))return;
+  if(frame.dataset.align===align)delete frame.dataset.align;else frame.dataset.align=align;
   tblHideDropdown();onContentChange();
 }
 
@@ -6379,10 +6383,11 @@ function tgInsert(rows,cols){
   }
 
   // Insert using generic range-based insertion (works inside columns too)
-  // Wrap in .tbl-outer scroll container so wide tables scroll rather than overflow the canvas
+  // Wrap in .tbl-frame > .tbl-outer: frame holds handles+alignment, outer is scroll container
+  const _tblFrame=document.createElement('div');_tblFrame.className='tbl-frame';
   const _tblWrapper=document.createElement('div');_tblWrapper.className='tbl-outer';
-  _tblWrapper.appendChild(table);
-  _cfInsertBlockAtRange(_tblWrapper,_slashSavedRange||(window.getSelection()?.rangeCount?window.getSelection().getRangeAt(0):null));
+  _tblWrapper.appendChild(table);_tblFrame.appendChild(_tblWrapper);
+  _cfInsertBlockAtRange(_tblFrame,_slashSavedRange||(window.getSelection()?.rangeCount?window.getSelection().getRangeAt(0):null));
 
   // ── Place cursor inside first data cell ───────────────────
   try{
@@ -11437,15 +11442,23 @@ async function doExportWebsite(){
     const tmp=document.createElement('div');tmp.innerHTML=d.content||'';
 
     // ─ 3a. Remove ALL editor-only UI nodes ─────────────────
+    // New structure: .tbl-frame > .tbl-outer > table
+    tmp.querySelectorAll('.tbl-frame').forEach(fr=>{
+      fr.querySelectorAll('.tbl-edge-h').forEach(e=>e.remove());
+      const tw=fr.dataset.tblwidth,al=fr.dataset.align;
+      fr.style.cssText='display:block;margin:14px 0;overflow:visible';
+      fr.style.width=(tw&&tw!=='100'?tw+'%':'100%');
+      if(al==='left'){fr.style.marginLeft='0';fr.style.marginRight='auto';}
+      else if(al==='center'){fr.style.marginLeft='auto';fr.style.marginRight='auto';}
+      else if(al==='right'){fr.style.marginLeft='auto';fr.style.marginRight='0';}
+      const inner=fr.querySelector('.tbl-outer');
+      if(inner)inner.style.cssText='width:100%;overflow-x:auto;overflow-y:visible';
+    });
+    // Old structure: bare .tbl-outer (backward compat with saved content before this change)
     tmp.querySelectorAll('.tbl-outer').forEach(w=>{
+      if(w.parentElement?.classList.contains('tbl-frame'))return;
       w.querySelectorAll('.tbl-edge-h').forEach(e=>e.remove());
-      // Preserve data-tblwidth and data-align; only strip inline styles that override CSS attribute selectors
-      const tw=w.dataset.tblwidth,al=w.dataset.align;
-      w.style.cssText='display:block;margin:14px 0;overflow-x:auto;overflow-y:visible';
-      if(tw&&tw!=='100'){w.style.width=tw+'%';}else{w.style.width='100%';}
-      if(al==='left'){w.style.marginLeft='0';w.style.marginRight='auto';}
-      else if(al==='center'){w.style.marginLeft='auto';w.style.marginRight='auto';}
-      else if(al==='right'){w.style.marginLeft='auto';w.style.marginRight='0';}
+      w.style.cssText='display:block;margin:14px 0;width:100%;overflow-x:auto;overflow-y:visible';
     });
     tmp.querySelectorAll([
       '.tbl-row-num','.tbl-col-resize-handle','.tbl-row-resize-handle',
@@ -12347,14 +12360,21 @@ async function doExportOptimized(){
     const ec=document.createElement('div');ec.className='editor-content';
     const tmp=document.createElement('div');tmp.innerHTML=d.content||'';
     // Strip editor-only UI
+    tmp.querySelectorAll('.tbl-frame').forEach(fr=>{
+      fr.querySelectorAll('.tbl-edge-h').forEach(e=>e.remove());
+      const tw=fr.dataset.tblwidth,al=fr.dataset.align;
+      fr.style.cssText='display:block;margin:14px 0;overflow:visible';
+      fr.style.width=(tw&&tw!=='100'?tw+'%':'100%');
+      if(al==='left'){fr.style.marginLeft='0';fr.style.marginRight='auto';}
+      else if(al==='center'){fr.style.marginLeft='auto';fr.style.marginRight='auto';}
+      else if(al==='right'){fr.style.marginLeft='auto';fr.style.marginRight='0';}
+      const inner=fr.querySelector('.tbl-outer');
+      if(inner)inner.style.cssText='width:100%;overflow-x:auto;overflow-y:visible';
+    });
     tmp.querySelectorAll('.tbl-outer').forEach(w=>{
+      if(w.parentElement?.classList.contains('tbl-frame'))return;
       w.querySelectorAll('.tbl-edge-h').forEach(e=>e.remove());
-      const tw=w.dataset.tblwidth,al=w.dataset.align;
-      w.style.cssText='display:block;margin:14px 0;overflow-x:auto;overflow-y:visible';
-      if(tw&&tw!=='100'){w.style.width=tw+'%';}else{w.style.width='100%';}
-      if(al==='left'){w.style.marginLeft='0';w.style.marginRight='auto';}
-      else if(al==='center'){w.style.marginLeft='auto';w.style.marginRight='auto';}
-      else if(al==='right'){w.style.marginLeft='auto';w.style.marginRight='0';}
+      w.style.cssText='display:block;margin:14px 0;width:100%;overflow-x:auto;overflow-y:visible';
     });
     tmp.querySelectorAll(['.tbl-row-num','.tbl-col-resize-handle','.tbl-row-resize-handle','.tbl-col-sel','.tbl-row-sel','.tbl-img-btn','.tbl-shadow-btn','.tbl-cell-drop','.tbl-merge-bar','colgroup','.fmedia','.txtbox','script','style','.cf-col-toolbar','.cf-col-count-dd','.cf-col-more-dd','.cf-img-toolbar','.cf-img-resize-h','.cf-img-ctx','.cf-panel-actions','.cf-car-toolbar','.cf-embed-toolbar','.cf-car-add-slide','.editor-block-bar','.slash-hint','.pab-logo-menu','.cf-toc-del','.cf-btn-toolbar','.cf-file-del','.cf-tab-add','.cf-progress-del','.cf-checklist-cam-btn','.cf-code-copy'].join(',')).forEach(e=>e.remove());
     tmp.querySelectorAll('[contenteditable]').forEach(el=>el.removeAttribute('contenteditable'));
