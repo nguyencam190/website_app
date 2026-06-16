@@ -6213,7 +6213,13 @@ function tblAttachTable(table){
     // Preserve existing colgroup widths — just ensure table layout is correct
     table.style.tableLayout='fixed';
     table.style.borderCollapse='collapse';
-    table.style.width=''; // Let CSS max-content determine table size from colgroup
+    // If cols already use calc/% → already responsive; if pixel → convert now
+    const _firstDataCol=Array.from(existCg.querySelectorAll('col')).find((_,i)=>!(table.rows[0]?.cells[0]?.classList.contains('tbl-row-num')&&i===0));
+    if(_firstDataCol&&(_firstDataCol.style.width.includes('calc')||_firstDataCol.style.width.includes('%'))){
+      table.style.width='100%';
+    } else {
+      _tblConvertColsToPct(table);
+    }
   }
   // 6. ── Drag-to-select cells ──────────────────────────────────
   table.addEventListener('mouseover',e=>{
@@ -6230,6 +6236,26 @@ function tblAttachTable(table){
 
   // 7. ── Add left/right edge resize handles ──
   _tblAddEdgeHandles(table);
+}
+
+// ── Convert pixel col widths → calc() percentages for responsive layout ──
+function _tblConvertColsToPct(table){
+  const cg=table.querySelector('colgroup');if(!cg)return;
+  const cols=Array.from(cg.querySelectorAll('col'));if(!cols.length)return;
+  const hasRowNum=table.rows[0]?.cells[0]?.classList.contains('tbl-row-num');
+  const rowNumW=hasRowNum?TBL_ROWNUM_W:0;
+  // Read rendered widths from header/first-row cells (most accurate with table-layout:fixed)
+  const headerCells=table.rows[0]?Array.from(table.rows[0].cells):[];
+  const dataCells=headerCells.slice(hasRowNum?1:0);
+  const dataTotal=dataCells.reduce((s,c)=>s+c.offsetWidth,0);
+  if(dataTotal===0)return;
+  cols.forEach((c,i)=>{
+    if(hasRowNum&&i===0){c.style.width=rowNumW+'px';return;}
+    const ci=hasRowNum?i-1:i;
+    const w=dataCells[ci]?dataCells[ci].offsetWidth:dataTotal/dataCells.length;
+    c.style.width=`calc((100% - ${rowNumW}px) * ${(w/dataTotal*100).toFixed(3)} / 100)`;
+  });
+  table.style.width='100%';
 }
 
 // ── COLUMN RESIZE ────────────────────────────────────────────
@@ -6266,6 +6292,7 @@ function tblColResizeStart(e,table,th,colIndex){
     overlay.remove();handle.classList.remove('dragging');
     document.removeEventListener('mousemove',move);
     document.removeEventListener('mouseup',up);
+    _tblConvertColsToPct(table);
     onContentChange();
   }
   document.addEventListener('mousemove',move);
