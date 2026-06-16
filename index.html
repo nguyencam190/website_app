@@ -11479,8 +11479,11 @@ async function doExportWebsite(){
     tmp.querySelectorAll('.tbl-frame').forEach(fr=>{
       fr.querySelectorAll('.tbl-edge-h').forEach(e=>e.remove());
       const tw=fr.dataset.tblwidth,al=fr.dataset.align;
+      const savedFrW=fr.style.width; // read before cssText clears inline styles
       fr.style.cssText='display:block;margin:14px 0;overflow:visible';
-      fr.style.width=(tw&&tw!=='100'?tw+'%':'100%');
+      if(tw&&tw!=='100'){fr.style.width=tw+'%';}
+      else if(savedFrW&&savedFrW!=='100%'){fr.style.width=savedFrW;} // pixel width from drag handles
+      else{fr.style.width='100%';}
       if(al==='left'){fr.style.marginLeft='0';fr.style.marginRight='auto';}
       else if(al==='center'){fr.style.marginLeft='auto';fr.style.marginRight='auto';}
       else if(al==='right'){fr.style.marginLeft='auto';fr.style.marginRight='0';}
@@ -12396,8 +12399,11 @@ async function doExportOptimized(){
     tmp.querySelectorAll('.tbl-frame').forEach(fr=>{
       fr.querySelectorAll('.tbl-edge-h').forEach(e=>e.remove());
       const tw=fr.dataset.tblwidth,al=fr.dataset.align;
+      const savedFrW=fr.style.width; // read before cssText clears inline styles
       fr.style.cssText='display:block;margin:14px 0;overflow:visible';
-      fr.style.width=(tw&&tw!=='100'?tw+'%':'100%');
+      if(tw&&tw!=='100'){fr.style.width=tw+'%';}
+      else if(savedFrW&&savedFrW!=='100%'){fr.style.width=savedFrW;} // pixel width from drag handles
+      else{fr.style.width='100%';}
       if(al==='left'){fr.style.marginLeft='0';fr.style.marginRight='auto';}
       else if(al==='center'){fr.style.marginLeft='auto';fr.style.marginRight='auto';}
       else if(al==='right'){fr.style.marginLeft='auto';fr.style.marginRight='0';}
