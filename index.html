@@ -385,7 +385,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .tbl-item.tbl-active{background:rgba(37,99,235,.1);color:var(--accent);font-weight:600}
 /* Edge drag handles — solid blue bars, visible on focus (like carousel block) */
 .tbl-edge-h{position:absolute;top:50%;transform:translateY(-50%);width:8px;height:60px;cursor:ew-resize;z-index:35;border-radius:4px;background:var(--accent);opacity:0;transition:opacity .15s;pointer-events:auto}
-.tbl-frame:focus-within .tbl-edge-h,.tbl-edge-h:hover,.tbl-edge-h.dragging{opacity:1}
+.tbl-frame.tbl-selected .tbl-edge-h,.tbl-edge-h:hover,.tbl-edge-h.dragging{opacity:1}
 .tbl-edge-h.tbl-edge-left{left:-12px}
 .tbl-edge-h.tbl-edge-right{right:-12px}
 .editor-content th,.editor-content td{padding:8px 12px;position:relative;word-break:break-word;overflow-wrap:break-word;white-space:normal;vertical-align:top;min-width:40px;transition:var(--mode-transition)}
@@ -5538,7 +5538,10 @@ function tblClearCellSel(){
 document.addEventListener('mousedown',e=>{
   if(!e.target.closest('#tblMergeBar')&&!e.target.closest('.editor-content td')&&!e.target.closest('.editor-content th')&&!e.target.closest('#tblSelPanel')){
     tblClearCellSel();
-    if(!e.target.closest('.editor-content table')){_activeTd=null;_updateMergeBar();}
+    if(!e.target.closest('.editor-content table')&&!e.target.closest('.tbl-edge-h')&&!e.target.closest('#tblDropdown')){
+      _activeTd=null;_updateMergeBar();
+      document.querySelectorAll('.tbl-frame.tbl-selected').forEach(f=>f.classList.remove('tbl-selected'));
+    }
   }
 });
 document.addEventListener('mouseup',()=>{_tblDragStart=null;});
@@ -6099,6 +6102,9 @@ function tblAttachTable(table){
     // This prevents ANY interference with the browser's natural cursor placement
     cell.addEventListener('click',e=>{
       _activeTd=cell;
+      // Mark the frame as selected (shows blue side handles)
+      document.querySelectorAll('.tbl-frame.tbl-selected').forEach(f=>f.classList.remove('tbl-selected'));
+      table.closest('.tbl-frame')?.classList.add('tbl-selected');
       if(e.shiftKey||e.ctrlKey){
         _mergeTable=table;
         _selectRect(table);_updateMergeBar();
