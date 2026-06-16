@@ -9302,25 +9302,39 @@ function _mdAutoFormat(e){
   const node=range.startContainer;
   if(node.nodeType!==Node.TEXT_NODE)return;
   if(_isInNestedEditable(node))return;
-  const txt=node.textContent;
   const off=range.startOffset;
-  const before=txt.slice(0,off); // text on current line up to cursor
-  // Only trigger if the pattern is the ENTIRE content before cursor (start-of-block)
+  // Collect ALL text in the block before cursor — prevents false triggers on "bold #"
+  const editor=document.getElementById('editor');
+  let blockEl=node.parentElement;
+  while(blockEl&&blockEl.parentElement!==editor&&
+        !['TD','TH'].includes(blockEl.parentElement?.tagName)&&
+        !blockEl.parentElement?.classList.contains('cf-column-item')&&
+        !blockEl.parentElement?.classList.contains('cf-panel-content')&&
+        !blockEl.parentElement?.classList.contains('cf-tab-panel'))
+    blockEl=blockEl.parentElement;
+  let fullBefore='';
+  if(blockEl){
+    const walker=document.createTreeWalker(blockEl,NodeFilter.SHOW_TEXT);
+    let done=false;
+    while(!done&&walker.nextNode()){
+      const n=walker.currentNode;
+      if(n===node){fullBefore+=node.textContent.slice(0,off);done=true;}
+      else fullBefore+=n.textContent;
+    }
+  } else {fullBefore=node.textContent.slice(0,off);}
   const MD=[
-    {key:' ',re:/^#{1}$/,id:'h1'},{key:' ',re:/^#{2}$/,id:'h2'},{key:' ',re:/^#{3}$/,id:'h3'},
-    {key:' ',re:/^#{4}$/,id:'h4'},{key:' ',re:/^-$/,id:'ul'},{key:' ',re:/^\*$/,id:'ul'},
+    {key:' ',re:/^#$/,id:'h1'},{key:' ',re:/^##$/,id:'h2'},{key:' ',re:/^###$/,id:'h3'},
+    {key:' ',re:/^####$/,id:'h4'},{key:' ',re:/^-$/,id:'ul'},{key:' ',re:/^\*$/,id:'ul'},
     {key:' ',re:/^>$/,id:'quote'},{key:' ',re:/^1\.$/,id:'ol'},
     {key:' ',re:/^\[\]$|^\[ \]$/,id:'task'},
     {key:'Enter',re:/^```$/,id:'code'},
   ];
   for(const m of MD){
-    if(e.key===m.key&&m.re.test(before)){
+    if(e.key===m.key&&m.re.test(fullBefore)){
       e.preventDefault();
-      // Delete the trigger characters from the text node
       const delRange=document.createRange();
       delRange.setStart(node,0);delRange.setEnd(node,off);
       delRange.deleteContents();
-      // Capture range after deletion for insertion
       const curRange=sel.rangeCount?sel.getRangeAt(0).cloneRange():range;
       _slashSavedRange=curRange;
       _slashInsert(m.id,curRange);
