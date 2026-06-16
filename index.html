@@ -3289,6 +3289,11 @@ function openPagesHome(){
       createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()
     };
     state.docs.unshift(home);persist();renderSidebar();
+  } else if(!home.content||home.content==='<h2>Giới thiệu dự án</h2><p>Viết thông tin giới thiệu dự án của bạn tại đây.</p>'){
+    // Upgrade old simple template to rich template
+    home.content=_pagesHomeTemplate();
+    home.title=state.projectName||home.title||'Giới thiệu dự án';
+    persist();
   }
   openDoc(home.id);
 }
