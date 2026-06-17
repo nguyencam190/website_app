@@ -3379,7 +3379,6 @@ function _updateRelatedContent(){
   function mkSection(label,items){
     if(!items.length)return;
     const sec=document.createElement('div');sec.className='doc-related-section';
-    const sl=document.createElement('div');sl.className='doc-related-section-label';sl.textContent=label;
     const grid=document.createElement('div');grid.className='doc-related-grid';
     items.forEach(d=>grid.appendChild(mkCard(d)));
     sec.appendChild(sl);sec.appendChild(grid);box.appendChild(sec);
@@ -11891,7 +11890,7 @@ async function doExportWebsite(){
     const relSiblings=d.parentId?docs.filter(x=>!x._deleted&&x.parentId===d.parentId&&x.id!==d.id):[];
     if(relChildren.length||relSiblings.length){
       const relH=document.createElement('div');relH.className='ws-related-heading';relH.innerHTML='<span>&#128279;</span> Nội dung liên quan';relDiv.appendChild(relH);
-      function _wsRelSec(label,items){if(!items.length)return;const s=document.createElement('div');s.className='ws-related-section';const sl=document.createElement('div');sl.className='ws-related-section-label';sl.textContent=label;const g=document.createElement('div');g.className='ws-related-grid';items.forEach(x=>{const a=document.createElement('a');a.className='ws-related-card';a.href='#';a.setAttribute('onclick','showDoc(\''+x.id+'\');return false;');a.innerHTML='<span class="ws-related-card-icon">&#128196;</span><div class="ws-related-card-info"><div class="ws-related-card-name">'+x.title+'</div></div>';g.appendChild(a);});s.appendChild(sl);s.appendChild(g);relDiv.appendChild(s);}
+      function _wsRelSec(label,items){if(!items.length)return;const s=document.createElement('div');s.className='ws-related-section';const g=document.createElement('div');g.className='ws-related-grid';items.forEach(x=>{const a=document.createElement('a');a.className='ws-related-card';a.href='#';a.setAttribute('onclick','showDoc(\''+x.id+'\');return false;');a.innerHTML='<span class="ws-related-card-icon">&#128196;</span><div class="ws-related-card-info"><div class="ws-related-card-name">'+x.title+'</div></div>';g.appendChild(a);});s.appendChild(sl);s.appendChild(g);relDiv.appendChild(s);}
       _wsRelSec('Trang con',relChildren);
       _wsRelSec('Trang cùng cấp',relSiblings);
     }
@@ -12668,7 +12667,7 @@ async function doExportOptimized(){
     canvasWrap.appendChild(canvas);
     const relDiv2=document.createElement('div');relDiv2.className='ws-related';
     const relC2=docs.filter(x=>!x._deleted&&x.parentId===d.id);const relS2=d.parentId?docs.filter(x=>!x._deleted&&x.parentId===d.parentId&&x.id!==d.id):[];
-    if(relC2.length||relS2.length){const relH2=document.createElement('div');relH2.className='ws-related-heading';relH2.innerHTML='<span>&#128279;</span> Nội dung liên quan';relDiv2.appendChild(relH2);function _wsRelSec2(label,items){if(!items.length)return;const s=document.createElement('div');s.className='ws-related-section';const sl=document.createElement('div');sl.className='ws-related-section-label';sl.textContent=label;const g=document.createElement('div');g.className='ws-related-grid';items.forEach(x=>{const a=document.createElement('a');a.className='ws-related-card';a.href='#';a.setAttribute('onclick','showDoc(\''+x.id+'\');return false;');a.innerHTML='<span class="ws-related-card-icon">&#128196;</span><div class="ws-related-card-info"><div class="ws-related-card-name">'+x.title+'</div></div>';g.appendChild(a);});s.appendChild(sl);s.appendChild(g);relDiv2.appendChild(s);}
+    if(relC2.length||relS2.length){const relH2=document.createElement('div');relH2.className='ws-related-heading';relH2.innerHTML='<span>&#128279;</span> Nội dung liên quan';relDiv2.appendChild(relH2);function _wsRelSec2(label,items){if(!items.length)return;const s=document.createElement('div');s.className='ws-related-section';const g=document.createElement('div');g.className='ws-related-grid';items.forEach(x=>{const a=document.createElement('a');a.className='ws-related-card';a.href='#';a.setAttribute('onclick','showDoc(\''+x.id+'\');return false;');a.innerHTML='<span class="ws-related-card-icon">&#128196;</span><div class="ws-related-card-info"><div class="ws-related-card-name">'+x.title+'</div></div>';g.appendChild(a);});s.appendChild(sl);s.appendChild(g);relDiv2.appendChild(s);}
     _wsRelSec2('Trang con',relC2);_wsRelSec2('Trang cùng cấp',relS2);}
     docDiv.appendChild(h1);docDiv.appendChild(meta);docDiv.appendChild(canvasWrap);docDiv.appendChild(relDiv2);pageRoot.appendChild(docDiv);
   }
