@@ -340,6 +340,30 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .doc-related-card-info{min-width:0;flex:1}
 .doc-related-card-name{font-size:12px;font-weight:400;color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4}
 .doc-related-card-date{font-size:11px;color:var(--text3);margin-top:2px}
+/* Comment section */
+.doc-comments{margin-top:32px;padding-top:20px;border-top:1px solid var(--border)}
+.doc-comment-list{margin-bottom:4px}
+.doc-comment-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.doc-comment-item:last-child{border-bottom:none}
+.doc-comment-avatar{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;margin-top:1px}
+.doc-comment-body{flex:1;min-width:0}
+.doc-comment-text{font-size:13px;color:var(--text);line-height:1.5;white-space:pre-wrap;word-break:break-word}
+.doc-comment-meta{display:flex;align-items:center;gap:8px;margin-top:3px}
+.doc-comment-date{font-size:11px;color:var(--text3)}
+.doc-comment-del{font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;padding:0;line-height:1}
+.doc-comment-del:hover{color:#e05252}
+.doc-comment-add-btn{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text3);background:none;border:none;cursor:pointer;padding:7px 0;border-radius:4px;transition:color .15s}
+.doc-comment-add-btn:hover{color:var(--accent)}
+.doc-comment-add-btn i{font-size:15px}
+.doc-comment-form{display:none;margin-top:6px}
+.doc-comment-form.open{display:block}
+.doc-comment-textarea{width:100%;min-height:72px;border:1px solid var(--border2);border-radius:6px;padding:8px 10px;font-size:13px;font-family:var(--font);color:var(--text);background:var(--surface);resize:vertical;outline:none;box-sizing:border-box;transition:border-color .15s}
+.doc-comment-textarea:focus{border-color:var(--accent)}
+.doc-comment-form-actions{display:flex;gap:8px;margin-top:6px;justify-content:flex-end}
+.doc-comment-save{padding:4px 14px;font-size:12px;background:var(--accent);color:#fff;border:none;border-radius:4px;cursor:pointer;opacity:1;transition:opacity .15s}
+.doc-comment-save:hover{opacity:.85}
+.doc-comment-cancel{padding:4px 12px;font-size:12px;background:none;border:1px solid var(--border2);border-radius:4px;cursor:pointer;color:var(--text2);transition:background .15s}
+.doc-comment-cancel:hover{background:var(--surface2)}
 .meta-chip{display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text3)}
 .meta-tag{background:var(--accent-light);color:var(--accent);padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
 .editor-content{outline:none;min-height:320px;font-size:16px;line-height:1.9;color:var(--text);position:relative}
@@ -1860,6 +1884,7 @@ kbd{background:var(--surface2);border:1px solid var(--border2);border-radius:4px
               <div class="doc-blank-hint-sub">Bấm vào đây để bắt đầu gõ, hoặc nhấn <kbd>/</kbd> để chọn định dạng</div>
             </div>
             <div class="doc-related" id="docRelated"></div>
+            <div class="doc-comments" id="docComments"></div>
           </div>
         </div>
       </div>
@@ -3362,6 +3387,7 @@ function openDoc(id){
   setTimeout(swapThemeColors,100);
   setTimeout(resetCanvasWidth,150);
   setTimeout(_updateRelatedContent,200);
+  setTimeout(_updateComments,200);
 }
 function currentDoc(){return state.docs.find(d=>d.id===state.currentDocId);}
 function _updateRelatedContent(){
@@ -3382,6 +3408,32 @@ function _updateRelatedContent(){
   const grid=document.createElement('div');grid.className='doc-related-grid';
   all.forEach(d=>grid.appendChild(mkCard(d)));
   box.appendChild(grid);
+}
+function _updateComments(){
+  const box=document.getElementById('docComments');if(!box)return;
+  const cur=currentDoc();if(!cur){box.innerHTML='';return;}
+  if(!cur.comments)cur.comments=[];
+  box.innerHTML='';
+  if(cur.comments.length>0){
+    const list=document.createElement('div');list.className='doc-comment-list';
+    cur.comments.forEach(c=>{
+      const item=document.createElement('div');item.className='doc-comment-item';
+      const ds=new Date(c.createdAt).toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'});
+      item.innerHTML=`<div class="doc-comment-avatar"><i class="ti ti-user" style="font-size:12px"></i></div><div class="doc-comment-body"><div class="doc-comment-text">${escH(c.text)}</div><div class="doc-comment-meta"><span class="doc-comment-date">${ds}</span><button class="doc-comment-del" title="Xóa bình luận"><i class="ti ti-x" style="font-size:11px"></i></button></div></div>`;
+      item.querySelector('.doc-comment-del').addEventListener('click',()=>{cur.comments=cur.comments.filter(x=>x.id!==c.id);markDirty();_updateComments();});
+      list.appendChild(item);
+    });
+    box.appendChild(list);
+  }
+  const wrap=document.createElement('div');
+  wrap.innerHTML=`<button class="doc-comment-add-btn"><i class="ti ti-message-plus"></i> Add a comment</button><div class="doc-comment-form"><textarea class="doc-comment-textarea" placeholder="Thêm bình luận..."></textarea><div class="doc-comment-form-actions"><button class="doc-comment-cancel">Hủy</button><button class="doc-comment-save">Lưu</button></div></div>`;
+  const btn=wrap.querySelector('.doc-comment-add-btn');
+  const form=wrap.querySelector('.doc-comment-form');
+  const ta=wrap.querySelector('.doc-comment-textarea');
+  wrap.querySelector('.doc-comment-add-btn').addEventListener('click',()=>{form.classList.add('open');btn.style.display='none';ta.focus();});
+  wrap.querySelector('.doc-comment-cancel').addEventListener('click',()=>{form.classList.remove('open');btn.style.display='';ta.value='';});
+  wrap.querySelector('.doc-comment-save').addEventListener('click',()=>{const txt=ta.value.trim();if(!txt)return;cur.comments.push({id:uid(),text:txt,createdAt:new Date().toISOString()});markDirty();_updateComments();});
+  box.appendChild(wrap);
 }
 function onTitleChange(){const doc=currentDoc();if(!doc)return;doc.title=document.getElementById('docTitleInput').value;doc.updatedAt=new Date().toISOString();markDirty();renderSidebar(document.getElementById('searchInput').value.toLowerCase());updatePageActionBar();}
 function _updateBlankHint(){
