@@ -339,7 +339,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .doc-related-card-icon{font-size:15px;color:var(--accent);flex-shrink:0;line-height:1}
 .doc-related-card-info{min-width:0;flex:1}
 .doc-related-card-name{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.doc-related-card-sub{font-size:11px;color:var(--text2);margin-top:2px}
 .meta-chip{display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text3)}
 .meta-tag{background:var(--accent-light);color:var(--accent);padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
 .editor-content{outline:none;min-height:320px;font-size:16px;line-height:1.9;color:var(--text);position:relative}
@@ -3371,29 +3370,26 @@ function _updateRelatedContent(){
   const cur=currentDoc();if(!cur){box.innerHTML='';return;}
   const id=cur.id,pid=cur.parentId||null;
   const children=state.docs.filter(d=>!d._deleted&&d.parentId===id);
-  // Only show siblings when there IS a parent (root-level siblings could be huge)
   const siblings=pid?state.docs.filter(d=>!d._deleted&&d.parentId===pid&&d.id!==id):[];
-  const parent=pid?state.docs.find(d=>d.id===pid&&!d._deleted):null;
-  if(!children.length&&!siblings.length&&!parent){box.innerHTML='';return;}
-  function mkCard(d,sub){
+  if(!children.length&&!siblings.length){box.innerHTML='';return;}
+  function mkCard(d){
     const el=document.createElement('a');el.className='doc-related-card';el.href='#';el.title=d.title||'Untitled';
-    el.innerHTML=`<span class="doc-related-card-icon"><i class="ti ti-file-text"></i></span><div class="doc-related-card-info"><div class="doc-related-card-name">${escH(d.title||'Untitled')}</div><div class="doc-related-card-sub">${sub}</div></div>`;
+    el.innerHTML=`<span class="doc-related-card-icon"><i class="ti ti-file-text"></i></span><div class="doc-related-card-info"><div class="doc-related-card-name">${escH(d.title||'Untitled')}</div></div>`;
     el.addEventListener('click',e=>{e.preventDefault();openDoc(d.id);});return el;
   }
   box.innerHTML='';
   const heading=document.createElement('div');heading.className='doc-related-heading';
   heading.innerHTML='<i class="ti ti-network"></i> Nội dung liên quan';box.appendChild(heading);
-  function mkSection(label,items,sub){
+  function mkSection(label,items){
     if(!items.length)return;
     const sec=document.createElement('div');sec.className='doc-related-section';
     const sl=document.createElement('div');sl.className='doc-related-section-label';sl.textContent=label;
     const grid=document.createElement('div');grid.className='doc-related-grid';
-    items.forEach(d=>grid.appendChild(mkCard(d,sub)));
+    items.forEach(d=>grid.appendChild(mkCard(d)));
     sec.appendChild(sl);sec.appendChild(grid);box.appendChild(sec);
   }
-  if(parent)mkSection('Trang cha',[parent],'Trang cha');
-  mkSection('Trang con',children,'Trang con');
-  mkSection('Trang liên quan',siblings,'Cùng cấp');
+  mkSection('Trang con',children);
+  mkSection('Trang cùng cấp',siblings);
 }
 function onTitleChange(){const doc=currentDoc();if(!doc)return;doc.title=document.getElementById('docTitleInput').value;doc.updatedAt=new Date().toISOString();markDirty();renderSidebar(document.getElementById('searchInput').value.toLowerCase());updatePageActionBar();}
 function _updateBlankHint(){
@@ -11897,13 +11893,11 @@ async function doExportWebsite(){
     const relDiv=document.createElement('div');relDiv.className='ws-related';
     const relChildren=docs.filter(x=>!x._deleted&&x.parentId===d.id);
     const relSiblings=d.parentId?docs.filter(x=>!x._deleted&&x.parentId===d.parentId&&x.id!==d.id):[];
-    const relParent=d.parentId?docs.find(x=>x.id===d.parentId&&!x._deleted):null;
-    if(relChildren.length||relSiblings.length||relParent){
+    if(relChildren.length||relSiblings.length){
       const relH=document.createElement('div');relH.className='ws-related-heading';relH.innerHTML='<span>&#128279;</span> Nội dung liên quan';relDiv.appendChild(relH);
-      function _wsRelSec(label,items,sub){if(!items.length)return;const s=document.createElement('div');s.className='ws-related-section';const sl=document.createElement('div');sl.className='ws-related-section-label';sl.textContent=label;const g=document.createElement('div');g.className='ws-related-grid';items.forEach(x=>{const a=document.createElement('a');a.className='ws-related-card';a.href='#';a.setAttribute('onclick','showDoc(\''+x.id+'\');return false;');a.innerHTML='<span class="ws-related-card-icon">&#128196;</span><div class="ws-related-card-info"><div class="ws-related-card-name">'+x.title+'</div><div class="ws-related-card-sub">'+sub+'</div></div>';g.appendChild(a);});s.appendChild(sl);s.appendChild(g);relDiv.appendChild(s);}
-      if(relParent)_wsRelSec('Trang cha',[relParent],'Trang cha');
-      _wsRelSec('Trang con',relChildren,'Trang con');
-      _wsRelSec('Trang liên quan',relSiblings,'Cùng cấp');
+      function _wsRelSec(label,items){if(!items.length)return;const s=document.createElement('div');s.className='ws-related-section';const sl=document.createElement('div');sl.className='ws-related-section-label';sl.textContent=label;const g=document.createElement('div');g.className='ws-related-grid';items.forEach(x=>{const a=document.createElement('a');a.className='ws-related-card';a.href='#';a.setAttribute('onclick','showDoc(\''+x.id+'\');return false;');a.innerHTML='<span class="ws-related-card-icon">&#128196;</span><div class="ws-related-card-info"><div class="ws-related-card-name">'+x.title+'</div></div>';g.appendChild(a);});s.appendChild(sl);s.appendChild(g);relDiv.appendChild(s);}
+      _wsRelSec('Trang con',relChildren);
+      _wsRelSec('Trang cùng cấp',relSiblings);
     }
     docDiv.appendChild(h1);docDiv.appendChild(meta);docDiv.appendChild(canvasWrap);docDiv.appendChild(relDiv);
     pageRoot.appendChild(docDiv);
@@ -12677,9 +12671,9 @@ async function doExportOptimized(){
     for(const tb of (d.textBoxes||[])){const box=document.createElement('div');box.style.cssText=`position:absolute;left:${tb.x}px;top:${tb.y}px;width:${tb.w}px;min-height:${tb.h||80}px;border:${tb.bdw||1.5}px solid ${tb.bd||'var(--accent)'};border-radius:6px;background:${tb.bg||'var(--surface)'};box-shadow:${tb.shadow?'0 4px 8px rgba(0,0,0,.24)':'none'};box-sizing:border-box;overflow:auto;padding:10px 12px;font-size:14px;line-height:1.7;color:var(--text)`;const tbT=document.createElement('div');tbT.innerHTML=tb.content||'';tbT.querySelectorAll('.txtbox-handle-bar,.rh,script,[contenteditable]').forEach(e=>{if(e.tagName==='SCRIPT'||e.classList.contains('txtbox-handle-bar')||e.classList.contains('rh'))e.remove();else e.removeAttribute('contenteditable');});box.innerHTML=tbT.innerHTML;canvas.appendChild(box);}
     canvasWrap.appendChild(canvas);
     const relDiv2=document.createElement('div');relDiv2.className='ws-related';
-    const relC2=docs.filter(x=>!x._deleted&&x.parentId===d.id);const relS2=d.parentId?docs.filter(x=>!x._deleted&&x.parentId===d.parentId&&x.id!==d.id):[];const relP2=d.parentId?docs.find(x=>x.id===d.parentId&&!x._deleted):null;
-    if(relC2.length||relS2.length||relP2){const relH2=document.createElement('div');relH2.className='ws-related-heading';relH2.innerHTML='<span>&#128279;</span> Nội dung liên quan';relDiv2.appendChild(relH2);function _wsRelSec2(label,items,sub){if(!items.length)return;const s=document.createElement('div');s.className='ws-related-section';const sl=document.createElement('div');sl.className='ws-related-section-label';sl.textContent=label;const g=document.createElement('div');g.className='ws-related-grid';items.forEach(x=>{const a=document.createElement('a');a.className='ws-related-card';a.href='#';a.setAttribute('onclick','showDoc(\''+x.id+'\');return false;');a.innerHTML='<span class="ws-related-card-icon">&#128196;</span><div class="ws-related-card-info"><div class="ws-related-card-name">'+x.title+'</div><div class="ws-related-card-sub">'+sub+'</div></div>';g.appendChild(a);});s.appendChild(sl);s.appendChild(g);relDiv2.appendChild(s);}
-    if(relP2)_wsRelSec2('Trang cha',[relP2],'Trang cha');_wsRelSec2('Trang con',relC2,'Trang con');_wsRelSec2('Trang liên quan',relS2,'Cùng cấp');}
+    const relC2=docs.filter(x=>!x._deleted&&x.parentId===d.id);const relS2=d.parentId?docs.filter(x=>!x._deleted&&x.parentId===d.parentId&&x.id!==d.id):[];
+    if(relC2.length||relS2.length){const relH2=document.createElement('div');relH2.className='ws-related-heading';relH2.innerHTML='<span>&#128279;</span> Nội dung liên quan';relDiv2.appendChild(relH2);function _wsRelSec2(label,items){if(!items.length)return;const s=document.createElement('div');s.className='ws-related-section';const sl=document.createElement('div');sl.className='ws-related-section-label';sl.textContent=label;const g=document.createElement('div');g.className='ws-related-grid';items.forEach(x=>{const a=document.createElement('a');a.className='ws-related-card';a.href='#';a.setAttribute('onclick','showDoc(\''+x.id+'\');return false;');a.innerHTML='<span class="ws-related-card-icon">&#128196;</span><div class="ws-related-card-info"><div class="ws-related-card-name">'+x.title+'</div></div>';g.appendChild(a);});s.appendChild(sl);s.appendChild(g);relDiv2.appendChild(s);}
+    _wsRelSec2('Trang con',relC2);_wsRelSec2('Trang cùng cấp',relS2);}
     docDiv.appendChild(h1);docDiv.appendChild(meta);docDiv.appendChild(canvasWrap);docDiv.appendChild(relDiv2);pageRoot.appendChild(docDiv);
   }
   const pagesHTML=pageRoot.innerHTML;const firstId=docs[0].id;
