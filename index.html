@@ -5101,19 +5101,48 @@ function _openSelPanel(title,type,idx,table,triggerEl){
   }
 
   if(type==='col'){
-    actWrap.appendChild(mkBtn('column-insert-left','Thêm cột bên trái',false,tblAddColLeft));
-    actWrap.appendChild(mkBtn('column-insert-right','Thêm cột bên phải',false,tblAddColRight));
-    actWrap.appendChild(mkBtn('trash','Xóa cột này',true,tblDelCol));
+    actWrap.appendChild(mkBtn('column-insert-left','Thêm cột bên trái',false,()=>{
+      Array.from(table.rows).forEach((row,ri)=>{
+        const cell=ri===0?document.createElement('th'):document.createElement('td');
+        cell.innerHTML=ri===0?'Cột mới':'';row.insertBefore(cell,row.cells[idx]);
+      });
+      const cg=table.querySelector('colgroup');if(cg)cg.dataset.auto='1';
+      tblEqualizeColumns(table);onContentChange();tblAttachAll();toast('Đã thêm cột','success');
+    }));
+    actWrap.appendChild(mkBtn('column-insert-right','Thêm cột bên phải',false,()=>{
+      Array.from(table.rows).forEach((row,ri)=>{
+        const cell=ri===0?document.createElement('th'):document.createElement('td');
+        cell.innerHTML=ri===0?'Cột mới':'Dữ liệu';row.insertBefore(cell,row.cells[idx+1]||null);
+      });
+      tblEqualizeColumns(table);onContentChange();tblAttachAll();toast('Đã thêm cột','success');
+    }));
+    actWrap.appendChild(mkBtn('trash','Xóa cột này',true,()=>{
+      if(table.rows[0].cells.length<=1){toast('Phải có ít nhất 1 cột','error');return;}
+      Array.from(table.rows).forEach(row=>{if(row.cells[idx])row.deleteCell(idx);});
+      tblEqualizeColumns(table);onContentChange();tblAttachAll();toast('Đã xoá cột','info');
+    }));
     // Divider + distribute equally (keeps # column fixed)
     const divD=document.createElement('div');divD.style.cssText='border-top:1px solid #1e293b;margin:3px 0';actWrap.appendChild(divD);
     actWrap.appendChild(mkBtn('layout-distribute-horizontal','Chia đều độ rộng các cột',false,
       ()=>tblDistributeColumns(table)));
   } else {
     {
-      // ── Normal row controls ───────────────────────────────
-      actWrap.appendChild(mkBtn('row-insert-top','Thêm hàng phía trên',false,tblAddRowAbove));
-      actWrap.appendChild(mkBtn('row-insert-bottom','Thêm hàng phía dưới',false,tblAddRowBelow));
-      actWrap.appendChild(mkBtn('trash','Xóa hàng này',true,tblDelRow));
+      // ── Normal row controls (use idx+table closure, not _activeTd) ──
+      const dataCols=()=>Array.from(table.rows[0].cells).filter(c=>!c.classList.contains('tbl-row-num')).length;
+      actWrap.appendChild(mkBtn('row-insert-top','Thêm hàng phía trên',false,()=>{
+        const nr=table.insertRow(idx);
+        for(let i=0;i<dataCols();i++){nr.insertCell(i).innerHTML='Dữ liệu';}
+        onContentChange();tblAttachAll();toast('Đã thêm hàng','success');
+      }));
+      actWrap.appendChild(mkBtn('row-insert-bottom','Thêm hàng phía dưới',false,()=>{
+        const nr=table.insertRow(idx+1);
+        for(let i=0;i<dataCols();i++){nr.insertCell(i).innerHTML='Dữ liệu';}
+        onContentChange();tblAttachAll();toast('Đã thêm hàng','success');
+      }));
+      actWrap.appendChild(mkBtn('trash','Xóa hàng này',true,()=>{
+        if(table.rows.length<=1){toast('Phải có ít nhất 1 hàng','error');return;}
+        table.deleteRow(idx);onContentChange();tblAttachAll();toast('Đã xoá hàng','info');
+      }));
       // Toggle row numbers — use table closure (not _activeTd) so it works from panel
       const hasNums=table&&table.dataset.rownums!=='0';
       actWrap.appendChild(mkBtn(hasNums?'eye-off':'list-numbers',
