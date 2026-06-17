@@ -7467,7 +7467,9 @@ function _cfWireChecklist(cl){
   badge.addEventListener('click',e=>{e.stopPropagation();_cycleStatus();});
   if(head){
     head.addEventListener('click',e=>{
-      if(e.target.closest('.cf-checklist-status-btn,.cf-checklist-cam-btn,.cf-checklist-title,.cf-cl-badge'))return;
+      if(e.target.closest('.cf-checklist-status-btn,.cf-checklist-cam-btn,.cf-cl-badge'))return;
+      // When open: clicking title allows editing — don't toggle
+      if(cl.dataset.open==='true'&&e.target.closest('.cf-checklist-title'))return;
       const _opening=cl.dataset.open!=='true';
       if(_opening){document.querySelectorAll('.cf-checklist[data-open="true"]').forEach(o=>{if(o!==cl)o.dataset.open='false';});}
       cl.dataset.open=_opening?'true':'false';
@@ -7530,7 +7532,8 @@ function _cfWireToggle(el){
   };
   if(btn)btn.addEventListener('click',_doToggle);
   head.addEventListener('click',e=>{
-    if(e.target.closest('.cf-toggle-title'))return;
+    // When open: clicking title allows editing — don't toggle
+    if(el.dataset.open==='true'&&e.target.closest('.cf-toggle-title'))return;
     _doToggle(e);
   });
 }
