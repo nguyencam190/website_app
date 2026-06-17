@@ -5609,6 +5609,8 @@ function tblMergeCells(){
     _mergeTable.dataset.colwidths=ws;
   }
   tblClearCellSel();
+  _activeTd=anchor;
+  _updateMergeBar();
   onContentChange();setTimeout(tblAttachAll,50);
   toast('Đã gộp '+inRect.size+' ô','success');
 }
