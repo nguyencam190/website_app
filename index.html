@@ -5106,12 +5106,22 @@ function _openSelPanel(title,type,idx,table,triggerEl){
       actWrap.appendChild(mkBtn('row-insert-top','Thêm hàng phía trên',false,tblAddRowAbove));
       actWrap.appendChild(mkBtn('row-insert-bottom','Thêm hàng phía dưới',false,tblAddRowBelow));
       actWrap.appendChild(mkBtn('trash','Xóa hàng này',true,tblDelRow));
-      // Toggle row numbers
+      // Toggle row numbers — use table closure (not _activeTd) so it works from panel
       const hasNums=table&&table.dataset.rownums!=='0';
       actWrap.appendChild(mkBtn(hasNums?'eye-off':'list-numbers',
-        hasNums?'Ẩn cột số thứ tự':'Hiện cột số thứ tự',false,tblToggleRowNums));
-      // Delete entire table
-      actWrap.appendChild(mkBtn('table-off','Xóa toàn bộ bảng',true,tblDelTable));
+        hasNums?'Ẩn cột số thứ tự':'Hiện cột số thứ tự',false,()=>{
+          const cur=table.dataset.rownums!=='0';
+          table.dataset.rownums=cur?'0':'1';
+          tblEqualizeColumns(table);tblAttachTable(table);onContentChange();
+          toast(cur?'Đã ẩn cột số thứ tự':'Đã hiện cột số thứ tự','info');
+        }));
+      // Delete entire table — use table closure (not _activeTd)
+      actWrap.appendChild(mkBtn('table-off','Xóa toàn bộ bảng',true,()=>{
+        if(!confirm('Xóa bảng này?'))return;
+        const frame=table.closest('.tbl-frame');
+        if(frame)frame.remove();else{const outer=table.closest('.tbl-outer');if(outer)outer.remove();else table.remove();}
+        _activeTd=null;onContentChange();toast('Đã xóa bảng','info');
+      }));
       // Unmerge if active cell is merged
       if(_activeTd&&(((_activeTd.colSpan||1)>1)||((_activeTd.rowSpan||1)>1))){
         const div2=document.createElement('div');div2.style.cssText='border-top:1px solid #1e293b;margin:3px 0';actWrap.appendChild(div2);
@@ -6044,7 +6054,6 @@ function tblShowDropdown(td,triggerEl){
   if(!dd){dd=document.createElement('div');dd.id='tblDropdown';dd.className='tbl-dropdown';document.body.appendChild(dd);}
   // Rebuild content every time (reflects current table state)
   const _tbl=td.closest('table');
-  const _hasRowNums=_tbl&&_tbl.dataset.rownums!=='0';
   const _frame=_tbl&&_tbl.closest('.tbl-outer')?.parentElement;
   const _curW=(_frame?.classList.contains('tbl-frame')&&_frame.dataset.tblwidth)||'100';
   const _curA=(_frame?.classList.contains('tbl-frame')&&_frame.dataset.align)||'';
@@ -6054,28 +6063,9 @@ function tblShowDropdown(td,triggerEl){
   dd.innerHTML='<div class="tbl-label">Kích thước</div>'
     +'<div style="display:flex;gap:4px;padding:2px 8px 6px">'+_wBtn(25)+_wBtn(50)+_wBtn(75)+_wBtn(100)+'</div>'
     +'<div class="tbl-label">Căn lề</div>'
-    +'<div style="display:flex;gap:4px;padding:2px 8px 6px">'
+    +'<div style="display:flex;gap:4px;padding:2px 8px 8px">'
       +_aBtn('left','left','Trái')+_aBtn('center','center','Giữa')+_aBtn('right','right','Phải')
-    +'</div>'
-    +'<div class="tbl-divider"></div>'
-    +'<div class="tbl-label">Hang</div>'
-    +'<button class="tbl-item" onclick="tblAddRowAbove()"><i class="ti ti-row-insert-top"></i> Them hang phia tren</button>'
-    +'<button class="tbl-item" onclick="tblAddRowBelow()"><i class="ti ti-row-insert-bottom"></i> Them hang phia duoi</button>'
-    +'<button class="tbl-item danger" onclick="tblDelRow()"><i class="ti ti-trash"></i> Xoa hang nay</button>'
-    +'<div class="tbl-divider"></div>'
-    +'<div class="tbl-label">Cot</div>'
-    +'<button class="tbl-item" onclick="tblAddColLeft()"><i class="ti ti-column-insert-left"></i> Them cot ben trai</button>'
-    +'<button class="tbl-item" onclick="tblAddColRight()"><i class="ti ti-column-insert-right"></i> Them cot ben phai</button>'
-    +'<button class="tbl-item danger" onclick="tblDelCol()"><i class="ti ti-trash"></i> Xoa cot nay</button>'
-    +'<button class="tbl-item" onclick="tblDistributeColumns(_activeTd&&_activeTd.closest(\'table\'));tblHideDropdown()"><i class="ti ti-layout-distribute-horizontal"></i> Chia đều độ rộng các cột</button>'
-    +'<div class="tbl-divider"></div>'
-    +'<div class="tbl-label">Cot so thu tu</div>'
-    +'<button class="tbl-item" onclick="tblToggleRowNums()">'
-      +'<i class="ti ti-'+(_hasRowNums?'eye-off':'list-numbers')+'"></i> '
-      +(_hasRowNums?'An cot so thu tu':'Hien cot so thu tu')
-    +'</button>'
-    +'<div class="tbl-divider"></div>'
-    +'<button class="tbl-item danger" onclick="tblDelTable()"><i class="ti ti-table-off"></i> Xoa bang</button>';
+    +'</div>';
 
   const r=triggerEl.getBoundingClientRect();dd.style.visibility='hidden';dd.classList.add('on');
   const ddW=dd.offsetWidth||220,ddH=dd.offsetHeight||320;
