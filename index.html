@@ -5595,6 +5595,9 @@ function _updateMergeBar(){
     const top=rect.top>52?rect.top-48:rect.bottom+8;
     bar.style.left=left+'px';bar.style.top=Math.max(8,top)+'px';
   }
+  // If text is already selected, reposition bubble toolbar to avoid overlap
+  const _sel=window.getSelection();
+  if(_sel&&!_sel.isCollapsed)setTimeout(()=>{if(typeof bbShow==='function')bbShow();},0);
 }
 
 function _tblSaveRowHeights(table){
@@ -10305,8 +10308,8 @@ function bbShow(){
     if(top<58)top=rect.bottom+10;
     const _mbEl=document.getElementById('tblMergeBar');
     if(_mbEl&&_mbEl.classList.contains('on')){
-      const _mbr=_mbEl.getBoundingClientRect();
-      if(top<_mbr.bottom+4&&top+bbH>_mbr.top-4){top=rect.bottom+10;if(top+bbH>window.innerHeight-8)top=Math.max(8,rect.top-bbH-10);}
+      top=rect.bottom+10;
+      if(top+bbH>window.innerHeight-8)top=Math.max(8,rect.top-bbH-10);
     }
     bb.style.left=left+'px';bb.style.top=top+'px';bb.style.visibility='';
     bbUpdateState();
