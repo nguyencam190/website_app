@@ -8425,6 +8425,9 @@ function _cfImgInitResize(inner,handle,side){
     function mu(){
       document.body.style.cursor='';document.body.style.userSelect='';
       document.removeEventListener('mousemove',mm);document.removeEventListener('mouseup',mu);
+      // Convert px → % so image scales proportionally when the container resizes (e.g. sidebar collapse)
+      const cW=container?.offsetWidth||maxW;
+      if(cW>0){const pct=Math.round(inner.offsetWidth/cW*100);inner.style.width=Math.min(100,Math.max(10,pct))+'%';}
       onContentChange();
     }
     document.addEventListener('mousemove',mm);document.addEventListener('mouseup',mu);
