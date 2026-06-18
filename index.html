@@ -486,6 +486,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .editor-content th.tbl-has-img{
   padding:0;overflow:hidden;vertical-align:middle;text-align:center;box-sizing:border-box;line-height:0;
 }
+/* Reveal resize handles outside cell edge when image block is selected */
+.editor-content td.tbl-has-img:has(.cf-img-block.selected),
+.editor-content th.tbl-has-img:has(.cf-img-block.selected){overflow:visible;}
 /* cf-img-block inside table cell — center like column layout */
 .editor-content td .cf-img-block,.editor-content th .cf-img-block{margin:0!important}
 .editor-content td .cf-img-caption,.editor-content th .cf-img-caption{display:none!important}
@@ -1466,6 +1469,23 @@ body[data-focus="1"] .editor-scroll{padding:64px 15%}
 .focus-exit-btn{position:fixed;top:14px;right:16px;z-index:9000;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-size:12px;color:var(--text2);cursor:pointer;display:none;align-items:center;gap:6px;box-shadow:var(--shadow);transition:background .15s}
 .focus-exit-btn:hover{background:var(--surface2)}
 body[data-focus="1"] .focus-exit-btn{display:flex}
+/* ── Find & Replace Bar ─────────────────────────────────────── */
+.cf-find-bar{position:fixed;top:56px;right:20px;z-index:9500;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.18);padding:10px 12px;display:none;flex-direction:column;gap:8px;min-width:340px;}
+.cf-find-row{display:flex;gap:6px;align-items:center;}
+.cf-find-inp{flex:1;padding:5px 9px;border:1px solid var(--border2);border-radius:6px;background:var(--bg);color:var(--text);font-size:13px;outline:none;box-sizing:border-box;font-family:var(--font);}
+.cf-find-inp:focus{border-color:var(--accent);}
+.cf-find-inp.no-match{border-color:#e5534b;background:rgba(229,83,75,.08);}
+.cf-find-count{font-size:11px;color:var(--text2);white-space:nowrap;min-width:42px;text-align:center;flex-shrink:0;}
+.cf-find-btn{width:28px;height:28px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;line-height:1;}
+.cf-find-btn:hover{background:var(--surface2);}
+.cf-find-actions{display:flex;gap:5px;flex-shrink:0;}
+.cf-find-action-btn{padding:4px 10px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer;font-size:12px;white-space:nowrap;}
+.cf-find-action-btn:hover{background:var(--surface2);}
+.cf-find-opts{display:flex;gap:10px;align-items:center;}
+.cf-find-opt-label{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2);cursor:pointer;user-select:none;}
+.cf-find-opt-label input{cursor:pointer;accent-color:var(--accent);}
+mark.cf-fh{background:rgba(255,200,0,.45);border-radius:2px;color:inherit;}
+mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1px solid #f90;color:inherit;}
 </style>
 </head>
 <body>
@@ -13048,6 +13068,7 @@ document.addEventListener('keydown',e=>{
   if(e.key==='k'&&!e.ctrlKey&&!e.metaKey&&!e.altKey){const _ae=document.activeElement;if(!_ae||_ae.tagName==='BODY'||(!_ae.isContentEditable&&_ae.tagName!=='INPUT'&&_ae.tagName!=='TEXTAREA')){e.preventDefault();openQS();}}
   if(e.key==='F11'){e.preventDefault();toggleFocusMode();}
   if(e.key==='Escape'){
+    if(document.getElementById('cfFindBar')?.style.display!=='none'){if(typeof window._closeFindBar==='function'){window._closeFindBar();return;}}
     if(document.getElementById('qsOverlay')?.classList.contains('on')){closeQS();return;}
     if(document.body.dataset.focus==='1'){toggleFocusMode();return;}
     hdrCloseAll();
@@ -13167,6 +13188,193 @@ function toggleFocusMode(){
   const btn=document.getElementById('focusModeBtn');
   if(btn)btn.innerHTML=on?'<i class="ti ti-focus-2"></i>':'<i class="ti ti-focus-off"></i>';
 }
+
+// ── Find & Replace ────────────────────────────────────────────
+(function(){
+  let bar=null,finpEl=null,repInpEl=null,countEl=null,caseChk=null,wholeChk=null;
+  let matches=[],idx=-1;
+
+  function build(){
+    bar=document.createElement('div');
+    bar.id='cfFindBar';bar.className='cf-find-bar';
+    bar.innerHTML=
+      '<div class="cf-find-row">'+
+        '<input class="cf-find-inp" id="cfFindInp" placeholder="Tìm kiếm…" autocomplete="off" spellcheck="false">'+
+        '<span class="cf-find-count" id="cfFindCount">0/0</span>'+
+        '<button class="cf-find-btn" id="cfFindPrev" title="Trước (Shift+Enter)">‹</button>'+
+        '<button class="cf-find-btn" id="cfFindNext" title="Tiếp (Enter)">›</button>'+
+        '<button class="cf-find-btn" id="cfFindClose" title="Đóng (Esc)">×</button>'+
+      '</div>'+
+      '<div class="cf-find-row">'+
+        '<input class="cf-find-inp" id="cfRepInp" placeholder="Thay thế…" autocomplete="off" spellcheck="false">'+
+        '<div class="cf-find-actions">'+
+          '<button class="cf-find-action-btn" id="cfRepOne">Thay thế</button>'+
+          '<button class="cf-find-action-btn" id="cfRepAll">Tất cả</button>'+
+        '</div>'+
+      '</div>'+
+      '<div class="cf-find-opts">'+
+        '<label class="cf-find-opt-label"><input type="checkbox" id="cfFindCase"> Hoa/thường</label>'+
+        '<label class="cf-find-opt-label"><input type="checkbox" id="cfFindWhole"> Toàn từ</label>'+
+      '</div>';
+    document.body.appendChild(bar);
+    finpEl=document.getElementById('cfFindInp');
+    repInpEl=document.getElementById('cfRepInp');
+    countEl=document.getElementById('cfFindCount');
+    caseChk=document.getElementById('cfFindCase');
+    wholeChk=document.getElementById('cfFindWhole');
+
+    finpEl.addEventListener('input',run);
+    caseChk.addEventListener('change',run);
+    wholeChk.addEventListener('change',run);
+    finpEl.addEventListener('keydown',function(e){
+      if(e.key==='Enter'){e.preventDefault();e.shiftKey?prev():next();}
+      if(e.key==='Escape'){e.preventDefault();close();}
+    });
+    repInpEl.addEventListener('keydown',function(e){
+      if(e.key==='Enter'){e.preventDefault();replaceOne();}
+      if(e.key==='Escape'){e.preventDefault();close();}
+    });
+    document.getElementById('cfFindPrev').addEventListener('click',prev);
+    document.getElementById('cfFindNext').addEventListener('click',next);
+    document.getElementById('cfFindClose').addEventListener('click',close);
+    document.getElementById('cfRepOne').addEventListener('click',replaceOne);
+    document.getElementById('cfRepAll').addEventListener('click',replaceAll);
+  }
+
+  function open(focusReplace){
+    if(!bar)build();
+    bar.style.display='flex';
+    const sel=window.getSelection();
+    if(sel&&sel.toString().trim()&&!focusReplace)finpEl.value=sel.toString().trim();
+    if(focusReplace){repInpEl.focus();repInpEl.select();}
+    else{finpEl.focus();finpEl.select();}
+    run();
+  }
+
+  function close(){
+    clearHL();
+    if(bar)bar.style.display='none';
+    if(finpEl)finpEl.classList.remove('no-match');
+  }
+
+  function clearHL(){
+    const editor=document.getElementById('editor');
+    if(!editor)return;
+    editor.querySelectorAll('mark.cf-fh').forEach(function(m){
+      if(m.parentNode){m.parentNode.replaceChild(document.createTextNode(m.textContent),m);}
+    });
+    editor.normalize();
+    matches=[];idx=-1;
+  }
+
+  function run(){
+    clearHL();
+    const q=finpEl?finpEl.value:'';
+    if(!q){if(countEl)countEl.textContent='0/0';if(finpEl)finpEl.classList.remove('no-match');return;}
+    const cs=caseChk&&caseChk.checked;
+    const whole=wholeChk&&wholeChk.checked;
+    const editor=document.getElementById('editor');
+    if(!editor)return;
+
+    const walker=document.createTreeWalker(editor,NodeFilter.SHOW_TEXT,{
+      acceptNode:function(node){
+        if(node.parentElement&&node.parentElement.closest('.cf-find-bar,.cf-img-toolbar,.cf-car-toolbar'))return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    const nodes=[];let nd;
+    while((nd=walker.nextNode()))nodes.push(nd);
+
+    nodes.forEach(function(tn){
+      const text=tn.nodeValue;
+      const ct=cs?text:text.toLowerCase();
+      const cq=cs?q:q.toLowerCase();
+      let i=0;const parts=[];
+      while(true){
+        const pos=ct.indexOf(cq,i);
+        if(pos===-1)break;
+        if(whole){
+          const wb=/\w/;
+          const pre=pos>0?ct[pos-1]:'';
+          const suf=pos+cq.length<ct.length?ct[pos+cq.length]:'';
+          if((pre&&wb.test(pre))||(suf&&wb.test(suf))){i=pos+1;continue;}
+        }
+        if(pos>i)parts.push(document.createTextNode(text.slice(i,pos)));
+        const mk=document.createElement('mark');
+        mk.className='cf-fh';
+        mk.textContent=text.slice(pos,pos+q.length);
+        parts.push(mk);matches.push(mk);
+        i=pos+q.length;
+      }
+      if(parts.length){
+        if(i<text.length)parts.push(document.createTextNode(text.slice(i)));
+        const frag=document.createDocumentFragment();
+        parts.forEach(function(p){frag.appendChild(p);});
+        tn.parentNode.replaceChild(frag,tn);
+      }
+    });
+
+    if(matches.length){
+      finpEl.classList.remove('no-match');
+      idx=0;matches[0].classList.add('cf-fh-cur');
+      matches[0].scrollIntoView({block:'center',behavior:'smooth'});
+      countEl.textContent='1/'+matches.length;
+    }else{
+      finpEl.classList.add('no-match');
+      countEl.textContent='0/0';
+    }
+  }
+
+  function setCurrent(){
+    matches.forEach(function(m,i){m.classList.toggle('cf-fh-cur',i===idx);});
+    if(matches[idx]){
+      matches[idx].scrollIntoView({block:'center',behavior:'smooth'});
+      countEl.textContent=(idx+1)+'/'+matches.length;
+    }
+  }
+  function next(){if(!matches.length)return;idx=(idx+1)%matches.length;setCurrent();}
+  function prev(){if(!matches.length)return;idx=(idx-1+matches.length)%matches.length;setCurrent();}
+
+  function replaceOne(){
+    if(idx<0||idx>=matches.length)return;
+    if(typeof _undoSnapshot==='function')_undoSnapshot();
+    const mk=matches[idx];
+    const rt=document.createTextNode(repInpEl.value);
+    mk.parentNode.replaceChild(rt,mk);
+    rt.parentNode&&rt.parentNode.normalize();
+    matches.splice(idx,1);
+    if(idx>=matches.length)idx=Math.max(0,matches.length-1);
+    if(matches.length){setCurrent();}
+    else{finpEl.classList.toggle('no-match',!!finpEl.value);}
+    countEl.textContent=matches.length?(idx+1)+'/'+matches.length:'0/0';
+    if(typeof onContentChange==='function')onContentChange();
+  }
+
+  function replaceAll(){
+    if(!matches.length)return;
+    if(typeof _undoSnapshot==='function')_undoSnapshot();
+    const rt=repInpEl.value;const cnt=matches.length;
+    matches.forEach(function(mk){
+      if(mk.parentNode)mk.parentNode.replaceChild(document.createTextNode(rt),mk);
+    });
+    document.getElementById('editor')&&document.getElementById('editor').normalize();
+    matches=[];idx=-1;
+    countEl.textContent='0/0';
+    finpEl.classList.remove('no-match');
+    if(typeof onContentChange==='function')onContentChange();
+    if(typeof toast==='function')toast('Đã thay thế '+cnt+' kết quả','success');
+  }
+
+  document.addEventListener('keydown',function(e){
+    if((e.ctrlKey||e.metaKey)&&!e.altKey){
+      if(e.key.toLowerCase()==='f'){e.preventDefault();open(false);return;}
+      if(e.key.toLowerCase()==='h'){e.preventDefault();open(true);return;}
+    }
+  });
+
+  window._closeFindBar=close;
+  window._openFindBar=open;
+})();
 
 init();
 </script>
