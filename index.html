@@ -8427,7 +8427,7 @@ function _cfImgSelect(block){
   if(_cfImgSelected&&_cfImgSelected!==block){
     _cfImgSelected.classList.remove('selected');
     const _ot=_cfImgSelected.querySelector('.cf-img-toolbar');
-    if(_ot&&!_cfImgSelected.matches(':hover'))_ot.style.display='none';
+    if(_ot)_ot.style.display='none';
   }
   _cfImgSelected=block;block.classList.add('selected');
   _cfImgPositionToolbar(block);
@@ -8438,13 +8438,13 @@ document.addEventListener('click',e=>{
   if(_cfImgSelected&&!_cfImgSelected.contains(e.target)){
     _cfImgSelected.classList.remove('selected');
     const _ot=_cfImgSelected.querySelector('.cf-img-toolbar');
-    if(_ot&&!_cfImgSelected.matches(':hover'))_ot.style.display='none';
+    if(_ot)_ot.style.display='none';
   }
   if(!e.target.closest('.cf-carousel-block')){
     document.querySelectorAll('.cf-carousel-block.selected').forEach(b=>{
       b.classList.remove('selected');
       const _t=b.querySelector('.cf-car-toolbar');
-      if(_t&&!b.matches(':hover'))_t.style.display='none';
+      if(_t)_t.style.display='none';
     });
   }
 });
@@ -8512,7 +8512,11 @@ async function cfBuildCarouselBlock(files){
 function _cfCarPositionToolbar(block){
   const tb=block.querySelector('.cf-car-toolbar');
   if(!tb)return;
-  const br=block.getBoundingClientRect();
+  const slides=block.querySelectorAll('.cf-car-slide');
+  const curSlide=slides[block._carIdx||0];
+  const img=curSlide?.querySelector('img')||block.querySelector('.cf-car-track img');
+  const ref=img||block;
+  const br=ref.getBoundingClientRect();
   if(!br.width)return;
   tb.style.display='flex';
   const vw=window.innerWidth,vh=window.innerHeight;
@@ -8529,7 +8533,9 @@ function _cfCarPositionToolbar(block){
 function _cfImgPositionToolbar(block){
   const tb=block.querySelector('.cf-img-toolbar');
   if(!tb)return;
-  const br=block.getBoundingClientRect();
+  const img=block.querySelector('.cf-img-inner img');
+  const ref=img||block;
+  const br=ref.getBoundingClientRect();
   if(!br.width)return;
   tb.style.display='flex';
   const vw=window.innerWidth,vh=window.innerHeight;
@@ -8544,15 +8550,7 @@ function _cfImgPositionToolbar(block){
 }
 
 function _cfImgWireHover(block,tb){
-  let _tbHide;
-  const ctx=tb._ctx;
-  const _showTb=()=>{clearTimeout(_tbHide);_cfImgPositionToolbar(block);};
-  const _hideTb=()=>{_tbHide=setTimeout(()=>{if(!block.classList.contains('selected')&&!(ctx&&ctx.classList.contains('on')))tb.style.display='none';},180);};
-  block.addEventListener('mouseenter',_showTb);
-  block.addEventListener('mouseleave',_hideTb);
-  tb.addEventListener('mouseenter',()=>clearTimeout(_tbHide));
-  tb.addEventListener('mouseleave',_hideTb);
-  if(ctx)ctx.addEventListener('mouseleave',_hideTb);
+  // toolbar shown on click via _cfImgSelect; hidden on outside click
 }
 
 function _cfBuildCarToolbar(block){
@@ -8681,15 +8679,7 @@ function _cfBuildCarToolbar(block){
     ctxBorderRow.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.toggle('active',(sl.dataset.carslideImgborder||'')=== s.dataset.swval));
   };
 
-  // Wire hover show/hide for fixed-position toolbar with gap-bridging delay
-  let _tbHide;
-  const _showTb=()=>{clearTimeout(_tbHide);_cfCarPositionToolbar(block);};
-  const _hideTb=()=>{_tbHide=setTimeout(()=>{if(!block.classList.contains('selected')&&!ctx.classList.contains('on'))tb.style.display='none';},180);};
-  block.addEventListener('mouseenter',_showTb);
-  block.addEventListener('mouseleave',_hideTb);
-  tb.addEventListener('mouseenter',()=>clearTimeout(_tbHide));
-  tb.addEventListener('mouseleave',_hideTb);
-  ctx.addEventListener('mouseleave',_hideTb);
+  // toolbar shown on mousedown via block handler; hidden on outside click
   return tb;
 }
 
@@ -8822,7 +8812,7 @@ function _cfBuildCarousel(slides){
   block.addEventListener('mousedown',e=>{
     if(e.target.closest('.cf-car-toolbar'))return;
     document.querySelectorAll('.cf-carousel-block.selected').forEach(b=>{
-      if(b!==block){b.classList.remove('selected');const _t=b.querySelector('.cf-car-toolbar');if(_t&&!b.matches(':hover'))_t.style.display='none';}
+      if(b!==block){b.classList.remove('selected');const _t=b.querySelector('.cf-car-toolbar');if(_t)_t.style.display='none';}
     });
     block.classList.add('selected');
     _cfCarPositionToolbar(block);
@@ -9043,7 +9033,7 @@ async function _cfCarLoadAll(editor){
       block.addEventListener('mousedown',e=>{
         if(e.target.closest('.cf-car-toolbar'))return;
         document.querySelectorAll('.cf-carousel-block.selected').forEach(b=>{
-          if(b!==block){b.classList.remove('selected');const _t=b.querySelector('.cf-car-toolbar');if(_t&&!b.matches(':hover'))_t.style.display='none';}
+          if(b!==block){b.classList.remove('selected');const _t=b.querySelector('.cf-car-toolbar');if(_t)_t.style.display='none';}
         });
         block.classList.add('selected');
         _cfCarPositionToolbar(block);
@@ -10313,6 +10303,11 @@ function bbShow(){
     let left=rect.left+rect.width/2-bbW/2;let top=rect.top-bbH-10;
     if(left<8)left=8;if(left+bbW>window.innerWidth-8)left=window.innerWidth-bbW-8;
     if(top<58)top=rect.bottom+10;
+    const _mbEl=document.getElementById('tblMergeBar');
+    if(_mbEl&&_mbEl.classList.contains('on')){
+      const _mbr=_mbEl.getBoundingClientRect();
+      if(top<_mbr.bottom+4&&top+bbH>_mbr.top-4){top=rect.bottom+10;if(top+bbH>window.innerHeight-8)top=Math.max(8,rect.top-bbH-10);}
+    }
     bb.style.left=left+'px';bb.style.top=top+'px';bb.style.visibility='';
     bbUpdateState();
   });
