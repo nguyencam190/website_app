@@ -2565,7 +2565,7 @@ function init(){
 }
 
 // ══ UNDO / REDO ══════════════════════════════════════════
-const _UNDO_MAX=50;
+const _UNDO_MAX=100;
 let _undoStack=[],_redoStack=[];
 let _undoPaused=false,_undoTimer=null;
 
@@ -4949,6 +4949,7 @@ ew.addEventListener('dragover',e=>{e.preventDefault();if(state.currentDocId)ov.c
 ew.addEventListener('dragleave',e=>{if(!ew.contains(e.relatedTarget))ov.classList.remove('on');});
 ew.addEventListener('drop',e=>{e.preventDefault();ov.classList.remove('on');if(!state.currentDocId)return;Array.from(e.dataTransfer.files).forEach(f=>{if(f.type.startsWith('image/')||f.type.startsWith('video/'))loadMedia(f);});});
 document.addEventListener('paste',e=>{if(!state.currentDocId)return;const item=Array.from(e.clipboardData.items||[]).find(i=>i.type.startsWith('image/')||i.type.startsWith('video/'));if(item){e.preventDefault();loadMedia(item.getAsFile());}});
+document.getElementById('editor')?.addEventListener('paste',()=>{_undoSnapshot();},true);
 document.getElementById('editor')?.addEventListener('paste',e=>{
   const html=e.clipboardData?.getData('text/html');
   if(!html||!html.includes('background'))return;
@@ -4973,8 +4974,8 @@ const dd=document.getElementById('bbSizeDD');if(dd&&!dd.contains(e.target)&&e.ta
 });
 
 // TOOLBAR
-function fmt(cmd){document.execCommand(cmd,false,null);document.getElementById('editor')?.focus({preventScroll:true});}
-function applyBlock(tag){document.execCommand('formatBlock',false,tag);document.getElementById('editor')?.focus({preventScroll:true});}
+function fmt(cmd){_undoSnapshot();document.execCommand(cmd,false,null);document.getElementById('editor')?.focus({preventScroll:true});}
+function applyBlock(tag){_undoSnapshot();document.execCommand('formatBlock',false,tag);document.getElementById('editor')?.focus({preventScroll:true});}
 function insertCode(savedRange){
   const editor=document.getElementById('editor');if(!editor)return;
   const pre=document.createElement('pre');
@@ -9533,6 +9534,10 @@ function _initSlashCommands(){
   if(!editor)return;
   editor.addEventListener('keydown',_editorSlashKeydown);
   editor.addEventListener('keydown',_mdAutoFormat);
+  editor.addEventListener('keydown',e=>{
+    if(e.key==='Enter'||e.key==='Backspace'||e.key==='Delete'||e.key==='Tab'){_undoSnapshot();}
+    if((e.ctrlKey||e.metaKey)&&!e.altKey&&['b','i','u'].includes(e.key.toLowerCase())){_undoSnapshot();}
+  });
   editor.addEventListener('input',_editorSlashInput);
   editor.addEventListener('keyup',_updateBlockBar);
   editor.addEventListener('mouseup',_updateBlockBar);
