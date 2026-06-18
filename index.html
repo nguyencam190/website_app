@@ -2770,7 +2770,7 @@ function showKeyboardShortcuts(){
   ];
   const rows=shortcuts.map(([k,d])=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)"><span style="font-size:13px;color:var(--text)">${d}</span><kbd>${k}</kbd></div>`).join('');
   const bg=document.createElement('div');bg.className='modal-bg on';bg.style.zIndex='9998';
-  bg.innerHTML=`<div class="modal" style="width:400px"><h3><i class="ti ti-keyboard" style="margin-right:8px;color:var(--accent)"></i>Phím tắt</h3><div>${rows}</div><div class="modal-actions" style="margin-top:16px"><button class="hbtn primary" onclick="this.closest('.modal-bg').remove()">Đóng</button></div></div>`;
+  bg.innerHTML=`<div class="modal" style="width:420px;max-height:85vh;display:flex;flex-direction:column"><h3 style="flex-shrink:0"><i class="ti ti-keyboard" style="margin-right:8px;color:var(--accent)"></i>Phím tắt</h3><div style="overflow-y:auto;flex:1;padding-right:4px">${rows}</div><div class="modal-actions" style="margin-top:16px;flex-shrink:0"><button class="hbtn primary" onclick="this.closest('.modal-bg').remove()">Đóng</button></div></div>`;
   document.body.appendChild(bg);
 }
 function hdrToggleDd(id){
