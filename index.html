@@ -1469,6 +1469,21 @@ body[data-focus="1"] .editor-scroll{padding:64px 15%}
 .focus-exit-btn{position:fixed;top:14px;right:16px;z-index:9000;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-size:12px;color:var(--text2);cursor:pointer;display:none;align-items:center;gap:6px;box-shadow:var(--shadow);transition:background .15s}
 .focus-exit-btn:hover{background:var(--surface2)}
 body[data-focus="1"] .focus-exit-btn{display:flex}
+/* ── Modal animations ───────────────────────────────────────── */
+@keyframes _modal-bg-in{from{opacity:0}to{opacity:1}}
+@keyframes _modal-bg-out{from{opacity:1}to{opacity:0}}
+@keyframes _modal-el-in{from{opacity:0;transform:scale(.96) translateY(-10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes _modal-el-out{from{opacity:1;transform:scale(1) translateY(0)}to{opacity:0;transform:scale(.96) translateY(-10px)}}
+.modal-bg.on{display:flex;animation:_modal-bg-in .15s ease}
+.modal-bg.on>.modal{animation:_modal-el-in .22s cubic-bezier(.34,1.2,.64,1)}
+.modal-bg.on.closing{animation:_modal-bg-out .15s ease forwards}
+.modal-bg.on.closing>.modal{animation:_modal-el-out .15s ease forwards}
+/* ── Block insertion animation ──────────────────────────────── */
+@keyframes _block-in{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+.cf-block-inserted{animation:_block-in .24s cubic-bezier(.34,1.2,.64,1)}
+/* ── Header scroll shadow ───────────────────────────────────── */
+.header{transition:box-shadow .25s ease}
+.header.hdr-scrolled{box-shadow:0 2px 18px rgba(0,0,0,.38)}
 /* ── Find & Replace Bar ─────────────────────────────────────── */
 .cf-find-bar{position:fixed;top:56px;right:20px;z-index:9500;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.18);padding:10px 12px;display:none;flex-direction:column;gap:8px;min-width:340px;}
 .cf-find-row{display:flex;gap:6px;align-items:center;}
@@ -2549,7 +2564,10 @@ function init(){
     document.querySelectorAll('.cf-carousel-block').forEach(b=>{const tb=b.querySelector('.cf-car-toolbar');if(tb&&tb.style.display==='flex')_cfCarPositionToolbar(b);});
     document.querySelectorAll('.cf-img-block').forEach(b=>{const tb=b.querySelector('.cf-img-toolbar');if(tb&&tb.style.display==='flex')_cfImgPositionToolbar(b);});
   }
-  document.getElementById('editorScroll')?.addEventListener('scroll',_reposVisibleToolbars);
+  document.getElementById('editorScroll')?.addEventListener('scroll',e=>{
+    _reposVisibleToolbars();
+    document.getElementById('mainHeader')?.classList.toggle('hdr-scrolled',e.target.scrollTop>10);
+  });
   window.addEventListener('resize',_reposVisibleToolbars);
   // Restore saved width
   const savedW=localStorage.getItem('sb_width');
@@ -3440,10 +3458,17 @@ function openDoc(id){
   document.getElementById('editorPanel').style.display='flex';
   _resetSmartPab();
   const _edScroll=document.getElementById('editorScroll');
-  _edScroll.style.transition='none';_edScroll.style.opacity='0';_edScroll.style.transform='translateY(8px)';
+  const _titleInp=document.getElementById('docTitleInput');
+  _edScroll.style.transition='none';_edScroll.style.opacity='0';_edScroll.style.transform='translateY(14px)';
+  if(_titleInp){_titleInp.style.transition='none';_titleInp.style.opacity='0';}
   document.getElementById('docTitleInput').value=doc.title||'';
   document.getElementById('editor').innerHTML=doc.content||'';
-  requestAnimationFrame(()=>{requestAnimationFrame(()=>{_edScroll.style.transition='opacity .2s ease,transform .2s ease';_edScroll.style.opacity='1';_edScroll.style.transform='translateY(0)';setTimeout(()=>{_edScroll.style.transform='';_edScroll.style.transition='';},240);});});
+  requestAnimationFrame(()=>{requestAnimationFrame(()=>{
+    _edScroll.style.transition='opacity .28s cubic-bezier(.25,.46,.45,.94),transform .28s cubic-bezier(.25,.46,.45,.94)';
+    _edScroll.style.opacity='1';_edScroll.style.transform='translateY(0)';
+    if(_titleInp){_titleInp.style.transition='opacity .2s ease';_titleInp.style.opacity='1';}
+    setTimeout(()=>{_edScroll.style.transform='';_edScroll.style.transition='';if(_titleInp){_titleInp.style.transition='';_titleInp.style.opacity='';}},300);
+  });});
   _updateBlankHint();
   _expandAncestors(id);
   // Reset watch button per-page (watch state is session-only)
@@ -5047,7 +5072,8 @@ function editUser(){const name=prompt('Doi ten:',state.username);if(name!==null)
 
 // MODALS
 function openModal(id){document.getElementById(id).classList.add('on');}
-function closeModal(id,e){if(e&&e.target!==document.getElementById(id))return;document.getElementById(id).classList.remove('on');}
+function _closeModalEl(bg){if(!bg||!bg.classList.contains('on'))return;bg.classList.add('closing');setTimeout(()=>bg.classList.remove('on','closing'),150);}
+function closeModal(id,e){if(e&&e.target!==document.getElementById(id))return;_closeModalEl(document.getElementById(id));}
 function showCtx(id,e){const m=document.getElementById(id);m.style.left=Math.min(e.clientX,window.innerWidth-200)+'px';m.style.top=Math.min(e.clientY,window.innerHeight-260)+'px';m.classList.add('on');}
 
 // TABLE EDITING
@@ -8232,6 +8258,8 @@ function _cfInsertBlockAtRange(block, savedRange){
 
   // Insert block
   insertParent.insertBefore(block, insertBefore);
+  block.classList.add('cf-block-inserted');
+  block.addEventListener('animationend',()=>block.classList.remove('cf-block-inserted'),{once:true});
   // Remove the original empty block first (e.g. the empty <p> the slash command was on)
   if(insertBefore&&insertParent.contains(insertBefore)){
     const isEmptyBlock=(insertBefore.tagName==='P'||insertBefore.tagName==='DIV')&&
@@ -13073,7 +13101,7 @@ document.addEventListener('keydown',e=>{
     if(document.body.dataset.focus==='1'){toggleFocusMode();return;}
     hdrCloseAll();
     ['ctxMenu','docCtxMenu'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('on');});
-    document.querySelectorAll('.modal-bg.on').forEach(m=>{if(m.id!=='welcomeModal')m.classList.remove('on');});
+    document.querySelectorAll('.modal-bg.on').forEach(m=>{if(m.id!=='welcomeModal')_closeModalEl(m);});
     const sm=document.getElementById('slashMenu');if(sm)sm.classList.remove('on');
     lbClose();closeVideoLightbox();
     closeFlyout();
