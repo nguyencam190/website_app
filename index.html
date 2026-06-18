@@ -1484,6 +1484,14 @@ body[data-focus="1"] .focus-exit-btn{display:flex}
 /* ── Header scroll shadow ───────────────────────────────────── */
 .header{transition:box-shadow .25s ease}
 .header.hdr-scrolled{box-shadow:0 2px 18px rgba(0,0,0,.38)}
+/* ── Inline link bubble ─────────────────────────────────────── */
+.cf-link-bubble{position:fixed;z-index:9400;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 18px rgba(0,0,0,.18);padding:5px 8px;display:none;align-items:center;gap:5px;max-width:380px;pointer-events:auto}
+.cf-link-bubble.on{display:flex}
+.cf-link-bubble-url{flex:1;font-size:12px;color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;text-decoration:underline;cursor:pointer}
+.cf-link-bubble-url:hover{opacity:.8}
+.cf-link-btn{width:26px;height:26px;border:none;background:transparent;color:var(--text2);cursor:pointer;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.cf-link-btn:hover{background:var(--surface2)}
+.cf-link-btn.danger:hover{background:rgba(239,68,68,.1);color:#ef4444}
 /* ── Find & Replace Bar ─────────────────────────────────────── */
 .cf-find-bar{position:fixed;top:56px;right:20px;z-index:9500;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.18);padding:10px 12px;display:none;flex-direction:column;gap:8px;min-width:340px;}
 .cf-find-row{display:flex;gap:6px;align-items:center;}
@@ -1961,7 +1969,8 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 
 <div class="statusbar">
   <span id="saveStatusEl" class="save-ok"><i class="ti ti-circle-check" style="font-size:12px"></i> Đã lưu</span>
-  <span><kbd>Ctrl+S</kbd> lưu &nbsp;·&nbsp; <kbd>Ctrl+V</kbd> dán ảnh &nbsp;·&nbsp; Kéo thả vào editor</span>
+  <span id="wordCountEl" style="color:var(--text3)"></span>
+  <span><kbd>Ctrl+S</kbd> lưu &nbsp;·&nbsp; <kbd>Ctrl+Shift+V</kbd> dán thuần &nbsp;·&nbsp; <kbd>/</kbd> chèn block</span>
 </div>
 
 <!-- CONTEXT MENU image -->
@@ -2912,6 +2921,7 @@ function hdrDuplicatePage(){
   copy.id=uid();copy.title+=' (copy)';copy.parentId=doc.parentId||null;
   copy.createdAt=new Date().toISOString();copy.updatedAt=new Date().toISOString();
   state.docs.push(copy);persist();renderSidebar();
+  openDoc(copy.id);
   toast('Đã sao chép trang','success');
 }
 function hdrDeletePage(){
@@ -3470,6 +3480,7 @@ function openDoc(id){
     setTimeout(()=>{_edScroll.style.transform='';_edScroll.style.transition='';if(_titleInp){_titleInp.style.transition='';_titleInp.style.opacity='';}},300);
   });});
   _updateBlankHint();
+  _updateWordCount();
   _expandAncestors(id);
   // Reset watch button per-page (watch state is session-only)
   const _wb=document.getElementById('pabWatchBtn');
@@ -3548,11 +3559,22 @@ function _updateBlankHint(){
   const hasContent=ed.textContent.trim()||ed.querySelector('img,video,.cf-img-block,.cf-carousel-block,.tbl-frame,.tbl-outer,.cf-column-layout,.cf-panel,.cf-checklist,.cf-toggle,.cf-tabs,.cf-code-block,.cf-file-block');
   hint.classList.toggle('on',!hasContent);
 }
+function _updateWordCount(){
+  const ed=document.getElementById('editor');const el=document.getElementById('wordCountEl');
+  if(!ed||!el)return;
+  const text=(ed.innerText||ed.textContent||'').trim();
+  if(!text){el.textContent='';return;}
+  const words=text.split(/\s+/).filter(Boolean).length;
+  const chars=text.replace(/\s/g,'').length;
+  const mins=Math.max(1,Math.round(words/200));
+  el.textContent=words+' từ · '+chars+' ký tự · ~'+mins+' phút đọc';
+}
 function onContentChange(){
   const doc=currentDoc();if(!doc)return;
   if(typeof _undoSnapshotDebounced==='function')_undoSnapshotDebounced();
   const editor_el=document.getElementById('editor');if(!editor_el)return;
   _updateBlankHint();
+  _updateWordCount();
   _cfRefreshTocs(editor_el);
   const clone=editor_el.cloneNode(true);
   // Strip interactive chrome (not content)
@@ -3612,7 +3634,7 @@ function renderMeta(doc){
 // DOC CTX
 function openDocCtx(e,id){docCtxId=id;const m=document.getElementById('docCtxMenu');m.style.left=Math.min(e.clientX,window.innerWidth-200)+'px';m.style.top=Math.min(e.clientY,window.innerHeight-130)+'px';m.classList.add('on');}
 function docCtxRename(){const doc=state.docs.find(d=>d.id===docCtxId);if(!doc)return;const name=prompt('Doi ten:',doc.title);if(name!==null){doc.title=name||doc.title;persist();renderSidebar();if(state.currentDocId===docCtxId)document.getElementById('docTitleInput').value=doc.title;}document.getElementById('docCtxMenu')?.classList.remove('on');}
-function docCtxDuplicate(){const doc=state.docs.find(d=>d.id===docCtxId);if(!doc)return;const copy=JSON.parse(JSON.stringify(doc));copy.id=uid();copy.title+=' (copy)';copy.parentId=doc.parentId||null;copy.createdAt=new Date().toISOString();copy.updatedAt=new Date().toISOString();state.docs.push(copy);persist();renderSidebar();toast('Đã nhân bản','success');document.getElementById('docCtxMenu')?.classList.remove('on');}
+function docCtxDuplicate(){const doc=state.docs.find(d=>d.id===docCtxId);if(!doc)return;const copy=JSON.parse(JSON.stringify(doc));copy.id=uid();copy.title+=' (copy)';copy.parentId=doc.parentId||null;copy.createdAt=new Date().toISOString();copy.updatedAt=new Date().toISOString();state.docs.push(copy);persist();renderSidebar();openDoc(copy.id);toast('Đã nhân bản','success');document.getElementById('docCtxMenu')?.classList.remove('on');}
 function docCtxDelete(){const doc=state.docs.find(d=>d.id===docCtxId);if(!doc)return;if(!confirm(`Xoá "${doc.title}"?`)){document.getElementById('docCtxMenu')?.classList.remove('on');return;}_purgeDocTree(docCtxId);if(state.currentDocId===docCtxId){state.currentDocId=null;document.getElementById('emptyState').style.display='';document.getElementById('editorPanel').style.display='none';}persistNow();renderSidebar();toast('Đã xoá','info');document.getElementById('docCtxMenu')?.classList.remove('on');}
 
 // ─── JSON EXPORT / IMPORT ────────────────────────────────────
@@ -13091,6 +13113,20 @@ function toast(msg,type='info'){const w=document.getElementById('toastWrap');con
 
 // KEYBOARD
 document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key.toLowerCase()==='v'){
+    const ed=document.getElementById('editor');
+    if(!ed)return;
+    const ae=document.activeElement;
+    if(!ed.contains(ae)&&ae!==ed)return;
+    e.preventDefault();
+    navigator.clipboard.readText().then(text=>{
+      if(!text)return;
+      _undoSnapshot();
+      document.execCommand('insertText',false,text);
+      onContentChange();
+    }).catch(()=>{});
+    return;
+  }
   if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();persist();const el=document.getElementById('saveStatusEl');el.className='save-ok';el.innerHTML='<i class="ti ti-circle-check" style="font-size:12px"></i> Đã lưu';toast('Đã lưu','success');}
   if((e.ctrlKey||e.metaKey)&&e.key==='n'){e.preventDefault();newDoc();}
   if(e.key==='k'&&!e.ctrlKey&&!e.metaKey&&!e.altKey){const _ae=document.activeElement;if(!_ae||_ae.tagName==='BODY'||(!_ae.isContentEditable&&_ae.tagName!=='INPUT'&&_ae.tagName!=='TEXTAREA')){e.preventDefault();openQS();}}
@@ -13216,6 +13252,79 @@ function toggleFocusMode(){
   const btn=document.getElementById('focusModeBtn');
   if(btn)btn.innerHTML=on?'<i class="ti ti-focus-2"></i>':'<i class="ti ti-focus-off"></i>';
 }
+
+// ── Inline link bubble ────────────────────────────────────────
+(function(){
+  const bubble=document.createElement('div');
+  bubble.id='cfLinkBubble';bubble.className='cf-link-bubble';
+  bubble.innerHTML=
+    '<i class="ti ti-link" style="font-size:12px;color:var(--text3);flex-shrink:0"></i>'+
+    '<span class="cf-link-bubble-url" id="cfLinkUrl"></span>'+
+    '<button class="cf-link-btn" id="cfLinkOpen" title="Mở link"><i class="ti ti-external-link"></i></button>'+
+    '<button class="cf-link-btn" id="cfLinkEdit" title="Sửa URL"><i class="ti ti-pencil"></i></button>'+
+    '<button class="cf-link-btn danger" id="cfLinkRemove" title="Xóa link"><i class="ti ti-unlink"></i></button>';
+  document.body.appendChild(bubble);
+  let _linkEl=null;
+
+  function showBubble(a){
+    _linkEl=a;
+    const r=a.getBoundingClientRect();
+    const urlEl=document.getElementById('cfLinkUrl');
+    urlEl.textContent=a.href;
+    urlEl.title=a.href;
+    const left=Math.min(r.left,window.innerWidth-390);
+    const top=r.bottom+6;
+    bubble.style.left=left+'px';
+    bubble.style.top=(top+window.scrollY)+'px';
+    bubble.style.position='fixed';
+    bubble.style.top=top+'px';
+    bubble.classList.add('on');
+  }
+  function hideBubble(){bubble.classList.remove('on');_linkEl=null;}
+
+  document.addEventListener('click',e=>{
+    if(bubble.contains(e.target))return;
+    const ed=document.getElementById('editor');
+    if(!ed)return;
+    const a=e.target.closest('a[href]');
+    if(a&&ed.contains(a)){e.preventDefault();showBubble(a);}
+    else hideBubble();
+  },true);
+
+  document.getElementById('cfLinkUrl').addEventListener('click',()=>{
+    if(_linkEl)window.open(_linkEl.href,'_blank');
+  });
+  document.getElementById('cfLinkOpen').addEventListener('click',()=>{
+    if(_linkEl)window.open(_linkEl.href,'_blank');
+  });
+  document.getElementById('cfLinkEdit').addEventListener('click',()=>{
+    if(!_linkEl)return;
+    const inp=document.createElement('input');
+    inp.type='text';inp.value=_linkEl.href;
+    inp.style.cssText='flex:1;padding:3px 6px;border:1px solid var(--accent);border-radius:4px;font-size:12px;background:var(--bg);color:var(--text);outline:none;min-width:180px';
+    const urlEl=document.getElementById('cfLinkUrl');
+    urlEl.replaceWith(inp);inp.focus();inp.select();
+    function confirm(){
+      const v=inp.value.trim();
+      if(v){_linkEl.href=v;if(typeof onContentChange==='function')onContentChange();}
+      hideBubble();
+    }
+    inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();confirm();}if(e.key==='Escape'){hideBubble();}});
+    inp.addEventListener('blur',confirm);
+  });
+  document.getElementById('cfLinkRemove').addEventListener('click',()=>{
+    if(!_linkEl)return;
+    if(typeof _undoSnapshot==='function')_undoSnapshot();
+    const parent=_linkEl.parentNode;
+    while(_linkEl.firstChild)parent.insertBefore(_linkEl.firstChild,_linkEl);
+    parent.removeChild(_linkEl);
+    parent.normalize();
+    if(typeof onContentChange==='function')onContentChange();
+    hideBubble();
+  });
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&_linkEl)hideBubble();});
+  document.addEventListener('scroll',hideBubble,true);
+})();
 
 // ── Find & Replace ────────────────────────────────────────────
 (function(){
