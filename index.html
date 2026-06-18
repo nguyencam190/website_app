@@ -2330,6 +2330,7 @@ function _applyCanvasScale(newW){
 
 // ─── SIDEBAR RESIZE ──────────────────────────────────────────
 const SB_MIN=160, SB_MAX=520, SB_DEFAULT=260;
+let _sbResizing=false;
 
 function _sbInitResize(){
   const handle=document.getElementById('sbResizer');
@@ -2339,6 +2340,7 @@ function _sbInitResize(){
   handle.addEventListener('mousedown',function(e){
     if(sidebar.classList.contains('collapsed'))return;
     e.preventDefault();handle.classList.add('dragging');
+    _sbResizing=true;
     document.body.style.cursor='col-resize';document.body.style.userSelect='none';
     const startX=e.clientX,startW=sidebar.offsetWidth;
 
@@ -2360,6 +2362,8 @@ function _sbInitResize(){
       if(scroll){const newW=scroll.offsetWidth;if(newW&&newW!==_canvasW)_applyCanvasScale(newW);}
       document.querySelectorAll('.cf-img-block').forEach(b=>{const tb=b.querySelector('.cf-img-toolbar');if(tb&&tb.style.display==='flex')_cfImgPositionToolbar(b);});
       document.querySelectorAll('.cf-carousel-block').forEach(b=>{const tb=b.querySelector('.cf-car-toolbar');if(tb&&tb.style.display==='flex')_cfCarPositionToolbar(b);});
+      // Suppress the click that fires after mouseup so it doesn't deselect the image block
+      setTimeout(()=>{_sbResizing=false;},0);
     }
     document.addEventListener('mousemove',onMove);document.addEventListener('mouseup',onUp);
   });
@@ -3419,7 +3423,7 @@ function openDoc(id){
   _edScroll.style.transition='none';_edScroll.style.opacity='0';_edScroll.style.transform='translateY(8px)';
   document.getElementById('docTitleInput').value=doc.title||'';
   document.getElementById('editor').innerHTML=doc.content||'';
-  requestAnimationFrame(()=>{requestAnimationFrame(()=>{_edScroll.style.transition='opacity .2s ease,transform .2s ease';_edScroll.style.opacity='1';_edScroll.style.transform='translateY(0)';});});
+  requestAnimationFrame(()=>{requestAnimationFrame(()=>{_edScroll.style.transition='opacity .2s ease,transform .2s ease';_edScroll.style.opacity='1';_edScroll.style.transform='translateY(0)';setTimeout(()=>{_edScroll.style.transform='';_edScroll.style.transition='';},240);});});
   _updateBlankHint();
   _expandAncestors(id);
   // Reset watch button per-page (watch state is session-only)
@@ -8438,6 +8442,7 @@ function _cfImgSelect(block){
 
 // Deselect on click outside
 document.addEventListener('click',e=>{
+  if(_sbResizing)return;
   if(_cfImgSelected&&!_cfImgSelected.contains(e.target)){
     _cfImgSelected.classList.remove('selected');
     const _ot=_cfImgSelected.querySelector('.cf-img-toolbar');
