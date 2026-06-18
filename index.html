@@ -2345,6 +2345,8 @@ function _sbInitResize(){
     function onMove(e2){
       const w=Math.max(SB_MIN,Math.min(SB_MAX,startW+(e2.clientX-startX)));
       sidebar.style.width=w+'px';
+      document.querySelectorAll('.cf-img-block').forEach(b=>{const tb=b.querySelector('.cf-img-toolbar');if(tb&&tb.style.display==='flex')_cfImgPositionToolbar(b);});
+      document.querySelectorAll('.cf-carousel-block').forEach(b=>{const tb=b.querySelector('.cf-car-toolbar');if(tb&&tb.style.display==='flex')_cfCarPositionToolbar(b);});
     }
     function onUp(){
       handle.classList.remove('dragging');
@@ -2356,6 +2358,8 @@ function _sbInitResize(){
       // Scale canvas elements once after drag ends
       const scroll=document.getElementById('editorScroll');
       if(scroll){const newW=scroll.offsetWidth;if(newW&&newW!==_canvasW)_applyCanvasScale(newW);}
+      document.querySelectorAll('.cf-img-block').forEach(b=>{const tb=b.querySelector('.cf-img-toolbar');if(tb&&tb.style.display==='flex')_cfImgPositionToolbar(b);});
+      document.querySelectorAll('.cf-carousel-block').forEach(b=>{const tb=b.querySelector('.cf-car-toolbar');if(tb&&tb.style.display==='flex')_cfCarPositionToolbar(b);});
     }
     document.addEventListener('mousemove',onMove);document.addEventListener('mouseup',onUp);
   });
@@ -2516,17 +2520,13 @@ function init(){
     const ed=document.getElementById('editor');
     if(ed){ed.focus();const r=document.createRange();r.selectNodeContents(ed);r.collapse(true);const sel=window.getSelection();sel.removeAllRanges();sel.addRange(r);}
   });
-  // Update fixed-position toolbars on editor scroll
-  document.getElementById('editorScroll')?.addEventListener('scroll',()=>{
-    document.querySelectorAll('.cf-carousel-block').forEach(b=>{
-      const tb=b.querySelector('.cf-car-toolbar');
-      if(tb&&tb.style.display==='flex')_cfCarPositionToolbar(b);
-    });
-    document.querySelectorAll('.cf-img-block').forEach(b=>{
-      const tb=b.querySelector('.cf-img-toolbar');
-      if(tb&&tb.style.display==='flex')_cfImgPositionToolbar(b);
-    });
-  });
+  // Update fixed-position toolbars on editor scroll or window resize
+  function _reposVisibleToolbars(){
+    document.querySelectorAll('.cf-carousel-block').forEach(b=>{const tb=b.querySelector('.cf-car-toolbar');if(tb&&tb.style.display==='flex')_cfCarPositionToolbar(b);});
+    document.querySelectorAll('.cf-img-block').forEach(b=>{const tb=b.querySelector('.cf-img-toolbar');if(tb&&tb.style.display==='flex')_cfImgPositionToolbar(b);});
+  }
+  document.getElementById('editorScroll')?.addEventListener('scroll',_reposVisibleToolbars);
+  window.addEventListener('resize',_reposVisibleToolbars);
   // Restore saved width
   const savedW=localStorage.getItem('sb_width');
   if(savedW){const sb=document.getElementById('sidebar');if(sb)sb.style.width=savedW+'px';}
