@@ -6649,7 +6649,11 @@ function _cfTabsActivate(block,idx){
   const btns=block.querySelectorAll('.cf-tab-btn');
   const isAlreadyActive=btns[idx]&&btns[idx].classList.contains('active');
   btns.forEach((b,i)=>b.classList.toggle('active',!isAlreadyActive&&i===idx));
-  block.querySelectorAll('.cf-tab-panel').forEach((p,i)=>p.classList.toggle('active',!isAlreadyActive&&i===idx));
+  const panels=block.querySelectorAll('.cf-tab-panel');
+  panels.forEach((p,i)=>p.classList.toggle('active',!isAlreadyActive&&i===idx));
+  if(!isAlreadyActive&&panels[idx]){
+    setTimeout(()=>panels[idx].scrollIntoView({block:'center',behavior:'smooth'}),340);
+  }
 }
 function _cfTabsAddTab(block){
   const btns=block.querySelectorAll('.cf-tab-btn');
@@ -7059,6 +7063,7 @@ function _slashInsert(id,execRange){
       cur.parentElement.insertBefore(block,cur.nextSibling);
       // Don't add a trailing <p> inside table cells — it clutters them
       const inCell=!!(cur.nodeType===Node.TEXT_NODE?cur.parentElement:cur)?.closest?.('td,th');
+      if(cur.parentElement.classList?.contains('cf-toggle-body'))p.contentEditable='true';
       if(!inCell)cur.parentElement.insertBefore(p,block.nextSibling);
       if((cur.tagName==='P'||cur.tagName==='DIV')&&!cur.textContent.trim())cur.remove();
     } else {
@@ -7555,6 +7560,7 @@ function _cfWireChecklist(cl){
       if(_opening){document.querySelectorAll('.cf-checklist[data-open="true"]').forEach(o=>{if(o!==cl)o.dataset.open='false';});}
       cl.dataset.open=_opening?'true':'false';
       onContentChange();
+      if(_opening){const body=cl.querySelector('.cf-checklist-body');if(body)setTimeout(()=>body.scrollIntoView({block:'center',behavior:'smooth'}),340);}
     });
   }
   if(camBtn){
@@ -7608,8 +7614,13 @@ function _cfWireToggle(el){
   if(!head)return;
   const _doToggle=e=>{
     e.stopPropagation();
-    el.dataset.open=el.dataset.open==='true'?'false':'true';
+    const opening=el.dataset.open!=='true';
+    el.dataset.open=opening?'true':'false';
     onContentChange();
+    if(opening){
+      const body=el.querySelector('.cf-toggle-body');
+      if(body)setTimeout(()=>body.scrollIntoView({block:'center',behavior:'smooth'}),340);
+    }
   };
   if(btn)btn.addEventListener('click',_doToggle);
   head.addEventListener('click',e=>{
@@ -8204,9 +8215,10 @@ function _cfInsertBlockAtRange(block, savedRange){
   // contentEditable so the browser can place a cursor there without an explicit <p>).
   const _nextEl=block.nextSibling;
   const _inColItem=insertParent.classList?.contains('cf-column-item');
+  const _inToggleBody=insertParent.classList?.contains('cf-toggle-body');
   const _needsTrail=!_inColItem&&(!_nextEl||
     (_nextEl.nodeType===Node.ELEMENT_NODE&&_nextEl.contentEditable==='false'));
-  if(_needsTrail){const p=document.createElement('p');p.innerHTML='<br>';insertParent.insertBefore(p,block.nextSibling);}
+  if(_needsTrail){const p=document.createElement('p');p.innerHTML='<br>';if(_inToggleBody)p.contentEditable='true';insertParent.insertBefore(p,block.nextSibling);}
   // Scroll the inserted block into view after layout settles
   setTimeout(()=>block.scrollIntoView({block:'nearest',behavior:'smooth'}),60);
 }
@@ -9679,11 +9691,14 @@ function _getBlockBar(){
       const container=useContainer||target.parentElement||editor;
       const insertAfter=useContainer?null:target.nextSibling;
       const p=document.createElement('p');p.innerHTML='<br>';
+      // cf-toggle-body is inside contenteditable="false" — child <p> must be explicitly editable
+      const _inToggleBody=container.classList?.contains('cf-toggle-body');
+      if(_inToggleBody)p.contentEditable='true';
       container.insertBefore(p,insertAfter);
       const range=document.createRange();
       range.selectNodeContents(p);range.collapse(true);
       sel.removeAllRanges();sel.addRange(range);
-      (container.closest('[contenteditable]')||editor).focus({preventScroll:true});
+      (_inToggleBody?p:container.closest('[contenteditable="true"]')||editor).focus({preventScroll:true});
       setTimeout(()=>p.scrollIntoView({block:'nearest',behavior:'smooth'}),40);
     }
     slashOpen();
@@ -12232,9 +12247,9 @@ async function doExportWebsite(){
     '  if(_wsFlyoutMode==="starred")wsBuildFlyout(document.getElementById("wsFlyoutSrch")?document.getElementById("wsFlyoutSrch").value:"");',
     '}',
     'window.addEventListener("resize",function(){if(_cur){var el=document.getElementById("doc-"+_cur);if(el)fitCanvas(el);}});',
-    'function wsInitToggles(d){d.querySelectorAll(".cf-toggle").forEach(function(toggle){var head=toggle.querySelector(".cf-toggle-head");if(!head)return;head.addEventListener("click",function(){toggle.dataset.open=toggle.dataset.open==="true"?"false":"true";});});}',
-    'function wsInitTabs(d){d.querySelectorAll(".cf-tabs").forEach(function(tabs){tabs.querySelectorAll(".cf-tab-btn,.cf-tab-panel").forEach(function(el){el.classList.remove("active");});tabs.querySelectorAll(".cf-tab-btn").forEach(function(btn,i){btn.addEventListener("click",function(){var already=btn.classList.contains("active");tabs.querySelectorAll(".cf-tab-btn").forEach(function(b,j){b.classList.toggle("active",!already&&j===i);});tabs.querySelectorAll(".cf-tab-panel").forEach(function(p,j){p.classList.toggle("active",!already&&j===i);});});});});}',
-    'function wsInitChecklists(d){var _lbl={minor:"Minor",major:"Major",critical:"Critical"};d.querySelectorAll(".cf-checklist").forEach(function(cl){var head=cl.querySelector(".cf-checklist-head");if(!head)return;var sb=cl.querySelector(".cf-checklist-status-btn");if(sb){sb.setAttribute("data-label",_lbl[cl.dataset.status||"minor"]||"Minor");sb.removeAttribute("title");}var badge=cl.querySelector(".cf-cl-badge");if(badge)badge.textContent=_lbl[cl.dataset.status||"minor"]||"Minor";head.addEventListener("click",function(e){if(e.target.closest(".cf-checklist-status-btn"))return;var _op=cl.dataset.open!=="true";if(_op){d.querySelectorAll(".cf-checklist[data-open=\'true\']").forEach(function(o){if(o!==cl)o.dataset.open="false";});}cl.dataset.open=_op?"true":"false";});});}',
+    'function wsInitToggles(d){d.querySelectorAll(".cf-toggle").forEach(function(toggle){var head=toggle.querySelector(".cf-toggle-head");if(!head)return;head.addEventListener("click",function(){var opening=toggle.dataset.open!=="true";toggle.dataset.open=opening?"true":"false";if(opening){var body=toggle.querySelector(".cf-toggle-body");if(body)setTimeout(function(){body.scrollIntoView({block:"center",behavior:"smooth"});},340);}});});}',
+    'function wsInitTabs(d){d.querySelectorAll(".cf-tabs").forEach(function(tabs){tabs.querySelectorAll(".cf-tab-btn,.cf-tab-panel").forEach(function(el){el.classList.remove("active");});var panels=Array.from(tabs.querySelectorAll(".cf-tab-panel"));tabs.querySelectorAll(".cf-tab-btn").forEach(function(btn,i){btn.addEventListener("click",function(){var already=btn.classList.contains("active");tabs.querySelectorAll(".cf-tab-btn").forEach(function(b,j){b.classList.toggle("active",!already&&j===i);});panels.forEach(function(p,j){p.classList.toggle("active",!already&&j===i);});if(!already&&panels[i])setTimeout(function(){panels[i].scrollIntoView({block:"center",behavior:"smooth"});},340);});});});}',
+    'function wsInitChecklists(d){var _lbl={minor:"Minor",major:"Major",critical:"Critical"};d.querySelectorAll(".cf-checklist").forEach(function(cl){var head=cl.querySelector(".cf-checklist-head");if(!head)return;var sb=cl.querySelector(".cf-checklist-status-btn");if(sb){sb.setAttribute("data-label",_lbl[cl.dataset.status||"minor"]||"Minor");sb.removeAttribute("title");}var badge=cl.querySelector(".cf-cl-badge");if(badge)badge.textContent=_lbl[cl.dataset.status||"minor"]||"Minor";head.addEventListener("click",function(e){if(e.target.closest(".cf-checklist-status-btn"))return;var _op=cl.dataset.open!=="true";if(_op){d.querySelectorAll(".cf-checklist[data-open=\'true\']").forEach(function(o){if(o!==cl)o.dataset.open="false";});}cl.dataset.open=_op?"true":"false";if(_op){var body=cl.querySelector(".cf-checklist-body");if(body)setTimeout(function(){body.scrollIntoView({block:"center",behavior:"smooth"});},340);}});});}',
     'function wsInitAll(d){d.querySelectorAll(".ws-canvas img").forEach(function(img){img.style.cursor="zoom-in";img.addEventListener("dblclick",function(){wsImgLb(img.src);});});d.querySelectorAll(".ws-canvas video").forEach(function(v){v.controls=true;v.style.pointerEvents="auto";});wsInitTbCars(d);wsInitFmCars(d);wsInitTblCars(d);wsInitToggles(d);wsInitTabs(d);wsInitChecklists(d);}',
     'function wsFmNav(btn,dir){var car=btn.closest(".ws-fm-car");if(!car)return;var tot=parseInt(car.dataset.cartotal)||1;var idx=Math.max(0,Math.min(tot-1,(parseInt(car.dataset.caridx||0))+dir));car.dataset.caridx=idx;var inner=car.querySelector(".ws-fm-inner");if(inner)inner.style.transform="translateX(-"+idx+"00%)";var badge=car.querySelector(".ws-fm-badge");if(badge)badge.textContent=(idx+1)+"/"+tot;_wsFmRestart(car);}',
     'function _wsFmAdvance(car){var tot=parseInt(car.dataset.cartotal)||1;if(tot<=1)return;var idx=(parseInt(car.dataset.caridx||0)+1)%tot;car.dataset.caridx=idx;var inner=car.querySelector(".ws-fm-inner");if(inner)inner.style.transform="translateX(-"+idx+"00%)";var badge=car.querySelector(".ws-fm-badge");if(badge)badge.textContent=(idx+1)+"/"+tot;}',
@@ -12883,9 +12898,9 @@ async function doExportOptimized(){
     'function _wsRelTime(ts){var ago=Math.round((Date.now()-ts)/60000);return ago<1?"Vừa xong":ago<60?ago+" phút trước":ago<1440?Math.round(ago/60)+"h trước":Math.round(ago/1440)+"d trước";}',
     'function wsToggleStar(id,btn){var str=_wsGetStr();var idx=str.indexOf(id);if(idx>-1){str.splice(idx,1);}else{str.unshift(id);}_wsSaveStr(str);var isStarred=str.indexOf(id)>-1;document.querySelectorAll(\'.ws-nav-item[data-docid="\'+id+\'"] .ws-star-btn\').forEach(function(b){b.classList.toggle("starred",isStarred);b.textContent=isStarred?"★":"☆";});if(btn){btn.classList.toggle("starred",isStarred);btn.textContent=isStarred?"★":"☆";}if(_wsFlyoutMode==="starred")wsBuildFlyout(document.getElementById("wsFlyoutSrch")?document.getElementById("wsFlyoutSrch").value:"");}',
     'window.addEventListener("resize",function(){if(_cur){var el=document.getElementById("doc-"+_cur);if(el)fitCanvas(el);}});',
-    'function wsInitToggles(d){d.querySelectorAll(".cf-toggle").forEach(function(toggle){var head=toggle.querySelector(".cf-toggle-head");if(!head)return;head.addEventListener("click",function(){toggle.dataset.open=toggle.dataset.open==="true"?"false":"true";});});}',
-    'function wsInitTabs(d){d.querySelectorAll(".cf-tabs").forEach(function(tabs){tabs.querySelectorAll(".cf-tab-btn,.cf-tab-panel").forEach(function(el){el.classList.remove("active");});tabs.querySelectorAll(".cf-tab-btn").forEach(function(btn,i){btn.addEventListener("click",function(){var already=btn.classList.contains("active");tabs.querySelectorAll(".cf-tab-btn").forEach(function(b,j){b.classList.toggle("active",!already&&j===i);});tabs.querySelectorAll(".cf-tab-panel").forEach(function(p,j){p.classList.toggle("active",!already&&j===i);});});});});}',
-    'function wsInitChecklists(d){var _lbl={minor:"Minor",major:"Major",critical:"Critical"};d.querySelectorAll(".cf-checklist").forEach(function(cl){var head=cl.querySelector(".cf-checklist-head");if(!head)return;var sb=cl.querySelector(".cf-checklist-status-btn");if(sb){sb.setAttribute("data-label",_lbl[cl.dataset.status||"minor"]||"Minor");sb.removeAttribute("title");}var badge=cl.querySelector(".cf-cl-badge");if(badge)badge.textContent=_lbl[cl.dataset.status||"minor"]||"Minor";head.addEventListener("click",function(e){if(e.target.closest(".cf-checklist-status-btn"))return;var _op=cl.dataset.open!=="true";if(_op){d.querySelectorAll(".cf-checklist[data-open=\'true\']").forEach(function(o){if(o!==cl)o.dataset.open="false";});}cl.dataset.open=_op?"true":"false";});});}',
+    'function wsInitToggles(d){d.querySelectorAll(".cf-toggle").forEach(function(toggle){var head=toggle.querySelector(".cf-toggle-head");if(!head)return;head.addEventListener("click",function(){var opening=toggle.dataset.open!=="true";toggle.dataset.open=opening?"true":"false";if(opening){var body=toggle.querySelector(".cf-toggle-body");if(body)setTimeout(function(){body.scrollIntoView({block:"center",behavior:"smooth"});},340);}});});}',
+    'function wsInitTabs(d){d.querySelectorAll(".cf-tabs").forEach(function(tabs){tabs.querySelectorAll(".cf-tab-btn,.cf-tab-panel").forEach(function(el){el.classList.remove("active");});var panels=Array.from(tabs.querySelectorAll(".cf-tab-panel"));tabs.querySelectorAll(".cf-tab-btn").forEach(function(btn,i){btn.addEventListener("click",function(){var already=btn.classList.contains("active");tabs.querySelectorAll(".cf-tab-btn").forEach(function(b,j){b.classList.toggle("active",!already&&j===i);});panels.forEach(function(p,j){p.classList.toggle("active",!already&&j===i);});if(!already&&panels[i])setTimeout(function(){panels[i].scrollIntoView({block:"center",behavior:"smooth"});},340);});});});}',
+    'function wsInitChecklists(d){var _lbl={minor:"Minor",major:"Major",critical:"Critical"};d.querySelectorAll(".cf-checklist").forEach(function(cl){var head=cl.querySelector(".cf-checklist-head");if(!head)return;var sb=cl.querySelector(".cf-checklist-status-btn");if(sb){sb.setAttribute("data-label",_lbl[cl.dataset.status||"minor"]||"Minor");sb.removeAttribute("title");}var badge=cl.querySelector(".cf-cl-badge");if(badge)badge.textContent=_lbl[cl.dataset.status||"minor"]||"Minor";head.addEventListener("click",function(e){if(e.target.closest(".cf-checklist-status-btn"))return;var _op=cl.dataset.open!=="true";if(_op){d.querySelectorAll(".cf-checklist[data-open=\'true\']").forEach(function(o){if(o!==cl)o.dataset.open="false";});}cl.dataset.open=_op?"true":"false";if(_op){var body=cl.querySelector(".cf-checklist-body");if(body)setTimeout(function(){body.scrollIntoView({block:"center",behavior:"smooth"});},340);}});});}',
     'function wsInitAll(d){d.querySelectorAll(".ws-canvas img").forEach(function(img){img.style.cursor="zoom-in";img.addEventListener("dblclick",function(){wsImgLb(img.src);});});d.querySelectorAll(".ws-canvas video").forEach(function(v){v.controls=true;v.style.pointerEvents="auto";});wsInitTbCars(d);wsInitFmCars(d);wsInitTblCars(d);wsInitToggles(d);wsInitTabs(d);wsInitChecklists(d);}',
     'function wsFmNav(btn,dir){var car=btn.closest(".ws-fm-car");if(!car)return;var tot=parseInt(car.dataset.cartotal)||1;var idx=Math.max(0,Math.min(tot-1,(parseInt(car.dataset.caridx||0))+dir));car.dataset.caridx=idx;var inner=car.querySelector(".ws-fm-inner");if(inner)inner.style.transform="translateX(-"+idx+"00%)";var badge=car.querySelector(".ws-fm-badge");if(badge)badge.textContent=(idx+1)+"/"+tot;_wsFmRestart(car);}',
     'function _wsFmAdvance(car){var tot=parseInt(car.dataset.cartotal)||1;if(tot<=1)return;var idx=(parseInt(car.dataset.caridx||0)+1)%tot;car.dataset.caridx=idx;var inner=car.querySelector(".ws-fm-inner");if(inner)inner.style.transform="translateX(-"+idx+"00%)";var badge=car.querySelector(".ws-fm-badge");if(badge)badge.textContent=(idx+1)+"/"+tot;}',
