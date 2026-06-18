@@ -8553,7 +8553,7 @@ function _cfImgPositionToolbar(block){
 }
 
 function _cfImgWireHover(block,tb){
-  // toolbar shown on click via _cfImgSelect; hidden on outside click
+  block.addEventListener('mouseenter',()=>{if(!block.classList.contains('selected'))tb.style.display='none';});
 }
 
 function _cfBuildCarToolbar(block){
@@ -8682,7 +8682,8 @@ function _cfBuildCarToolbar(block){
     ctxBorderRow.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.toggle('active',(sl.dataset.carslideImgborder||'')=== s.dataset.swval));
   };
 
-  // toolbar shown on mousedown via block handler; hidden on outside click
+  // toolbar visible only when block is selected (mousedown); suppress on hover
+  block.addEventListener('mouseenter',()=>{if(!block.classList.contains('selected'))tb.style.display='none';});
   return tb;
 }
 
