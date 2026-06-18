@@ -314,7 +314,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .drop-overlay{display:none;position:absolute;inset:0;background:rgba(37,99,235,.05);border:2px dashed var(--accent);border-radius:12px;z-index:40;align-items:center;justify-content:center;flex-direction:column;gap:12px;pointer-events:none}
 .drop-overlay.on{display:flex}
 .drop-overlay i{font-size:48px;color:var(--accent);opacity:.7}
-.editor-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:40px 52px;background:var(--bg);position:relative;transition:var(--mode-transition)}
+.editor-scroll{flex:1;overflow-y:auto;overflow-x:clip;padding:40px 52px;background:var(--bg);position:relative;transition:var(--mode-transition)}
 .editor-scroll::-webkit-scrollbar{width:5px}
 .editor-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
 .doc-title-edit{width:100%;border:none;outline:none;font-size:30px;font-weight:700;color:var(--text2);background:transparent;font-family:var(--font);letter-spacing:-.5px;line-height:1.2;margin-bottom:8px;text-align:center}
@@ -471,7 +471,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
   margin:0;
   border-radius:0;cursor:zoom-in;
   background:transparent;
-  position:relative;
 }
 /* Cell with image — remove padding, image fills cell edge to edge */
 /* Hide broken/loading images in table cells — only show when src is valid */
@@ -11255,7 +11254,7 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .editor-content tr:hover td{background:var(--tbl-hover)}',
     '.ws-canvas .editor-content td.tbl-has-img,.ws-canvas .editor-content th.tbl-has-img{padding:0;overflow:hidden;text-align:center;vertical-align:middle;line-height:0}',
     '.ws-canvas .editor-content .cf-panel-content{color:var(--text)!important}',
-    '.ws-canvas .editor-content td img,.ws-canvas .editor-content th img{display:block!important;max-width:100%!important;height:auto!important;margin:auto!important;background:transparent}',
+    '.ws-canvas .editor-content td img,.ws-canvas .editor-content th img{display:block!important;max-width:100%!important;height:auto!important;margin:auto!important;background:transparent;position:static!important}',
     '.ws-canvas .editor-content td .cf-img-block,.ws-canvas .editor-content th .cf-img-block{margin:0!important}',
     '.ws-canvas .editor-content td .cf-img-caption,.ws-canvas .editor-content th .cf-img-caption{display:none!important}',
     '.ws-canvas .editor-content td .cf-img-wrap,.ws-canvas .editor-content th .cf-img-wrap{width:100%;display:flex;justify-content:center;align-items:center}',
