@@ -1920,7 +1920,13 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
     <div class="sb-search-row">
       <div class="sb-search"><i class="ti ti-search"></i><input type="text" placeholder="Search pages..." id="searchInput" oninput="filterDocs()"></div>
       <button class="sb-new-btn" onclick="_quickNewRootDoc()" title="Trang mới"><i class="ti ti-plus"></i></button>
-      <button class="sb-new-btn" onclick="importPageJson()" title="Nhập trang từ JSON"><i class="ti ti-file-import"></i></button>
+      <div style="position:relative" id="sbImportWrap">
+        <button class="sb-new-btn" onclick="_sbImportToggle()" title="Nhập trang"><i class="ti ti-file-import"></i></button>
+        <div id="sbImportDd" style="display:none;position:absolute;bottom:calc(100% + 4px);right:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);z-index:999;min-width:210px;padding:4px">
+          <div class="hdr-dd-item" onclick="importPageJson();_sbImportClose()"><i class="ti ti-file-description"></i> Nhập trang từ file</div>
+          <div class="hdr-dd-item" onclick="importMergePagesFromFolder();_sbImportClose()"><i class="ti ti-folder-plus" style="color:var(--accent)"></i> Nhập từ thư mục <span style="font-size:10px;background:var(--accent);color:#fff;border-radius:10px;padding:1px 6px;margin-left:2px">có ảnh</span></div>
+        </div>
+      </div>
     </div>
 
     <!-- Nav tree -->
@@ -11134,6 +11140,21 @@ document.addEventListener('selectionchange',()=>{const sel=window.getSelection()
 
 // ══ IMPORT MERGE (Nhập trang từ file) ══════════════════════
 let _importMergeDocs=[];
+
+function _sbImportToggle(){
+  const dd=document.getElementById('sbImportDd');
+  if(!dd)return;
+  const open=dd.style.display==='block';
+  dd.style.display=open?'none':'block';
+  if(!open){
+    setTimeout(()=>document.addEventListener('click',_sbImportOutside,{once:true}),0);
+  }
+}
+function _sbImportClose(){document.getElementById('sbImportDd').style.display='none';}
+function _sbImportOutside(e){
+  const wrap=document.getElementById('sbImportWrap');
+  if(wrap&&!wrap.contains(e.target))_sbImportClose();
+}
 
 function importMergePages(){
   document.getElementById('importMergeInput').click();
