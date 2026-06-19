@@ -166,6 +166,14 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .edit-banner{background:#fffae6;border-bottom:2px solid #f5cd47;padding:8px 16px;display:none;align-items:center;gap:10px;font-size:13px;color:#5e4300;flex-shrink:0}
 .edit-banner.on{display:flex}
 [data-theme="dark"] .edit-banner{background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.3);color:#f59e0b}
+/* Lock / read-only banner */
+.lock-banner{background:var(--surface2);border-bottom:2px solid var(--border2);padding:8px 16px;display:none;align-items:center;gap:10px;font-size:13px;color:var(--text2);flex-shrink:0}
+.lock-banner.on{display:flex}
+[data-theme="dark"] .lock-banner{background:rgba(30,42,56,.5);border-color:var(--border)}
+.pab-icon-btn.pab-locked{color:#f59e0b}
+.editor-content[contenteditable="false"]{cursor:default}
+.editor-content[contenteditable="false"] *{pointer-events:none!important}
+.editor-content[contenteditable="false"] a,.editor-content[contenteditable="false"] .cf-status{pointer-events:auto!important;}
 /* .header-logo and .logo-box defined above — duplicate removed */
 .project-name:hover{border-color:var(--border2);background:var(--surface2);color:var(--text)}
 .hbtn{display:flex;align-items:center;gap:5px;padding:6px 14px;border-radius:7px;font-size:13.5px;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--text2);transition:.15s;font-family:var(--font);white-space:nowrap;font-weight:500}
@@ -1666,6 +1674,12 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
   <span>Đang chỉnh sửa — Nhớ lưu thay đổi của bạn</span>
   <button onclick="hdrExitEdit()" style="margin-left:auto;background:transparent;border:1px solid #d4a017;border-radius:4px;padding:3px 10px;font-size:12px;cursor:pointer;color:#5e4300">Thoát chỉnh sửa</button>
 </div>
+<!-- Lock / read-only banner -->
+<div class="lock-banner" id="lockBanner">
+  <i class="ti ti-lock" style="font-size:16px;flex-shrink:0"></i>
+  <span>Trang này đang bị <strong>khóa</strong> — chỉ đọc, không thể chỉnh sửa.</span>
+  <button onclick="toggleDocLock()" style="margin-left:auto;background:transparent;border:1px solid var(--border2);border-radius:4px;padding:3px 10px;font-size:12px;cursor:pointer;color:var(--text2);white-space:nowrap"><i class="ti ti-lock-open" style="font-size:11px"></i> Mở khóa</button>
+</div>
 
 
 <!-- ═══ EMBED VIDEO POPUP ══════════════════════════════════ -->
@@ -1920,6 +1934,9 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
           </button>
           <button class="pab-icon-btn" id="pabStarBtn" onclick="hdrToggleStar()" title="Đánh dấu yêu thích">
             <i class="ti ti-star"></i>
+          </button>
+          <button class="pab-icon-btn" id="pabLockBtn" onclick="toggleDocLock()" title="Khóa trang (chỉ đọc)">
+            <i class="ti ti-lock-open"></i>
           </button>
           <button class="pab-icon-btn" id="pabUndoBtn" onclick="editorUndo()" title="Hoàn tác (Ctrl+Z)" style="display:none"><i class="ti ti-arrow-back-up"></i></button>
           <button class="pab-icon-btn" id="pabRedoBtn" onclick="editorRedo()" title="Làm lại (Ctrl+Y)" style="display:none"><i class="ti ti-arrow-forward-up"></i></button>
@@ -2894,6 +2911,36 @@ function hdrToggleEdit(){
   }
 }
 function hdrExitEdit(){if(_hdrIsEditing)hdrToggleEdit();}
+
+// ── Document lock / read-only ─────────────────────────────────
+function _applyDocLock(doc){
+  const locked=!!(doc&&doc.locked);
+  const editor=document.getElementById('editor');
+  const titleInp=document.getElementById('docTitleInput');
+  const lockBanner=document.getElementById('lockBanner');
+  const editBtn=document.getElementById('pabEditBtn');
+  if(editor)editor.contentEditable=locked?'false':'true';
+  if(titleInp)titleInp.readOnly=locked;
+  if(lockBanner)lockBanner.classList.toggle('on',locked);
+  if(editBtn)editBtn.style.display=locked?'none':'';
+  if(locked&&typeof _hdrIsEditing!=='undefined'&&_hdrIsEditing)hdrExitEdit();
+  _updateLockBtn(doc);
+}
+function _updateLockBtn(doc){
+  const locked=!!(doc&&doc.locked);
+  const btn=document.getElementById('pabLockBtn');
+  if(!btn)return;
+  btn.innerHTML=locked?'<i class="ti ti-lock"></i>':'<i class="ti ti-lock-open"></i>';
+  btn.classList.toggle('pab-locked',locked);
+  btn.title=locked?'Mở khóa trang':'Khóa trang (chỉ đọc)';
+}
+function toggleDocLock(){
+  const doc=currentDoc();if(!doc)return;
+  doc.locked=!doc.locked;
+  persist();
+  _applyDocLock(doc);
+  toast(doc.locked?'Trang đã được khóa — chỉ đọc':'Đã mở khóa trang',doc.locked?'info':'success');
+}
 function hdrToggleStar(){
   const doc=currentDoc();if(!doc)return;
   if(!state.starred)state.starred=[];
@@ -3144,6 +3191,7 @@ function updatePageActionBar(){
     dateEl.textContent='Edited '+rel;dateEl.title=d.toLocaleString('vi-VN');
   }
   if(statusEl){const editing=typeof _hdrIsEditing!=='undefined'&&_hdrIsEditing;statusEl.innerHTML=(editing?'<i class="ti ti-pencil" style="font-size:11px"></i>Editing':'<i class="ti ti-world-upload" style="font-size:11px"></i>Published');statusEl.className='pab-status'+(editing?' editing':'');statusEl.onclick=editing?null:openExportWebsiteModal;statusEl.style.cursor=editing?'default':'pointer';}
+  _updateLockBtn(doc);
   const sl=document.getElementById('shareLink');
   if(sl&&doc)sl.value=window.location.href.split('?')[0]+'?doc='+doc.id;
 }
@@ -3486,6 +3534,7 @@ function openDoc(id){
   const _wb=document.getElementById('pabWatchBtn');
   if(_wb){_wb.classList.remove('watching');_wb.innerHTML='<i class="ti ti-bell"></i>';_wb.title='Theo dõi trang';}
   renderMeta(doc);renderSidebar(document.getElementById('searchInput').value.toLowerCase());updatePageActionBar();hdrBuildNotif();
+  _applyDocLock(doc);
   // Reset undo stack for new doc
   _undoStack=[];_redoStack=[];
   setTimeout(()=>{
@@ -3552,7 +3601,7 @@ function _updateComments(){
   wrap.querySelector('.doc-comment-save').addEventListener('click',()=>{const txt=ta.value.trim();if(!txt)return;cur.comments.push({id:uid(),text:txt,createdAt:new Date().toISOString()});markDirty();_updateComments();});
   box.appendChild(wrap);
 }
-function onTitleChange(){const doc=currentDoc();if(!doc)return;doc.title=document.getElementById('docTitleInput').value;doc.updatedAt=new Date().toISOString();markDirty();renderSidebar(document.getElementById('searchInput').value.toLowerCase());updatePageActionBar();}
+function onTitleChange(){const doc=currentDoc();if(!doc||doc.locked)return;doc.title=document.getElementById('docTitleInput').value;doc.updatedAt=new Date().toISOString();markDirty();renderSidebar(document.getElementById('searchInput').value.toLowerCase());updatePageActionBar();}
 function _updateBlankHint(){
   const hint=document.getElementById('docBlankHint');if(!hint)return;
   const ed=document.getElementById('editor');if(!ed)return;
