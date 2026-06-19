@@ -1704,8 +1704,9 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 
     <!-- Project folder -->
     <div style="display:flex;align-items:center;gap:4px">
-      <button class="header-icon-btn" id="projFolderBtn" onclick="_projOpenFolder()" title="Mở/Nhập project từ thư mục (tự lưu tại đó)"><i class="ti ti-folder-open"></i></button>
-      <span class="proj-folder-badge" id="projFolderBadge" onclick="_projOpenFolder()" title="Đang lưu tự động — nhấn để mở thư mục khác"></span>
+      <input type="file" id="projJsonInput" accept=".json,.zip" style="display:none" onchange="_projHandleJsonOpen(event)">
+      <button class="header-icon-btn" id="projFolderBtn" onclick="document.getElementById('projJsonInput').click()" title="Mở file data JSON của project"><i class="ti ti-database-import"></i></button>
+      <span class="proj-folder-badge" id="projFolderBadge" onclick="_projOpenFolder()" title="Đang lưu tự động — nhấn để đổi thư mục"></span>
       <button class="header-icon-btn" id="projLoadBtn" onclick="_projLoadFromFolder()" title="Refresh — tải lại project mới nhất từ thư mục" style="display:none;color:var(--accent)"><i class="ti ti-folder-down"></i></button>
       <button class="header-icon-btn" id="projDisconnectBtn" onclick="_projDisconnect()" title="Ngắt kết nối thư mục" style="display:none;font-size:13px;color:var(--text3)"><i class="ti ti-folder-x"></i></button>
       <button class="proj-live-btn" id="projLiveBtn" onclick="_projToggleLive()" title="Live — bật/tắt đồng bộ toàn bộ ảnh và dữ liệu vào thư mục project">
@@ -11630,6 +11631,86 @@ async function _projInit(){
       if(banner)banner.classList.add('on');
     }
   }catch(e){console.warn('[projInit]',e);}
+}
+
+async function _projHandleJsonOpen(e){
+  const file=e.target.files[0];e.target.value='';if(!file)return;
+  const ext=(file.name.split('.').pop()||'').toLowerCase();
+  try{
+    if(ext==='zip'){
+      // ZIP project file
+      let JSZip;
+      try{JSZip=await _loadJSZip();}catch(er){toast('Không tải được JSZip','error');return;}
+      const zip=await JSZip.loadAsync(file);
+      const jf=zip.file('data.json');
+      if(!jf){toast('Không tìm thấy data.json trong ZIP','error');return;}
+      const imported=JSON.parse(await jf.async('string'));
+      if(!imported?.docs)throw new Error('data.json không hợp lệ');
+      if(!confirm(`Mở project "${imported.projectName||'Unknown'}" (${imported.docs.length} tài liệu)?\nDữ liệu hiện tại sẽ bị ghi đè.`))return;
+      let mediaCount=0;
+      for(const[path,entry]of Object.entries(zip.files)){
+        if(entry.dir||(!path.startsWith('images/')&&!path.startsWith('videos/')))continue;
+        try{
+          const origExt=(path.split('.').pop()||'').toLowerCase();
+          const raw=await entry.async('blob');
+          const blob=_ensureBlobMime(raw,origExt);
+          const id=path.replace(/^(images|videos)\//,'').replace(/\.[^.]+$/,'');
+          if(id&&blob.size>0){await _idbPut(id,blob);mediaCount++;}
+        }catch(er){}
+      }
+      state=imported;
+      if(!state.docs)state.docs=[];
+      if(!state.sections?.length)state.sections=['default'];
+      state.docs.forEach(d=>{d.section=state.sections[0]||'default';});
+      if(!state.recent)state.recent=[];if(!state.starred)state.starred=[];
+      persist();
+      document.getElementById('projectNameEl').textContent=state.projectName||'My Project';
+      updateUserUI();renderSidebar();
+      state.currentDocId=null;
+      document.getElementById('emptyState').style.display='';
+      document.getElementById('editorPanel').style.display='none';
+      toast(`✅ Đã mở "${state.projectName||'Project'}" — ${state.docs.length} tài liệu${mediaCount?' · '+mediaCount+' ảnh/video':''}`, 'success');
+      // Offer to connect the folder for auto-save + image sync
+      _projAskConnectFolder();
+    }else{
+      // Plain JSON
+      const text=await file.text();
+      const imported=JSON.parse(text);
+      if(!imported?.docs)throw new Error('File JSON không hợp lệ');
+      if(!confirm(`Mở project "${imported.projectName||'Unknown'}" (${imported.docs.length} tài liệu)?\nDữ liệu hiện tại sẽ bị ghi đè.`))return;
+      state=imported;
+      if(!state.docs)state.docs=[];
+      if(!state.sections?.length)state.sections=['default'];
+      state.docs.forEach(d=>{d.section=state.sections[0]||'default';});
+      if(!state.recent)state.recent=[];if(!state.starred)state.starred=[];
+      persist();
+      document.getElementById('projectNameEl').textContent=state.projectName||'My Project';
+      updateUserUI();renderSidebar();
+      state.currentDocId=null;
+      document.getElementById('emptyState').style.display='';
+      document.getElementById('editorPanel').style.display='none';
+      if(state.docs.length>0)openDoc(state.docs[0].id);
+      toast(`✅ Đã mở "${state.projectName||'Project'}" — ${state.docs.length} tài liệu`,'success');
+      // Offer to connect folder for auto-save + images
+      _projAskConnectFolder();
+    }
+  }catch(err){toast('Lỗi mở file: '+err.message,'error');console.error(err);}
+}
+
+function _projAskConnectFolder(){
+  if(!window.showDirectoryPicker)return;
+  // Small non-blocking toast with action button
+  const id='_projConnectToast';
+  document.getElementById(id)?.remove();
+  const el=document.createElement('div');
+  el.id=id;
+  el.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9999;background:var(--surface);border:1px solid var(--accent);border-radius:10px;padding:12px 18px;box-shadow:0 4px 20px #0004;display:flex;align-items:center;gap:12px;font-size:13px;color:var(--text);min-width:300px';
+  el.innerHTML=`<i class="ti ti-folder-question" style="font-size:18px;color:var(--accent);flex-shrink:0"></i>
+    <span style="flex:1">Kết nối thư mục chứa ảnh để tự lưu?</span>
+    <button onclick="_projOpenFolder();document.getElementById('${id}')?.remove()" style="padding:4px 12px;border:none;border-radius:6px;background:var(--accent);color:#fff;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap">Chọn thư mục</button>
+    <button onclick="document.getElementById('${id}')?.remove()" style="padding:4px 8px;border:none;border-radius:6px;background:var(--surface2);color:var(--text2);cursor:pointer;font-size:12px">Bỏ qua</button>`;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),12000);
 }
 
 async function _projOpenFolder(){
