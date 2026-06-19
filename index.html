@@ -3784,12 +3784,9 @@ async function docCtxExportJson(){
 
     const payload=JSON.stringify({version:1,type:'camnguyen-page',exportedAt:new Date().toISOString(),doc:docCopy,media},null,2);
     const dlBlob=new Blob([payload],{type:'application/json'});
-    const url=URL.createObjectURL(dlBlob);
-    const a=document.createElement('a');a.href=url;
-    a.download=(doc.title||'page').replace(/[\/\\?%*:|"<>]/g,'_')+'.camnguyen.json';
-    document.body.appendChild(a);a.click();document.body.removeChild(a);
-    setTimeout(()=>URL.revokeObjectURL(url),5000);
-    toast('Đã xuất JSON thành công','success');
+    const fname=(doc.title||'page').replace(/[\/\\?%*:|"<>]/g,'_')+'.camnguyen.json';
+    const ok=await _saveFile(dlBlob,fname,[{description:'CamNguyen Page',accept:{'application/json':['.json']}}]);
+    if(ok)toast('Đã xuất JSON thành công','success');
   }catch(err){
     toast('Lỗi xuất JSON: '+err.message,'error');
     console.error('[export] docCtxExportJson error:',err);
@@ -11162,11 +11159,34 @@ function handleWelcomeRestore(e){
   reader.readAsText(file);e.target.value='';
 }
 
-function exportProject(){
+// ── File Save helper: uses File System Access API (native folder picker) with fallback ──
+async function _saveFile(blob, suggestedName, types){
+  if(window.showSaveFilePicker){
+    try{
+      const handle=await window.showSaveFilePicker({suggestedName,types,startIn:'downloads'});
+      const writable=await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      return true;
+    }catch(e){
+      if(e.name==='AbortError')return false; // user clicked Cancel
+      // API failed unexpectedly — fall through to legacy
+    }
+  }
+  // Legacy fallback (Firefox / older browsers)
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=suggestedName;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+  return true;
+}
+
+async function exportProject(){
   const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download=(state.projectName||'project').replace(/\s+/g,'_')+'.projectdocs.json';
-  a.click();toast('Đã xuất JSON backup','success');
+  const name=(state.projectName||'project').replace(/\s+/g,'_')+'.projectdocs.json';
+  const ok=await _saveFile(blob,name,[{description:'Project Backup',accept:{'application/json':['.json']}}]);
+  if(ok)toast('Đã xuất JSON backup','success');
 }
 
 async function exportSelfContained(){
@@ -11187,10 +11207,8 @@ async function exportSelfContained(){
     const embedTag='<script id="pd-embedded-state" type="application/json">\n'+JSON.stringify(toSave)+'\n<\/script>\n';
     html=html.replace('</head>',embedTag+'</head>');
     const fname=(state.projectName||'project-docs').replace(/[^a-zA-Z0-9\-_]/g,'-')+'.html';
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));
-    a.download=fname;a.click();
-    toast('✅ File HTML có sẵn dữ liệu — mở bất kỳ đâu đều đúng project','success');
+    const ok=await _saveFile(new Blob([html],{type:'text/html'}),fname,[{description:'Self-contained HTML',accept:{'text/html':['.html']}}]);
+    if(ok)toast('✅ File HTML có sẵn dữ liệu — mở bất kỳ đâu đều đúng project','success');
   }catch(err){toast('Lỗi: '+err.message,'error');}
 }
 function importProject(){document.getElementById('importInput').click();}
@@ -12855,11 +12873,9 @@ async function doExportWebsite(){
   // \u2500\u2500 Phase 6b: Download \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   const encoder=new TextEncoder();
   const outBlob=new Blob([encoder.encode(htmlParts)],{type:'text/html;charset=utf-8'});
-  const url=URL.createObjectURL(outBlob);
-  const a=document.createElement('a');
-  a.href=url;a.download=title.replace(/[^a-z0-9\u00C0-\u024F\s]/gi,'_').replace(/\s+/g,'-')+'.html';
-  document.body.appendChild(a);a.click();document.body.removeChild(a);
-  setTimeout(()=>URL.revokeObjectURL(url),60000);
+  const htmlName=title.replace(/[^a-z0-9\u00C0-\u024F\s]/gi,'_').replace(/\s+/g,'-')+'.html';
+  const ok=await _saveFile(outBlob,htmlName,[{description:'Website HTML',accept:{'text/html':['.html']}}]);
+  if(!ok){_showExportProgress(0,0,'');return;}
   closeModal('exportWebModal');
   _showExportProgress(0,0,'');
   const fileSizeKb=Math.round(outBlob.size/1024);
@@ -13274,11 +13290,8 @@ async function doExportOptimized(){
   // ── Download ZIP ──────────────────────────────────────────
   const zipBlob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
   const zipName=title.replace(/[^a-z0-9À-ɏ\s]/gi,'_').replace(/\s+/g,'-')+'-website.zip';
-  const url=URL.createObjectURL(zipBlob);
-  const a=document.createElement('a');
-  a.href=url;a.download=zipName;
-  document.body.appendChild(a);a.click();document.body.removeChild(a);
-  setTimeout(()=>URL.revokeObjectURL(url),60000);
+  const ok=await _saveFile(zipBlob,zipName,[{description:'Website ZIP',accept:{'application/zip':['.zip']}}]);
+  if(!ok){_showExportProgress(0,0,'');return;}
   closeModal('exportWebModal');
   _showExportProgress(0,0,'');
   const fileSizeKb=Math.round(zipBlob.size/1024);
