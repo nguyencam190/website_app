@@ -1345,7 +1345,6 @@ kbd{background:var(--surface2);border:1px solid var(--border2);border-radius:4px
 .ctx-sep{height:1px;background:var(--border);margin:4px 0}
 /* MODAL */
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.4);z-index:400;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
-.modal-bg.on{display:flex}
 .modal{background:var(--surface);border-radius:14px;border:1px solid var(--border);padding:24px;width:380px;box-shadow:var(--shadow-lg);transition:var(--mode-transition)}
 .modal h3{font-size:16px;font-weight:600;margin-bottom:18px;color:var(--text)}
 /* Modal structure classes (importMergeModal, shareModal) */
@@ -2737,7 +2736,6 @@ function _isDescendant(ancestorId,nodeId){let cur=state.docs.find(d=>d.id===node
 function _sbDrop(dragId,targetId,pos){if(dragId===targetId||_isDescendant(dragId,targetId))return;const dragged=state.docs.find(d=>d.id===dragId);const target=state.docs.find(d=>d.id===targetId);if(!dragged||!target)return;state.docs=state.docs.filter(d=>d.id!==dragId);if(pos==='child'){dragged.parentId=targetId;_nodeCollapsed[targetId]=false;state.docs.push(dragged);}else{dragged.parentId=target.parentId||null;const idx=state.docs.findIndex(d=>d.id===targetId);state.docs.splice(pos==='before'?idx:idx+1,0,dragged);}persistNow();_expandAncestors(dragId);renderSidebar();}
 
 // Helpers
-function _esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function _getChildren(sec,parentId){
   return state.docs.filter(d=>!d.isHomePage&&(d.parentId||null)===(parentId||null));
 }
@@ -3233,7 +3231,7 @@ function renderSidebar(filter=''){
     const homeRow=document.createElement('div');
     homeRow.className='doc-item'+(state.currentDocId===home.id?' active':'');
     homeRow.style.cssText='margin:2px 6px 0 8px;font-weight:600';
-    homeRow.innerHTML='<span style="width:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-home" style="font-size:13px;color:var(--accent)"></i></span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-left:4px">'+_esc(home.title||'Giới thiệu dự án')+'</span>';
+    homeRow.innerHTML='<span style="width:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-home" style="font-size:13px;color:var(--accent)"></i></span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-left:4px">'+escH(home.title||'Giới thiệu dự án')+'</span>';
     homeRow.onclick=()=>openDoc(home.id);
     nav.appendChild(homeRow);
     // divider
