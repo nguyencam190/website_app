@@ -1569,28 +1569,6 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 </head>
 <body>
 <!-- Project folder reconnect banner -->
-<!-- Unified import panel -->
-<div class="sb-import-panel" id="sbImportPanel" onclick="if(event.target===this)_sbImportPanelClose()">
-  <div class="sb-import-box">
-    <h3>Nhập trang</h3>
-    <p>Chọn nguồn để nhập — hỗ trợ file .zip, .json và thư mục project</p>
-    <div class="sb-import-opt" onclick="_sbImportFile()">
-      <i class="ti ti-file-zip"></i>
-      <div class="sb-import-opt-text">
-        <strong>Chọn file</strong>
-        <span>Nhập từ file .zip hoặc .json</span>
-      </div>
-    </div>
-    <div class="sb-import-opt" onclick="_sbImportFolder()">
-      <i class="ti ti-folder-open"></i>
-      <div class="sb-import-opt-text">
-        <strong>Chọn thư mục</strong>
-        <span>Nhập từ thư mục project (có ảnh/video)</span>
-      </div>
-    </div>
-    <button class="sb-import-cancel" onclick="_sbImportPanelClose()">Hủy</button>
-  </div>
-</div>
 <div class="proj-reconnect-banner" id="projReconnectBanner">
   <i class="ti ti-folder-exclamation"></i>
   <span>Thư mục project "<span id="projReconnectName"></span>" cần được cấp lại quyền truy cập.</span>
@@ -11213,10 +11191,112 @@ document.addEventListener('selectionchange',()=>{const sel=window.getSelection()
 // ══ IMPORT MERGE (Nhập trang từ file) ══════════════════════
 let _importMergeDocs=[];
 
-function _sbImportAll(){document.getElementById('sbImportPanel').classList.add('on');}
-function _sbImportPanelClose(){document.getElementById('sbImportPanel').classList.remove('on');}
-function _sbImportFile(){_sbImportPanelClose();importPageJson();}
-function _sbImportFolder(){_sbImportPanelClose();importMergePagesFromFolder();}
+async function _sbImportAll(){
+  const input=document.createElement('input');
+  input.type='file';
+  input.accept='.zip,.json,.camnguyen.json';
+  input.onchange=async e=>{
+    const file=e.target.files[0];if(!file)return;
+    const ext=(file.name.split('.').pop()||'').toLowerCase();
+    toast('Đang phân tích file...','info');
+    try{
+      if(ext==='zip'){
+        let JSZip;
+        try{JSZip=await _loadJSZip();}catch(er){toast('Không tải được JSZip','error');return;}
+        const zip=await JSZip.loadAsync(file);
+        if(zip.file('data.json')){
+          // Project ZIP → dùng flow merge (chọn trang nào nhập)
+          await _importMergeFromZip(zip,file.name);
+        }else if(zip.file('page.json')){
+          // Single page ZIP → nhập thẳng
+          await _importSinglePageFromZip(zip);
+        }else{
+          toast('File ZIP không nhận dạng được — cần có data.json hoặc page.json','error');
+        }
+      }else if(ext==='json'){
+        const text=await file.text();
+        const data=JSON.parse(text);
+        if(data.type==='camnguyen-page'&&data.doc){
+          // Single page JSON (legacy) → nhập thẳng
+          _importMergeDocs=[JSON.parse(JSON.stringify(data.doc))];
+          const media=data.media||{};
+          for(const[id,b64]of Object.entries(media)){
+            if(!b64)continue;
+            try{const blob=_dataUrlToBlob(b64);if(blob){await _idbPut(id,blob);if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}}}catch(er){}
+          }
+          _sbImportShowMergeModal(file.name,_importMergeDocs,0);
+        }else if(data.docs&&Array.isArray(data.docs)){
+          // Project JSON → dùng flow merge
+          _importMergeDocs=data.docs;
+          _sbImportShowMergeModal(data.projectName||file.name,data.docs,0);
+        }else{
+          toast('File JSON không nhận dạng được','error');
+        }
+      }
+    }catch(err){toast('Lỗi đọc file: '+err.message,'error');console.error(err);}
+  };
+  input.click();
+}
+
+async function _importMergeFromZip(zip,filename){
+  const jsonFile=zip.file('data.json');
+  if(!jsonFile){toast('Không tìm thấy data.json trong ZIP','error');return;}
+  const imported=JSON.parse(await jsonFile.async('string'));
+  if(!imported||!imported.docs){toast('data.json không hợp lệ','error');return;}
+  // Load media vào IDB
+  let mediaCount=0;
+  for(const[path,entry]of Object.entries(zip.files)){
+    if(entry.dir||(!path.startsWith('images/')&&!path.startsWith('videos/')))continue;
+    try{
+      const blob=await entry.async('blob');
+      const id=path.replace(/^(images|videos)\//,'').replace(/\.[^.]+$/,'');
+      if(id&&blob.size>0){await _idbPut(id,blob);mediaCount++;}
+    }catch(er){}
+  }
+  _importMergeDocs=imported.docs;
+  _sbImportShowMergeModal(imported.projectName||filename,imported.docs,mediaCount);
+}
+
+async function _importSinglePageFromZip(zip){
+  const pf=zip.file('page.json');
+  if(!pf){toast('Không tìm thấy page.json trong ZIP','error');return;}
+  const data=JSON.parse(await pf.async('string'));
+  if(data.type!=='camnguyen-page'||!data.doc){toast('page.json không hợp lệ','error');return;}
+  let mediaCount=0;
+  for(const[path,entry]of Object.entries(zip.files)){
+    if(entry.dir||(!path.startsWith('images/')&&!path.startsWith('videos/')))continue;
+    try{
+      const blob=await entry.async('blob');
+      const id=path.replace(/^(images|videos)\//,'').replace(/\.[^.]+$/,'');
+      if(id&&blob.size>0){await _idbPut(id,blob);if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}mediaCount++;}
+    }catch(er){}
+  }
+  _importMergeDocs=[JSON.parse(JSON.stringify(data.doc))];
+  _sbImportShowMergeModal(data.doc.title||'Trang nhập',_importMergeDocs,mediaCount);
+}
+
+function _sbImportShowMergeModal(sourceName,docs,mediaCount){
+  const list=document.getElementById('importMergeList');
+  const info=document.getElementById('importMergeInfo');
+  info.style.display='';
+  info.innerHTML=`<i class="ti ti-file-import" style="font-size:14px;margin-right:6px;color:var(--accent)"></i><strong>${escH(sourceName)}</strong> — ${docs.length} trang${mediaCount?' · '+mediaCount+' ảnh/video':''}`;
+  list.innerHTML=`<div style="display:flex;gap:8px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border)">
+    <button onclick="document.querySelectorAll('#importMergeList input').forEach(i=>i.checked=true)" style="font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);cursor:pointer;color:var(--text)">✓ Chọn tất cả</button>
+    <button onclick="document.querySelectorAll('#importMergeList input').forEach(i=>i.checked=false)" style="font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);cursor:pointer;color:var(--text)">✕ Bỏ chọn</button>
+  </div>`;
+  docs.forEach(d=>{
+    const row=document.createElement('label');row.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:13px;transition:background .1s';
+    row.onmouseenter=()=>row.style.background='var(--surface2)';row.onmouseleave=()=>row.style.background='';
+    const chk=document.createElement('input');chk.type='checkbox';chk.value=d.id;chk.checked=true;chk.style.accentColor='var(--accent)';
+    const icon=document.createElement('i');icon.className='ti ti-file-text';icon.style.cssText='font-size:13px;color:var(--text2);flex-shrink:0';
+    const title=document.createElement('span');title.style.flex='1';title.textContent=d.title||'Untitled';
+    const preview=document.createElement('span');preview.style.cssText='font-size:11px;color:var(--text3);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+    preview.textContent=(d.content||'').replace(/<[^>]+>/g,' ').trim().slice(0,60)||'(trống)';
+    row.appendChild(chk);row.appendChild(icon);row.appendChild(title);row.appendChild(preview);
+    list.appendChild(row);
+  });
+  openModal('importMergeModal');
+}
 
 function importMergePages(){
   document.getElementById('importMergeInput').click();
