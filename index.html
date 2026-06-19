@@ -2961,7 +2961,23 @@ function _applyDocLock(doc){
   const titleInp=document.getElementById('docTitleInput');
   const lockBanner=document.getElementById('lockBanner');
   const editBtn=document.getElementById('pabEditBtn');
-  if(editor)editor.contentEditable=locked?'false':'true';
+  if(editor){
+    if(locked){
+      editor.contentEditable='false';
+      // Child elements with explicit contentEditable="true" override the parent —
+      // must disable them individually or the user can still type inside them.
+      editor.querySelectorAll('[contenteditable="true"]').forEach(el=>{
+        el.dataset.wasEditable='1';
+        el.contentEditable='false';
+      });
+    } else {
+      editor.contentEditable='true';
+      editor.querySelectorAll('[data-was-editable="1"]').forEach(el=>{
+        el.contentEditable='true';
+        delete el.dataset.wasEditable;
+      });
+    }
+  }
   if(titleInp)titleInp.readOnly=locked;
   if(lockBanner)lockBanner.classList.toggle('on',locked);
   if(editBtn)editBtn.style.display=locked?'none':'';
