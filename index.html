@@ -8575,7 +8575,18 @@ function _cfBuildImgToolbar(block){
     btn.innerHTML=wt.icon;btn.title=wt.title;
     btn.addEventListener('click',()=>{
       const inner=block.querySelector('.cf-img-inner');
-      if(inner){inner.style.width=wt.w;onContentChange();}
+      const wrap=block.querySelector('.cf-img-wrap');
+      if(inner){
+        inner.style.width=wt.w;
+        // Vertical padding % is relative to container WIDTH in CSS, so it scales
+        // proportionally with the cell width when sidebar collapses (same as horizontal)
+        if(wrap&&inner.closest('td,th')){
+          const p=parseFloat(wt.w);
+          const vp=isNaN(p)?0:Math.max(0,(100-p)/2);
+          wrap.style.paddingTop=wrap.style.paddingBottom=vp>0?vp+'%':'';
+        }
+        onContentChange();
+      }
     });
     tb.appendChild(btn);
   });
@@ -8633,7 +8644,7 @@ function _cfBuildImgToolbar(block){
   const ctxItems=[
     {icon:'ti-link',label:'Thêm liên kết',fn:()=>{const url=prompt('Nhập URL liên kết:');if(url){block.dataset.link=url;toast('Đã thêm link','success');}}},
     {icon:'ti-text-caption',label:'Thêm alt text',fn:()=>{const t=prompt('Nhập mô tả (alt text):',block.querySelector('img')?.alt||'');if(t!=null){const img=block.querySelector('img');if(img)img.alt=t;block.dataset.name=t;toast('Đã cập nhật alt text','success');}}},
-    {icon:'ti-resize',label:'Thay đổi kích thước',fn:()=>{const v=prompt('Nhập chiều rộng (%, vd: 80):',parseInt(block.querySelector('.cf-img-inner')?.style.width||'100'));if(v){const inner=block.querySelector('.cf-img-inner');if(inner){inner.style.width=parseInt(v)+'%';onContentChange();}}}},
+    {icon:'ti-resize',label:'Thay đổi kích thước',fn:()=>{const v=prompt('Nhập chiều rộng (%, vd: 80):',parseInt(block.querySelector('.cf-img-inner')?.style.width||'100'));if(v){const inner=block.querySelector('.cf-img-inner');const wrap=block.querySelector('.cf-img-wrap');if(inner){const p=Math.min(100,Math.max(10,parseInt(v)||100));inner.style.width=p+'%';if(wrap&&inner.closest('td,th')){const vp=(100-p)/2;wrap.style.paddingTop=wrap.style.paddingBottom=vp>0?vp+'%':'';}onContentChange();}}}},
     {sep:true},
     {icon:'ti-copy',label:'Sao chép',fn:()=>{
       const clone=block.cloneNode(true);_cfImgRewireBlock(clone);
@@ -8694,7 +8705,16 @@ function _cfImgInitResize(inner,handle,side){
       document.removeEventListener('mousemove',mm);document.removeEventListener('mouseup',mu);
       // Convert px → % so image scales proportionally when the container resizes (e.g. sidebar collapse)
       const cW=container?.offsetWidth||maxW;
-      if(cW>0){const pct=Math.round(inner.offsetWidth/cW*100);inner.style.width=Math.min(100,Math.max(10,pct))+'%';}
+      if(cW>0){
+        const pct=Math.min(100,Math.max(10,Math.round(inner.offsetWidth/cW*100)));
+        inner.style.width=pct+'%';
+        // Vertical padding % is relative to container WIDTH in CSS, so top/bottom whitespace
+        // scales proportionally with cell width (same mechanism as horizontal whitespace)
+        if(inner.closest('td,th')){
+          const vp=(100-pct)/2;
+          container.style.paddingTop=container.style.paddingBottom=vp>0?vp+'%':'';
+        }
+      }
       onContentChange();
     }
     document.addEventListener('mousemove',mm);document.addEventListener('mouseup',mu);
