@@ -1690,7 +1690,8 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
         <div class="hdr-dd-item" onclick="exportProject();hdrCloseAll()"><i class="ti ti-file-zip"></i> Xuất ZIP backup (có ảnh)</div>
         <div class="hdr-dd-item" onclick="importProject();hdrCloseAll()"><i class="ti ti-folder-open"></i> Mở project từ ZIP/JSON</div>
         <div class="hdr-dd-sep"></div>
-        <div class="hdr-dd-item" onclick="_sbImportAll();hdrCloseAll()"><i class="ti ti-file-import"></i> Nhập trang</div>
+        <div class="hdr-dd-item" onclick="_sbImportAll();hdrCloseAll()"><i class="ti ti-file-import"></i> Nhập trang (ZIP/JSON)</div>
+        <div class="hdr-dd-item" onclick="importMergePagesFromFolder();hdrCloseAll()"><i class="ti ti-folder-plus"></i> Nhập trang từ thư mục</div>
       </div>
     </div>
 
@@ -1931,8 +1932,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
     <div class="sb-search-row">
       <div class="sb-search"><i class="ti ti-search"></i><input type="text" placeholder="Search pages..." id="searchInput" oninput="filterDocs()"></div>
       <button class="sb-new-btn" onclick="_quickNewRootDoc()" title="Trang mới"><i class="ti ti-plus"></i></button>
-      <button class="sb-new-btn" onclick="_sbImportAll()" title="Nhập trang từ file ZIP/JSON"><i class="ti ti-file-import"></i></button>
-      <button class="sb-new-btn" onclick="importMergePagesFromFolder()" title="Merge trang từ thư mục (ổ mạng/Desktop)"><i class="ti ti-folder-plus"></i></button>
+      <button class="sb-new-btn" onclick="_sbImportAll()" title="Nhập trang"><i class="ti ti-file-import"></i></button>
     </div>
 
     <!-- Nav tree -->
@@ -11288,7 +11288,8 @@ function _sbImportShowMergeModal(sourceName,docs,mediaCount){
   const list=document.getElementById('importMergeList');
   const info=document.getElementById('importMergeInfo');
   info.style.display='';
-  info.innerHTML=`<i class="ti ti-file-import" style="font-size:14px;margin-right:6px;color:var(--accent)"></i><strong>${escH(sourceName)}</strong> — ${docs.length} trang${mediaCount?' · '+mediaCount+' ảnh/video':''}`;
+  const _destInfo=_projDir?`<span style="color:var(--accent);margin-left:8px;font-size:11px">→ lưu vào 📁 ${escH(_projDirName)}</span>`:'';
+  info.innerHTML=`<i class="ti ti-file-import" style="font-size:14px;margin-right:6px;color:var(--accent)"></i><strong>${escH(sourceName)}</strong> — ${docs.length} trang${mediaCount?' · '+mediaCount+' ảnh/video':''}${_destInfo}`;
   list.innerHTML=`<div style="display:flex;gap:8px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border)">
     <button onclick="document.querySelectorAll('#importMergeList input').forEach(i=>i.checked=true)" style="font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);cursor:pointer;color:var(--text)">✓ Chọn tất cả</button>
     <button onclick="document.querySelectorAll('#importMergeList input').forEach(i=>i.checked=false)" style="font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);cursor:pointer;color:var(--text)">✕ Bỏ chọn</button>
@@ -11363,30 +11364,10 @@ async function importMergePagesFromFolder(){
     _projSavedIds.delete(id);
     _projSaveAsset(id,blob);
   }
-  const folderMsg=_projDir?' → đang sao chép vào "'+_projDirName+'"':'';
-  if(mediaCount)toast('✅ Đã tải '+mediaCount+' ảnh/video'+folderMsg,'success');
-  // 3. Hiển thị dialog chọn trang để merge (tái dùng UI hiện có)
+  if(mediaCount)toast('✅ Đã tải '+mediaCount+' ảnh/video'+(mediaCount&&_projDir?' → sao chép vào 📁 '+_projDirName:''),'success');
+  // 3. Hiển thị dialog chọn trang
   _importMergeDocs=imported.docs;
-  const list=document.getElementById('importMergeList');
-  const info=document.getElementById('importMergeInfo');
-  info.style.display='';
-  info.innerHTML=`<i class="ti ti-folder" style="font-size:14px;margin-right:6px;color:var(--accent)"></i>Thư mục: <strong>${escH(dir.name)}</strong> — ${imported.docs.length} trang${mediaCount?' · '+mediaCount+' ảnh/video':''}`;
-  list.innerHTML=`<div style="display:flex;gap:8px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border)">
-    <button onclick="document.querySelectorAll('#importMergeList input').forEach(i=>i.checked=true)" style="font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);cursor:pointer;color:var(--text)">✓ Chọn tất cả</button>
-    <button onclick="document.querySelectorAll('#importMergeList input').forEach(i=>i.checked=false)" style="font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);cursor:pointer;color:var(--text)">✕ Bỏ chọn</button>
-  </div>`;
-  imported.docs.forEach(d=>{
-    const row=document.createElement('label');row.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:13px;transition:background .1s';
-    row.onmouseenter=()=>row.style.background='var(--surface2)';row.onmouseleave=()=>row.style.background='';
-    const chk=document.createElement('input');chk.type='checkbox';chk.value=d.id;chk.checked=true;chk.style.accentColor='var(--accent)';
-    const icon=document.createElement('i');icon.className='ti ti-file-text';icon.style.cssText='font-size:13px;color:var(--text2);flex-shrink:0';
-    const title=document.createElement('span');title.style.flex='1';title.textContent=d.title||'Untitled';
-    const preview=document.createElement('span');preview.style.cssText='font-size:11px;color:var(--text3);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
-    preview.textContent=(d.content||'').replace(/<[^>]+>/g,' ').trim().slice(0,60)||'(trống)';
-    row.appendChild(chk);row.appendChild(icon);row.appendChild(title);row.appendChild(preview);
-    list.appendChild(row);
-  });
-  openModal('importMergeModal');
+  _sbImportShowMergeModal('📁 '+dir.name,imported.docs,mediaCount);
 }
 function handleImportMerge(e){
   const file=e.target.files[0];if(!file)return;
@@ -11482,7 +11463,10 @@ function doImportMerge(){
   persistNow();renderSidebar();
   closeModal('importMergeModal');
   if(imported.length)openDoc(imported[0].id);
-  toast(`Đã nhập ${imported.length} trang`,'success');
+  const msg=`Đã nhập ${imported.length} trang`+(_projDir?' · ảnh đã lưu vào 📁 '+_projDirName:'');
+  toast(msg,'success');
+  // Ensure all images referenced by newly merged pages are in the project folder
+  if(typeof _projMigrateToFolder==='function')_projMigrateToFolder();
 }
 
 function closeWelcomeAndStart(){
