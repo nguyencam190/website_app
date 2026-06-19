@@ -1703,12 +1703,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 
     <!-- Project folder -->
     <div style="display:flex;align-items:center;gap:4px">
-      <input type="file" id="projJsonInput" accept=".json,.zip" style="display:none" onchange="_projHandleJsonOpen(event)">
-      <button class="header-icon-btn" id="projFolderBtn" onclick="document.getElementById('projJsonInput').click()" title="Mở file data JSON của project"><i class="ti ti-database-import"></i></button>
-      <span class="proj-folder-badge" id="projFolderBadge" onclick="_projOpenFolder()" title="Kết nối thư mục để tự lưu ảnh và dữ liệu">📁 Chọn ổ project</span>
-      <button class="header-icon-btn" id="projLoadBtn" onclick="_projLoadFromFolder()" title="Refresh — tải lại project mới nhất từ thư mục" style="display:none;color:var(--accent)"><i class="ti ti-folder-down"></i></button>
-      <button class="header-icon-btn" id="projDisconnectBtn" onclick="_projDisconnect()" title="Ngắt kết nối thư mục" style="display:none;font-size:13px;color:var(--text3)"><i class="ti ti-folder-x"></i></button>
-      <button class="proj-live-btn" id="projLiveBtn" onclick="_projToggleLive()" title="Lưu tất cả dữ liệu và ảnh vào thư mục project ngay bây giờ">
+      <button class="proj-live-btn" id="projLiveBtn" onclick="_projToggleLive()" title="Lưu tất cả dữ liệu và ảnh vào thư mục project">
         <span class="proj-live-dot" id="projLiveDot"></span>Live
       </button>
     </div>
@@ -11561,21 +11556,17 @@ const _pendingFolderSaves=new Map(); // blobs queued while _projDir was null
 let _projLiveSaving=false;    // guard against concurrent saves
 
 function _projUpdateBadge(){
-  const badge=document.getElementById('projFolderBadge');
-  const load=document.getElementById('projLoadBtn');
-  const disc=document.getElementById('projDisconnectBtn');
-  if(badge){
-    badge.textContent=_projDir?'📁 '+_projDirName:'📁 Chọn ổ project';
-    badge.title=_projDir?'Đang lưu tự động — nhấn để đổi thư mục':'Kết nối thư mục để tự lưu ảnh và dữ liệu';
-    badge.classList.toggle('on',!!_projDir);
-  }
-  if(load)load.style.display=_projDir?'':'none';
-  if(disc)disc.style.display=_projDir?'':'none';
+  // Live button title reflects connection status
+  const btn=document.getElementById('projLiveBtn');
+  if(btn)btn.title=_projDir?`Lưu tất cả vào 📁 "${_projDirName}"`:'Lưu tất cả — sẽ hỏi chọn thư mục project';
 }
 
-function _projToggleLive(){
-  if(!_projDir){toast('Cần mở thư mục project trước (nhấn nút 📁)','error');return;}
+async function _projToggleLive(){
   if(_projLiveSaving)return;
+  if(!_projDir){
+    await _projOpenFolder();
+    if(!_projDir)return;
+  }
   const btn=document.getElementById('projLiveBtn');
   if(btn)btn.classList.add('active');
   _projFullSync().finally(()=>{
