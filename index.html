@@ -1546,9 +1546,23 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 .accent-pop.on{display:block}
 .accent-pop-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
 #accentBtnDot{width:14px;height:14px;border-radius:50%;background:var(--accent);display:inline-block;border:2px solid rgba(128,128,128,.35);transition:background .15s;vertical-align:middle}
+/* Project folder */
+.proj-folder-badge{display:none;align-items:center;gap:4px;font-size:11px;color:var(--accent);background:var(--accent-light);border:1px solid var(--accent);border-radius:20px;padding:2px 10px;cursor:pointer;max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:.15s}
+.proj-folder-badge.on{display:flex}
+.proj-reconnect-banner{display:none;position:fixed;top:0;left:0;right:0;z-index:10000;background:#f59e0b;color:#1c1917;font-size:13px;padding:8px 16px;align-items:center;gap:8px}
+.proj-reconnect-banner.on{display:flex}
+.proj-reconnect-banner button.reconnect-btn{background:rgba(0,0,0,.18);border:none;border-radius:4px;padding:3px 12px;cursor:pointer;font-size:13px;font-weight:600;color:#1c1917}
+.proj-reconnect-banner button.reconnect-close{margin-left:auto;background:none;border:none;cursor:pointer;font-size:18px;opacity:.7;line-height:1;padding:0}
 </style>
 </head>
 <body>
+<!-- Project folder reconnect banner -->
+<div class="proj-reconnect-banner" id="projReconnectBanner">
+  <i class="ti ti-folder-exclamation"></i>
+  <span>Thư mục project "<span id="projReconnectName"></span>" cần được cấp lại quyền truy cập.</span>
+  <button class="reconnect-btn" onclick="_projReconnect()">Kết nối lại</button>
+  <button class="reconnect-close" onclick="document.getElementById('projReconnectBanner').classList.remove('on')" title="Đóng">✕</button>
+</div>
 <!-- ── TOP NAV (CamNguyen style) ── -->
 <div class="header" id="mainHeader">
   <!-- App switcher -->
@@ -1668,6 +1682,12 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
       </div>
     </div>
 
+    <!-- Project folder -->
+    <div style="display:flex;align-items:center;gap:4px">
+      <button class="header-icon-btn" id="projFolderBtn" onclick="_projSelectFolder()" title="Chọn thư mục lưu project tự động"><i class="ti ti-folder-open"></i></button>
+      <span class="proj-folder-badge" id="projFolderBadge" onclick="_projSelectFolder()" title="Đang lưu tự động vào thư mục này — nhấn để thay đổi"></span>
+      <button class="header-icon-btn" id="projDisconnectBtn" onclick="_projDisconnect()" title="Ngắt kết nối thư mục" style="display:none;font-size:13px;color:var(--text3)"><i class="ti ti-folder-x"></i></button>
+    </div>
     <!-- Focus mode -->
     <button class="header-icon-btn" id="focusModeBtn" onclick="toggleFocusMode()" title="Focus mode (F11)"><i class="ti ti-focus-2"></i></button>
     <!-- Accent color picker -->
@@ -2683,6 +2703,8 @@ function init(){
   const tg=document.getElementById('tableGrid');
   if(tw)tw.addEventListener('mouseleave',()=>{_tgHideTimer=setTimeout(hideTableGrid,200);});
   if(tg)tg.addEventListener('mouseenter',()=>{clearTimeout(_tgHideTimer);});
+  // Restore project folder connection
+  _projInit();
 }
 
 // ══ UNDO / REDO ══════════════════════════════════════════
@@ -2758,6 +2780,8 @@ function persist(){
     if(el){el.className='save-dirty';el.innerHTML='<i class="ti ti-alert-triangle" style="font-size:12px"></i> Bộ nhớ đầy';}
     console.warn('localStorage quota exceeded',e);
   }
+  // Also auto-save to project folder if connected
+  if(typeof _projSaveJSON==='function')_projSaveJSON();
 }
 
 function markDirty(){
@@ -3921,7 +3945,12 @@ function _idbPut(id,blob){
   return _openIDB().then(db=>new Promise((res,rej)=>{
     const tx=db.transaction('blobs','readwrite');
     tx.objectStore('blobs').put(blob,id);
-    tx.oncomplete=res;tx.onerror=rej;
+    tx.oncomplete=()=>{
+      // Mirror asset to project folder if connected
+      if(typeof _projSaveAsset==='function'&&blob instanceof Blob)_projSaveAsset(id,blob);
+      res();
+    };
+    tx.onerror=rej;
   }));
 }
 function _idbGet(id){
@@ -11273,6 +11302,156 @@ async function _saveFile(blob, suggestedName, types){
   return true;
 }
 
+// ── Project Folder (File System Access API) ─────────────────────────────
+const PROJ_DIR_IDB_KEY='__proj_folder_handle__';
+let _projDir=null,_projDirName='';
+const _projSavedIds=new Set();
+
+function _projUpdateBadge(){
+  const badge=document.getElementById('projFolderBadge');
+  const disc=document.getElementById('projDisconnectBtn');
+  if(badge){badge.textContent=_projDir?'📁 '+_projDirName:'';badge.classList.toggle('on',!!_projDir);}
+  if(disc)disc.style.display=_projDir?'':'none';
+}
+
+async function _projInit(){
+  try{
+    const db=await _openIDB();
+    const handle=await new Promise(res=>{
+      const tx=db.transaction('blobs','readonly');
+      const req=tx.objectStore('blobs').get(PROJ_DIR_IDB_KEY);
+      req.onsuccess=e=>res(e.target.result);req.onerror=()=>res(null);
+    });
+    if(!handle||handle.kind!=='directory')return;
+    const perm=await handle.queryPermission({mode:'readwrite'});
+    if(perm==='granted'){
+      _projDir=handle;_projDirName=handle.name;_projUpdateBadge();
+    }else{
+      // Permission revoked after page reload — show reconnect banner
+      _projDirName=handle.name||'';
+      const banner=document.getElementById('projReconnectBanner');
+      const nameEl=document.getElementById('projReconnectName');
+      if(nameEl)nameEl.textContent=_projDirName;
+      if(banner)banner.classList.add('on');
+    }
+  }catch(e){console.warn('[projInit]',e);}
+}
+
+async function _projSelectFolder(){
+  if(!window.showDirectoryPicker){toast('Trình duyệt không hỗ trợ chọn thư mục (cần Chrome/Edge 86+)','error');return;}
+  try{
+    const handle=await window.showDirectoryPicker({mode:'readwrite',startIn:'documents'});
+    _projDir=handle;_projDirName=handle.name;
+    // Persist handle to IDB so we can restore on next page load
+    const db=await _openIDB();
+    await new Promise((res,rej)=>{
+      const tx=db.transaction('blobs','readwrite');
+      tx.objectStore('blobs').put(handle,PROJ_DIR_IDB_KEY);
+      tx.oncomplete=res;tx.onerror=rej;
+    });
+    document.getElementById('projReconnectBanner')?.classList.remove('on');
+    _projUpdateBadge();
+    toast('📁 Đã kết nối thư mục: '+handle.name,'success');
+    // Migrate existing IDB assets to folder
+    await _projMigrateToFolder();
+    // Immediately save current state
+    await _projSaveJSON();
+  }catch(e){if(e.name!=='AbortError')toast('Lỗi chọn thư mục: '+e.message,'error');}
+}
+
+async function _projReconnect(){
+  try{
+    const db=await _openIDB();
+    const handle=await new Promise(res=>{
+      const tx=db.transaction('blobs','readonly');
+      const req=tx.objectStore('blobs').get(PROJ_DIR_IDB_KEY);
+      req.onsuccess=e=>res(e.target.result);req.onerror=()=>res(null);
+    });
+    if(!handle){toast('Không tìm thấy thư mục đã lưu','error');return;}
+    const perm=await handle.requestPermission({mode:'readwrite'});
+    if(perm==='granted'){
+      _projDir=handle;_projDirName=handle.name;
+      document.getElementById('projReconnectBanner')?.classList.remove('on');
+      _projUpdateBadge();
+      toast('📁 Đã kết nối lại: '+handle.name,'success');
+      await _projSaveJSON();
+    }else{toast('Bị từ chối quyền truy cập thư mục','error');}
+  }catch(e){toast('Lỗi kết nối lại: '+e.message,'error');}
+}
+
+async function _projDisconnect(){
+  if(!confirm('Ngắt kết nối thư mục project?\nApp sẽ tiếp tục lưu vào trình duyệt như bình thường.'))return;
+  _projDir=null;_projDirName='';_projSavedIds.clear();
+  try{
+    const db=await _openIDB();
+    await new Promise(res=>{
+      const tx=db.transaction('blobs','readwrite');
+      tx.objectStore('blobs').delete(PROJ_DIR_IDB_KEY);
+      tx.oncomplete=res;tx.onerror=res;
+    });
+  }catch(e){}
+  document.getElementById('projReconnectBanner')?.classList.remove('on');
+  _projUpdateBadge();
+  toast('Đã ngắt kết nối thư mục project','info');
+}
+
+async function _projSaveJSON(){
+  if(!_projDir)return;
+  try{
+    const toSave=JSON.parse(JSON.stringify(state));
+    toSave.docs.forEach(doc=>{
+      if(doc.images)doc.images=doc.images.map(m=>{const{src,...meta}=m;return src&&src.startsWith('data:')?{...meta,src}:meta;});
+    });
+    const fh=await _projDir.getFileHandle('data.json',{create:true});
+    const wr=await fh.createWritable();
+    await wr.write(JSON.stringify(toSave,null,2));
+    await wr.close();
+  }catch(e){console.warn('[projSaveJSON]',e);}
+}
+
+async function _projSaveAsset(id,blob){
+  if(!_projDir||!id||!blob||_projSavedIds.has(id))return;
+  try{
+    const mime=blob.type||'image/jpeg';
+    const ext=_mimeToExt(mime)||'.bin';
+    const isVideo=mime.startsWith('video/');
+    const subDir=await _projDir.getDirectoryHandle(isVideo?'videos':'images',{create:true});
+    const fh=await subDir.getFileHandle(id+ext,{create:true});
+    const wr=await fh.createWritable();
+    await wr.write(blob);
+    await wr.close();
+    _projSavedIds.add(id);
+  }catch(e){console.warn('[projSaveAsset]',e);}
+}
+
+async function _projMigrateToFolder(){
+  if(!_projDir)return;
+  const ids=new Set();
+  state.docs.forEach(doc=>{
+    (doc.images||[]).forEach(m=>{
+      if(m&&m.id)ids.add(m.id);
+      if(m&&m.type==='carousel'&&m.slides)m.slides.forEach(sl=>{if(sl&&sl.id)ids.add(sl.id);});
+    });
+  });
+  let migrated=0;
+  for(const id of ids){
+    if(_projSavedIds.has(id))continue;
+    try{const blob=await _idbGet(id);if(blob){await _projSaveAsset(id,blob);migrated++;}}catch(e){}
+  }
+  if(migrated>0)toast('📁 Đã sao lưu '+migrated+' file ảnh/video vào thư mục project','success');
+}
+
+async function _projExportHTML(htmlBlob,htmlName){
+  if(!_projDir)return;
+  try{
+    const fh=await _projDir.getFileHandle(htmlName,{create:true});
+    const wr=await fh.createWritable();
+    await wr.write(htmlBlob);
+    await wr.close();
+    toast('📁 Đã lưu HTML vào thư mục project: '+htmlName,'success');
+  }catch(e){console.warn('[projExportHTML]',e);toast('Lỗi lưu HTML vào thư mục: '+e.message,'error');}
+}
+
 async function exportProject(){
   const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
   const name=(state.projectName||'project').replace(/\s+/g,'_')+'.projectdocs.json';
@@ -11298,8 +11477,11 @@ async function exportSelfContained(){
     const embedTag='<script id="pd-embedded-state" type="application/json">\n'+JSON.stringify(toSave)+'\n<\/script>\n';
     html=html.replace('</head>',embedTag+'</head>');
     const fname=(state.projectName||'project-docs').replace(/[^a-zA-Z0-9\-_]/g,'-')+'.html';
-    const ok=await _saveFile(new Blob([html],{type:'text/html'}),fname,[{description:'Self-contained HTML',accept:{'text/html':['.html']}}]);
+    const htmlBlob=new Blob([html],{type:'text/html'});
+    const ok=await _saveFile(htmlBlob,fname,[{description:'Self-contained HTML',accept:{'text/html':['.html']}}]);
     if(ok)toast('✅ File HTML có sẵn dữ liệu — mở bất kỳ đâu đều đúng project','success');
+    // Auto-save to project folder if connected
+    if(_projDir)await _projExportHTML(htmlBlob,fname);
   }catch(err){toast('Lỗi: '+err.message,'error');}
 }
 function importProject(){document.getElementById('importInput').click();}
@@ -12972,6 +13154,8 @@ async function doExportWebsite(){
   _showExportProgress(0,0,'');
   const fileSizeKb=Math.round(outBlob.size/1024);
   toast('Đã xuất '+docs.length+' tài liệu ('+fileSizeKb+' KB)','success');
+  // Auto-save HTML to project folder if connected
+  if(_projDir)await _projExportHTML(outBlob,htmlName);
   }catch(err){
     console.error('[Publish Web] error:',err);
     _showExportProgress(0,0,'');
