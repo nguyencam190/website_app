@@ -1675,8 +1675,8 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
       <div class="hdr-dd" id="hdrExportDd" style="right:0">
         <div class="hdr-dd-item" onclick="exportSelfContained();hdrCloseAll()"><i class="ti ti-file-code" style="color:var(--accent)"></i> <strong>Lưu file HTML (có data)</strong></div>
         <div class="hdr-dd-sep"></div>
-        <div class="hdr-dd-item" onclick="exportProject();hdrCloseAll()"><i class="ti ti-device-floppy"></i> Xuất JSON backup</div>
-        <div class="hdr-dd-item" onclick="importProject();hdrCloseAll()"><i class="ti ti-folder-open"></i> Mở project từ JSON</div>
+        <div class="hdr-dd-item" onclick="exportProject();hdrCloseAll()"><i class="ti ti-file-zip"></i> Xuất ZIP backup (có ảnh)</div>
+        <div class="hdr-dd-item" onclick="importProject();hdrCloseAll()"><i class="ti ti-folder-open"></i> Mở project từ ZIP/JSON</div>
         <div class="hdr-dd-sep"></div>
         <div class="hdr-dd-item" onclick="importMergePages();hdrCloseAll()"><i class="ti ti-file-import"></i> Nhập trang từ file</div>
         <div class="hdr-dd-item" onclick="importMergePagesFromFolder();hdrCloseAll()"><i class="ti ti-folder-plus"></i> Nhập trang từ thư mục (có ảnh)</div>
@@ -1723,7 +1723,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
       </div>
     </div>
   </div>
-  <input type="file" id="importInput" accept=".json" style="display:none" onchange="handleImport(event)">
+  <input type="file" id="importInput" accept=".json,.zip" style="display:none" onchange="handleImport(event)">
   <input type="file" id="importMergeInput" accept=".json,.html,.htm,.txt,.md" style="display:none" onchange="handleImportMerge(event)">
 </div>
 
@@ -2016,7 +2016,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
             <div class="hdr-dd" id="pabMoreDd" style="right:0;top:36px">
               <div class="hdr-dd-item" onclick="hdrCopyLink();hdrCloseAll()"><i class="ti ti-link"></i> Copy link trang</div>
               <div class="hdr-dd-item" onclick="hdrDuplicatePage();hdrCloseAll()"><i class="ti ti-copy"></i> Sao chép trang</div>
-              <div class="hdr-dd-item" onclick="hdrExportCurrentJson();hdrCloseAll()"><i class="ti ti-file-export"></i> Xuất JSON (backup ảnh)</div>
+              <div class="hdr-dd-item" onclick="hdrExportCurrentJson();hdrCloseAll()"><i class="ti ti-file-zip"></i> Xuất ZIP trang (có ảnh)</div>
               <div class="hdr-dd-item" onclick="reloadAllMedia();hdrCloseAll()"><i class="ti ti-refresh"></i> Reload lại tất cả ảnh/video</div>
               <div class="hdr-dd-sep"></div>
               <div class="hdr-dd-item danger" onclick="hdrDeletePage()"><i class="ti ti-trash"></i> Xóa trang</div>
@@ -2075,7 +2075,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 <div class="ctx" id="docCtxMenu">
   <div class="ctx-item" onclick="docCtxRename()"><i class="ti ti-pencil"></i> Đổi tên</div>
   <div class="ctx-item" onclick="docCtxDuplicate()"><i class="ti ti-copy"></i> Nhân bản</div>
-  <div class="ctx-item" onclick="docCtxExportJson()"><i class="ti ti-file-export"></i> Xuất JSON (backup)</div>
+  <div class="ctx-item" onclick="docCtxExportJson()"><i class="ti ti-file-zip"></i> Xuất ZIP (có ảnh)</div>
   <div class="ctx-sep"></div>
   <div class="ctx-item red" onclick="docCtxDelete()"><i class="ti ti-trash"></i> Xoá tài liệu</div>
 </div>
@@ -3855,11 +3855,33 @@ async function docCtxExportJson(){
     const docCopy=JSON.parse(JSON.stringify(doc));
     (docCopy.images||[]).forEach(m=>{if(m&&m.src&&m.src.startsWith('blob:'))delete m.src;});
 
-    const payload=JSON.stringify({version:1,type:'camnguyen-page',exportedAt:new Date().toISOString(),doc:docCopy,media},null,2);
-    const dlBlob=new Blob([payload],{type:'application/json'});
-    const fname=(doc.title||'page').replace(/[\/\\?%*:|"<>]/g,'_')+'.camnguyen.json';
-    const ok=await _saveFile(dlBlob,fname,[{description:'CamNguyen Page',accept:{'application/json':['.json']}}]);
-    if(ok)toast('Đã xuất JSON thành công','success');
+    // Build ZIP: page.json (no base64) + images/ + videos/
+    let JSZip;
+    try{JSZip=await _loadJSZip();}catch(er){toast('Không tải được JSZip','error');return;}
+    const zip=new JSZip();
+    // page.json — no base64 media (files are separate in ZIP)
+    const pageJson=JSON.stringify({version:2,type:'camnguyen-page',exportedAt:new Date().toISOString(),doc:docCopy},null,2);
+    zip.file('page.json',pageJson);
+    // Add image/video files
+    let saved=0;
+    for(const[id,blob]of Object.entries(await (async()=>{
+      const m={};
+      for(const id of mediaIds){
+        if(!id)continue;
+        const b=await _fetchAssetBlob(id);
+        if(b)m[id]=b;
+      }
+      return m;
+    })())){
+      const mime=blob.type||'image/jpeg';
+      const ext=_mimeToExt(mime)||'.bin';
+      zip.file((mime.startsWith('video/')?'videos':'images')+'/'+id+ext,blob);
+      saved++;
+    }
+    const zipBlob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
+    const fname=(doc.title||'page').replace(/[\/\\?%*:|"<>]/g,'_')+'.camnguyen.zip';
+    const ok=await _saveFile(zipBlob,fname,[{description:'CamNguyen Page ZIP',accept:{'application/zip':['.zip']}}]);
+    if(ok)toast('✅ Đã xuất ZIP trang ('+saved+' ảnh/video)','success');
   }catch(err){
     toast('Lỗi xuất JSON: '+err.message,'error');
     console.error('[export] docCtxExportJson error:',err);
@@ -3869,56 +3891,78 @@ async function docCtxExportJson(){
 async function importPageJson(){
   document.getElementById('docCtxMenu')?.classList.remove('on');
   const input=document.createElement('input');
-  input.type='file';input.accept='.json';
+  input.type='file';input.accept='.json,.zip';
   input.onchange=async e=>{
     const file=e.target.files[0];if(!file)return;
+    const ext=(file.name.split('.').pop()||'').toLowerCase();
     try{
       toast('Đang nhập trang...','info');
-      const text=await file.text();
-      const data=JSON.parse(text);
-      if(data.type!=='camnguyen-page'||!data.doc){toast('File không hợp lệ (phải là file .camnguyen.json)','error');return;}
-      const importDoc=JSON.parse(JSON.stringify(data.doc));
-      const media=data.media||{};
+      let importDoc,media={};
 
-      // Re-store all blobs into IndexedDB and populate obj URL cache
-      let _importOk=0,_importFail=0;
-      for(const[id,b64] of Object.entries(media)){
-        if(!b64)continue;
-        try{
-          const blob=_dataUrlToBlob(b64);
-          if(!blob){_importFail++;continue;}
-          await _idbPut(id,blob);
-          // Pre-cache blob URL so idbToZipAsset finds it without IDB roundtrip during publish
-          if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}
-          _importOk++;
-        }catch(e){_importFail++;}
+      if(ext==='zip'){
+        // ZIP format: page.json + images/ + videos/
+        let JSZip;
+        try{JSZip=await _loadJSZip();}catch(er){toast('Không tải được JSZip','error');return;}
+        const zip=await JSZip.loadAsync(file);
+        const pf=zip.file('page.json');
+        if(!pf){toast('Không tìm thấy page.json trong ZIP','error');return;}
+        const data=JSON.parse(await pf.async('string'));
+        if(data.type!=='camnguyen-page'||!data.doc){toast('File ZIP không hợp lệ','error');return;}
+        importDoc=JSON.parse(JSON.stringify(data.doc));
+        // Load images + videos from ZIP into IDB
+        for(const[path,entry]of Object.entries(zip.files)){
+          if(entry.dir)continue;
+          if(!path.startsWith('images/')&&!path.startsWith('videos/'))continue;
+          try{
+            const blob=await entry.async('blob');
+            const id=path.replace(/^(images|videos)\//,'').replace(/\.[^.]+$/,'');
+            if(id&&blob.size>0){
+              await _idbPut(id,blob);
+              if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}
+            }
+          }catch(er){console.warn('[importPage zip] skip',path,er);}
+        }
+      }else{
+        // Legacy .camnguyen.json format (base64 media)
+        const text=await file.text();
+        const data=JSON.parse(text);
+        if(data.type!=='camnguyen-page'||!data.doc){toast('File không hợp lệ (phải là .camnguyen.json hoặc .camnguyen.zip)','error');return;}
+        importDoc=JSON.parse(JSON.stringify(data.doc));
+        media=data.media||{};
+        let _importOk=0,_importFail=0;
+        for(const[id,b64]of Object.entries(media)){
+          if(!b64)continue;
+          try{
+            const blob=_dataUrlToBlob(b64);
+            if(!blob){_importFail++;continue;}
+            await _idbPut(id,blob);
+            if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}
+            _importOk++;
+          }catch(e){_importFail++;}
+        }
+        if(_importFail>0)console.warn('[import] Failed to restore',_importFail,'media items;',_importOk,'ok');
       }
-      if(_importFail>0)console.warn('[import] Failed to restore',_importFail,'media items;',_importOk,'ok');
 
       // Give a new ID to avoid collision with existing docs
       const newId=uid();
-      // Update content: replace old doc id references (breadcrumb links etc.)
       importDoc.content=(importDoc.content||'').replace(new RegExp(importDoc.id,'g'),newId);
       importDoc.id=newId;
       importDoc.parentId=null;
+      importDoc.section=state.sections[0]||'default';
       importDoc.createdAt=importDoc.createdAt||new Date().toISOString();
       importDoc.updatedAt=new Date().toISOString();
 
-      // Re-attach base64 src for small floating images; clear stale blob: srcs
+      // Re-attach base64 src for small floating images (legacy path only)
       (importDoc.images||[]).forEach(m=>{
         if(!m)return;
-        // Outer entry
         if(media[m.id]&&(!m.src||m.src.startsWith('blob:'))){
-          if((m.size||0)<=512*1024)m.src=media[m.id];
-          else delete m.src;
+          if((m.size||0)<=512*1024)m.src=media[m.id];else delete m.src;
         }else if(m.src&&m.src.startsWith('blob:'))delete m.src;
-        // Carousel slides
         if(m.type==='carousel'&&m.slides){
           m.slides.forEach(sl=>{
             if(!sl)return;
             if(media[sl.id]&&(!sl.src||sl.src.startsWith('blob:'))){
-              if((sl.size||0)<=512*1024)sl.src=media[sl.id];
-              else delete sl.src;
+              if((sl.size||0)<=512*1024)sl.src=media[sl.id];else delete sl.src;
             }else if(sl.src&&sl.src.startsWith('blob:'))delete sl.src;
           });
         }
@@ -3926,8 +3970,8 @@ async function importPageJson(){
 
       state.docs.push(importDoc);
       persist();renderSidebar();openDoc(newId);
-      toast(`Đã nhập "${importDoc.title||'Untitled'}"  ✓`,'success');
-    }catch(ex){toast('Lỗi nhập file: '+ex.message,'error');}
+      toast(`✅ Đã nhập "${importDoc.title||'Untitled'}"','success');
+    }catch(ex){toast('Lỗi nhập file: '+ex.message,'error');console.error(ex);}
   };
   input.click();
 }
@@ -11598,11 +11642,70 @@ async function _projExportHTML(htmlBlob,htmlName){
   }catch(e){console.warn('[projExportHTML]',e);toast('Lỗi lưu HTML vào thư mục: '+e.message,'error');}
 }
 
+// Collect all unique media IDs referenced in a list of docs
+function _collectDocAssetIds(docs){
+  const ids=new Set();
+  docs.forEach(doc=>{
+    (doc.images||[]).forEach(m=>{
+      if(!m)return;
+      if(m.id)ids.add(m.id);
+      if(m.type==='carousel'&&m.slides)m.slides.forEach(sl=>{if(sl&&sl.id)ids.add(sl.id);});
+    });
+    const tmp=document.createElement('div');tmp.innerHTML=doc.content||'';
+    tmp.querySelectorAll('[data-cfimgid]').forEach(el=>el.dataset.cfimgid&&ids.add(el.dataset.cfimgid));
+    tmp.querySelectorAll('[data-tblimgid]').forEach(el=>el.dataset.tblimgid&&ids.add(el.dataset.tblimgid));
+    tmp.querySelectorAll('[data-cffileid]').forEach(el=>el.dataset.cffileid&&ids.add(el.dataset.cffileid));
+    tmp.querySelectorAll('[data-carids]').forEach(el=>(el.dataset.carids||'').split(',').filter(Boolean).forEach(id=>ids.add(id)));
+    tmp.querySelectorAll('[data-slideids]').forEach(el=>(el.dataset.slideids||'').split(',').filter(Boolean).forEach(id=>ids.add(id)));
+  });
+  return ids;
+}
+
+// Fetch blob for an id from IDB or in-memory URL cache
+async function _fetchAssetBlob(id){
+  let blob=null;
+  try{blob=await _idbGet(id);}catch(e){}
+  if(!blob&&_objUrls&&_objUrls[id]){
+    try{const r=await fetch(_objUrls[id]);if(r.ok)blob=await r.blob();}catch(e){}
+  }
+  return blob;
+}
+
+// Add all assets for given ids into a JSZip instance
+async function _addAssetsToZip(zip,ids){
+  let count=0;
+  for(const id of ids){
+    if(!id)continue;
+    const blob=await _fetchAssetBlob(id);
+    if(!blob)continue;
+    const mime=blob.type||'image/jpeg';
+    const ext=_mimeToExt(mime)||'.bin';
+    zip.file((mime.startsWith('video/')?'videos':'images')+'/'+id+ext,blob);
+    count++;
+  }
+  return count;
+}
+
 async function exportProject(){
-  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
-  const name=(state.projectName||'project').replace(/\s+/g,'_')+'.projectdocs.json';
-  const ok=await _saveFile(blob,name,[{description:'Project Backup',accept:{'application/json':['.json']}}]);
-  if(ok)toast('Đã xuất JSON backup','success');
+  let JSZip;
+  try{JSZip=await _loadJSZip();}catch(e){toast('Không tải được JSZip. Kiểm tra kết nối mạng.','error');return;}
+  toast('Đang chuẩn bị ZIP...','info');
+  try{
+    const zip=new JSZip();
+    // data.json — strip blob: src URLs
+    const toSave=JSON.parse(JSON.stringify(state));
+    toSave.docs.forEach(doc=>{
+      if(doc.images)doc.images=doc.images.map(m=>{const{src,...meta}=m;return src&&src.startsWith('data:')?{...meta,src}:meta;});
+    });
+    zip.file('data.json',JSON.stringify(toSave,null,2));
+    // Collect all assets across all docs
+    const ids=_collectDocAssetIds(state.docs);
+    const saved=await _addAssetsToZip(zip,ids);
+    const zipBlob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
+    const name=(state.projectName||'project').replace(/[^a-zA-Z0-9\-_]/g,'_')+'.projectdocs.zip';
+    const ok=await _saveFile(zipBlob,name,[{description:'Project ZIP',accept:{'application/zip':['.zip']}}]);
+    if(ok)toast('✅ Đã xuất ZIP backup ('+saved+' ảnh/video)','success');
+  }catch(err){toast('Lỗi xuất ZIP: '+err.message,'error');console.error(err);}
 }
 
 async function exportSelfContained(){
@@ -11631,7 +11734,67 @@ async function exportSelfContained(){
   }catch(err){toast('Lỗi: '+err.message,'error');}
 }
 function importProject(){document.getElementById('importInput').click();}
-function handleImport(e){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=ev=>{try{const imported=JSON.parse(ev.target.result);if(!imported.docs)throw new Error('Invalid');if(!confirm(`Import "${imported.projectName||'Unknown'}" voi ${imported.docs.length} tai lieu? Du lieu hien tai se bi ghi de.`))return;state=imported;persist();document.getElementById('projectNameEl').textContent=state.projectName;updateUserUI();renderSidebar();state.currentDocId=null;document.getElementById('emptyState').style.display='';document.getElementById('editorPanel').style.display='none';toast(`Da import ${state.docs.length} tai lieu`,'success');}catch(err){toast('File khong hop le','error');}};reader.readAsText(file);e.target.value='';}
+async function handleImport(e){
+  const file=e.target.files[0];if(!file)return;
+  e.target.value='';
+  const ext=(file.name.split('.').pop()||'').toLowerCase();
+  try{
+    if(ext==='zip'){
+      // ZIP import: extract data.json + images/ + videos/
+      let JSZip;
+      try{JSZip=await _loadJSZip();}catch(er){toast('Không tải được JSZip','error');return;}
+      const zip=await JSZip.loadAsync(file);
+      const jsonFile=zip.file('data.json');
+      if(!jsonFile){toast('Không tìm thấy data.json trong ZIP','error');return;}
+      const imported=JSON.parse(await jsonFile.async('string'));
+      if(!imported||!imported.docs)throw new Error('Invalid');
+      if(!confirm(`Import "${imported.projectName||'Unknown'}" (${imported.docs.length} tài liệu)?\nDữ liệu hiện tại sẽ bị ghi đè.`))return;
+      // Load images + videos into IDB
+      let mediaCount=0;
+      for(const[path,entry]of Object.entries(zip.files)){
+        if(entry.dir)continue;
+        if(!path.startsWith('images/')&&!path.startsWith('videos/'))continue;
+        try{
+          const blob=await entry.async('blob');
+          const id=path.replace(/^(images|videos)\//,'').replace(/\.[^.]+$/,'');
+          if(id&&blob.size>0){await _idbPut(id,blob);mediaCount++;}
+        }catch(er){console.warn('[import zip] skip',path,er);}
+      }
+      // Apply state
+      state=imported;
+      if(!state.docs)state.docs=[];
+      if(!state.sections||!state.sections.length)state.sections=['default'];
+      state.docs.forEach(d=>{d.section=state.sections[0]||'default';});
+      if(!state.recent)state.recent=[];
+      if(!state.starred)state.starred=[];
+      persist();
+      document.getElementById('projectNameEl').textContent=state.projectName||'My Project';
+      updateUserUI();renderSidebar();
+      state.currentDocId=null;
+      document.getElementById('emptyState').style.display='';
+      document.getElementById('editorPanel').style.display='none';
+      toast(`✅ Đã import ${state.docs.length} tài liệu${mediaCount?' và '+mediaCount+' ảnh/video':''}','success');
+    }else{
+      // Legacy JSON import
+      const reader=new FileReader();
+      reader.onload=ev=>{
+        try{
+          const imported=JSON.parse(ev.target.result);
+          if(!imported.docs)throw new Error('Invalid');
+          if(!confirm(`Import "${imported.projectName||'Unknown'}" (${imported.docs.length} tài liệu)?\nDữ liệu hiện tại sẽ bị ghi đè.`))return;
+          state=imported;persist();
+          document.getElementById('projectNameEl').textContent=state.projectName;
+          updateUserUI();renderSidebar();
+          state.currentDocId=null;
+          document.getElementById('emptyState').style.display='';
+          document.getElementById('editorPanel').style.display='none';
+          toast(`Đã import ${state.docs.length} tài liệu`,'success');
+        }catch(err){toast('File không hợp lệ','error');}
+      };
+      reader.readAsText(file);
+    }
+  }catch(err){toast('Lỗi import: '+err.message,'error');console.error(err);}
+}
 
 // EXPORT WEBSITE - DOM-based, no string quoting issues
 function openExportWebsiteModal(){
