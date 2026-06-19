@@ -11210,10 +11210,10 @@ async function _sbImportAll(){
         try{JSZip=await _loadJSZip();}catch(er){toast('Không tải được JSZip','error');return;}
         const zip=await JSZip.loadAsync(file);
         if(zip.file('data.json')){
-          // Project ZIP → dùng flow merge (chọn trang nào nhập)
+          if(!_projDir)await _projConnectFolderOnly();
           await _importMergeFromZip(zip,file.name);
         }else if(zip.file('page.json')){
-          // Single page ZIP → nhập thẳng
+          if(!_projDir)await _projConnectFolderOnly();
           await _importSinglePageFromZip(zip);
         }else{
           toast('File ZIP không nhận dạng được — cần có data.json hoặc page.json','error');
@@ -11222,7 +11222,7 @@ async function _sbImportAll(){
         const text=await file.text();
         const data=JSON.parse(text);
         if(data.type==='camnguyen-page'&&data.doc){
-          // Single page JSON (legacy) → nhập thẳng
+          if(!_projDir)await _projConnectFolderOnly();
           _importMergeDocs=[JSON.parse(JSON.stringify(data.doc))];
           const media=data.media||{};
           for(const[id,b64]of Object.entries(media)){
@@ -11231,7 +11231,7 @@ async function _sbImportAll(){
           }
           _sbImportShowMergeModal(file.name,_importMergeDocs,0);
         }else if(data.docs&&Array.isArray(data.docs)){
-          // Project JSON → dùng flow merge
+          if(!_projDir)await _projConnectFolderOnly();
           _importMergeDocs=data.docs;
           _sbImportShowMergeModal(data.projectName||file.name,data.docs,0);
         }else{
@@ -11656,7 +11656,7 @@ async function _projHandleJsonOpen(e){
       document.getElementById('editorPanel').style.display='none';
       toast(`✅ Đã mở "${state.projectName||'Project'}" — ${state.docs.length} tài liệu${mediaCount?' · '+mediaCount+' ảnh/video':''}`, 'success');
       // Offer to connect the folder for auto-save + image sync
-      _projAskConnectFolder();
+      if(!_projDir)await _projConnectFolderOnly();
     }else{
       // Plain JSON
       const text=await file.text();
@@ -11677,25 +11677,26 @@ async function _projHandleJsonOpen(e){
       if(state.docs.length>0)openDoc(state.docs[0].id);
       toast(`✅ Đã mở "${state.projectName||'Project'}" — ${state.docs.length} tài liệu`,'success');
       // Offer to connect folder for auto-save + images
-      _projAskConnectFolder();
+      if(!_projDir)await _projConnectFolderOnly();
     }
   }catch(err){toast('Lỗi mở file: '+err.message,'error');console.error(err);}
 }
 
-function _projAskConnectFolder(){
+async function _projConnectFolderOnly(){
   if(!window.showDirectoryPicker)return;
-  // Small non-blocking toast with action button
-  const id='_projConnectToast';
-  document.getElementById(id)?.remove();
-  const el=document.createElement('div');
-  el.id=id;
-  el.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9999;background:var(--surface);border:1px solid var(--accent);border-radius:10px;padding:12px 18px;box-shadow:0 4px 20px #0004;display:flex;align-items:center;gap:12px;font-size:13px;color:var(--text);min-width:300px';
-  el.innerHTML=`<i class="ti ti-folder-question" style="font-size:18px;color:var(--accent);flex-shrink:0"></i>
-    <span style="flex:1">Kết nối thư mục chứa ảnh để tự lưu?</span>
-    <button onclick="_projOpenFolder();document.getElementById('${id}')?.remove()" style="padding:4px 12px;border:none;border-radius:6px;background:var(--accent);color:#fff;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap">Chọn thư mục</button>
-    <button onclick="document.getElementById('${id}')?.remove()" style="padding:4px 8px;border:none;border-radius:6px;background:var(--surface2);color:var(--text2);cursor:pointer;font-size:12px">Bỏ qua</button>`;
-  document.body.appendChild(el);
-  setTimeout(()=>el.remove(),12000);
+  let handle;
+  try{handle=await window.showDirectoryPicker({mode:'readwrite',startIn:'documents'});}
+  catch(e){return;} // user cancelled = OK, no error shown
+  const db=await _openIDB();
+  await new Promise((res,rej)=>{
+    const tx=db.transaction('blobs','readwrite');
+    tx.objectStore('blobs').put(handle,PROJ_DIR_IDB_KEY);
+    tx.oncomplete=res;tx.onerror=rej;
+  });
+  _projDir=handle;_projDirName=handle.name;
+  document.getElementById('projReconnectBanner')?.classList.remove('on');
+  _projUpdateBadge();
+  toast('📁 Đã kết nối ổ project "'+handle.name+'" — nhấn Live để lưu','success');
 }
 
 async function _projOpenFolder(){
