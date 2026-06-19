@@ -11243,18 +11243,18 @@ async function _importMergeFromZip(zip,filename){
   if(!jsonFile){toast('Không tìm thấy data.json trong ZIP','error');return;}
   const imported=JSON.parse(await jsonFile.async('string'));
   if(!imported||!imported.docs){toast('data.json không hợp lệ','error');return;}
-  // Load media vào IDB + sync to project folder
   let mediaCount=0;
-  const importedAssets=[];
   for(const[path,entry]of Object.entries(zip.files)){
     if(entry.dir||(!path.startsWith('images/')&&!path.startsWith('videos/')))continue;
     try{
-      const blob=await entry.async('blob');
+      const origExt=(path.split('.').pop()||'').toLowerCase();
+      const rawBlob=await entry.async('blob');
+      // Ensure correct MIME — JSZip often returns empty type
+      const blob=_ensureBlobMime(rawBlob,origExt);
       const id=path.replace(/^(images|videos)\//,'').replace(/\.[^.]+$/,'');
-      if(id&&blob.size>0){await _idbPut(id,blob);importedAssets.push([id,blob]);mediaCount++;}
+      if(id&&blob.size>0){await _idbPut(id,blob);mediaCount++;}
     }catch(er){}
   }
-  for(const[id,blob]of importedAssets){_projSavedIds.delete(id);_projSaveAsset(id,blob);}
   _importMergeDocs=imported.docs;
   _sbImportShowMergeModal(imported.projectName||filename,imported.docs,mediaCount);
 }
@@ -11265,21 +11265,20 @@ async function _importSinglePageFromZip(zip){
   const data=JSON.parse(await pf.async('string'));
   if(data.type!=='camnguyen-page'||!data.doc){toast('page.json không hợp lệ','error');return;}
   let mediaCount=0;
-  const importedAssets=[];
   for(const[path,entry]of Object.entries(zip.files)){
     if(entry.dir||(!path.startsWith('images/')&&!path.startsWith('videos/')))continue;
     try{
-      const blob=await entry.async('blob');
+      const origExt=(path.split('.').pop()||'').toLowerCase();
+      const rawBlob=await entry.async('blob');
+      const blob=_ensureBlobMime(rawBlob,origExt);
       const id=path.replace(/^(images|videos)\//,'').replace(/\.[^.]+$/,'');
       if(id&&blob.size>0){
         await _idbPut(id,blob);
-        importedAssets.push([id,blob]);
         if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}
         mediaCount++;
       }
     }catch(er){}
   }
-  for(const[id,blob]of importedAssets){_projSavedIds.delete(id);_projSaveAsset(id,blob);}
   _importMergeDocs=[JSON.parse(JSON.stringify(data.doc))];
   _sbImportShowMergeModal(data.doc.title||'Trang nhập',_importMergeDocs,mediaCount);
 }
@@ -11339,10 +11338,9 @@ async function importMergePagesFromFolder(){
     toast('Không tìm thấy data.json hoặc page.json trong thư mục này.\nHãy chọn thư mục project được tạo bởi "Lưu vào thư mục" hoặc giải nén từ file .zip','error');
     return;
   }
-  // 2. Import ảnh + video vào IDB và sao chép vào thư mục project (_projDir)
+  // 2. Import ảnh + video vào IDB — _idbPut.oncomplete tự gọi _projSaveAsset
   let mediaCount=0;
   toast('⏳ Đang tải ảnh/video từ thư mục...','info');
-  const importedAssets=[];
   for(const subDirName of['images','videos']){
     let subDir;
     try{subDir=await dir.getDirectoryHandle(subDirName);}catch(e){continue;}
@@ -11350,21 +11348,16 @@ async function importMergePagesFromFolder(){
       if(entry.kind!=='file')continue;
       try{
         const f=await entry.getFile();
-        const blob=new Blob([await f.arrayBuffer()],{type:f.type||'application/octet-stream'});
+        const origExt=(entry.name.split('.').pop()||'').toLowerCase();
+        const rawBlob=new Blob([await f.arrayBuffer()],{type:f.type});
+        const blob=_ensureBlobMime(rawBlob,origExt);
         const id=entry.name.replace(/\.[^.]+$/,'');
         await _idbPut(id,blob);
-        importedAssets.push([id,blob]);
         mediaCount++;
       }catch(e){console.warn('[mergeFolder] skip',entry.name,e);}
     }
   }
-  // Explicitly sync to project folder (covers case where _idbPut oncomplete already fired
-  // but also handles pending-queue path when _projDir reconnects later)
-  for(const[id,blob]of importedAssets){
-    _projSavedIds.delete(id);
-    _projSaveAsset(id,blob);
-  }
-  if(mediaCount)toast('✅ Đã tải '+mediaCount+' ảnh/video'+(mediaCount&&_projDir?' → sao chép vào 📁 '+_projDirName:''),'success');
+  if(mediaCount)toast('✅ Đã tải '+mediaCount+' ảnh/video'+(mediaCount&&_projDir?' → 📁 '+_projDirName:''),'success');
   // 3. Hiển thị dialog chọn trang
   _importMergeDocs=imported.docs;
   _sbImportShowMergeModal('📁 '+dir.name,imported.docs,mediaCount);
@@ -11453,7 +11446,7 @@ function handleImportMerge(e){
   };
   reader.readAsText(file);e.target.value='';
 }
-function doImportMerge(){
+async function doImportMerge(){
   const checkedIds=Array.from(document.querySelectorAll('#importMergeList input:checked')).map(i=>i.value);
   if(!checkedIds.length){toast('Chọn ít nhất 1 trang','error');return;}
   const selected=_importMergeDocs.filter(d=>checkedIds.includes(d.id));
@@ -11463,10 +11456,22 @@ function doImportMerge(){
   persistNow();renderSidebar();
   closeModal('importMergeModal');
   if(imported.length)openDoc(imported[0].id);
-  const msg=`Đã nhập ${imported.length} trang`+(_projDir?' · ảnh đã lưu vào 📁 '+_projDirName:'');
-  toast(msg,'success');
-  // Ensure all images referenced by newly merged pages are in the project folder
-  if(typeof _projMigrateToFolder==='function')_projMigrateToFolder();
+  toast(`Đã nhập ${imported.length} trang`,'success');
+  if(_projDir){
+    // Give fire-and-forget writes from _idbPut.oncomplete time to finish,
+    // then retry only those that failed (not in _projSavedIds yet).
+    await new Promise(r=>setTimeout(r,300));
+    const ids=_collectDocAssetIds(imported);
+    let synced=0;
+    for(const id of ids){
+      if(_projSavedIds.has(id)){synced++;continue;} // already written
+      const blob=await _idbGet(id);
+      if(blob){await _projSaveAsset(id,blob);if(_projSavedIds.has(id))synced++;}
+    }
+    if(synced)toast(`📁 Đã lưu ${synced} ảnh/video vào "${_projDirName}"`,'success');
+  } else if(_pendingFolderSaves.size>0){
+    toast('⚠️ Chưa kết nối thư mục — ảnh tự đồng bộ khi Reconnect','warning');
+  }
 }
 
 function closeWelcomeAndStart(){
@@ -12015,6 +12020,13 @@ function _onExportModeChange(mode){
 }
 
 // ── MIME type → file extension ────────────────────────────
+// Ensure a blob has a proper MIME type by inferring from file extension when missing
+const _EXT_MIME={jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',gif:'image/gif',webp:'image/webp',svg:'image/svg+xml',avif:'image/avif',bmp:'image/bmp',mp4:'video/mp4',webm:'video/webm',mov:'video/quicktime',ogv:'video/ogg',mkv:'video/x-matroska'};
+function _ensureBlobMime(blob,ext){
+  const t=blob.type;
+  if(t&&t!=='application/octet-stream')return blob;
+  return new Blob([blob],{type:_EXT_MIME[ext]||'image/jpeg'});
+}
 function _mimeToExt(mime){
   const m={
     'image/jpeg':'.jpg','image/jpg':'.jpg','image/png':'.png',
