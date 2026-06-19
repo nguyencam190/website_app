@@ -1547,8 +1547,9 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 .accent-pop-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
 #accentBtnDot{width:14px;height:14px;border-radius:50%;background:var(--accent);display:inline-block;border:2px solid rgba(128,128,128,.35);transition:background .15s;vertical-align:middle}
 /* Project folder */
-.proj-folder-badge{display:none;align-items:center;gap:4px;font-size:11px;color:var(--accent);background:var(--accent-light);border:1px solid var(--accent);border-radius:20px;padding:2px 10px;cursor:pointer;max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:.15s}
-.proj-folder-badge.on{display:flex}
+.proj-folder-badge{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text3);background:transparent;border:1px dashed var(--border);border-radius:20px;padding:2px 10px;cursor:pointer;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:.15s}
+.proj-folder-badge:hover{border-color:var(--accent);color:var(--accent)}
+.proj-folder-badge.on{color:var(--accent);background:var(--accent-light);border:1px solid var(--accent);border-style:solid}
 @keyframes _livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
 .proj-live-btn{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border:1px solid var(--border);border-radius:20px;background:var(--surface2);cursor:pointer;color:var(--text2);transition:.15s;white-space:nowrap}
 .proj-live-btn:hover{border-color:#22c55e;color:#16a34a}
@@ -1704,7 +1705,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
     <div style="display:flex;align-items:center;gap:4px">
       <input type="file" id="projJsonInput" accept=".json,.zip" style="display:none" onchange="_projHandleJsonOpen(event)">
       <button class="header-icon-btn" id="projFolderBtn" onclick="document.getElementById('projJsonInput').click()" title="Mở file data JSON của project"><i class="ti ti-database-import"></i></button>
-      <span class="proj-folder-badge" id="projFolderBadge" onclick="_projOpenFolder()" title="Đang lưu tự động — nhấn để đổi thư mục"></span>
+      <span class="proj-folder-badge" id="projFolderBadge" onclick="_projOpenFolder()" title="Kết nối thư mục để tự lưu ảnh và dữ liệu">📁 Chọn ổ project</span>
       <button class="header-icon-btn" id="projLoadBtn" onclick="_projLoadFromFolder()" title="Refresh — tải lại project mới nhất từ thư mục" style="display:none;color:var(--accent)"><i class="ti ti-folder-down"></i></button>
       <button class="header-icon-btn" id="projDisconnectBtn" onclick="_projDisconnect()" title="Ngắt kết nối thư mục" style="display:none;font-size:13px;color:var(--text3)"><i class="ti ti-folder-x"></i></button>
       <button class="proj-live-btn" id="projLiveBtn" onclick="_projToggleLive()" title="Lưu tất cả dữ liệu và ảnh vào thư mục project ngay bây giờ">
@@ -11563,7 +11564,11 @@ function _projUpdateBadge(){
   const badge=document.getElementById('projFolderBadge');
   const load=document.getElementById('projLoadBtn');
   const disc=document.getElementById('projDisconnectBtn');
-  if(badge){badge.textContent=_projDir?'📁 '+_projDirName:'';badge.classList.toggle('on',!!_projDir);}
+  if(badge){
+    badge.textContent=_projDir?'📁 '+_projDirName:'📁 Chọn ổ project';
+    badge.title=_projDir?'Đang lưu tự động — nhấn để đổi thư mục':'Kết nối thư mục để tự lưu ảnh và dữ liệu';
+    badge.classList.toggle('on',!!_projDir);
+  }
   if(load)load.style.display=_projDir?'':'none';
   if(disc)disc.style.display=_projDir?'':'none';
 }
