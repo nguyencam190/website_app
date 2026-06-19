@@ -504,8 +504,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .editor-content td .cf-img-block,.editor-content th .cf-img-block{margin:0!important}
 .editor-content td .cf-img-caption,.editor-content th .cf-img-caption{display:none!important}
 .editor-content td .cf-img-wrap,.editor-content th .cf-img-wrap{width:100%;display:flex;justify-content:center;align-items:center}
-.editor-content td .cf-img-inner,.editor-content th .cf-img-inner{display:inline-block;max-width:100%}
+.editor-content td .cf-img-inner,.editor-content th .cf-img-inner{display:block;max-width:100%;min-width:0}
 .editor-content td .cf-img-inner img,.editor-content th .cf-img-inner img{max-width:100%!important;height:auto!important;display:block!important;width:auto!important;margin:auto!important}
+/* When inner has an explicit width (e.g. 75%), image must fill inner completely so the percentage shows as whitespace around it */
+.editor-content td .cf-img-inner[style*="width"] img,.editor-content th .cf-img-inner[style*="width"] img{width:100%!important}
 /* Table cell carousel — compact version of .fm-car */
 .tbl-cell-car{display:flex;flex-direction:column;width:100%;height:100%;min-height:100px;background:transparent;border-radius:6px;overflow:hidden;user-select:none;box-sizing:border-box}
 .tbl-cell-car .tcc-stage{position:relative;flex:1;overflow:hidden;cursor:grab;min-height:0;background:transparent}
@@ -11621,8 +11623,9 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .editor-content td .cf-img-block,.ws-canvas .editor-content th .cf-img-block{margin:0!important}',
     '.ws-canvas .editor-content td .cf-img-caption,.ws-canvas .editor-content th .cf-img-caption{display:none!important}',
     '.ws-canvas .editor-content td .cf-img-wrap,.ws-canvas .editor-content th .cf-img-wrap{width:100%;display:flex;justify-content:center;align-items:center}',
-    '.ws-canvas .editor-content td .cf-img-inner,.ws-canvas .editor-content th .cf-img-inner{display:inline-block;max-width:100%}',
+    '.ws-canvas .editor-content td .cf-img-inner,.ws-canvas .editor-content th .cf-img-inner{display:block;max-width:100%;min-width:0}',
     '.ws-canvas .editor-content td .cf-img-inner img,.ws-canvas .editor-content th .cf-img-inner img{max-width:100%!important;height:auto!important;display:block!important;width:auto!important;margin:auto!important}',
+    '.ws-canvas .editor-content td .cf-img-inner[style*="width"] img,.ws-canvas .editor-content th .cf-img-inner[style*="width"] img{width:100%!important}',
     '.tbl-cell-car{display:flex;flex-direction:column;width:100%;height:100%;min-height:100px;background:transparent;border-radius:4px;overflow:hidden}',
     '.tbl-cell-car .tcc-stage{position:relative;flex:1;overflow:hidden;cursor:pointer;min-height:0}',
     '.tbl-cell-car .tcc-inner{display:flex;height:100%;transition:transform .3s}',
