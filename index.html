@@ -1518,6 +1518,18 @@ body[data-focus="1"] .focus-exit-btn{display:flex}
 .cf-find-opt-label input{cursor:pointer;accent-color:var(--accent);}
 mark.cf-fh{background:rgba(255,200,0,.45);border-radius:2px;color:inherit;}
 mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1px solid #f90;color:inherit;}
+/* Scroll to top button */
+.scroll-top-btn{position:fixed;bottom:52px;right:18px;width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 3px 12px var(--accent-glow);opacity:0;transform:translateY(10px);transition:opacity .22s,transform .22s,background .15s;pointer-events:none;z-index:8800}
+.scroll-top-btn.on{opacity:1;transform:translateY(0);pointer-events:auto}
+.scroll-top-btn:hover{background:var(--accent-h)}
+/* Accent color swatches */
+.accent-swatches{display:flex;gap:7px;flex-wrap:wrap;margin-top:4px}
+.accent-swatch{width:24px;height:24px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:transform .15s,border-color .15s;flex-shrink:0}
+.accent-swatch:hover{transform:scale(1.18)}
+.accent-swatch.active{border-color:var(--text)!important;box-shadow:0 0 0 1px var(--surface)}
+.accent-swatch-custom{width:24px;height:24px;border-radius:50%;border:2px solid var(--border2);cursor:pointer;overflow:hidden;flex-shrink:0;position:relative;display:flex;align-items:center;justify-content:center}
+.accent-swatch-custom input[type=color]{position:absolute;inset:-6px;width:calc(100%+12px);height:calc(100%+12px);border:none;cursor:pointer;opacity:0}
+.accent-swatch-custom-icon{font-size:12px;color:var(--text2);pointer-events:none}
 </style>
 </head>
 <body>
@@ -1985,6 +1997,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
   </div>
 </div>
 
+<button class="scroll-top-btn" id="scrollTopBtn" title="Lên đầu trang" onclick="document.getElementById('editorScroll').scrollTo({top:0,behavior:'smooth'})"><i class="ti ti-arrow-up"></i></button>
 <div class="statusbar">
   <span id="saveStatusEl" class="save-ok"><i class="ti ti-circle-check" style="font-size:12px"></i> Đã lưu</span>
   <span id="wordCountEl" style="color:var(--text3)"></span>
@@ -2074,6 +2087,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
     <h3>Cài đặt</h3>
     <div class="field"><label>Tên dự án</label><input type="text" id="settProjectName"></div>
     <div class="field"><label>Tên của bạn</label><input type="text" id="settUsername"></div>
+    <div class="field"><label>Màu nhấn</label><div class="accent-swatches" id="accentSwatches"></div></div>
     <div class="modal-actions"><button class="hbtn" onclick="closeModal('settingsModal')">Huỷ</button><button class="hbtn primary" onclick="saveSettings()">Lưu</button></div>
   </div>
 </div>
@@ -2594,6 +2608,7 @@ function init(){
   document.getElementById('editorScroll')?.addEventListener('scroll',e=>{
     _reposVisibleToolbars();
     document.getElementById('mainHeader')?.classList.toggle('hdr-scrolled',e.target.scrollTop>10);
+    document.getElementById('scrollTopBtn')?.classList.toggle('on',e.target.scrollTop>300);
   });
   window.addEventListener('resize',_reposVisibleToolbars);
   // Restore saved width
@@ -2619,6 +2634,9 @@ function init(){
   if(!state.starred)state.starred=[];
   document.getElementById('projectNameEl').textContent=state.projectName;
   const _spTxt=document.getElementById('sbSpaceIconText');if(_spTxt)_spTxt.textContent=(state.projectName||'P').charAt(0).toUpperCase();
+  // Restore saved accent color
+  const _savedAccent=localStorage.getItem('accent_color');
+  if(_savedAccent&&typeof _accentApply==='function')_accentApply(_savedAccent);
   updateUserUI();renderSidebar();
   if(state.currentDocId)openDoc(state.currentDocId);
   // Show welcome/restore modal if no data (new file or new path)
@@ -2633,6 +2651,7 @@ function init(){
 const _UNDO_MAX=100;
 let _undoStack=[],_redoStack=[];
 let _undoPaused=false,_undoTimer=null;
+const _undoHistoryCache=new Map();
 
 function _undoSnapshot(){
   if(_undoPaused)return;
@@ -3507,6 +3526,12 @@ function _expandAncestors(id){
 }
 function openDoc(id){
   const doc=state.docs.find(d=>d.id===id);if(!doc)return;
+  // Save undo history of departing page
+  const _prevDocId=state.currentDocId;
+  if(_prevDocId&&_prevDocId!==id&&(_undoStack.length>1||_redoStack.length)){
+    _undoHistoryCache.set(_prevDocId,{stack:[..._undoStack],redo:[..._redoStack]});
+    if(_undoHistoryCache.size>4){_undoHistoryCache.delete(_undoHistoryCache.keys().next().value);}
+  }
   // Track recent
   if(!state.recent)state.recent=[];
   state.recent=state.recent.filter(r=>r.id!==id);
@@ -3536,8 +3561,10 @@ function openDoc(id){
   if(_wb){_wb.classList.remove('watching');_wb.innerHTML='<i class="ti ti-bell"></i>';_wb.title='Theo dõi trang';}
   renderMeta(doc);renderSidebar(document.getElementById('searchInput').value.toLowerCase());updatePageActionBar();hdrBuildNotif();
   _applyDocLock(doc);
-  // Reset undo stack for new doc
-  _undoStack=[];_redoStack=[];
+  // Restore undo history for this page if cached, otherwise reset
+  const _cachedUndo=_undoHistoryCache.get(id);
+  if(_cachedUndo){_undoStack=_cachedUndo.stack;_redoStack=_cachedUndo.redo;}
+  else{_undoStack=[];_redoStack=[];}
   setTimeout(()=>{
     _cfImgLoadAll(document.getElementById('editor'));
     _cfToggleLoadAll(document.getElementById('editor'));
@@ -5133,8 +5160,39 @@ function ctxDelete(){const doc=currentDoc();if(!doc||ctxImgIdx===null)return;con
 
 
 // SETTINGS
-function openSettings(){document.getElementById('settProjectName').value=state.projectName;document.getElementById('settUsername').value=state.username;openModal('settingsModal');}
+function openSettings(){document.getElementById('settProjectName').value=state.projectName;document.getElementById('settUsername').value=state.username;_buildAccentSwatches();openModal('settingsModal');}
 function saveSettings(){state.projectName=document.getElementById('settProjectName').value.trim()||state.projectName;state.username=document.getElementById('settUsername').value.trim()||state.username;persist();document.getElementById('projectNameEl').textContent=state.projectName;updateUserUI();renderSidebar();closeModal('settingsModal');toast('Đã lưu cài đặt','success');}
+// Accent color customizer
+const _ACCENT_PRESETS=[
+  {c:'#2563eb',n:'Xanh dương'},{c:'#7c3aed',n:'Tím'},{c:'#059669',n:'Xanh lá'},
+  {c:'#dc2626',n:'Đỏ'},{c:'#d97706',n:'Cam'},{c:'#db2777',n:'Hồng'},
+  {c:'#0891b2',n:'Cyan'},{c:'#374151',n:'Xám'},
+];
+function _hexDarken(hex,a){let r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);r=Math.max(0,r+a);g=Math.max(0,g+a);b=Math.max(0,b+a);return`#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;}
+function _accentApply(hex){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  const h=_hexDarken(hex,-20);
+  document.documentElement.style.setProperty('--accent',hex);
+  document.documentElement.style.setProperty('--accent-h',h);
+  document.documentElement.style.setProperty('--accent-light',`rgba(${r},${g},${b},.12)`);
+  document.documentElement.style.setProperty('--accent-glow',`rgba(${r},${g},${b},.25)`);
+  localStorage.setItem('accent_color',hex);
+}
+function _buildAccentSwatches(){
+  const cont=document.getElementById('accentSwatches');if(!cont)return;
+  const cur=localStorage.getItem('accent_color')||'#2563eb';
+  cont.innerHTML='';
+  const apply=(c)=>{_accentApply(c);cont.querySelectorAll('.accent-swatch').forEach(x=>x.classList.toggle('active',x.dataset.c===c));};
+  _ACCENT_PRESETS.forEach(({c,n})=>{
+    const s=document.createElement('div');s.className='accent-swatch'+(c.toLowerCase()===cur.toLowerCase()?' active':'');
+    s.dataset.c=c;s.style.background=c;s.title=n;s.onclick=()=>apply(c);cont.appendChild(s);
+  });
+  const cw=document.createElement('div');cw.className='accent-swatch-custom';cw.title='Tùy chỉnh màu';
+  const ci=document.createElement('input');ci.type='color';ci.value=cur;
+  ci.oninput=function(){_accentApply(this.value);cont.querySelectorAll('.accent-swatch').forEach(x=>x.classList.remove('active'));};
+  const icon=document.createElement('div');icon.className='accent-swatch-custom-icon';icon.innerHTML='<i class="ti ti-palette"></i>';
+  cw.appendChild(ci);cw.appendChild(icon);cont.appendChild(cw);
+}
 function updateUserUI(){
   const nameEl=document.getElementById('sbUsernameEl');if(nameEl)nameEl.textContent=state.username;
   const avatarEl=document.getElementById('sbAvatarEl');if(avatarEl)avatarEl.textContent=(state.username||'U').charAt(0).toUpperCase();
