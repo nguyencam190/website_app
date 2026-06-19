@@ -3970,7 +3970,7 @@ async function importPageJson(){
 
       state.docs.push(importDoc);
       persist();renderSidebar();openDoc(newId);
-      toast(`✅ Đã nhập "${importDoc.title||'Untitled'}"','success');
+      toast(`✅ Đã nhập "${importDoc.title||'Untitled'}"`, 'success');
     }catch(ex){toast('Lỗi nhập file: '+ex.message,'error');console.error(ex);}
   };
   input.click();
@@ -11773,7 +11773,7 @@ async function handleImport(e){
       state.currentDocId=null;
       document.getElementById('emptyState').style.display='';
       document.getElementById('editorPanel').style.display='none';
-      toast(`✅ Đã import ${state.docs.length} tài liệu${mediaCount?' và '+mediaCount+' ảnh/video':''}','success');
+      toast(`✅ Đã import ${state.docs.length} tài liệu${mediaCount?' và '+mediaCount+' ảnh/video':''}`, 'success');
     }else{
       // Legacy JSON import
       const reader=new FileReader();
