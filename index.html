@@ -11539,6 +11539,7 @@ async function _saveFile(blob, suggestedName, types){
 const PROJ_DIR_IDB_KEY='__proj_folder_handle__';
 let _projDir=null,_projDirName='';
 const _projSavedIds=new Set();
+const _pendingFolderSaves=new Map(); // blobs queued while _projDir was null
 
 function _projUpdateBadge(){
   const badge=document.getElementById('projFolderBadge');
@@ -11589,6 +11590,7 @@ async function _projSelectFolder(){
     toast('📁 Đã kết nối thư mục: '+handle.name,'success');
     // Migrate existing IDB assets to folder
     await _projMigrateToFolder();
+    await _projFlushPendingSaves();
     // Immediately save current state
     await _projSaveJSON();
   }catch(e){if(e.name!=='AbortError')toast('Lỗi chọn thư mục: '+e.message,'error');}
@@ -11610,13 +11612,15 @@ async function _projReconnect(){
       _projUpdateBadge();
       toast('📁 Đã kết nối lại: '+handle.name,'success');
       await _projSaveJSON();
+      await _projFlushPendingSaves();
+      await _projMigrateToFolder();
     }else{toast('Bị từ chối quyền truy cập thư mục','error');}
   }catch(e){toast('Lỗi kết nối lại: '+e.message,'error');}
 }
 
 async function _projDisconnect(){
   if(!confirm('Ngắt kết nối thư mục project?\nApp sẽ tiếp tục lưu vào trình duyệt như bình thường.'))return;
-  _projDir=null;_projDirName='';_projSavedIds.clear();
+  _projDir=null;_projDirName='';_projSavedIds.clear();_pendingFolderSaves.clear();
   try{
     const db=await _openIDB();
     await new Promise(res=>{
@@ -11711,7 +11715,13 @@ async function _projSaveJSON(){
 }
 
 async function _projSaveAsset(id,blob){
-  if(!_projDir||!id||!blob||_projSavedIds.has(id))return;
+  if(!id||!blob)return;
+  if(!_projDir){
+    // Folder not connected yet — queue for flush when folder reconnects
+    _pendingFolderSaves.set(id,blob);
+    return;
+  }
+  if(_projSavedIds.has(id))return;
   try{
     const mime=blob.type||'image/jpeg';
     const ext=_mimeToExt(mime)||'.bin';
@@ -11722,7 +11732,18 @@ async function _projSaveAsset(id,blob){
     await wr.write(blob);
     await wr.close();
     _projSavedIds.add(id);
+    _pendingFolderSaves.delete(id);
   }catch(e){console.warn('[projSaveAsset]',e);}
+}
+
+async function _projFlushPendingSaves(){
+  if(!_projDir||_pendingFolderSaves.size===0)return;
+  let saved=0;
+  for(const[id,blob]of _pendingFolderSaves){
+    _projSavedIds.delete(id); // ensure guard doesn't block
+    try{await _projSaveAsset(id,blob);saved++;}catch(e){}
+  }
+  if(saved>0)toast('📁 Đã sao lưu '+saved+' ảnh/video vào thư mục project','success');
 }
 
 async function _projMigrateToFolder(){
