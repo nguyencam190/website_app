@@ -1551,12 +1551,46 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 .proj-folder-badge.on{display:flex}
 .proj-reconnect-banner{display:none;position:fixed;top:0;left:0;right:0;z-index:10000;background:#f59e0b;color:#1c1917;font-size:13px;padding:8px 16px;align-items:center;gap:8px}
 .proj-reconnect-banner.on{display:flex}
+/* Unified import panel */
+.sb-import-panel{display:none;position:fixed;inset:0;z-index:10000;align-items:center;justify-content:center;background:rgba(0,0,0,.45)}
+.sb-import-panel.on{display:flex}
+.sb-import-box{background:var(--surface);border-radius:14px;padding:24px;width:320px;box-shadow:0 8px 32px rgba(0,0,0,.25)}
+.sb-import-box h3{margin:0 0 6px;font-size:15px;font-weight:600;color:var(--text)}
+.sb-import-box p{margin:0 0 18px;font-size:12px;color:var(--text3);line-height:1.5}
+.sb-import-opt{display:flex;align-items:center;gap:12px;padding:14px 16px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;transition:.15s;margin-bottom:10px}
+.sb-import-opt:hover{border-color:var(--accent);background:var(--accent-light)}
+.sb-import-opt i{font-size:22px;color:var(--accent);flex-shrink:0}
+.sb-import-opt-text strong{display:block;font-size:13px;color:var(--text);margin-bottom:2px}
+.sb-import-opt-text span{font-size:11px;color:var(--text3)}
+.sb-import-cancel{width:100%;padding:8px;border:none;border-radius:8px;background:var(--surface2);color:var(--text2);cursor:pointer;font-size:13px;margin-top:4px}
 .proj-reconnect-banner button.reconnect-btn{background:rgba(0,0,0,.18);border:none;border-radius:4px;padding:3px 12px;cursor:pointer;font-size:13px;font-weight:600;color:#1c1917}
 .proj-reconnect-banner button.reconnect-close{margin-left:auto;background:none;border:none;cursor:pointer;font-size:18px;opacity:.7;line-height:1;padding:0}
 </style>
 </head>
 <body>
 <!-- Project folder reconnect banner -->
+<!-- Unified import panel -->
+<div class="sb-import-panel" id="sbImportPanel" onclick="if(event.target===this)_sbImportPanelClose()">
+  <div class="sb-import-box">
+    <h3>Nhập trang</h3>
+    <p>Chọn nguồn để nhập — hỗ trợ file .zip, .json và thư mục project</p>
+    <div class="sb-import-opt" onclick="_sbImportFile()">
+      <i class="ti ti-file-zip"></i>
+      <div class="sb-import-opt-text">
+        <strong>Chọn file</strong>
+        <span>Nhập từ file .zip hoặc .json</span>
+      </div>
+    </div>
+    <div class="sb-import-opt" onclick="_sbImportFolder()">
+      <i class="ti ti-folder-open"></i>
+      <div class="sb-import-opt-text">
+        <strong>Chọn thư mục</strong>
+        <span>Nhập từ thư mục project (có ảnh/video)</span>
+      </div>
+    </div>
+    <button class="sb-import-cancel" onclick="_sbImportPanelClose()">Hủy</button>
+  </div>
+</div>
 <div class="proj-reconnect-banner" id="projReconnectBanner">
   <i class="ti ti-folder-exclamation"></i>
   <span>Thư mục project "<span id="projReconnectName"></span>" cần được cấp lại quyền truy cập.</span>
@@ -1920,13 +1954,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
     <div class="sb-search-row">
       <div class="sb-search"><i class="ti ti-search"></i><input type="text" placeholder="Search pages..." id="searchInput" oninput="filterDocs()"></div>
       <button class="sb-new-btn" onclick="_quickNewRootDoc()" title="Trang mới"><i class="ti ti-plus"></i></button>
-      <div style="position:relative" id="sbImportWrap">
-        <button class="sb-new-btn" onclick="_sbImportToggle()" title="Nhập trang"><i class="ti ti-file-import"></i></button>
-        <div id="sbImportDd" style="display:none;position:absolute;bottom:calc(100% + 4px);right:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);z-index:999;min-width:210px;padding:4px">
-          <div class="hdr-dd-item" onclick="importPageJson();_sbImportClose()"><i class="ti ti-file-description"></i> Nhập trang từ file</div>
-          <div class="hdr-dd-item" onclick="importMergePagesFromFolder();_sbImportClose()"><i class="ti ti-folder-plus" style="color:var(--accent)"></i> Nhập từ thư mục <span style="font-size:10px;background:var(--accent);color:#fff;border-radius:10px;padding:1px 6px;margin-left:2px">có ảnh</span></div>
-        </div>
-      </div>
+      <button class="sb-new-btn" onclick="_sbImportAll()" title="Nhập trang"><i class="ti ti-file-import"></i></button>
     </div>
 
     <!-- Nav tree -->
@@ -11185,20 +11213,10 @@ document.addEventListener('selectionchange',()=>{const sel=window.getSelection()
 // ══ IMPORT MERGE (Nhập trang từ file) ══════════════════════
 let _importMergeDocs=[];
 
-function _sbImportToggle(){
-  const dd=document.getElementById('sbImportDd');
-  if(!dd)return;
-  const open=dd.style.display==='block';
-  dd.style.display=open?'none':'block';
-  if(!open){
-    setTimeout(()=>document.addEventListener('click',_sbImportOutside,{once:true}),0);
-  }
-}
-function _sbImportClose(){document.getElementById('sbImportDd').style.display='none';}
-function _sbImportOutside(e){
-  const wrap=document.getElementById('sbImportWrap');
-  if(wrap&&!wrap.contains(e.target))_sbImportClose();
-}
+function _sbImportAll(){document.getElementById('sbImportPanel').classList.add('on');}
+function _sbImportPanelClose(){document.getElementById('sbImportPanel').classList.remove('on');}
+function _sbImportFile(){_sbImportPanelClose();importPageJson();}
+function _sbImportFolder(){_sbImportPanelClose();importMergePagesFromFolder();}
 
 function importMergePages(){
   document.getElementById('importMergeInput').click();
