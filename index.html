@@ -1679,6 +1679,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
         <div class="hdr-dd-item" onclick="importProject();hdrCloseAll()"><i class="ti ti-folder-open"></i> Mở project từ JSON</div>
         <div class="hdr-dd-sep"></div>
         <div class="hdr-dd-item" onclick="importMergePages();hdrCloseAll()"><i class="ti ti-file-import"></i> Nhập trang từ file</div>
+        <div class="hdr-dd-item" onclick="importMergePagesFromFolder();hdrCloseAll()"><i class="ti ti-folder-plus"></i> Nhập trang từ thư mục (có ảnh)</div>
       </div>
     </div>
 
@@ -11136,6 +11137,61 @@ let _importMergeDocs=[];
 
 function importMergePages(){
   document.getElementById('importMergeInput').click();
+}
+
+async function importMergePagesFromFolder(){
+  if(!window.showDirectoryPicker){toast('Trình duyệt không hỗ trợ (cần Chrome/Edge 86+)','error');return;}
+  let dir;
+  try{dir=await window.showDirectoryPicker({mode:'read',startIn:'documents'});}
+  catch(e){if(e.name!=='AbortError')toast('Lỗi chọn thư mục: '+e.message,'error');return;}
+  // 1. Đọc data.json
+  let imported;
+  try{
+    const fh=await dir.getFileHandle('data.json');
+    const text=await(await fh.getFile()).text();
+    imported=JSON.parse(text);
+  }catch(e){toast('Không tìm thấy data.json trong thư mục này','error');return;}
+  if(!imported||!Array.isArray(imported.docs)){toast('File data.json không hợp lệ','error');return;}
+  // 2. Import ảnh + video vào IDB (chạy nền, không chặn UI)
+  let mediaCount=0;
+  toast('⏳ Đang tải ảnh/video từ thư mục...','info');
+  for(const subDirName of['images','videos']){
+    let subDir;
+    try{subDir=await dir.getDirectoryHandle(subDirName);}catch(e){continue;}
+    for await(const[,entry]of subDir.entries()){
+      if(entry.kind!=='file')continue;
+      try{
+        const f=await entry.getFile();
+        const blob=new Blob([await f.arrayBuffer()],{type:f.type||'application/octet-stream'});
+        const id=entry.name.replace(/\.[^.]+$/,'');
+        await _idbPut(id,blob);
+        mediaCount++;
+      }catch(e){console.warn('[mergeFolder] skip',entry.name,e);}
+    }
+  }
+  if(mediaCount)toast('✅ Đã tải '+mediaCount+' ảnh/video vào trình duyệt','success');
+  // 3. Hiển thị dialog chọn trang để merge (tái dùng UI hiện có)
+  _importMergeDocs=imported.docs;
+  const list=document.getElementById('importMergeList');
+  const info=document.getElementById('importMergeInfo');
+  info.style.display='';
+  info.innerHTML=`<i class="ti ti-folder" style="font-size:14px;margin-right:6px;color:var(--accent)"></i>Thư mục: <strong>${escH(dir.name)}</strong> — ${imported.docs.length} trang${mediaCount?' · '+mediaCount+' ảnh/video':''}`;
+  list.innerHTML=`<div style="display:flex;gap:8px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border)">
+    <button onclick="document.querySelectorAll('#importMergeList input').forEach(i=>i.checked=true)" style="font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);cursor:pointer;color:var(--text)">✓ Chọn tất cả</button>
+    <button onclick="document.querySelectorAll('#importMergeList input').forEach(i=>i.checked=false)" style="font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);cursor:pointer;color:var(--text)">✕ Bỏ chọn</button>
+  </div>`;
+  imported.docs.forEach(d=>{
+    const row=document.createElement('label');row.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:13px;transition:background .1s';
+    row.onmouseenter=()=>row.style.background='var(--surface2)';row.onmouseleave=()=>row.style.background='';
+    const chk=document.createElement('input');chk.type='checkbox';chk.value=d.id;chk.checked=true;chk.style.accentColor='var(--accent)';
+    const icon=document.createElement('i');icon.className='ti ti-file-text';icon.style.cssText='font-size:13px;color:var(--text2);flex-shrink:0';
+    const title=document.createElement('span');title.style.flex='1';title.textContent=d.title||'Untitled';
+    const preview=document.createElement('span');preview.style.cssText='font-size:11px;color:var(--text3);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+    preview.textContent=(d.content||'').replace(/<[^>]+>/g,' ').trim().slice(0,60)||'(trống)';
+    row.appendChild(chk);row.appendChild(icon);row.appendChild(title);row.appendChild(preview);
+    list.appendChild(row);
+  });
+  openModal('importMergeModal');
 }
 function handleImportMerge(e){
   const file=e.target.files[0];if(!file)return;
