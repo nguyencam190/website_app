@@ -1269,6 +1269,14 @@ td .cf-checklist-body,.cf-column-item .cf-checklist-body{padding:8px 10px 10px 1
 .bb-select:focus,.bb-select:hover{border-color:#2563eb;color:#e2e8f0}
 .bb-size-wrap{position:relative;display:inline-flex;align-items:center}
 .bb-size-input{width:36px;text-align:center;font-size:12px;font-family:var(--mono);font-weight:700;color:#e2e8f0;background:#0f172a;border:1px solid #334155;border-radius:5px;padding:3px 4px;cursor:pointer;outline:none}
+.bb-link-row{display:none;align-items:center;gap:5px;padding:0 2px}
+.bb-link-row.on{display:flex}
+.bb-link-inp{width:220px;font-size:12px;font-family:var(--font);color:#e2e8f0;background:#0f172a;border:1px solid #334155;border-radius:6px;padding:4px 8px;outline:none}
+.bb-link-inp:focus{border-color:#2563eb}
+.bb-link-ok{width:24px;height:24px;background:#2563eb;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center}
+.bb-link-ok:hover{background:#1d4ed8}
+.bb-link-cancel{width:24px;height:24px;background:transparent;color:#64748b;border:none;border-radius:5px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+.bb-link-cancel:hover{background:#334155;color:#fff}
 .bb-size-input:hover,.bb-size-input:focus{border-color:#2563eb}
 .bb-size-dropdown{position:fixed;z-index:900;background:#1e293b;border:1px solid #334155;border-radius:9px;box-shadow:0 8px 28px rgba(0,0,0,.35);padding:4px;min-width:72px;display:none;flex-direction:column;max-height:260px;overflow-y:auto}
 .bb-size-dropdown.on{display:flex;animation:bbSizeFade .12s ease}
@@ -2212,8 +2220,14 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
     <div class="bb-spacing-dropdown" id="bbSpacingDD" style="min-width:170px"></div>
   </div>
   <div class="bb-sep"></div>
-  <button class="bb" onmousedown="event.preventDefault();bbInsertLink()" title="Chen link"><i class="ti ti-link"></i></button>
+  <button class="bb" id="bbLinkBtn" onmousedown="event.preventDefault();bbOpenLinkRow()" title="Chèn liên kết"><i class="ti ti-link"></i></button>
   <button class="bb" onmousedown="event.preventDefault();bbClear()" title="Xoa dinh dang" style="font-size:10px;font-weight:700;color:#64748b">xA</button>
+  <div class="bb-link-row" id="bbLinkRow">
+    <div class="bb-sep"></div>
+    <input class="bb-link-inp" id="bbLinkInp" type="url" placeholder="https://" autocomplete="off" spellcheck="false">
+    <button class="bb-link-ok" id="bbLinkOk" title="Áp dụng"><i class="ti ti-check"></i></button>
+    <button class="bb-link-cancel" id="bbLinkCancel" title="Huỷ"><i class="ti ti-x"></i></button>
+  </div>
 </div>
 
 <!-- COLOR PALETTES -->
@@ -2697,7 +2711,7 @@ function persistNow(){
   toSave.docs.forEach(doc=>{
     if(doc.images)doc.images=doc.images.map(m=>{const{src,...meta}=m;return src&&src.startsWith('data:')?{...meta,src}:meta;});
   });
-  localStorage.setItem('projectdocs_v3',JSON.stringify(toSave));
+  try{localStorage.setItem('projectdocs_v3',JSON.stringify(toSave));}catch(e){console.warn('persistNow quota exceeded',e);}
 }
 function persist(){
   // Strip blob Object URLs from media before saving (only store metadata)
@@ -10514,7 +10528,7 @@ function bbShow(){
     bbUpdateState();
   });
 }
-function bbHide(){const bb=document.getElementById('bubbleToolbar');if(bb)bb.classList.remove('on');}
+function bbHide(){const bb=document.getElementById('bubbleToolbar');if(bb)bb.classList.remove('on');document.getElementById('bbLinkRow')?.classList.remove('on');}
 function bbUpdateState(){
   const sel=window.getSelection();if(!sel||!sel.rangeCount)return;
   const node=sel.anchorNode;const el=node&&node.nodeType===3?node.parentElement:node;if(!el)return;
@@ -10953,7 +10967,37 @@ function _updateAlignBtns(){
     if(btn)btn.classList.toggle('active',document.queryCommandState(cmd));
   });
 }
-function bbInsertLink(){const url=prompt('Nhap URL:');if(!url)return;document.execCommand('createLink',false,url);onContentChange();bbHide();}
+function bbOpenLinkRow(){
+  saveRange();
+  const row=document.getElementById('bbLinkRow');const inp=document.getElementById('bbLinkInp');
+  if(!row||!inp)return;
+  row.classList.add('on');
+  inp.value='https://';
+  inp.focus();inp.select();
+}
+function _bbApplyLink(){
+  const row=document.getElementById('bbLinkRow');const inp=document.getElementById('bbLinkInp');
+  const url=(inp?.value||'').trim();
+  row?.classList.remove('on');
+  if(!url||url==='https://')return;
+  restoreRange();
+  document.execCommand('createLink',false,url);
+  onContentChange();bbHide();
+}
+function _bbCancelLink(){
+  document.getElementById('bbLinkRow')?.classList.remove('on');
+  restoreRange();
+}
+(function(){
+  setTimeout(()=>{
+    const inp=document.getElementById('bbLinkInp');
+    const ok=document.getElementById('bbLinkOk');
+    const cancel=document.getElementById('bbLinkCancel');
+    if(inp)inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();_bbApplyLink();}if(e.key==='Escape'){e.preventDefault();_bbCancelLink();}});
+    if(ok)ok.addEventListener('mousedown',e=>{e.preventDefault();_bbApplyLink();});
+    if(cancel)cancel.addEventListener('mousedown',e=>{e.preventDefault();_bbCancelLink();});
+  },200);
+})();
 function bbOpenSpacingDD(){clearTimeout(_spacingCloseTimer);saveRange();const dd=document.getElementById('bbSpacingDD');const sel=window.getSelection();let curLH='1.15';if(sel&&sel.rangeCount){const node=sel.anchorNode;const el=node&&node.nodeType===3?node.parentElement:node;if(el){const lh=window.getComputedStyle(el).lineHeight;curLH=lh==='normal'?'1.15':parseFloat(lh).toFixed(2);}}dd.innerHTML=BB_SPACINGS.map(s=>`<div class="bb-spacing-opt${parseFloat(s.val).toFixed(2)===parseFloat(curLH).toFixed(2)?' active':''}" onmousedown="event.preventDefault();bbApplySpacing('${s.val}')">${s.label}</div>`).join('');const wrap=document.getElementById('bbSpacingWrap');const r=wrap.getBoundingClientRect();dd.style.visibility='hidden';dd.classList.add('on');const ddH=dd.offsetHeight||200;let top=r.bottom+2;if(top+ddH>window.innerHeight-8)top=r.top-ddH-2;dd.style.top=top+'px';dd.style.left=r.left+'px';dd.style.visibility='';}
 function bbCloseSpacingDD(){_spacingCloseTimer=setTimeout(()=>document.getElementById('bbSpacingDD').classList.remove('on'),120);}
 function bbApplySpacing(val){restoreRange();const sel=window.getSelection();if(!sel||!sel.rangeCount)return;const range=sel.getRangeAt(0);const editor=document.getElementById('editor');const blocks=new Set();const walker=document.createTreeWalker(editor,NodeFilter.SHOW_TEXT);let node;while(node=walker.nextNode()){if(range.intersectsNode(node)){let block=node.parentElement;while(block&&block!==editor&&!['P','H1','H2','H3','LI','DIV','BLOCKQUOTE'].includes(block.tagName)){block=block.parentElement;}if(block&&block!==editor)blocks.add(block);}}if(blocks.size===0){const span=document.createElement('span');span.style.lineHeight=val;try{range.surroundContents(span);}catch(e){}}else{blocks.forEach(b=>b.style.lineHeight=val);}document.getElementById('bbSpacingDD').classList.remove('on');onContentChange();setTimeout(bbShow,10);}
@@ -12778,7 +12822,7 @@ async function doExportWebsite(){
     '<div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0">',
     '<span id="wsDocCount" class="ws-doc-count">'+docs.length+' pages</span>',
     '<button class="ws-focus-btn" id="wsFocusBtn" title="Focus mode (F11)"><i class="ti ti-focus-2"></i></button>',
-    '<button class="ws-theme-btn" id="wsThemeBtn">&#9728;</button>',
+    '<button class="ws-theme-btn" id="wsThemeBtn" aria-label="Chuyển giao diện sáng/tối">&#9728;</button>',
     '</div>',
     '</div>',
     '<div class="ws-qs-overlay" id="wsQsOverlay"><div class="ws-qs-box"><input class="ws-qs-inp" id="wsQsInput" type="text" placeholder="Tìm trang... (⌘K)" autocomplete="off"><div class="ws-qs-list" id="wsQsList"></div></div></div>',
@@ -13194,7 +13238,7 @@ async function doExportOptimized(){
     '<div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0">',
     '<span id="wsDocCount" class="ws-doc-count">'+docs.length+' pages</span>',
     '<button class="ws-focus-btn" id="wsFocusBtn" title="Focus mode (F11)"><i class="ti ti-focus-2"></i></button>',
-    '<button class="ws-theme-btn" id="wsThemeBtn">&#9728;</button>',
+    '<button class="ws-theme-btn" id="wsThemeBtn" aria-label="Chuyển giao diện sáng/tối">&#9728;</button>',
     '</div>',
     '</div>',
     '<div class="ws-qs-overlay" id="wsQsOverlay"><div class="ws-qs-box"><input class="ws-qs-inp" id="wsQsInput" type="text" placeholder="Tìm trang... (⌘K)" autocomplete="off"><div class="ws-qs-list" id="wsQsList"></div></div></div>',
