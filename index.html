@@ -11170,6 +11170,15 @@ function openExportWebsiteModal(){
     </label>`;
   });
   list.innerHTML=html;
+  // Pre-select webTheme radio matching user's current accent color
+  (function(){
+    const cur=(localStorage.getItem('accent_color')||'').toLowerCase();
+    if(!cur)return;
+    let matched=false;
+    document.querySelectorAll('input[name="webTheme"]').forEach(r=>{
+      if(r.value.toLowerCase()===cur){r.checked=true;matched=true;}
+    });
+  })();
   openModal('exportWebModal');
   // Sync dual-display sliders
   setTimeout(()=>{
@@ -11796,6 +11805,10 @@ function _buildViewerShellCss(accent){
     '}',
     /* Mobile overlay backdrop — hidden by default */
     '.ws-sb-overlay{display:none}',
+    /* Scroll-to-top button */
+    '.ws-scroll-top{position:fixed;bottom:24px;right:20px;width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 3px 12px rgba(0,0,0,.18);opacity:0;transform:translateY(10px);transition:opacity .22s,transform .22s;pointer-events:none;z-index:8800}',
+    '.ws-scroll-top.on{opacity:1;transform:translateY(0);pointer-events:auto}',
+    '.ws-scroll-top:hover{filter:brightness(1.1)}',
   ].join('\n');
 }
 
@@ -12722,6 +12735,7 @@ async function doExportWebsite(){
     'document.addEventListener("copy",function(e){var sel=window.getSelection();if(sel&&sel.toString()){e.clipboardData.setData("text/plain",sel.toString());e.preventDefault();}});',
     /* ── Init all on showDoc ── */
     'wsSbMode("pages");',
+    '(function(){var m=document.getElementById("wsMain"),b=document.getElementById("wsScrollTop");if(!m||!b)return;m.addEventListener("scroll",function(){b.classList.toggle("on",m.scrollTop>400);},{passive:true});b.onclick=function(){m.scrollTo({top:0,behavior:"smooth"});};})();',
     'showDoc('+JSON.stringify(firstId)+');',
   ];
 
@@ -12773,6 +12787,7 @@ async function doExportWebsite(){
     '  <div class="ws-flyout-list" id="wsFlyoutList"></div>',
     '  <div class="ws-flyout-footer" id="wsFlyoutFooter"></div>',
     '</div>',
+    '<button class="ws-scroll-top" id="wsScrollTop" title="L\u00ean \u0111\u1ea7u trang">\u2191</button>',
     jsTag,
     '</body>',
     '</html>'
@@ -13136,6 +13151,7 @@ async function doExportOptimized(){
     'function wsToggleFocus(){_wsFocused=!_wsFocused;document.body.classList.toggle("ws-focused",_wsFocused);var btn=document.getElementById("wsFocusBtn");if(btn)btn.innerHTML=_wsFocused?"<i class=\\"ti ti-focus-off\\"></i>":"<i class=\\"ti ti-focus-2\\"></i>";}',
     'document.addEventListener("keydown",function(e){var lb=document.getElementById("wsImgOv");if(lb&&lb.classList.contains("on")){if(e.key==="Escape")wsLbClose();else if(e.key==="ArrowLeft")wsLbGo(-1);else if(e.key==="ArrowRight")wsLbGo(1);return;}if(e.key==="k"&&!e.ctrlKey&&!e.metaKey&&!e.altKey){var _ae=document.activeElement;if(!_ae||_ae.tagName==="BODY"||(!_ae.isContentEditable&&_ae.tagName!=="INPUT"&&_ae.tagName!=="TEXTAREA")){e.preventDefault();wsOpenQS();}}if(e.key==="F11"){e.preventDefault();wsToggleFocus();}var qsOv=document.getElementById("wsQsOverlay");if(e.key==="Escape"){if(qsOv&&qsOv.classList.contains("on")){wsCloseQS();return;}if(_wsFocused){wsToggleFocus();return;}}if(qsOv&&qsOv.classList.contains("on")){if(e.key==="ArrowDown"){e.preventDefault();wsQsMove(1);}else if(e.key==="ArrowUp"){e.preventDefault();wsQsMove(-1);}else if(e.key==="Enter"){e.preventDefault();var sel=document.querySelector(".ws-qs-item.ws-qs-sel");if(sel){showDoc(sel.dataset.docid);wsCloseQS();}}}});',
     '(function(){var qsInp=document.getElementById("wsQsInput");if(qsInp)qsInp.addEventListener("input",function(){_wsQsSel=0;wsRenderQS(this.value);});var qsOv=document.getElementById("wsQsOverlay");if(qsOv)qsOv.addEventListener("click",function(e){if(e.target===qsOv)wsCloseQS();});var fb=document.getElementById("wsFocusBtn");if(fb)fb.addEventListener("click",wsToggleFocus);var fex=document.getElementById("wsFocusExitBtn");if(fex)fex.addEventListener("click",wsToggleFocus);})();',
+    '(function(){var m=document.getElementById("wsMain"),b=document.getElementById("wsScrollTop");if(!m||!b)return;m.addEventListener("scroll",function(){b.classList.toggle("on",m.scrollTop>400);},{passive:true});b.onclick=function(){m.scrollTo({top:0,behavior:"smooth"});};})();',
     'wsSbMode("pages");',
     'showDoc('+JSON.stringify(firstId)+');',
   ].join('\n');
@@ -13186,6 +13202,7 @@ async function doExportOptimized(){
     '  <div class="ws-flyout-list" id="wsFlyoutList"></div>',
     '  <div class="ws-flyout-footer" id="wsFlyoutFooter"></div>',
     '</div>',
+    '<button class="ws-scroll-top" id="wsScrollTop" title="Lên đầu trang">↑</button>',
     jsTag,
     '</body>',
     '</html>'
