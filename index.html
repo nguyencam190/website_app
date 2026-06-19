@@ -11209,14 +11209,28 @@ async function importMergePagesFromFolder(){
   let dir;
   try{dir=await window.showDirectoryPicker({mode:'read',startIn:'documents'});}
   catch(e){if(e.name!=='AbortError')toast('Lỗi chọn thư mục: '+e.message,'error');return;}
-  // 1. Đọc data.json
-  let imported;
-  try{
-    const fh=await dir.getFileHandle('data.json');
-    const text=await(await fh.getFile()).text();
-    imported=JSON.parse(text);
-  }catch(e){toast('Không tìm thấy data.json trong thư mục này','error');return;}
-  if(!imported||!Array.isArray(imported.docs)){toast('File data.json không hợp lệ','error');return;}
+
+  // Thử đọc data.json (project folder) rồi page.json (single-page export folder)
+  let imported=null;
+  let isSinglePage=false;
+  for(const[fname,single]of[['data.json',false],['page.json',true]]){
+    try{
+      const fh=await dir.getFileHandle(fname);
+      const text=await(await fh.getFile()).text();
+      const parsed=JSON.parse(text);
+      if(single){
+        // page.json: {type:'camnguyen-page', doc:{...}}
+        if(parsed.type==='camnguyen-page'&&parsed.doc){imported={docs:[parsed.doc]};isSinglePage=true;break;}
+      }else{
+        // data.json: {docs:[...]}
+        if(parsed&&Array.isArray(parsed.docs)){imported=parsed;break;}
+      }
+    }catch(e){}
+  }
+  if(!imported){
+    toast('Không tìm thấy data.json hoặc page.json trong thư mục này.\nHãy chọn thư mục project được tạo bởi "Lưu vào thư mục" hoặc giải nén từ file .zip','error');
+    return;
+  }
   // 2. Import ảnh + video vào IDB (chạy nền, không chặn UI)
   let mediaCount=0;
   toast('⏳ Đang tải ảnh/video từ thư mục...','info');
