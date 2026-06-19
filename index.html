@@ -1931,7 +1931,8 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
     <div class="sb-search-row">
       <div class="sb-search"><i class="ti ti-search"></i><input type="text" placeholder="Search pages..." id="searchInput" oninput="filterDocs()"></div>
       <button class="sb-new-btn" onclick="_quickNewRootDoc()" title="Trang mới"><i class="ti ti-plus"></i></button>
-      <button class="sb-new-btn" onclick="_sbImportAll()" title="Nhập trang"><i class="ti ti-file-import"></i></button>
+      <button class="sb-new-btn" onclick="_sbImportAll()" title="Nhập trang từ file ZIP/JSON"><i class="ti ti-file-import"></i></button>
+      <button class="sb-new-btn" onclick="importMergePagesFromFolder()" title="Merge trang từ thư mục (ổ mạng/Desktop)"><i class="ti ti-folder-plus"></i></button>
     </div>
 
     <!-- Nav tree -->
@@ -11242,16 +11243,18 @@ async function _importMergeFromZip(zip,filename){
   if(!jsonFile){toast('Không tìm thấy data.json trong ZIP','error');return;}
   const imported=JSON.parse(await jsonFile.async('string'));
   if(!imported||!imported.docs){toast('data.json không hợp lệ','error');return;}
-  // Load media vào IDB
+  // Load media vào IDB + sync to project folder
   let mediaCount=0;
+  const importedAssets=[];
   for(const[path,entry]of Object.entries(zip.files)){
     if(entry.dir||(!path.startsWith('images/')&&!path.startsWith('videos/')))continue;
     try{
       const blob=await entry.async('blob');
       const id=path.replace(/^(images|videos)\//,'').replace(/\.[^.]+$/,'');
-      if(id&&blob.size>0){await _idbPut(id,blob);mediaCount++;}
+      if(id&&blob.size>0){await _idbPut(id,blob);importedAssets.push([id,blob]);mediaCount++;}
     }catch(er){}
   }
+  for(const[id,blob]of importedAssets){_projSavedIds.delete(id);_projSaveAsset(id,blob);}
   _importMergeDocs=imported.docs;
   _sbImportShowMergeModal(imported.projectName||filename,imported.docs,mediaCount);
 }
@@ -11262,14 +11265,21 @@ async function _importSinglePageFromZip(zip){
   const data=JSON.parse(await pf.async('string'));
   if(data.type!=='camnguyen-page'||!data.doc){toast('page.json không hợp lệ','error');return;}
   let mediaCount=0;
+  const importedAssets=[];
   for(const[path,entry]of Object.entries(zip.files)){
     if(entry.dir||(!path.startsWith('images/')&&!path.startsWith('videos/')))continue;
     try{
       const blob=await entry.async('blob');
       const id=path.replace(/^(images|videos)\//,'').replace(/\.[^.]+$/,'');
-      if(id&&blob.size>0){await _idbPut(id,blob);if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}mediaCount++;}
+      if(id&&blob.size>0){
+        await _idbPut(id,blob);
+        importedAssets.push([id,blob]);
+        if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}
+        mediaCount++;
+      }
     }catch(er){}
   }
+  for(const[id,blob]of importedAssets){_projSavedIds.delete(id);_projSaveAsset(id,blob);}
   _importMergeDocs=[JSON.parse(JSON.stringify(data.doc))];
   _sbImportShowMergeModal(data.doc.title||'Trang nhập',_importMergeDocs,mediaCount);
 }
@@ -11328,9 +11338,10 @@ async function importMergePagesFromFolder(){
     toast('Không tìm thấy data.json hoặc page.json trong thư mục này.\nHãy chọn thư mục project được tạo bởi "Lưu vào thư mục" hoặc giải nén từ file .zip','error');
     return;
   }
-  // 2. Import ảnh + video vào IDB (chạy nền, không chặn UI)
+  // 2. Import ảnh + video vào IDB và sao chép vào thư mục project (_projDir)
   let mediaCount=0;
   toast('⏳ Đang tải ảnh/video từ thư mục...','info');
+  const importedAssets=[];
   for(const subDirName of['images','videos']){
     let subDir;
     try{subDir=await dir.getDirectoryHandle(subDirName);}catch(e){continue;}
@@ -11341,11 +11352,19 @@ async function importMergePagesFromFolder(){
         const blob=new Blob([await f.arrayBuffer()],{type:f.type||'application/octet-stream'});
         const id=entry.name.replace(/\.[^.]+$/,'');
         await _idbPut(id,blob);
+        importedAssets.push([id,blob]);
         mediaCount++;
       }catch(e){console.warn('[mergeFolder] skip',entry.name,e);}
     }
   }
-  if(mediaCount)toast('✅ Đã tải '+mediaCount+' ảnh/video vào trình duyệt','success');
+  // Explicitly sync to project folder (covers case where _idbPut oncomplete already fired
+  // but also handles pending-queue path when _projDir reconnects later)
+  for(const[id,blob]of importedAssets){
+    _projSavedIds.delete(id);
+    _projSaveAsset(id,blob);
+  }
+  const folderMsg=_projDir?' → đang sao chép vào "'+_projDirName+'"':'';
+  if(mediaCount)toast('✅ Đã tải '+mediaCount+' ảnh/video'+folderMsg,'success');
   // 3. Hiển thị dialog chọn trang để merge (tái dùng UI hiện có)
   _importMergeDocs=imported.docs;
   const list=document.getElementById('importMergeList');
