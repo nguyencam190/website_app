@@ -2663,7 +2663,7 @@ function _undoSnapshot(){
 }
 function _undoSnapshotDebounced(){
   clearTimeout(_undoTimer);
-  _undoTimer=setTimeout(_undoSnapshot,500);
+  _undoTimer=setTimeout(_undoSnapshot,300);
 }
 function editorUndo(){
   if(_undoStack.length<2)return;
@@ -2712,7 +2712,13 @@ function persist(){
       });
     }
   });
-  localStorage.setItem(STORE_KEY,JSON.stringify(toSave));
+  try{
+    localStorage.setItem(STORE_KEY,JSON.stringify(toSave));
+  }catch(e){
+    const el=document.getElementById('saveStatusEl');
+    if(el){el.className='save-dirty';el.innerHTML='<i class="ti ti-alert-triangle" style="font-size:12px"></i> Bộ nhớ đầy';}
+    console.warn('localStorage quota exceeded',e);
+  }
 }
 
 function markDirty(){
@@ -3563,13 +3569,15 @@ function openDoc(id){
   const _cachedUndo=_undoHistoryCache.get(id);
   if(_cachedUndo){_undoStack=_cachedUndo.stack;_redoStack=_cachedUndo.redo;}
   else{_undoStack=[];_redoStack=[];}
+  const _snapDocId=id;
   setTimeout(()=>{
+    if(state.currentDocId!==_snapDocId)return; // doc switched before timer fired
     _cfImgLoadAll(document.getElementById('editor'));
     _cfToggleLoadAll(document.getElementById('editor'));
     document.querySelectorAll('.cf-checklist').forEach(cl=>_cfWireChecklist(cl));
     _cfFileLoadAll(document.getElementById('editor'));
     _cfAddCodeCopyBtns(document.getElementById('editor'));
-    _undoSnapshot(); // initial snapshot
+    if(!_cachedUndo)_undoSnapshot(); // initial snapshot (skip if restoring from cache)
   },80);
   setTimeout(async()=>{const ed=document.getElementById('editor');await _cfCarLoadAll(ed);_cfEmbedLoadAll(ed);},120);
   setTimeout(tblAttachAll,50);setTimeout(()=>tbLoadAll(doc),60);setTimeout(()=>fmLoadAll(doc),80);
@@ -5168,6 +5176,7 @@ const _ACCENT_PRESETS=[
 ];
 function _hexDarken(hex,a){let r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);r=Math.max(0,r+a);g=Math.max(0,g+a);b=Math.max(0,b+a);return`#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;}
 function _accentApply(hex){
+  if(!/^#[0-9a-fA-F]{6}$/.test(hex))hex='#2563eb';
   const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
   const h=_hexDarken(hex,-20);
   document.documentElement.style.setProperty('--accent',hex);
@@ -12793,7 +12802,7 @@ async function doExportWebsite(){
     '  <div class="ws-flyout-list" id="wsFlyoutList"></div>',
     '  <div class="ws-flyout-footer" id="wsFlyoutFooter"></div>',
     '</div>',
-    '<button class="ws-scroll-top" id="wsScrollTop" title="L\u00ean \u0111\u1ea7u trang">\u2191</button>',
+    '<button class="ws-scroll-top" id="wsScrollTop" title="L\u00ean \u0111\u1ea7u trang" aria-label="L\u00ean \u0111\u1ea7u trang"><i class="ti ti-arrow-up"></i></button>',
     jsTag,
     '</body>',
     '</html>'
@@ -13209,7 +13218,7 @@ async function doExportOptimized(){
     '  <div class="ws-flyout-list" id="wsFlyoutList"></div>',
     '  <div class="ws-flyout-footer" id="wsFlyoutFooter"></div>',
     '</div>',
-    '<button class="ws-scroll-top" id="wsScrollTop" title="Lên đầu trang">↑</button>',
+    '<button class="ws-scroll-top" id="wsScrollTop" title="Lên đầu trang" aria-label="Lên đầu trang"><i class="ti ti-arrow-up"></i></button>',
     jsTag,
     '</body>',
     '</html>'
@@ -13402,10 +13411,16 @@ function toggleFocusMode(){
     const urlEl=document.getElementById('cfLinkUrl');
     urlEl.textContent=a.href;
     urlEl.title=a.href;
+    // Hide edit/unlink buttons in locked (read-only) documents
+    const ed=document.getElementById('editor');
+    const isLocked=ed&&ed.contentEditable==='false';
+    const editBtn=document.getElementById('cfLinkEdit');
+    const removeBtn=document.getElementById('cfLinkRemove');
+    if(editBtn)editBtn.style.display=isLocked?'none':'';
+    if(removeBtn)removeBtn.style.display=isLocked?'none':'';
     const left=Math.min(r.left,window.innerWidth-390);
     const top=r.bottom+6;
     bubble.style.left=left+'px';
-    bubble.style.top=(top+window.scrollY)+'px';
     bubble.style.position='fixed';
     bubble.style.top=top+'px';
     bubble.classList.add('on');
@@ -13545,7 +13560,7 @@ function toggleFocusMode(){
 
     const walker=document.createTreeWalker(editor,NodeFilter.SHOW_TEXT,{
       acceptNode:function(node){
-        if(node.parentElement&&node.parentElement.closest('.cf-find-bar,.cf-img-toolbar,.cf-car-toolbar'))return NodeFilter.FILTER_REJECT;
+        if(node.parentElement&&node.parentElement.closest('.cf-find-bar,.cf-img-toolbar,.cf-car-toolbar,.cf-code-copy,.cf-car-btn,.cf-car-counter,.cf-img-resize-h,.tbl-resize-handle,.tbl-row-num'))return NodeFilter.FILTER_REJECT;
         return NodeFilter.FILTER_ACCEPT;
       }
     });
