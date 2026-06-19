@@ -1686,6 +1686,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
     <div style="display:flex;align-items:center;gap:4px">
       <button class="header-icon-btn" id="projFolderBtn" onclick="_projSelectFolder()" title="Chọn thư mục lưu project tự động"><i class="ti ti-folder-open"></i></button>
       <span class="proj-folder-badge" id="projFolderBadge" onclick="_projSelectFolder()" title="Đang lưu tự động vào thư mục này — nhấn để thay đổi"></span>
+      <button class="header-icon-btn" id="projLoadBtn" onclick="_projLoadFromFolder()" title="Tải project mới nhất từ thư mục" style="display:none;color:var(--accent)"><i class="ti ti-folder-down"></i></button>
       <button class="header-icon-btn" id="projDisconnectBtn" onclick="_projDisconnect()" title="Ngắt kết nối thư mục" style="display:none;font-size:13px;color:var(--text3)"><i class="ti ti-folder-x"></i></button>
     </div>
     <!-- Focus mode -->
@@ -11309,8 +11310,10 @@ const _projSavedIds=new Set();
 
 function _projUpdateBadge(){
   const badge=document.getElementById('projFolderBadge');
+  const load=document.getElementById('projLoadBtn');
   const disc=document.getElementById('projDisconnectBtn');
   if(badge){badge.textContent=_projDir?'📁 '+_projDirName:'';badge.classList.toggle('on',!!_projDir);}
+  if(load)load.style.display=_projDir?'':'none';
   if(disc)disc.style.display=_projDir?'':'none';
 }
 
@@ -11393,6 +11396,55 @@ async function _projDisconnect(){
   document.getElementById('projReconnectBanner')?.classList.remove('on');
   _projUpdateBadge();
   toast('Đã ngắt kết nối thư mục project','info');
+}
+
+async function _projLoadFromFolder(){
+  if(!_projDir){toast('Chưa kết nối thư mục nào','error');return;}
+  try{
+    // Đọc data.json từ thư mục
+    let fh;
+    try{fh=await _projDir.getFileHandle('data.json');}
+    catch(e){toast('Không tìm thấy data.json trong thư mục "'+_projDirName+'"','error');return;}
+    const file=await fh.getFile();
+    const text=await file.text();
+    let imported;
+    try{imported=JSON.parse(text);}
+    catch(e){toast('File data.json bị lỗi hoặc không đúng định dạng','error');return;}
+    if(!imported||!imported.docs){toast('File data.json không hợp lệ','error');return;}
+    // Lấy thời gian sửa đổi file
+    const modTime=file.lastModified?new Date(file.lastModified).toLocaleString('vi-VN'):'';
+    const msg='Tải project "'+(imported.projectName||'Unknown')+'" từ thư mục?\n'
+      +(modTime?'Lần lưu cuối: '+modTime+'\n':'')
+      +imported.docs.length+' tài liệu\n\nDữ liệu hiện tại trong trình duyệt sẽ bị ghi đè.';
+    if(!confirm(msg))return;
+    // Load state
+    state=imported;
+    if(!state.docs)state.docs=[];
+    if(!state.sections||!state.sections.length)state.sections=['default'];
+    const _defSec=state.sections[0]||'default';
+    state.docs.forEach(d=>{d.section=_defSec;});
+    if(!state.recent)state.recent=[];
+    if(!state.starred)state.starred=[];
+    // Persist vào localStorage để đồng bộ
+    persist();
+    // Cập nhật UI
+    const nameEl=document.getElementById('projectNameEl');
+    if(nameEl)nameEl.textContent=state.projectName||'My Project';
+    const spTxt=document.getElementById('sbSpaceIconText');
+    if(spTxt)spTxt.textContent=(state.projectName||'P').charAt(0).toUpperCase();
+    updateUserUI();
+    renderSidebar();
+    // Mở trang đầu tiên nếu có
+    if(state.currentDocId&&state.docs.find(d=>d.id===state.currentDocId)){
+      openDoc(state.currentDocId);
+    }else if(state.docs.length>0){
+      openDoc(state.docs[0].id);
+    }else{
+      document.getElementById('emptyState').style.display='';
+      document.getElementById('editorPanel').style.display='none';
+    }
+    toast('✅ Đã tải '+imported.docs.length+' tài liệu từ thư mục "'+_projDirName+'"','success');
+  }catch(e){toast('Lỗi tải từ thư mục: '+e.message,'error');console.error('[projLoad]',e);}
 }
 
 async function _projSaveJSON(){
