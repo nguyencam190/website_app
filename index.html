@@ -1708,7 +1708,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
       <span class="proj-folder-badge" id="projFolderBadge" onclick="_projOpenFolder()" title="Đang lưu tự động — nhấn để đổi thư mục"></span>
       <button class="header-icon-btn" id="projLoadBtn" onclick="_projLoadFromFolder()" title="Refresh — tải lại project mới nhất từ thư mục" style="display:none;color:var(--accent)"><i class="ti ti-folder-down"></i></button>
       <button class="header-icon-btn" id="projDisconnectBtn" onclick="_projDisconnect()" title="Ngắt kết nối thư mục" style="display:none;font-size:13px;color:var(--text3)"><i class="ti ti-folder-x"></i></button>
-      <button class="proj-live-btn" id="projLiveBtn" onclick="_projToggleLive()" title="Live — bật/tắt đồng bộ toàn bộ ảnh và dữ liệu vào thư mục project">
+      <button class="proj-live-btn" id="projLiveBtn" onclick="_projToggleLive()" title="Lưu tất cả dữ liệu và ảnh vào thư mục project ngay bây giờ">
         <span class="proj-live-dot" id="projLiveDot"></span>Live
       </button>
     </div>
@@ -11558,8 +11558,7 @@ const PROJ_DIR_IDB_KEY='__proj_folder_handle__';
 let _projDir=null,_projDirName='';
 const _projSavedIds=new Set();
 const _pendingFolderSaves=new Map(); // blobs queued while _projDir was null
-let _projLive=false;          // Live sync toggle state
-let _projLiveTimer=null;      // interval for periodic JSON save in live mode
+let _projLiveSaving=false;    // guard against concurrent saves
 
 function _projUpdateBadge(){
   const badge=document.getElementById('projFolderBadge');
@@ -11572,27 +11571,21 @@ function _projUpdateBadge(){
 
 function _projToggleLive(){
   if(!_projDir){toast('Cần mở thư mục project trước (nhấn nút 📁)','error');return;}
-  _projLive=!_projLive;
+  if(_projLiveSaving)return;
   const btn=document.getElementById('projLiveBtn');
-  if(btn)btn.classList.toggle('active',_projLive);
-  if(_projLive){
-    // Start periodic JSON auto-save (every 15s) on top of the normal persist hook
-    _projLiveTimer=setInterval(()=>{if(_projLive&&_projDir)_projSaveJSON();},15000);
-    // Immediately do a full sync of ALL current data
-    _projFullSync();
-  }else{
-    clearInterval(_projLiveTimer);_projLiveTimer=null;
-    toast('Đã tắt Live sync','info');
-  }
+  if(btn)btn.classList.add('active');
+  _projFullSync().finally(()=>{
+    setTimeout(()=>{if(btn)btn.classList.remove('active');},1500);
+  });
 }
 
 async function _projFullSync(){
   if(!_projDir){toast('Chưa kết nối thư mục project','error');return;}
+  if(_projLiveSaving)return;
+  _projLiveSaving=true;
   try{
-    toast('⏳ Live — đang đồng bộ toàn bộ dữ liệu...','info');
-    // 1. Save data.json
+    toast('⏳ Đang lưu toàn bộ dữ liệu...','info');
     await _projSaveJSON();
-    // 2. Save ALL images/videos referenced in any doc
     const ids=_collectDocAssetIds(state.docs);
     let saved=0,skipped=0;
     for(const id of ids){
@@ -11600,11 +11593,11 @@ async function _projFullSync(){
       const blob=await _idbGet(id);
       if(blob){await _projSaveAsset(id,blob);saved++;}
     }
-    // 3. Flush any pending saves from imports
     await _projFlushPendingSaves();
     const total=saved+skipped;
-    toast(`✅ Live — đã lưu ${state.docs.length} trang · ${total} ảnh/video vào 📁 "${_projDirName}"`,'success');
-  }catch(e){toast('Lỗi Live sync: '+e.message,'error');console.error(e);}
+    toast(`✅ Đã lưu ${state.docs.length} trang · ${total} ảnh/video vào 📁 "${_projDirName}"`,'success');
+  }catch(e){toast('Lỗi lưu: '+e.message,'error');console.error(e);}
+  finally{_projLiveSaving=false;}
 }
 
 async function _projInit(){
@@ -11824,9 +11817,7 @@ async function _projReconnect(){
 
 async function _projDisconnect(){
   if(!confirm('Ngắt kết nối thư mục project?\nApp sẽ tiếp tục lưu vào trình duyệt như bình thường.'))return;
-  _projLive=false;clearInterval(_projLiveTimer);_projLiveTimer=null;
-  const liveBtn=document.getElementById('projLiveBtn');
-  if(liveBtn)liveBtn.classList.remove('active');
+  _projLiveSaving=false;
   _projDir=null;_projDirName='';_projSavedIds.clear();_pendingFolderSaves.clear();
   try{
     const db=await _openIDB();
