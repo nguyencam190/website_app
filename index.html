@@ -1549,6 +1549,13 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 /* Project folder */
 .proj-folder-badge{display:none;align-items:center;gap:4px;font-size:11px;color:var(--accent);background:var(--accent-light);border:1px solid var(--accent);border-radius:20px;padding:2px 10px;cursor:pointer;max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:.15s}
 .proj-folder-badge.on{display:flex}
+@keyframes _livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+.proj-live-btn{display:none;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border:1px solid var(--border);border-radius:20px;background:var(--surface2);cursor:pointer;color:var(--text2);transition:.15s;white-space:nowrap}
+.proj-live-btn:hover{border-color:#22c55e;color:#16a34a}
+.proj-live-btn.active{background:#dcfce7;border-color:#22c55e;color:#15803d}
+.proj-live-btn.on{display:flex}
+.proj-live-dot{width:7px;height:7px;border-radius:50%;background:#94a3b8;flex-shrink:0;transition:background .2s}
+.proj-live-btn.active .proj-live-dot{background:#22c55e;animation:_livePulse 1.2s infinite}
 .proj-reconnect-banner{display:none;position:fixed;top:0;left:0;right:0;z-index:10000;background:#f59e0b;color:#1c1917;font-size:13px;padding:8px 16px;align-items:center;gap:8px}
 .proj-reconnect-banner.on{display:flex}
 /* Unified import panel */
@@ -1701,6 +1708,9 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
       <span class="proj-folder-badge" id="projFolderBadge" onclick="_projOpenFolder()" title="Đang lưu tự động — nhấn để mở thư mục khác"></span>
       <button class="header-icon-btn" id="projLoadBtn" onclick="_projLoadFromFolder()" title="Refresh — tải lại project mới nhất từ thư mục" style="display:none;color:var(--accent)"><i class="ti ti-folder-down"></i></button>
       <button class="header-icon-btn" id="projDisconnectBtn" onclick="_projDisconnect()" title="Ngắt kết nối thư mục" style="display:none;font-size:13px;color:var(--text3)"><i class="ti ti-folder-x"></i></button>
+      <button class="proj-live-btn" id="projLiveBtn" onclick="_projToggleLive()" title="Live — bật/tắt đồng bộ toàn bộ ảnh và dữ liệu vào thư mục project">
+        <span class="proj-live-dot" id="projLiveDot"></span>Live
+      </button>
     </div>
     <!-- Focus mode -->
     <button class="header-icon-btn" id="focusModeBtn" onclick="toggleFocusMode()" title="Focus mode (F11)"><i class="ti ti-focus-2"></i></button>
@@ -11548,14 +11558,55 @@ const PROJ_DIR_IDB_KEY='__proj_folder_handle__';
 let _projDir=null,_projDirName='';
 const _projSavedIds=new Set();
 const _pendingFolderSaves=new Map(); // blobs queued while _projDir was null
+let _projLive=false;          // Live sync toggle state
+let _projLiveTimer=null;      // interval for periodic JSON save in live mode
 
 function _projUpdateBadge(){
   const badge=document.getElementById('projFolderBadge');
   const load=document.getElementById('projLoadBtn');
   const disc=document.getElementById('projDisconnectBtn');
+  const liveBtn=document.getElementById('projLiveBtn');
   if(badge){badge.textContent=_projDir?'📁 '+_projDirName:'';badge.classList.toggle('on',!!_projDir);}
   if(load)load.style.display=_projDir?'':'none';
   if(disc)disc.style.display=_projDir?'':'none';
+  if(liveBtn)liveBtn.classList.toggle('on',!!_projDir);
+}
+
+function _projToggleLive(){
+  if(!_projDir){toast('Cần mở thư mục project trước (nhấn nút 📁)','error');return;}
+  _projLive=!_projLive;
+  const btn=document.getElementById('projLiveBtn');
+  if(btn)btn.classList.toggle('active',_projLive);
+  if(_projLive){
+    // Start periodic JSON auto-save (every 15s) on top of the normal persist hook
+    _projLiveTimer=setInterval(()=>{if(_projLive&&_projDir)_projSaveJSON();},15000);
+    // Immediately do a full sync of ALL current data
+    _projFullSync();
+  }else{
+    clearInterval(_projLiveTimer);_projLiveTimer=null;
+    toast('Đã tắt Live sync','info');
+  }
+}
+
+async function _projFullSync(){
+  if(!_projDir){toast('Chưa kết nối thư mục project','error');return;}
+  try{
+    toast('⏳ Live — đang đồng bộ toàn bộ dữ liệu...','info');
+    // 1. Save data.json
+    await _projSaveJSON();
+    // 2. Save ALL images/videos referenced in any doc
+    const ids=_collectDocAssetIds(state.docs);
+    let saved=0,skipped=0;
+    for(const id of ids){
+      if(_projSavedIds.has(id)){skipped++;continue;}
+      const blob=await _idbGet(id);
+      if(blob){await _projSaveAsset(id,blob);saved++;}
+    }
+    // 3. Flush any pending saves from imports
+    await _projFlushPendingSaves();
+    const total=saved+skipped;
+    toast(`✅ Live — đã lưu ${state.docs.length} trang · ${total} ảnh/video vào 📁 "${_projDirName}"`,'success');
+  }catch(e){toast('Lỗi Live sync: '+e.message,'error');console.error(e);}
 }
 
 async function _projInit(){
@@ -11695,6 +11746,9 @@ async function _projReconnect(){
 
 async function _projDisconnect(){
   if(!confirm('Ngắt kết nối thư mục project?\nApp sẽ tiếp tục lưu vào trình duyệt như bình thường.'))return;
+  _projLive=false;clearInterval(_projLiveTimer);_projLiveTimer=null;
+  const liveBtn=document.getElementById('projLiveBtn');
+  if(liveBtn)liveBtn.classList.remove('active');
   _projDir=null;_projDirName='';_projSavedIds.clear();_pendingFolderSaves.clear();
   try{
     const db=await _openIDB();
