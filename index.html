@@ -1697,9 +1697,9 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 
     <!-- Project folder -->
     <div style="display:flex;align-items:center;gap:4px">
-      <button class="header-icon-btn" id="projFolderBtn" onclick="_projSelectFolder()" title="Chọn thư mục lưu project tự động"><i class="ti ti-folder-open"></i></button>
-      <span class="proj-folder-badge" id="projFolderBadge" onclick="_projSelectFolder()" title="Đang lưu tự động vào thư mục này — nhấn để thay đổi"></span>
-      <button class="header-icon-btn" id="projLoadBtn" onclick="_projLoadFromFolder()" title="Tải project mới nhất từ thư mục" style="display:none;color:var(--accent)"><i class="ti ti-folder-down"></i></button>
+      <button class="header-icon-btn" id="projFolderBtn" onclick="_projOpenFolder()" title="Mở/Nhập project từ thư mục (tự lưu tại đó)"><i class="ti ti-folder-open"></i></button>
+      <span class="proj-folder-badge" id="projFolderBadge" onclick="_projOpenFolder()" title="Đang lưu tự động — nhấn để mở thư mục khác"></span>
+      <button class="header-icon-btn" id="projLoadBtn" onclick="_projLoadFromFolder()" title="Refresh — tải lại project mới nhất từ thư mục" style="display:none;color:var(--accent)"><i class="ti ti-folder-down"></i></button>
       <button class="header-icon-btn" id="projDisconnectBtn" onclick="_projDisconnect()" title="Ngắt kết nối thư mục" style="display:none;font-size:13px;color:var(--text3)"><i class="ti ti-folder-x"></i></button>
     </div>
     <!-- Focus mode -->
@@ -11581,27 +11581,94 @@ async function _projInit(){
   }catch(e){console.warn('[projInit]',e);}
 }
 
-async function _projSelectFolder(){
-  if(!window.showDirectoryPicker){toast('Trình duyệt không hỗ trợ chọn thư mục (cần Chrome/Edge 86+)','error');return;}
-  try{
-    const handle=await window.showDirectoryPicker({mode:'readwrite',startIn:'documents'});
-    _projDir=handle;_projDirName=handle.name;
-    // Persist handle to IDB so we can restore on next page load
-    const db=await _openIDB();
-    await new Promise((res,rej)=>{
-      const tx=db.transaction('blobs','readwrite');
-      tx.objectStore('blobs').put(handle,PROJ_DIR_IDB_KEY);
-      tx.oncomplete=res;tx.onerror=rej;
-    });
-    document.getElementById('projReconnectBanner')?.classList.remove('on');
-    _projUpdateBadge();
-    toast('📁 Đã kết nối thư mục: '+handle.name,'success');
-    // Migrate existing IDB assets to folder
+async function _projOpenFolder(){
+  if(!window.showDirectoryPicker){toast('Trình duyệt không hỗ trợ (cần Chrome/Edge 86+)','error');return;}
+  let handle;
+  try{handle=await window.showDirectoryPicker({mode:'readwrite',startIn:'documents'});}
+  catch(e){if(e.name!=='AbortError')toast('Lỗi chọn thư mục: '+e.message,'error');return;}
+
+  // Persist handle first so reconnect works on reload
+  const db=await _openIDB();
+  await new Promise((res,rej)=>{
+    const tx=db.transaction('blobs','readwrite');
+    tx.objectStore('blobs').put(handle,PROJ_DIR_IDB_KEY);
+    tx.oncomplete=res;tx.onerror=rej;
+  });
+  _projDir=handle;_projDirName=handle.name;
+  document.getElementById('projReconnectBanner')?.classList.remove('on');
+  _projUpdateBadge();
+
+  // Check if folder contains a project (data.json)
+  let fh;
+  try{fh=await handle.getFileHandle('data.json');}catch(e){fh=null;}
+
+  if(fh){
+    // Folder has an existing project → load it (like importProject)
+    const file=await fh.getFile();
+    const modTime=file.lastModified?new Date(file.lastModified).toLocaleString('vi-VN'):'';
+    let imported;
+    try{imported=JSON.parse(await file.text());}
+    catch(e){toast('data.json bị lỗi định dạng','error');await _projSaveJSON();return;}
+    if(!imported||!imported.docs){toast('data.json không hợp lệ','error');await _projSaveJSON();return;}
+    const msg=`Mở project "${imported.projectName||'Unknown'}" từ thư mục "${handle.name}"?\n`
+      +(modTime?'Lần lưu cuối: '+modTime+'\n':'')
+      +imported.docs.length+' tài liệu\n\nDữ liệu hiện tại sẽ bị ghi đè.';
+    if(!confirm(msg)){
+      // User cancelled load — stay connected but keep current data
+      toast('📁 Đã kết nối thư mục "'+handle.name+'" (giữ nguyên dữ liệu hiện tại)','info');
+      await _projSaveJSON();
+      await _projFlushPendingSaves();
+      await _projMigrateToFolder();
+      return;
+    }
+    // Load state
+    state=imported;
+    if(!state.docs)state.docs=[];
+    if(!state.sections||!state.sections.length)state.sections=['default'];
+    state.docs.forEach(d=>{d.section=state.sections[0]||'default';});
+    if(!state.recent)state.recent=[];
+    if(!state.starred)state.starred=[];
+    persist();
+    document.getElementById('projectNameEl').textContent=state.projectName||'My Project';
+    const spTxt=document.getElementById('sbSpaceIconText');
+    if(spTxt)spTxt.textContent=(state.projectName||'P').charAt(0).toUpperCase();
+    updateUserUI();renderSidebar();
+    // Load images/videos from folder into IDB
+    let mediaCount=0;
+    toast('⏳ Đang tải ảnh/video...','info');
+    for(const subDirName of['images','videos']){
+      let subDir;
+      try{subDir=await handle.getDirectoryHandle(subDirName);}catch(e){continue;}
+      for await(const[,entry]of subDir.entries()){
+        if(entry.kind!=='file')continue;
+        try{
+          const f=await entry.getFile();
+          const origExt=(entry.name.split('.').pop()||'').toLowerCase();
+          const rawBlob=new Blob([await f.arrayBuffer()],{type:f.type});
+          const blob=_ensureBlobMime(rawBlob,origExt);
+          const id=entry.name.replace(/\.[^.]+$/,'');
+          await _idbPut(id,blob);
+          _projSavedIds.add(id);
+          mediaCount++;
+        }catch(e){}
+      }
+    }
+    if(state.currentDocId&&state.docs.find(d=>d.id===state.currentDocId)){
+      openDoc(state.currentDocId);
+    }else if(state.docs.length>0){
+      openDoc(state.docs[0].id);
+    }else{
+      document.getElementById('emptyState').style.display='';
+      document.getElementById('editorPanel').style.display='none';
+    }
+    toast(`✅ Đã mở "${state.projectName||'Project'}" — ${state.docs.length} tài liệu${mediaCount?' · '+mediaCount+' ảnh/video':''}  (📁 tự lưu vào "${handle.name}")`,'success');
+  }else{
+    // Empty folder — new project, just connect
+    toast('📁 Kết nối thư mục mới "'+handle.name+'" — project sẽ tự lưu vào đây','success');
     await _projMigrateToFolder();
     await _projFlushPendingSaves();
-    // Immediately save current state
     await _projSaveJSON();
-  }catch(e){if(e.name!=='AbortError')toast('Lỗi chọn thư mục: '+e.message,'error');}
+  }
 }
 
 async function _projReconnect(){
