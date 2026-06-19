@@ -1539,6 +1539,11 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 .accent-swatch-custom{width:24px;height:24px;border-radius:50%;border:2px solid var(--border2);cursor:pointer;overflow:hidden;flex-shrink:0;position:relative;display:flex;align-items:center;justify-content:center}
 .accent-swatch-custom input[type=color]{position:absolute;inset:-6px;width:calc(100%+12px);height:calc(100%+12px);border:none;cursor:pointer;opacity:0}
 .accent-swatch-custom-icon{font-size:12px;color:var(--text2);pointer-events:none}
+/* Accent pop */
+.accent-pop{position:absolute;top:calc(100% + 8px);right:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;box-shadow:var(--shadow-lg);z-index:9100;display:none;min-width:210px}
+.accent-pop.on{display:block}
+.accent-pop-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+#accentBtnDot{width:14px;height:14px;border-radius:50%;background:var(--accent);display:inline-block;border:2px solid rgba(128,128,128,.35);transition:background .15s;vertical-align:middle}
 </style>
 </head>
 <body>
@@ -1663,6 +1668,14 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 
     <!-- Focus mode -->
     <button class="header-icon-btn" id="focusModeBtn" onclick="toggleFocusMode()" title="Focus mode (F11)"><i class="ti ti-focus-2"></i></button>
+    <!-- Accent color picker -->
+    <div style="position:relative" id="accentBtnWrap">
+      <button class="header-icon-btn" id="accentPopBtn" onclick="toggleAccentPop()" title="Màu nhấn (Accent color)"><span id="accentBtnDot"></span></button>
+      <div class="accent-pop" id="accentPop">
+        <div class="accent-pop-label">Màu nhấn</div>
+        <div class="accent-swatches" id="accentPopSwatches"></div>
+      </div>
+    </div>
     <!-- Theme toggle -->
     <button class="header-icon-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Chuyển sáng/tối" style="font-size:16px">&#9728;</button>
 
@@ -2606,6 +2619,12 @@ function _resetSmartPab(){
 
 function init(){
   applyTheme();
+  // Close accent popover when clicking outside
+  document.addEventListener('click',e=>{
+    const pop=document.getElementById('accentPop');
+    const wrap=document.getElementById('accentBtnWrap');
+    if(pop&&pop.classList.contains('on')&&wrap&&!wrap.contains(e.target))pop.classList.remove('on');
+  },true);
   _sbInitResize();
   _initSlashCommands();
   _pabLogoInit();
@@ -5215,6 +5234,7 @@ function _accentApply(hex){
   document.documentElement.style.setProperty('--accent-light',`rgba(${r},${g},${b},.12)`);
   document.documentElement.style.setProperty('--accent-glow',`rgba(${r},${g},${b},.25)`);
   localStorage.setItem('accent_color',hex);
+  const dot=document.getElementById('accentBtnDot');if(dot)dot.style.background=hex;
 }
 function _buildAccentSwatches(){
   const cont=document.getElementById('accentSwatches');if(!cont)return;
@@ -5228,6 +5248,35 @@ function _buildAccentSwatches(){
   const cw=document.createElement('div');cw.className='accent-swatch-custom';cw.title='Tùy chỉnh màu';
   const ci=document.createElement('input');ci.type='color';ci.value=cur;
   ci.oninput=function(){_accentApply(this.value);cont.querySelectorAll('.accent-swatch').forEach(x=>x.classList.remove('active'));};
+  const icon=document.createElement('div');icon.className='accent-swatch-custom-icon';icon.innerHTML='<i class="ti ti-palette"></i>';
+  cw.appendChild(ci);cw.appendChild(icon);cont.appendChild(cw);
+}
+function toggleAccentPop(){
+  const pop=document.getElementById('accentPop');if(!pop)return;
+  const on=pop.classList.toggle('on');
+  if(on)_buildAccentPopSwatches();
+}
+function _buildAccentPopSwatches(){
+  const cont=document.getElementById('accentPopSwatches');if(!cont)return;
+  const cur=(localStorage.getItem('accent_color')||'#2563eb').toLowerCase();
+  cont.innerHTML='';
+  const apply=(c)=>{
+    _accentApply(c);
+    cont.querySelectorAll('.accent-swatch').forEach(x=>x.classList.toggle('active',x.dataset.c===c));
+    const dot=document.getElementById('accentBtnDot');if(dot)dot.style.background=c;
+  };
+  _ACCENT_PRESETS.forEach(({c,n})=>{
+    const s=document.createElement('div');
+    s.className='accent-swatch'+(c.toLowerCase()===cur?' active':'');
+    s.dataset.c=c;s.style.background=c;s.title=n;s.onclick=()=>apply(c);cont.appendChild(s);
+  });
+  const cw=document.createElement('div');cw.className='accent-swatch-custom';cw.title='Tùy chỉnh màu';
+  const ci=document.createElement('input');ci.type='color';ci.value=cur;
+  ci.oninput=function(){
+    _accentApply(this.value);
+    cont.querySelectorAll('.accent-swatch').forEach(x=>x.classList.remove('active'));
+    const dot=document.getElementById('accentBtnDot');if(dot)dot.style.background=this.value;
+  };
   const icon=document.createElement('div');icon.className='accent-swatch-custom-icon';icon.innerHTML='<i class="ti ti-palette"></i>';
   cw.appendChild(ci);cw.appendChild(icon);cont.appendChild(cw);
 }
