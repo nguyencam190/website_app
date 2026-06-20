@@ -1938,7 +1938,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
     <div class="sb-search-row">
       <div class="sb-search"><i class="ti ti-search"></i><input type="text" placeholder="Search pages..." id="searchInput" oninput="filterDocs()"></div>
       <button class="sb-new-btn" onclick="_quickNewRootDoc()" title="Trang mới"><i class="ti ti-plus"></i></button>
-      <button class="sb-new-btn sb-import-btn" onclick="_sbImportClickSmart()" title="Nhập trang từ file ZIP hoặc thư mục (tự nhận biết)"><i class="ti ti-file-import"></i></button>
+      <button class="sb-new-btn sb-import-btn" onclick="_sbImportClickSmart()" title="Click: chọn thư mục · Kéo thả: thư mục hoặc file ZIP"><i class="ti ti-file-import"></i></button>
     </div>
 
     <!-- Nav tree -->
@@ -11247,34 +11247,9 @@ async function _openProjectFile(){
   input.click();
 }
 async function _sbImportClickSmart(){
-  // One click: try ZIP/JSON file picker first.
-  // If user cancels (they have a folder instead), automatically open folder picker.
-  // Drag-and-drop on the button also auto-detects folder vs file.
-  try{
-    await _sbImportFromZipOrJson();
-  }catch(e){
-    // AbortError = user cancelled the file picker → open folder picker instead
-    if(e.name==='AbortError'){
-      try{await importMergePagesFromFolder();}catch(e2){}
-    }
-  }
-}
-async function _sbImportFromZipOrJson(){
-  // Uses File System Access API showOpenFilePicker so we can catch AbortError on cancel
-  if(window.showOpenFilePicker){
-    let handles;
-    try{
-      handles=await window.showOpenFilePicker({
-        multiple:false,
-        types:[{description:'ZIP / JSON',accept:{'application/zip':['.zip'],'application/json':['.json']}}]
-      });
-    }catch(e){throw e;} // propagate AbortError
-    const file=await handles[0].getFile();
-    await _sbImportProcessFile(file);
-    return;
-  }
-  // Fallback: classic input (can't detect cancel, so no folder fallback)
-  await _sbImportFromZip();
+  // Click → folder picker (direct, no intermediate UI).
+  // Drag-drop onto the button auto-detects folder vs ZIP file.
+  await importMergePagesFromFolder();
 }
 // Wire drag-and-drop folder support onto import buttons (called once on init)
 function _sbImportWireDrop(){
