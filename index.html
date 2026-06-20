@@ -1796,17 +1796,16 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
     </div>
     <div style="padding:24px">
       <div style="font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.6">
-        Để tiếp tục làm việc với dự án cũ, hãy tải file <strong>.html (có data)</strong> hoặc <strong>.json backup</strong> mà bạn đã lưu trước đó.
+        Để tiếp tục làm việc với dự án cũ, hãy mở <strong>thư mục project</strong> mà bạn đã lưu trước đó.
       </div>
       <div style="display:flex;flex-direction:column;gap:10px">
-        <label style="display:flex;align-items:center;gap:12px;padding:14px 16px;border:1.5px solid var(--accent);border-radius:8px;cursor:pointer;background:var(--accent-light);transition:.12s" onmouseenter="this.style.background='rgba(37,99,235,.12)'" onmouseleave="this.style.background='var(--accent-light)'">
-          <input type="file" accept=".html,.json" style="display:none" onchange="handleWelcomeRestore(event)">
+        <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border:1.5px solid var(--accent);border-radius:8px;cursor:pointer;background:var(--accent-light);transition:.12s" onmouseenter="this.style.background='rgba(37,99,235,.12)'" onmouseleave="this.style.background='var(--accent-light)'" onclick="_projOpenFolder()">
           <i class="ti ti-folder-open" style="font-size:22px;color:var(--accent);flex-shrink:0"></i>
           <div style="text-align:left">
-            <div style="font-weight:600;color:var(--text);font-size:14px">Mở file dự án cũ</div>
-            <div style="font-size:12px;color:var(--text3)">Chọn file .html (có data) hoặc .json backup</div>
+            <div style="font-weight:600;color:var(--text);font-size:14px">Mở thư mục dự án</div>
+            <div style="font-size:12px;color:var(--text3)">Chọn thư mục project — tải đầy đủ ảnh/video</div>
           </div>
-        </label>
+        </div>
         <button onclick="closeWelcomeAndStart()" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border:1px solid var(--border);border-radius:8px;cursor:pointer;background:var(--surface);width:100%;font-family:var(--font);transition:.12s" onmouseenter="this.style.background='var(--surface2)'" onmouseleave="this.style.background='var(--surface)'">
           <i class="ti ti-sparkles" style="font-size:22px;color:var(--text2);flex-shrink:0"></i>
           <div style="text-align:left">
@@ -1816,7 +1815,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
         </button>
       </div>
       <div style="margin-top:16px;padding:10px 12px;background:var(--surface2);border-radius:6px;font-size:11.5px;color:var(--text3);text-align:left;line-height:1.6">
-        💡 <strong>Mẹo:</strong> Lần sau dùng <strong>💾 → Lưu file HTML (có data)</strong> để lưu file chứa sẵn dữ liệu. Mở file đó là có ngay project của bạn.
+        💡 <strong>Mẹo:</strong> Sau khi làm việc, dùng <strong>Push</strong> để lưu toàn bộ vào thư mục. Lần sau chỉ cần mở lại thư mục đó là có ngay project.
       </div>
     </div>
   </div>
@@ -12119,6 +12118,7 @@ async function _projOpenFolder(){
   });
   _projDir=handle;_projDirName=handle.name;
   document.getElementById('projReconnectBanner')?.classList.remove('on');
+  document.getElementById('welcomeModal').style.display='none';
   _projUpdateBadge();
 
   // Check if folder contains a project (data.json)
