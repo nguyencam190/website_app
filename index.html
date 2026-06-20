@@ -1703,7 +1703,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 
     <!-- Project folder -->
     <div style="display:flex;align-items:center;gap:4px">
-      <button class="header-icon-btn" onclick="_sbImportAll()" title="Nhập trang từ thư mục (kéo thả ZIP/JSON)"><i class="ti ti-file-import"></i></button>
+      <button class="header-icon-btn" onclick="_sbImportAll()" title="Mở file JSON đã lưu"><i class="ti ti-folder-open"></i></button>
       <button class="proj-live-btn" id="projLiveBtn" onclick="_projToggleLive()" title="Lưu tất cả dữ liệu và ảnh vào thư mục project">
         <span class="proj-live-dot" id="projLiveDot"></span>Push
       </button>
@@ -1938,7 +1938,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
     <div class="sb-search-row">
       <div class="sb-search"><i class="ti ti-search"></i><input type="text" placeholder="Search pages..." id="searchInput" oninput="filterDocs()"></div>
       <button class="sb-new-btn" onclick="_quickNewRootDoc()" title="Trang mới"><i class="ti ti-plus"></i></button>
-      <button class="sb-new-btn" onclick="_sbImportAll()" title="Nhập trang từ thư mục (kéo thả ZIP/JSON)"><i class="ti ti-file-import"></i></button>
+      <button class="sb-new-btn" onclick="_sbImportAll()" title="Mở file JSON đã lưu"><i class="ti ti-folder-open"></i></button>
     </div>
 
     <!-- Nav tree -->
@@ -11221,14 +11221,33 @@ let _importMergeDocs=[];
 // Single smart import: file picker for ZIP/JSON, auto-detect images folder when needed.
 // Drag a folder onto the import button → triggers folder import directly.
 function _sbImportAll(triggerEl){
-  // Primary: folder picker — reads data.json / page.json + images/ + videos/ in one step.
-  // ZIP / JSON files: drag onto this button instead.
-  if(window.showDirectoryPicker){
-    importMergePagesFromFolder();
-  }else{
-    // Fallback for browsers without showDirectoryPicker (Firefox)
-    _sbImportFromFile();
-  }
+  _openProjectFile();
+}
+async function _openProjectFile(){
+  const input=document.createElement('input');
+  input.type='file';
+  input.accept='.json';
+  input.onchange=async e=>{
+    const file=e.target.files[0];if(!file)return;
+    try{
+      const text=await file.text();
+      const data=JSON.parse(text);
+      if(!data||!Array.isArray(data.docs)){toast('File không hợp lệ — không tìm thấy danh sách trang','error');return;}
+      if(state.docs&&state.docs.length>0){
+        if(!confirm(`Mở "${file.name}" sẽ thay thế ${state.docs.length} trang hiện tại.\nBạn có muốn tiếp tục?`))return;
+      }
+      Object.assign(state,data);
+      localStorage.setItem('projectdocs_v3',JSON.stringify(data));
+      renderSidebar();
+      if(state.docs&&state.docs.length>0){
+        openDoc(state.docs[0].id);
+        setTimeout(()=>_reloadEditorImages(),200);
+        if(_projDir)_projLoadFolderAssets(_projDir).then(()=>_reloadEditorImages()).catch(()=>{});
+      }
+      toast(`✅ Đã mở "${file.name}" — ${data.docs.length} trang`,'success');
+    }catch(err){toast('Lỗi đọc file: '+err.message,'error');}
+  };
+  input.click();
 }
 // Wire drag-and-drop folder support onto import buttons (called once on init)
 function _sbImportWireDrop(){
