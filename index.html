@@ -934,6 +934,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 td .cf-checklist,th .cf-checklist,.cf-column-item .cf-checklist{margin:4px 0;font-size:13px}
 td .cf-checklist-head,.cf-column-item .cf-checklist-head{padding:6px 10px 6px 8px}
 td .cf-checklist-body,.cf-column-item .cf-checklist-body{padding:8px 10px 10px 10px}
+/* Collapse the trailing empty <p> that is inserted after a non-editable block inside a
+   table cell. The paragraph stays in the DOM (cursor target) but takes no visual space. */
+td>*[contenteditable="false"]+p:last-child,th>*[contenteditable="false"]+p:last-child{height:0;overflow:hidden;margin:0;padding:0}
 /* ═══ TOC BLOCK ═════════════════════════════════════════════ */
 .cf-toc{border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin:12px 0;background:var(--surface2);position:relative}
 .cf-toc-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
@@ -8658,20 +8661,13 @@ function _cfInsertBlockAtRange(block, savedRange){
                        !insertBefore.textContent.trim()&&(insertBefore.children.length<=1);
     if(isEmptyBlock)insertBefore.remove();
   }
-  // In table cells: also remove any leftover empty <p> children to prevent whitespace build-up
-  if(insertParent.tagName==='TD'||insertParent.tagName==='TH'){
-    insertParent.querySelectorAll(':scope>p').forEach(p=>{
-      if(!p.textContent.trim()&&(p.children.length===0||(p.children.length===1&&p.firstElementChild?.tagName==='BR')))p.remove();
-    });
-  }
   // Only add trailing <p> when needed: block is the last child or followed by another
   // non-editable block, AND we are NOT inside a cf-column-item (the column item is itself
   // contentEditable so the browser can place a cursor there without an explicit <p>).
   const _nextEl=block.nextSibling;
   const _inColItem=insertParent.classList?.contains('cf-column-item');
   const _inToggleBody=insertParent.classList?.contains('cf-toggle-body');
-  const _inTableCell=insertParent.tagName==='TD'||insertParent.tagName==='TH';
-  const _needsTrail=!_inColItem&&!_inTableCell&&(!_nextEl||
+  const _needsTrail=!_inColItem&&(!_nextEl||
     (_nextEl.nodeType===Node.ELEMENT_NODE&&_nextEl.contentEditable==='false'));
   if(_needsTrail){const p=document.createElement('p');p.innerHTML='<br>';if(_inToggleBody)p.contentEditable='true';insertParent.insertBefore(p,block.nextSibling);}
   // Scroll the inserted block into view after layout settles
