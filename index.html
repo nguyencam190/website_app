@@ -11641,8 +11641,12 @@ async function _projFullSync(){
       deletedIdb++;
     }
 
+    // 4. Publish HTML to project folder (overwrite existing)
+    const{blob:htmlBlob,fname:htmlName}=await _buildHtmlBlob();
+    await _projExportHTML(htmlBlob,htmlName);
+
     const total=saved+skipped;
-    let msg=`✅ Đã lưu ${state.docs.length} trang · ${total} ảnh/video vào 📁 "${_projDirName}"`;
+    let msg=`✅ Đã push ${state.docs.length} trang · ${total} ảnh/video · HTML → 📁 "${_projDirName}"`;
     if(dupes)msg+=` · bỏ ${dupes} trùng`;
     if(deletedFiles||deletedIdb)msg+=` · xóa ${deletedFiles} file thừa`;
     toast(msg,'success');
@@ -12019,8 +12023,21 @@ async function _projExportHTML(htmlBlob,htmlName){
     const wr=await fh.createWritable();
     await wr.write(htmlBlob);
     await wr.close();
-    toast('📁 Đã lưu HTML vào thư mục project: '+htmlName,'success');
   }catch(e){console.warn('[projExportHTML]',e);toast('Lỗi lưu HTML vào thư mục: '+e.message,'error');}
+}
+
+async function _buildHtmlBlob(){
+  const resp=await fetch(location.href);
+  let html=await resp.text();
+  html=html.replace(/<script id="pd-embedded-state"[\s\S]*?<\/script>\s*/g,'');
+  const toSave=JSON.parse(JSON.stringify(state));
+  toSave.docs.forEach(doc=>{
+    if(doc.images)doc.images=doc.images.map(m=>{const{src,...meta}=m;return src&&src.startsWith('data:')?{...meta,src}:meta;});
+  });
+  const embedTag='<script id="pd-embedded-state" type="application/json">\n'+JSON.stringify(toSave)+'\n<\/script>\n';
+  html=html.replace('</head>',embedTag+'</head>');
+  const fname=(state.projectName||'project-docs').replace(/[^a-zA-Z0-9\-_]/g,'-')+'.html';
+  return{blob:new Blob([html],{type:'text/html'}),fname};
 }
 
 // Collect all unique media IDs referenced in a list of docs
@@ -12092,25 +12109,9 @@ async function exportProject(){
 async function exportSelfContained(){
   toast('Đang tạo file...','info');
   try{
-    // Get current app HTML source
-    const resp=await fetch(location.href);
-    let html=await resp.text();
-    // Clean up any previously embedded state
-    // Remove any previously embedded state block
-    html=html.replace(/<script id="pd-embedded-state"[\s\S]*?<\/script>\s*/g,'');
-    // Prepare state (strip blob URLs)
-    const toSave=JSON.parse(JSON.stringify(state));
-    toSave.docs.forEach(doc=>{
-      if(doc.images)doc.images=doc.images.map(m=>{const{src,...meta}=m;return src&&src.startsWith('data:')?{...meta,src}:meta;});
-    });
-    // Embed state as JSON script tag right before </head>
-    const embedTag='<script id="pd-embedded-state" type="application/json">\n'+JSON.stringify(toSave)+'\n<\/script>\n';
-    html=html.replace('</head>',embedTag+'</head>');
-    const fname=(state.projectName||'project-docs').replace(/[^a-zA-Z0-9\-_]/g,'-')+'.html';
-    const htmlBlob=new Blob([html],{type:'text/html'});
+    const{blob:htmlBlob,fname}=await _buildHtmlBlob();
     const ok=await _saveFile(htmlBlob,fname,[{description:'Self-contained HTML',accept:{'text/html':['.html']}}]);
     if(ok)toast('✅ File HTML có sẵn dữ liệu — mở bất kỳ đâu đều đúng project','success');
-    // Auto-save to project folder if connected
     if(_projDir)await _projExportHTML(htmlBlob,fname);
   }catch(err){toast('Lỗi: '+err.message,'error');}
 }
