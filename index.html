@@ -1703,6 +1703,8 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 
     <!-- Project folder -->
     <div style="display:flex;align-items:center;gap:4px">
+      <input type="file" id="projJsonInput" accept=".json,.zip" style="display:none" onchange="_projHandleJsonOpen(event)">
+      <button class="header-icon-btn" id="projFolderBtn" onclick="document.getElementById('projJsonInput').click()" title="Mở file data JSON / ZIP của project"><i class="ti ti-database-import"></i></button>
       <button class="proj-live-btn" id="projLiveBtn" onclick="_projToggleLive()" title="Lưu tất cả dữ liệu và ảnh vào thư mục project">
         <span class="proj-live-dot" id="projLiveDot"></span>Live
       </button>
