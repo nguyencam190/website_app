@@ -4034,19 +4034,27 @@ function _idbDel(id){
 }
 function _purgeDocMedia(doc){
   if(!doc)return;
-  // Build set of all floating media IDs still used by OTHER pages (e.g. after JSON import)
-  const stillUsed=new Set();
-  state.docs.filter(d=>d.id!==doc.id).forEach(d=>{
-    (d.images||[]).forEach(m=>{
-      if(m&&m.id)stillUsed.add(m.id);
-      if(m&&m.type==='carousel'&&m.slides)m.slides.forEach(sl=>{if(sl&&sl.id)stillUsed.add(sl.id);});
-    });
-  });
-  (doc.images||[]).forEach(m=>{
-    if(!m)return;
-    if(m.id&&!stillUsed.has(m.id))_idbDel(m.id);
-    if(m.type==='carousel'&&m.slides)m.slides.forEach(sl=>{if(sl&&sl.id&&!stillUsed.has(sl.id))_idbDel(sl.id);});
-  });
+  // Use _collectDocAssetIds for thorough scan (images array + inline content refs)
+  const stillUsed=_collectDocAssetIds(state.docs.filter(d=>d.id!==doc.id));
+  const docIds=_collectDocAssetIds([doc]);
+  for(const id of docIds){
+    if(!stillUsed.has(id)){
+      _idbDel(id);
+      if(_objUrls&&_objUrls[id]){URL.revokeObjectURL(_objUrls[id]);delete _objUrls[id];}
+      _pendingFolderSaves.delete(id);
+      _projSavedIds.delete(id);
+      if(_projDir)_projDeleteFolderAsset(id);
+    }
+  }
+}
+async function _projDeleteFolderAsset(id){
+  if(!_projDir||!id)return;
+  for(const sub of['images','videos']){
+    let dir;try{dir=await _projDir.getDirectoryHandle(sub);}catch(e){continue;}
+    for await(const[name] of dir.entries()){
+      if(name.replace(/\.[^.]+$/,'')===id){try{await dir.removeEntry(name);}catch(e){}break;}
+    }
+  }
 }
 function _purgeDocTree(docId){
   const doc=state.docs.find(d=>d.id===docId);
@@ -11458,12 +11466,14 @@ async function doImportMerge(){
   if(!checkedIds.length){toast('Chọn ít nhất 1 trang','error');return;}
   const selected=_importMergeDocs.filter(d=>checkedIds.includes(d.id));
   const targetSec=state.sections[0]||'default';
-  // Dedup: skip pages already imported (same importedFrom ID or same title)
+  // Dedup: skip pages already imported (same importedFrom ID, same title, or same content fingerprint)
   const existingImportedFrom=new Set(state.docs.map(d=>d.importedFrom).filter(Boolean));
   const existingTitles=new Set(state.docs.map(d=>(d.title||'').trim().toLowerCase()).filter(Boolean));
+  const existingContent=new Set(state.docs.map(d=>{const c=d.content||'';return c.length>0?c.length+':'+c.slice(0,300):null;}).filter(Boolean));
   const toImport=selected.filter(d=>{
     if(existingImportedFrom.has(d.id))return false;
     if(existingTitles.has((d.title||'').trim().toLowerCase()))return false;
+    const c=d.content||'';if(c.length>0&&existingContent.has(c.length+':'+c.slice(0,300)))return false;
     return true;
   });
   const skipped=selected.length-toImport.length;
@@ -11614,6 +11624,11 @@ async function _projFullSync(){
       if(hasSrc&&_seenSrc.has(src))return false;
       if(hasTitle&&_seenTitle.has(title))return false;
       if(hasContent&&_seenContent.has(fp))return false;
+      // Deduplicate fully-empty pages — keep only the first one
+      if(!hasSrc&&!hasTitle&&!hasContent){
+        if(_seenContent.has('__blank__'))return false;
+        _seenContent.add('__blank__');return true;
+      }
       if(hasSrc)_seenSrc.add(src);
       if(hasTitle)_seenTitle.add(title);
       if(hasContent)_seenContent.add(fp);
@@ -12040,7 +12055,6 @@ async function _projFlushPendingSaves(){
   if(!_projDir||_pendingFolderSaves.size===0)return;
   let saved=0;
   for(const[id,blob]of _pendingFolderSaves){
-    _projSavedIds.delete(id); // ensure guard doesn't block
     try{await _projSaveAsset(id,blob);saved++;}catch(e){}
   }
   if(saved>0)toast('📁 Đã sao lưu '+saved+' ảnh/video vào thư mục project','success');
@@ -12085,6 +12099,7 @@ async function _buildHtmlBlob(){
   }
   html=html.replace(/<script id="pd-embedded-state"[\s\S]*?<\/script>\s*/g,'');
   const toSave=JSON.parse(JSON.stringify(state));
+  toSave.docs=(toSave.docs||[]).filter(d=>!d._deleted);
   toSave.docs.forEach(doc=>{
     if(doc.images)doc.images=doc.images.map(m=>{const{src,...meta}=m;return src&&src.startsWith('data:')?{...meta,src}:meta;});
   });
@@ -12167,14 +12182,15 @@ async function exportProject(){
   toast('Đang chuẩn bị ZIP...','info');
   try{
     const zip=new JSZip();
-    // data.json — strip blob: src URLs
+    // data.json — strip blob: src URLs, exclude deleted docs
     const toSave=JSON.parse(JSON.stringify(state));
+    toSave.docs=(toSave.docs||[]).filter(d=>!d._deleted);
     toSave.docs.forEach(doc=>{
       if(doc.images)doc.images=doc.images.map(m=>{const{src,...meta}=m;return src&&src.startsWith('data:')?{...meta,src}:meta;});
     });
     zip.file('data.json',JSON.stringify(toSave,null,2));
-    // Collect all assets across all docs
-    const ids=_collectDocAssetIds(state.docs);
+    // Collect all assets across live docs only
+    const ids=_collectDocAssetIds(toSave.docs);
     const saved=await _addAssetsToZip(zip,ids);
     const zipBlob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
     const name=(state.projectName||'project').replace(/[^a-zA-Z0-9\-_]/g,'_')+'.projectdocs.zip';
