@@ -1699,6 +1699,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
         <div class="hdr-dd-item" onclick="_projOpenFolder();hdrCloseAll()"><i class="ti ti-folder-cog"></i> Set project folder</div>
         <div class="hdr-dd-sep"></div>
         <div class="hdr-dd-item" onclick="_deduplicatePages();hdrCloseAll()" style="color:#e11d48"><i class="ti ti-copy-off" style="color:#e11d48"></i> Xóa trang trùng lặp</div>
+        <div class="hdr-dd-item" onclick="if(confirm('Xóa TẤT CẢ trang khỏi project?')){state.docs=[];state.currentDocId=null;persistNow();renderSidebar();document.getElementById('editorPanel').style.display='none';document.getElementById('emptyState').style.display='';if(_projDir)_projSaveJSON();toast('Đã xóa tất cả trang','success');}hdrCloseAll()" style="color:#e11d48"><i class="ti ti-trash" style="color:#e11d48"></i> Xóa tất cả trang</div>
       </div>
     </div>
 
@@ -4057,6 +4058,7 @@ function _purgeDocTree(docId){
   state.docs=state.docs.filter(d=>d.id!==docId);
   state.recent=(state.recent||[]).filter(r=>r.id!==docId);
   state.starred=(state.starred||[]).filter(id=>id!==docId);
+  if(_projDir)_projSaveJSON(); // sync data.json immediately on delete
 }
 // Blob → base64 DataURL (only used for export)
 function _blobToB64(blob){
@@ -12086,6 +12088,7 @@ function _deduplicatePages(){
   if(!removed){toast('Không có trang trùng','info');return;}
   persistNow();renderSidebar();
   toast(`Đã xóa ${removed} trang trùng (còn ${state.docs.length} trang)`,'success');
+  if(_projDir)_projSaveJSON(); // sync data.json immediately
 }
 
 // Collect all unique media IDs referenced in a list of docs
