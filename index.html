@@ -5170,7 +5170,7 @@ function _reloadEditorImages(){
   const editor=document.getElementById('editor');if(!editor)return;
   if(typeof _cfImgLoadAll==='function')_cfImgLoadAll(editor);
   if(typeof _cfCarLoadAll==='function')_cfCarLoadAll(editor);
-  // Also refresh floating media for the current doc
+  if(typeof tblAttachAll==='function')tblAttachAll();
   const doc=currentDoc();if(doc&&typeof fmLoadAll==='function')fmLoadAll(doc);
 }
 
@@ -11498,10 +11498,14 @@ async function doImportMerge(){
   closeModal('importMergeModal');
   if(imported.length)openDoc(imported[0].id);
   toast(`Đã nhập ${imported.length} trang${skipped?` · bỏ qua ${skipped} trang trùng`:''}`,'success');
-  // Reload images in editor — background _projLoadFolderAssets may have just finished
+  // Initial quick re-render (for images already in IDB/cache from ZIP loading)
   setTimeout(()=>_reloadEditorImages(),200);
   if(_projDir){
-    await new Promise(r=>setTimeout(r,300));
+    // Load any folder images missing from IDB (handles: JSON-without-embed import,
+    // race where startup _projLoadFolderAssets hadn't finished when openDoc ran)
+    const loadedFromFolder=await _projLoadFolderAssets(_projDir);
+    if(loadedFromFolder>0)_reloadEditorImages();
+    // Save any imported images that landed in IDB but not yet in folder
     const ids=_collectDocAssetIds(imported);
     let synced=0;
     for(const id of ids){
@@ -11510,6 +11514,8 @@ async function doImportMerge(){
       if(blob){await _projSaveAsset(id,blob);if(_projSavedIds.has(id))synced++;}
     }
     if(synced)toast(`📁 Đã lưu ${synced} ảnh/video vào "${_projDirName}"`,'success');
+    // Final re-render after all folder-loads and saves complete
+    _reloadEditorImages();
   } else if(_pendingFolderSaves.size>0){
     toast('⚠️ Chưa kết nối thư mục — ảnh tự đồng bộ khi Reconnect','warning');
   }
@@ -11852,9 +11858,10 @@ async function _projLoadFolderAssets(handle){
         const origExt=(entry.name.split('.').pop()||'').toLowerCase();
         const rawBlob=new Blob([await f.arrayBuffer()],{type:f.type});
         const blob=_ensureBlobMime(rawBlob,origExt);
+        // Mark as saved BEFORE _idbPut so its auto-call to _projSaveAsset skips re-writing
+        _projSavedIds.add(id);
         await _idbPut(id,blob);
         if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}
-        _projSavedIds.add(id);
         count++;
       }catch(e){}
     }
