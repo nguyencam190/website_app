@@ -1703,7 +1703,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 
     <!-- Project folder -->
     <div style="display:flex;align-items:center;gap:4px">
-      <button class="header-icon-btn" onclick="_projOpenFolder()" title="Mở thư mục project (tải trang + ảnh/video)"><i class="ti ti-folder-open"></i></button>
+      <button class="header-icon-btn" onclick="_openProjectFile()" title="Mở file JSON đã lưu"><i class="ti ti-folder-open"></i></button>
       <button class="proj-live-btn" id="projLiveBtn" onclick="_projToggleLive()" title="Lưu tất cả dữ liệu và ảnh vào thư mục project">
         <span class="proj-live-dot" id="projLiveDot"></span>Push
       </button>
@@ -11247,7 +11247,7 @@ async function _openProjectFile(){
   input.click();
 }
 function _sbImportClickSmart(){
-  // Show a tiny inline picker: Thư mục | File ZIP/JSON
+  // Show a tiny inline picker: Thư mục | File ZIP
   const existing=document.getElementById('_sbImportPicker');
   if(existing){existing.remove();return;}
   const btn=document.querySelector('.sb-import-btn');
@@ -11266,7 +11266,7 @@ function _sbImportClickSmart(){
     return el;
   };
   pop.appendChild(mkItem('ti-folder-open','Chọn thư mục',()=>importMergePagesFromFolder()));
-  pop.appendChild(mkItem('ti-file-zip','Chọn file ZIP / JSON',()=>_sbImportFromFile()));
+  pop.appendChild(mkItem('ti-file-zip','Chọn file ZIP',()=>_sbImportFromZip()));
   document.body.appendChild(pop);
   const close=e=>{if(!pop.contains(e.target)&&e.target!==btn){pop.remove();document.removeEventListener('mousedown',close);}};
   setTimeout(()=>document.addEventListener('mousedown',close),0);
@@ -11299,6 +11299,16 @@ async function _sbImportFromFile(){
   const input=document.createElement('input');
   input.type='file';
   input.accept='.zip,.json,.camnguyen.json,application/zip,application/x-zip-compressed,application/octet-stream';
+  input.onchange=async e=>{
+    const file=e.target.files[0];if(!file)return;
+    await _sbImportProcessFile(file);
+  };
+  input.click();
+}
+async function _sbImportFromZip(){
+  const input=document.createElement('input');
+  input.type='file';
+  input.accept='.zip,application/zip,application/x-zip-compressed';
   input.onchange=async e=>{
     const file=e.target.files[0];if(!file)return;
     await _sbImportProcessFile(file);
