@@ -11589,22 +11589,63 @@ async function _projFullSync(){
   try{
     toast('⏳ Đang lưu toàn bộ dữ liệu...','info');
     await _projSaveJSON();
-    const ids=_collectDocAssetIds(state.docs);
+    const referencedIds=_collectDocAssetIds(state.docs);
+
+    // 1. Save new assets (skip already-saved and content duplicates)
     let saved=0,skipped=0,dupes=0;
     const seenHashes=new Set();
-    for(const id of ids){
+    for(const id of referencedIds){
       if(_projSavedIds.has(id)){skipped++;continue;}
       const blob=await _idbGet(id);
       if(!blob)continue;
       const hash=await _blobHash(blob);
-      if(hash&&seenHashes.has(hash)){dupes++;continue;} // same content already saved
+      if(hash&&seenHashes.has(hash)){dupes++;continue;}
       if(hash)seenHashes.add(hash);
       await _projSaveAsset(id,blob);saved++;
     }
     await _projFlushPendingSaves();
+
+    // 2. Delete orphaned files from project folder (not referenced in any doc)
+    let deletedFiles=0;
+    for(const subDirName of['images','videos']){
+      let subDir;
+      try{subDir=await _projDir.getDirectoryHandle(subDirName);}catch(e){continue;}
+      const toDelete=[];
+      for await(const[name] of subDir.entries()){
+        const id=name.replace(/\.[^.]+$/,'');
+        if(!referencedIds.has(id))toDelete.push(name);
+      }
+      for(const name of toDelete){
+        try{await subDir.removeEntry(name);deletedFiles++;}catch(e){}
+        _projSavedIds.delete(name.replace(/\.[^.]+$/,''));
+      }
+    }
+
+    // 3. Clean orphaned blobs from IDB
+    const db=await _openIDB();
+    const allKeys=await new Promise(res=>{
+      const tx=db.transaction('blobs','readonly');
+      const req=tx.objectStore('blobs').getAllKeys();
+      req.onsuccess=e=>res(e.target.result);req.onerror=()=>res([]);
+    });
+    let deletedIdb=0;
+    for(const key of allKeys){
+      if(key===PROJ_DIR_IDB_KEY||referencedIds.has(key))continue;
+      await new Promise(res=>{
+        const tx=db.transaction('blobs','readwrite');
+        tx.objectStore('blobs').delete(key);
+        tx.oncomplete=res;tx.onerror=res;
+      });
+      if(_objUrls[key]){URL.revokeObjectURL(_objUrls[key]);delete _objUrls[key];}
+      _pendingFolderSaves.delete(key);
+      deletedIdb++;
+    }
+
     const total=saved+skipped;
-    const dupeMsg=dupes?` · bỏ ${dupes} ảnh trùng`:'';
-    toast(`✅ Đã lưu ${state.docs.length} trang · ${total} ảnh/video vào 📁 "${_projDirName}"${dupeMsg}`,'success');
+    let msg=`✅ Đã lưu ${state.docs.length} trang · ${total} ảnh/video vào 📁 "${_projDirName}"`;
+    if(dupes)msg+=` · bỏ ${dupes} trùng`;
+    if(deletedFiles||deletedIdb)msg+=` · xóa ${deletedFiles} file thừa`;
+    toast(msg,'success');
   }catch(e){toast('Lỗi lưu: '+e.message,'error');console.error(e);}
   finally{_projLiveSaving=false;}
 }
