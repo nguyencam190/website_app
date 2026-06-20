@@ -1697,6 +1697,8 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
         <div class="hdr-dd-item" onclick="exportProject();hdrCloseAll()"><i class="ti ti-file-zip"></i> Xuất ZIP backup (có ảnh)</div>
         <div class="hdr-dd-sep"></div>
         <div class="hdr-dd-item" onclick="_projOpenFolder();hdrCloseAll()"><i class="ti ti-folder-cog"></i> Set project folder</div>
+        <div class="hdr-dd-sep"></div>
+        <div class="hdr-dd-item" onclick="_deduplicatePages();hdrCloseAll()" style="color:#e11d48"><i class="ti ti-copy-off" style="color:#e11d48"></i> Xóa trang trùng lặp</div>
       </div>
     </div>
 
@@ -11456,12 +11458,22 @@ async function doImportMerge(){
   if(!checkedIds.length){toast('Chọn ít nhất 1 trang','error');return;}
   const selected=_importMergeDocs.filter(d=>checkedIds.includes(d.id));
   const targetSec=state.sections[0]||'default';
-  const imported=selected.map(d=>({...d,id:uid(),section:targetSec,parentId:null,importedFrom:d.id,updatedAt:new Date().toISOString()}));
+  // Dedup: skip pages already imported (same importedFrom ID or same title)
+  const existingImportedFrom=new Set(state.docs.map(d=>d.importedFrom).filter(Boolean));
+  const existingTitles=new Set(state.docs.map(d=>(d.title||'').trim().toLowerCase()).filter(Boolean));
+  const toImport=selected.filter(d=>{
+    if(existingImportedFrom.has(d.id))return false;
+    if(existingTitles.has((d.title||'').trim().toLowerCase()))return false;
+    return true;
+  });
+  const skipped=selected.length-toImport.length;
+  if(!toImport.length){toast(`Tất cả ${selected.length} trang đã tồn tại — không nhập trùng`,'warning');return;}
+  const imported=toImport.map(d=>({...d,id:uid(),section:targetSec,parentId:null,importedFrom:d.id,updatedAt:new Date().toISOString()}));
   state.docs.push(...imported);
   persistNow();renderSidebar();
   closeModal('importMergeModal');
   if(imported.length)openDoc(imported[0].id);
-  toast(`Đã nhập ${imported.length} trang`,'success');
+  toast(`Đã nhập ${imported.length} trang${skipped?` · bỏ qua ${skipped} trang trùng`:''}`,'success');
   if(_projDir){
     // Give fire-and-forget writes from _idbPut.oncomplete time to finish,
     // then retry only those that failed (not in _projSavedIds yet).
@@ -12055,6 +12067,25 @@ async function _buildHtmlBlob(){
   html=html.replace('</head>',embedTag+'</head>');
   const fname=(state.projectName||'project-docs').replace(/[^a-zA-Z0-9\-_]/g,'-')+'.html';
   return{blob:new Blob([html],{type:'text/html'}),fname};
+}
+
+function _deduplicatePages(){
+  const before=state.docs.length;
+  const seenTitles=new Set();
+  const seenImportedFrom=new Set();
+  state.docs=state.docs.filter(d=>{
+    const key=(d.title||'').trim().toLowerCase();
+    const src=d.importedFrom||'';
+    if(src&&seenImportedFrom.has(src))return false;
+    if(key&&seenTitles.has(key))return false;
+    if(src)seenImportedFrom.add(src);
+    if(key)seenTitles.add(key);
+    return true;
+  });
+  const removed=before-state.docs.length;
+  if(!removed){toast('Không có trang trùng','info');return;}
+  persistNow();renderSidebar();
+  toast(`Đã xóa ${removed} trang trùng (còn ${state.docs.length} trang)`,'success');
 }
 
 // Collect all unique media IDs referenced in a list of docs
