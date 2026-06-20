@@ -1939,7 +1939,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
     <div class="sb-search-row">
       <div class="sb-search"><i class="ti ti-search"></i><input type="text" placeholder="Search pages..." id="searchInput" oninput="filterDocs()"></div>
       <button class="sb-new-btn" onclick="_quickNewRootDoc()" title="Trang mới"><i class="ti ti-plus"></i></button>
-      <button class="sb-new-btn sb-import-btn" onclick="_sbImportClickSmart()" title="Click: chọn thư mục · Kéo thả: thư mục hoặc file ZIP"><i class="ti ti-file-import"></i></button>
+      <button class="sb-new-btn sb-import-btn" onclick="_sbImportClickSmart(this)" title="Import thư mục hoặc file ZIP"><i class="ti ti-file-import"></i></button>
     </div>
 
     <!-- Nav tree -->
@@ -11323,9 +11323,35 @@ async function _openProjectFile(){
   };
   input.click();
 }
-function _sbImportClickSmart(){
-  // Click → open folder picker. Drag-drop onto button → handles folder or ZIP.
-  importMergePagesFromFolder();
+function _sbImportClickSmart(btn){
+  // Toggle a small dropdown (folder / ZIP) anchored to the button
+  const existing=document.getElementById('_sbImportDd');
+  if(existing){existing.remove();return;}
+  const dd=document.createElement('div');
+  dd.id='_sbImportDd';
+  dd.className='hdr-dd on';
+  dd.style.cssText='position:fixed;min-width:170px;right:auto;top:auto;z-index:9999;';
+  const r=btn.getBoundingClientRect();
+  dd.style.left=r.left+'px';
+  dd.style.top=(r.bottom+6)+'px';
+  dd.innerHTML=
+    '<div class="hdr-dd-item" id="_sbImportFolderItem"><i class="ti ti-folder"></i> Thư mục</div>'+
+    '<div class="hdr-dd-sep"></div>'+
+    '<div class="hdr-dd-item" id="_sbImportZipItem"><i class="ti ti-file-zip"></i> File ZIP</div>';
+  document.body.appendChild(dd);
+  dd.querySelector('#_sbImportFolderItem').onclick=()=>{dd.remove();importMergePagesFromFolder();};
+  dd.querySelector('#_sbImportZipItem').onclick=()=>{
+    dd.remove();
+    const input=document.createElement('input');
+    input.type='file';
+    input.accept='.zip,application/zip,application/x-zip-compressed';
+    input.onchange=async e=>{const file=e.target.files[0];if(!file)return;await _sbImportProcessFile(file);};
+    input.click();
+  };
+  setTimeout(()=>{
+    const close=e=>{if(!dd.contains(e.target)&&e.target!==btn){dd.remove();document.removeEventListener('mousedown',close);}};
+    document.addEventListener('mousedown',close);
+  },0);
 }
 // Wire drag-and-drop folder support onto import buttons (called once on init)
 function _sbImportWireDrop(){
