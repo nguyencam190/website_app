@@ -18,10 +18,11 @@ Sau **mỗi lần thay đổi code** trong dự án này, bắt buộc phải:
 - Kéo thả → nhận thư mục hoặc file ZIP
 - KHÔNG dùng `<input type="file">` cho click — browser không cho phép chọn cả folder lẫn file ZIP trong cùng một dialog
 
-### "Open thư mục dự án" (`_projOpenFolder`)
+### "Open project" trong menu 💾 (`_projOpenFolder`)
 - **Mở thư mục project** — tải cả data.json + ảnh/video cùng lúc
 - Gọi `_projOpenFolder()` — KHÔNG gọi `_openProjectFile()`
-- Là nút icon 📂 (`#pabOpenFolderBtn`) trên **page action bar**, nằm **giữa nút khóa trang (`pabLockBtn`) và nút "Published" (`pabStatus`)**
-- KHÔNG còn nằm trong dropdown menu 💾 (menu 💾 chỉ còn New project + Export backup)
+- Nằm trong dropdown menu 💾 (item giữa: New project · Open project · Export backup), KHÔNG còn nút 📁 riêng trên header
+- KHÔNG đặt trên page action bar — vì khi không có trang nào thì page action bar bị ẩn, sẽ không thấy nút
+- Header chỉ còn nút **Push** (`_projToggleLive`) bên cạnh menu 💾
 
-**Nút import sidebar và "Open thư mục dự án" có chức năng riêng biệt, không được gộp hay nhầm lẫn.**
+**Nút import sidebar và "Open project" có chức năng riêng biệt, không được gộp hay nhầm lẫn.**

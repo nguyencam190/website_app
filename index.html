@@ -1694,6 +1694,8 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
       <div class="hdr-dd" id="hdrExportDd" style="right:0">
         <div class="hdr-dd-item" onclick="_resetApp();hdrCloseAll()" style="color:#f38ba8"><i class="ti ti-sparkles" style="color:#f38ba8"></i> New project</div>
         <div class="hdr-dd-sep"></div>
+        <div class="hdr-dd-item" onclick="_projOpenFolder();hdrCloseAll()"><i class="ti ti-folder-open" style="color:var(--accent)"></i> <strong>Open project</strong></div>
+        <div class="hdr-dd-sep"></div>
         <div class="hdr-dd-item" onclick="exportProject();hdrCloseAll()"><i class="ti ti-file-zip"></i> Export backup</div>
       </div>
     </div>
@@ -2012,7 +2014,6 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
           </button>
           <button class="pab-icon-btn" id="pabUndoBtn" onclick="editorUndo()" title="Hoàn tác (Ctrl+Z)" style="display:none"><i class="ti ti-arrow-back-up"></i></button>
           <button class="pab-icon-btn" id="pabRedoBtn" onclick="editorRedo()" title="Làm lại (Ctrl+Y)" style="display:none"><i class="ti ti-arrow-forward-up"></i></button>
-          <button class="pab-icon-btn" id="pabOpenFolderBtn" onclick="_projOpenFolder()" title="Mở thư mục dự án (data.json + ảnh/video)"><i class="ti ti-folder-open"></i></button>
           <span class="pab-status" id="pabStatus" onclick="openExportWebsiteModal()" title="Click để xuất Website" style="cursor:pointer;display:flex;align-items:center;gap:4px"><i class="ti ti-world-upload" style="font-size:11px"></i>Published</span>
           <button class="pab-btn" onclick="openShareModal()">
             <i class="ti ti-share" style="font-size:13px"></i> Share
