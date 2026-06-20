@@ -1695,7 +1695,6 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
         <div class="hdr-dd-item" onclick="exportSelfContained();hdrCloseAll()"><i class="ti ti-file-code" style="color:var(--accent)"></i> <strong>Lưu file HTML (có data)</strong></div>
         <div class="hdr-dd-sep"></div>
         <div class="hdr-dd-item" onclick="exportProject();hdrCloseAll()"><i class="ti ti-file-zip"></i> Xuất ZIP backup (có ảnh)</div>
-        <div class="hdr-dd-item" onclick="_projOpenFolder();hdrCloseAll()"><i class="ti ti-folder-cog"></i> Kết nối thư mục project</div>
         <div class="hdr-dd-sep"></div>
         <div class="hdr-dd-item" onclick="_sbImportAll();hdrCloseAll()"><i class="ti ti-file-import"></i> Nhập trang (ZIP/JSON)</div>
       </div>
@@ -1703,8 +1702,6 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 
     <!-- Project folder -->
     <div style="display:flex;align-items:center;gap:4px">
-      <input type="file" id="projJsonInput" accept=".json,.zip" style="display:none" onchange="_projHandleJsonOpen(event)">
-      <button class="header-icon-btn" id="projFolderBtn" onclick="document.getElementById('projJsonInput').click()" title="Mở file data JSON / ZIP của project"><i class="ti ti-database-import"></i></button>
       <button class="proj-live-btn" id="projLiveBtn" onclick="_projToggleLive()" title="Lưu tất cả dữ liệu và ảnh vào thư mục project">
         <span class="proj-live-dot" id="projLiveDot"></span>Live
       </button>
