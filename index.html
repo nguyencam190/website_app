@@ -1703,7 +1703,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 
     <!-- Project folder -->
     <div style="display:flex;align-items:center;gap:4px">
-      <button class="header-icon-btn" onclick="_sbImportAll()" title="Nhập trang (ZIP/JSON)"><i class="ti ti-file-import"></i></button>
+      <button class="header-icon-btn" onclick="_sbImportAll(this)" title="Nhập trang (ZIP/JSON/thư mục)"><i class="ti ti-file-import"></i></button>
       <button class="proj-live-btn" id="projLiveBtn" onclick="_projToggleLive()" title="Lưu tất cả dữ liệu và ảnh vào thư mục project">
         <span class="proj-live-dot" id="projLiveDot"></span>Push
       </button>
@@ -1938,7 +1938,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
     <div class="sb-search-row">
       <div class="sb-search"><i class="ti ti-search"></i><input type="text" placeholder="Search pages..." id="searchInput" oninput="filterDocs()"></div>
       <button class="sb-new-btn" onclick="_quickNewRootDoc()" title="Trang mới"><i class="ti ti-plus"></i></button>
-      <button class="sb-new-btn" onclick="_sbImportAll()" title="Nhập trang"><i class="ti ti-file-import"></i></button>
+      <button class="sb-new-btn" onclick="_sbImportAll(this)" title="Nhập trang"><i class="ti ti-file-import"></i></button>
     </div>
 
     <!-- Nav tree -->
@@ -11216,7 +11216,32 @@ document.addEventListener('selectionchange',()=>{const sel=window.getSelection()
 // ══ IMPORT MERGE (Nhập trang từ file) ══════════════════════
 let _importMergeDocs=[];
 
-async function _sbImportAll(){
+function _sbImportAll(triggerEl){
+  // Show a tiny inline menu: import file vs import folder
+  const existingMenu=document.getElementById('_sbImportMenu');
+  if(existingMenu){existingMenu.remove();return;}
+  const menu=document.createElement('div');
+  menu.id='_sbImportMenu';
+  menu.style.cssText='position:fixed;z-index:9999;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.22);padding:6px 0;min-width:210px;font-size:13px;color:var(--text)';
+  const anchor=triggerEl instanceof Element?triggerEl:document.querySelector('[onclick*="_sbImportAll"]');
+  if(anchor){const r=anchor.getBoundingClientRect();menu.style.top=(r.bottom+6)+'px';menu.style.left=r.left+'px';}
+  else{menu.style.top='80px';menu.style.left='16px';}
+  function item(icon,label,desc,fn){
+    const el=document.createElement('div');
+    el.style.cssText='display:flex;align-items:center;gap:10px;padding:9px 14px;cursor:pointer;transition:background .12s';
+    el.onmouseenter=()=>el.style.background='var(--surface2)';
+    el.onmouseleave=()=>el.style.background='';
+    el.innerHTML=`<i class="${icon}" style="font-size:15px;color:var(--accent);flex-shrink:0"></i><div><div style="font-weight:500">${label}</div><div style="font-size:11px;color:var(--text3)">${desc}</div></div>`;
+    el.onclick=()=>{menu.remove();fn();};
+    menu.appendChild(el);
+  }
+  item('ti ti-file-import','Nhập file','ZIP hoặc JSON (có ảnh nhúng)',_sbImportFromFile);
+  item('ti ti-folder-open','Nhập từ thư mục','Chọn thư mục chứa page.json + images/',importMergePagesFromFolder);
+  document.body.appendChild(menu);
+  const close=e=>{if(!menu.contains(e.target)){menu.remove();document.removeEventListener('mousedown',close,true);}};
+  setTimeout(()=>document.addEventListener('mousedown',close,true),0);
+}
+async function _sbImportFromFile(){
   const input=document.createElement('input');
   input.type='file';
   input.accept='.zip,.json,.camnguyen.json';
@@ -11243,13 +11268,12 @@ async function _sbImportAll(){
           _importMergeDocs=[JSON.parse(JSON.stringify(data.doc))];
           const media=data.media||{};
           let mediaCount=0;
-          // Load embedded base64 media (legacy format)
           for(const[id,b64]of Object.entries(media)){
             if(!b64)continue;
             try{const blob=_dataUrlToBlob(b64);if(blob){await _idbPut(id,blob);if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}mediaCount++;}}catch(er){}
           }
           if(mediaCount===0&&Object.keys(media).length===0)
-            toast('ℹ️ Ảnh chưa được tải — nhấn Push hoặc "Set project folder" để tải ảnh từ thư mục','info');
+            toast('ℹ️ File không có ảnh nhúng — nếu có thư mục ảnh kèm theo, hãy dùng "Nhập từ thư mục"','info');
           _sbImportShowMergeModal(file.name,_importMergeDocs,mediaCount);
         }else if(data.docs&&Array.isArray(data.docs)){
           _importMergeDocs=data.docs;
@@ -11382,6 +11406,7 @@ async function importMergePagesFromFolder(){
         const blob=_ensureBlobMime(rawBlob,origExt);
         const id=entry.name.replace(/\.[^.]+$/,'');
         await _idbPut(id,blob);
+        if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}
         mediaCount++;
       }catch(e){console.warn('[mergeFolder] skip',entry.name,e);}
     }
