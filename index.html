@@ -5165,6 +5165,15 @@ async function _fmLoadSrc(fm){
   }
 }
 
+// Re-run image loaders on the current editor — call after background asset loading finishes
+function _reloadEditorImages(){
+  const editor=document.getElementById('editor');if(!editor)return;
+  if(typeof _cfImgLoadAll==='function')_cfImgLoadAll(editor);
+  if(typeof _cfCarLoadAll==='function')_cfCarLoadAll(editor);
+  // Also refresh floating media for the current doc
+  const doc=currentDoc();if(doc&&typeof fmLoadAll==='function')fmLoadAll(doc);
+}
+
 async function reloadAllMedia(){
   const doc=currentDoc();if(!doc)return;
   // Clear cached blob URLs for this doc so IDB is re-fetched
@@ -11489,14 +11498,14 @@ async function doImportMerge(){
   closeModal('importMergeModal');
   if(imported.length)openDoc(imported[0].id);
   toast(`Đã nhập ${imported.length} trang${skipped?` · bỏ qua ${skipped} trang trùng`:''}`,'success');
+  // Reload images in editor — background _projLoadFolderAssets may have just finished
+  setTimeout(()=>_reloadEditorImages(),200);
   if(_projDir){
-    // Give fire-and-forget writes from _idbPut.oncomplete time to finish,
-    // then retry only those that failed (not in _projSavedIds yet).
     await new Promise(r=>setTimeout(r,300));
     const ids=_collectDocAssetIds(imported);
     let synced=0;
     for(const id of ids){
-      if(_projSavedIds.has(id)){synced++;continue;} // already written
+      if(_projSavedIds.has(id)){synced++;continue;}
       const blob=await _idbGet(id);
       if(blob){await _projSaveAsset(id,blob);if(_projSavedIds.has(id))synced++;}
     }
@@ -11731,8 +11740,8 @@ async function _projInit(){
     const perm=await handle.queryPermission({mode:'readwrite'});
     if(perm==='granted'){
       _projDir=handle;_projDirName=handle.name;_projUpdateBadge();
-      // Load images/videos from folder into IDB in background so pages render correctly
-      _projLoadFolderAssets(handle).catch(()=>{});
+      // Load images/videos from folder into IDB in background, then re-render current doc
+      _projLoadFolderAssets(handle).then(()=>_reloadEditorImages()).catch(()=>{});
     }else{
       // Permission revoked after page reload — show reconnect banner
       _projDirName=handle.name||'';
@@ -11941,8 +11950,8 @@ async function _projReconnect(){
       document.getElementById('projReconnectBanner')?.classList.remove('on');
       _projUpdateBadge();
       toast('📁 Đã kết nối lại: '+handle.name,'success');
-      // Load images from folder into IDB so pages render correctly
-      _projLoadFolderAssets(handle).catch(()=>{});
+      // Load images from folder into IDB, then re-render current doc images
+      _projLoadFolderAssets(handle).then(()=>_reloadEditorImages()).catch(()=>{});
       await _projSaveJSON();
       await _projFlushPendingSaves();
       await _projMigrateToFolder();
