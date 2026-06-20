@@ -1839,7 +1839,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
     <div class="modal-footer" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
       <div style="display:flex;gap:8px;width:100%;justify-content:flex-end;margin-top:4px">
         <button class="hbtn" onclick="closeModal('importMergeModal')">Hủy</button>
-        <button class="hbtn primary" id="doImportMergeBtn" onclick="this.disabled=true;this.textContent='Đang xử lý...';doImportMerge().finally(()=>{this.disabled=false;this.innerHTML='<i class=\"ti ti-file-import\" style=\"font-size:13px\"></i> Merge vào project của tôi';})"><i class="ti ti-file-import" style="font-size:13px"></i> Merge vào project của tôi</button>
+        <button class="hbtn primary" id="doImportMergeBtn" onclick="_doImportMergeBtnClick(this)"><i class="ti ti-file-import" style="font-size:13px"></i> Merge vào project của tôi</button>
       </div>
     </div>
   </div>
@@ -11622,6 +11622,14 @@ function handleImportMerge(e){
     toast('Chỉ hỗ trợ .json, .html, .txt, .md','error');
   };
   reader.readAsText(file);e.target.value='';
+}
+function _doImportMergeBtnClick(btn){
+  btn.disabled=true;
+  btn.textContent='Đang xử lý...';
+  doImportMerge().finally(()=>{
+    btn.disabled=false;
+    btn.innerHTML='<i class="ti ti-file-import" style="font-size:13px"></i> Merge vào project của tôi';
+  });
 }
 async function doImportMerge(){
   const checkedIds=Array.from(document.querySelectorAll('#importMergeList input:checked')).map(i=>i.value);
