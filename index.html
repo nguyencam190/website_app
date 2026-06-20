@@ -11267,7 +11267,11 @@ async function _importMergeFromZip(zip,filename){
       // Ensure correct MIME — JSZip often returns empty type
       const blob=_ensureBlobMime(rawBlob,origExt);
       const id=path.replace(/^(images|videos)\//,'').replace(/\.[^.]+$/,'');
-      if(id&&blob.size>0){await _idbPut(id,blob);mediaCount++;}
+      if(id&&blob.size>0){
+        await _idbPut(id,blob);
+        if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}
+        mediaCount++;
+      }
     }catch(er){}
   }
   _importMergeDocs=imported.docs;
@@ -11815,7 +11819,32 @@ async function _projConnectFolderOnly(){
   _projDir=handle;_projDirName=handle.name;
   document.getElementById('projReconnectBanner')?.classList.remove('on');
   _projUpdateBadge();
-  toast('📁 Đã kết nối ổ project "'+handle.name+'" — nhấn Live để lưu','success');
+  // Load any existing images/videos from this folder into IDB so imported pages render correctly
+  const mc=await _projLoadFolderAssets(handle);
+  toast('📁 Đã kết nối ổ project "'+handle.name+'"'+(mc?' · tải '+mc+' ảnh/video':''),'success');
+}
+
+// Load all files from images/ and videos/ subdirs of a folder handle into IDB + ObjectURL cache
+async function _projLoadFolderAssets(handle){
+  let count=0;
+  for(const sub of['images','videos']){
+    let subDir;try{subDir=await handle.getDirectoryHandle(sub);}catch(e){continue;}
+    for await(const[,entry]of subDir.entries()){
+      if(entry.kind!=='file')continue;
+      try{
+        const f=await entry.getFile();
+        const origExt=(entry.name.split('.').pop()||'').toLowerCase();
+        const rawBlob=new Blob([await f.arrayBuffer()],{type:f.type});
+        const blob=_ensureBlobMime(rawBlob,origExt);
+        const id=entry.name.replace(/\.[^.]+$/,'');
+        await _idbPut(id,blob);
+        if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}
+        _projSavedIds.add(id);
+        count++;
+      }catch(e){}
+    }
+  }
+  return count;
 }
 
 async function _projOpenFolder(){
@@ -11870,26 +11899,9 @@ async function _projOpenFolder(){
     const spTxt=document.getElementById('sbSpaceIconText');
     if(spTxt)spTxt.textContent=(state.projectName||'P').charAt(0).toUpperCase();
     updateUserUI();renderSidebar();
-    // Load images/videos from folder into IDB
-    let mediaCount=0;
+    // Load images/videos from folder into IDB + ObjectURL cache
     toast('⏳ Đang tải ảnh/video...','info');
-    for(const subDirName of['images','videos']){
-      let subDir;
-      try{subDir=await handle.getDirectoryHandle(subDirName);}catch(e){continue;}
-      for await(const[,entry]of subDir.entries()){
-        if(entry.kind!=='file')continue;
-        try{
-          const f=await entry.getFile();
-          const origExt=(entry.name.split('.').pop()||'').toLowerCase();
-          const rawBlob=new Blob([await f.arrayBuffer()],{type:f.type});
-          const blob=_ensureBlobMime(rawBlob,origExt);
-          const id=entry.name.replace(/\.[^.]+$/,'');
-          await _idbPut(id,blob);
-          _projSavedIds.add(id);
-          mediaCount++;
-        }catch(e){}
-      }
-    }
+    const mediaCount=await _projLoadFolderAssets(handle);
     if(state.currentDocId&&state.docs.find(d=>d.id===state.currentDocId)){
       openDoc(state.currentDocId);
     }else if(state.docs.length>0){
@@ -11975,25 +11987,9 @@ async function _projLoadFromFolder(){
     if(!state.recent)state.recent=[];
     if(!state.starred)state.starred=[];
     persist();
-    // 3. Import ảnh & video từ images/ và videos/ vào IDB
-    let mediaCount=0;
+    // 3. Import ảnh & video từ images/ và videos/ vào IDB + ObjectURL cache
     toast('⏳ Đang tải ảnh/video vào trình duyệt...','info');
-    for(const subDirName of['images','videos']){
-      let subDir;
-      try{subDir=await _projDir.getDirectoryHandle(subDirName);}catch(e){continue;}
-      for await(const[,entry]of subDir.entries()){
-        if(entry.kind!=='file')continue;
-        try{
-          const f=await entry.getFile();
-          const blob=new Blob([await f.arrayBuffer()],{type:f.type||'application/octet-stream'});
-          // ID = filename without extension
-          const id=entry.name.replace(/\.[^.]+$/,'');
-          await _idbPut(id,blob);
-          _projSavedIds.add(id);
-          mediaCount++;
-        }catch(e){console.warn('[projLoad] skip asset',entry.name,e);}
-      }
-    }
+    const mediaCount=await _projLoadFolderAssets(_projDir);
     // 4. Cập nhật UI
     const nameEl=document.getElementById('projectNameEl');
     if(nameEl)nameEl.textContent=state.projectName||'My Project';
