@@ -1839,7 +1839,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
     <div class="modal-footer" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
       <div style="display:flex;gap:8px;width:100%;justify-content:flex-end;margin-top:4px">
         <button class="hbtn" onclick="closeModal('importMergeModal')">Hủy</button>
-        <button class="hbtn primary" onclick="doImportMerge()"><i class="ti ti-file-import" style="font-size:13px"></i> Merge vào project của tôi</button>
+        <button class="hbtn primary" id="doImportMergeBtn" onclick="this.disabled=true;this.textContent='Đang xử lý...';doImportMerge().finally(()=>{this.disabled=false;this.innerHTML='<i class=\"ti ti-file-import\" style=\"font-size:13px\"></i> Merge vào project của tôi';})"><i class="ti ti-file-import" style="font-size:13px"></i> Merge vào project của tôi</button>
       </div>
     </div>
   </div>
@@ -11596,6 +11596,8 @@ function handleImportMerge(e){
 async function doImportMerge(){
   const checkedIds=Array.from(document.querySelectorAll('#importMergeList input:checked')).map(i=>i.value);
   if(!checkedIds.length){toast('Chọn ít nhất 1 trang','error');return;}
+  // Close modal immediately — prevents double-click spam
+  closeModal('importMergeModal');
   const selected=_importMergeDocs.filter(d=>checkedIds.includes(d.id));
   const targetSec=state.sections[0]||'default';
   // Build lookup maps for conflict detection
@@ -11604,18 +11606,19 @@ async function doImportMerge(){
   const _existingContent=new Set(state.docs.map(d=>{const c=d.content||'';return c.length>0?c.length+':'+c.slice(0,300):null;}).filter(Boolean));
   // Separate into: UPDATE existing page vs CREATE new page
   const toCreate=[];
-  const toUpdate=[];// [{existing,incoming}]
+  const toUpdate=[];
   for(const d of selected){
     const c=d.content||'';
-    if(c.length>0&&_existingContent.has(c.length+':'+c.slice(0,300)))continue;// identical content — skip
+    if(c.length>0&&_existingContent.has(c.length+':'+c.slice(0,300)))continue;// identical — skip silently
     const byImpFrom=_byImportedFrom.get(d.id);
     if(byImpFrom){toUpdate.push({existing:byImpFrom,incoming:d});continue;}
     const byTitle=_byTitle.get((d.title||'').trim().toLowerCase());
     if(byTitle){toUpdate.push({existing:byTitle,incoming:d});continue;}
     toCreate.push(d);
   }
-  if(!toCreate.length&&!toUpdate.length){toast(`Tất cả ${selected.length} trang đã có nội dung giống hệt — không có gì thay đổi`,'warning');return;}
-  // Apply updates (overwrite content + updatedAt of existing doc)
+  // Nothing to do — close silently, no spam
+  if(!toCreate.length&&!toUpdate.length)return;
+  // Apply updates
   for(const{existing,incoming}of toUpdate){
     existing.content=incoming.content||existing.content;
     existing.images=incoming.images||existing.images;
@@ -11626,7 +11629,6 @@ async function doImportMerge(){
   const imported=toCreate.map(d=>({...d,id:uid(),section:targetSec,parentId:null,importedFrom:d.id,updatedAt:new Date().toISOString()}));
   state.docs.push(...imported);
   persistNow();renderSidebar();
-  closeModal('importMergeModal');
   const firstDoc=imported[0]||toUpdate[0]?.existing;
   if(firstDoc)openDoc(firstDoc.id);
   const _parts=[];
