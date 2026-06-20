@@ -1703,7 +1703,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 
     <!-- Project folder -->
     <div style="display:flex;align-items:center;gap:4px">
-      <button class="header-icon-btn" onclick="_sbImportAll(this)" title="Nhập trang (ZIP/JSON/thư mục)"><i class="ti ti-file-import"></i></button>
+      <button class="header-icon-btn" onclick="_sbImportAll()" title="Nhập trang (ZIP / JSON / thư mục)"><i class="ti ti-file-import"></i></button>
       <button class="proj-live-btn" id="projLiveBtn" onclick="_projToggleLive()" title="Lưu tất cả dữ liệu và ảnh vào thư mục project">
         <span class="proj-live-dot" id="projLiveDot"></span>Push
       </button>
@@ -1938,7 +1938,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
     <div class="sb-search-row">
       <div class="sb-search"><i class="ti ti-search"></i><input type="text" placeholder="Search pages..." id="searchInput" oninput="filterDocs()"></div>
       <button class="sb-new-btn" onclick="_quickNewRootDoc()" title="Trang mới"><i class="ti ti-plus"></i></button>
-      <button class="sb-new-btn" onclick="_sbImportAll(this)" title="Nhập trang"><i class="ti ti-file-import"></i></button>
+      <button class="sb-new-btn" onclick="_sbImportAll()" title="Nhập trang"><i class="ti ti-file-import"></i></button>
     </div>
 
     <!-- Nav tree -->
@@ -2725,6 +2725,8 @@ function init(){
   if(tg)tg.addEventListener('mouseenter',()=>{clearTimeout(_tgHideTimer);});
   // Restore project folder connection
   _projInit();
+  // Wire drag-drop folder support on import buttons
+  setTimeout(_sbImportWireDrop,500);
 }
 
 // ══ UNDO / REDO ══════════════════════════════════════════
@@ -11216,30 +11218,38 @@ document.addEventListener('selectionchange',()=>{const sel=window.getSelection()
 // ══ IMPORT MERGE (Nhập trang từ file) ══════════════════════
 let _importMergeDocs=[];
 
+// Single smart import: file picker for ZIP/JSON, auto-detect images folder when needed.
+// Drag a folder onto the import button → triggers folder import directly.
 function _sbImportAll(triggerEl){
-  // Show a tiny inline menu: import file vs import folder
-  const existingMenu=document.getElementById('_sbImportMenu');
-  if(existingMenu){existingMenu.remove();return;}
-  const menu=document.createElement('div');
-  menu.id='_sbImportMenu';
-  menu.style.cssText='position:fixed;z-index:9999;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.22);padding:6px 0;min-width:210px;font-size:13px;color:var(--text)';
-  const anchor=triggerEl instanceof Element?triggerEl:document.querySelector('[onclick*="_sbImportAll"]');
-  if(anchor){const r=anchor.getBoundingClientRect();menu.style.top=(r.bottom+6)+'px';menu.style.left=r.left+'px';}
-  else{menu.style.top='80px';menu.style.left='16px';}
-  function item(icon,label,desc,fn){
-    const el=document.createElement('div');
-    el.style.cssText='display:flex;align-items:center;gap:10px;padding:9px 14px;cursor:pointer;transition:background .12s';
-    el.onmouseenter=()=>el.style.background='var(--surface2)';
-    el.onmouseleave=()=>el.style.background='';
-    el.innerHTML=`<i class="${icon}" style="font-size:15px;color:var(--accent);flex-shrink:0"></i><div><div style="font-weight:500">${label}</div><div style="font-size:11px;color:var(--text3)">${desc}</div></div>`;
-    el.onclick=()=>{menu.remove();fn();};
-    menu.appendChild(el);
-  }
-  item('ti ti-file-import','Nhập file','ZIP hoặc JSON (có ảnh nhúng)',_sbImportFromFile);
-  item('ti ti-folder-open','Nhập từ thư mục','Chọn thư mục chứa page.json + images/',importMergePagesFromFolder);
-  document.body.appendChild(menu);
-  const close=e=>{if(!menu.contains(e.target)){menu.remove();document.removeEventListener('mousedown',close,true);}};
-  setTimeout(()=>document.addEventListener('mousedown',close,true),0);
+  _sbImportFromFile();
+}
+// Wire drag-and-drop folder support onto import buttons (called once on init)
+function _sbImportWireDrop(){
+  document.querySelectorAll('[onclick*="_sbImportAll"]').forEach(btn=>{
+    if(btn._importDropWired)return;
+    btn._importDropWired=true;
+    btn.addEventListener('dragover',e=>{e.preventDefault();btn.style.outline='2px solid var(--accent)';});
+    btn.addEventListener('dragleave',()=>{btn.style.outline='';});
+    btn.addEventListener('drop',async e=>{
+      e.preventDefault();btn.style.outline='';
+      const item=e.dataTransfer.items&&e.dataTransfer.items[0];
+      if(!item)return;
+      // Folder drop — use FileSystemEntry API
+      const entry=item.webkitGetAsEntry&&item.webkitGetAsEntry();
+      if(entry&&entry.isDirectory){
+        // Convert FileSystemDirectoryEntry to a FileSystemDirectoryHandle
+        if(window.showDirectoryPicker){
+          // Can't convert entry → prompt user to use folder picker
+          toast('Kéo thư mục không được hỗ trợ — hãy dùng Ctrl+Shift+I hoặc nhấn nút và chọn thư mục','info');
+        }
+        return;
+      }
+      // File drop — process directly
+      const file=item.getAsFile?item.getAsFile():null;
+      if(!file)return;
+      await _sbImportProcessFile(file);
+    });
+  });
 }
 async function _sbImportFromFile(){
   const input=document.createElement('input');
@@ -11247,44 +11257,74 @@ async function _sbImportFromFile(){
   input.accept='.zip,.json,.camnguyen.json';
   input.onchange=async e=>{
     const file=e.target.files[0];if(!file)return;
-    const ext=(file.name.split('.').pop()||'').toLowerCase();
-    toast('Đang phân tích file...','info');
-    try{
-      if(ext==='zip'){
-        let JSZip;
-        try{JSZip=await _loadJSZip();}catch(er){toast('Không tải được JSZip','error');return;}
-        const zip=await JSZip.loadAsync(file);
-        if(zip.file('data.json')){
-          await _importMergeFromZip(zip,file.name);
-        }else if(zip.file('page.json')){
-          await _importSinglePageFromZip(zip);
-        }else{
-          toast('File ZIP không nhận dạng được — cần có data.json hoặc page.json','error');
-        }
-      }else if(ext==='json'){
-        const text=await file.text();
-        const data=JSON.parse(text);
-        if(data.type==='camnguyen-page'&&data.doc){
-          _importMergeDocs=[JSON.parse(JSON.stringify(data.doc))];
-          const media=data.media||{};
-          let mediaCount=0;
-          for(const[id,b64]of Object.entries(media)){
-            if(!b64)continue;
-            try{const blob=_dataUrlToBlob(b64);if(blob){await _idbPut(id,blob);if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}mediaCount++;}}catch(er){}
-          }
-          if(mediaCount===0&&Object.keys(media).length===0)
-            toast('ℹ️ File không có ảnh nhúng — nếu có thư mục ảnh kèm theo, hãy dùng "Nhập từ thư mục"','info');
-          _sbImportShowMergeModal(file.name,_importMergeDocs,mediaCount);
-        }else if(data.docs&&Array.isArray(data.docs)){
-          _importMergeDocs=data.docs;
-          _sbImportShowMergeModal(data.projectName||file.name,data.docs,0);
-        }else{
-          toast('File JSON không nhận dạng được','error');
-        }
-      }
-    }catch(err){toast('Lỗi đọc file: '+err.message,'error');console.error(err);}
+    await _sbImportProcessFile(file);
   };
   input.click();
+}
+async function _sbImportProcessFile(file){
+  const ext=(file.name.split('.').pop()||'').toLowerCase();
+  toast('Đang phân tích file...','info');
+  try{
+    if(ext==='zip'){
+      let JSZip;
+      try{JSZip=await _loadJSZip();}catch(er){toast('Không tải được JSZip','error');return;}
+      const zip=await JSZip.loadAsync(file);
+      if(zip.file('data.json')){
+        await _importMergeFromZip(zip,file.name);
+      }else if(zip.file('page.json')){
+        await _importSinglePageFromZip(zip);
+      }else{
+        toast('File ZIP không nhận dạng được — cần có data.json hoặc page.json','error');
+      }
+    }else if(ext==='json'){
+      const text=await file.text();
+      const data=JSON.parse(text);
+      if(data.type==='camnguyen-page'&&data.doc){
+        _importMergeDocs=[JSON.parse(JSON.stringify(data.doc))];
+        const media=data.media||{};
+        let mediaCount=0;
+        for(const[id,b64]of Object.entries(media)){
+          if(!b64)continue;
+          try{const blob=_dataUrlToBlob(b64);if(blob){await _idbPut(id,blob);if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}mediaCount++;}}catch(er){}
+        }
+        if(mediaCount===0&&Object.keys(media).length===0&&window.showDirectoryPicker){
+          // No embedded images — auto-ask for the images folder
+          toast('Đang tải ảnh từ thư mục...','info');
+          try{
+            const dir=await window.showDirectoryPicker({mode:'read',startIn:'downloads'});
+            let loaded=0;
+            for(const subName of['images','videos']){
+              let sub;try{sub=await dir.getDirectoryHandle(subName);}catch(e){continue;}
+              for await(const[,entry]of sub.entries()){
+                if(entry.kind!=='file')continue;
+                try{
+                  const f=await entry.getFile();
+                  const origExt=(entry.name.split('.').pop()||'').toLowerCase();
+                  const rawBlob=new Blob([await f.arrayBuffer()],{type:f.type});
+                  const blob=_ensureBlobMime(rawBlob,origExt);
+                  const id=entry.name.replace(/\.[^.]+$/,'');
+                  await _idbPut(id,blob);
+                  if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}
+                  loaded++;
+                }catch(e){}
+              }
+            }
+            mediaCount=loaded;
+            if(loaded)toast('✅ Đã tải '+loaded+' ảnh/video','success');
+          }catch(e){
+            if(e.name!=='AbortError')console.warn('[import] folder picker error',e);
+            // user cancelled = no images, continue without
+          }
+        }
+        _sbImportShowMergeModal(file.name,_importMergeDocs,mediaCount);
+      }else if(data.docs&&Array.isArray(data.docs)){
+        _importMergeDocs=data.docs;
+        _sbImportShowMergeModal(data.projectName||file.name,data.docs,0);
+      }else{
+        toast('File JSON không nhận dạng được','error');
+      }
+    }
+  }catch(err){toast('Lỗi đọc file: '+err.message,'error');console.error(err);}
 }
 
 async function _importMergeFromZip(zip,filename){
