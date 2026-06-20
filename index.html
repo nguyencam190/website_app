@@ -11601,20 +11601,26 @@ async function _projFullSync(){
   try{
     toast('⏳ Đang lưu toàn bộ dữ liệu...','info');
 
-    // 0. Dedup pages: remove duplicate titles/sources before saving
+    // 0. Dedup pages — triple check: importedFrom, title, content fingerprint
     const _beforeDedup=state.docs.length;
-    const _seenTitles=new Set(),_seenSrc=new Set();
+    const _seenSrc=new Set(),_seenTitle=new Set(),_seenContent=new Set();
     state.docs=state.docs.filter(d=>{
-      const key=(d.title||'').trim().toLowerCase();
       const src=d.importedFrom||'';
-      if(src&&_seenSrc.has(src))return false;
-      if(key&&_seenTitles.has(key))return false;
-      if(src)_seenSrc.add(src);
-      if(key)_seenTitles.add(key);
+      const title=(d.title||'').trim().toLowerCase();
+      const c=d.content||'';
+      // content fingerprint: length + first 300 chars (fast, no crypto needed)
+      const fp=c.length+':'+c.slice(0,300);
+      const hasSrc=!!src,hasTitle=!!title,hasContent=c.length>0;
+      if(hasSrc&&_seenSrc.has(src))return false;
+      if(hasTitle&&_seenTitle.has(title))return false;
+      if(hasContent&&_seenContent.has(fp))return false;
+      if(hasSrc)_seenSrc.add(src);
+      if(hasTitle)_seenTitle.add(title);
+      if(hasContent)_seenContent.add(fp);
       return true;
     });
     const _dedupRemoved=_beforeDedup-state.docs.length;
-    if(_dedupRemoved>0)persistNow();
+    if(_dedupRemoved>0){persistNow();renderSidebar();}
 
     await _projSaveJSON();
     const referencedIds=_collectDocAssetIds(state.docs);
@@ -11996,6 +12002,8 @@ async function _projSaveJSON(){
   if(!_projDir)return;
   try{
     const toSave=JSON.parse(JSON.stringify(state));
+    // Strip deleted docs and sanitize image src blobs
+    toSave.docs=(toSave.docs||[]).filter(d=>!d._deleted);
     toSave.docs.forEach(doc=>{
       if(doc.images)doc.images=doc.images.map(m=>{const{src,...meta}=m;return src&&src.startsWith('data:')?{...meta,src}:meta;});
     });
@@ -12088,22 +12096,25 @@ async function _buildHtmlBlob(){
 
 function _deduplicatePages(){
   const before=state.docs.length;
-  const seenTitles=new Set();
-  const seenImportedFrom=new Set();
+  const _seenSrc=new Set(),_seenTitle=new Set(),_seenContent=new Set();
   state.docs=state.docs.filter(d=>{
-    const key=(d.title||'').trim().toLowerCase();
     const src=d.importedFrom||'';
-    if(src&&seenImportedFrom.has(src))return false;
-    if(key&&seenTitles.has(key))return false;
-    if(src)seenImportedFrom.add(src);
-    if(key)seenTitles.add(key);
+    const title=(d.title||'').trim().toLowerCase();
+    const c=d.content||'';
+    const fp=c.length+':'+c.slice(0,300);
+    if(src&&_seenSrc.has(src))return false;
+    if(title&&_seenTitle.has(title))return false;
+    if(c.length>0&&_seenContent.has(fp))return false;
+    if(src)_seenSrc.add(src);
+    if(title)_seenTitle.add(title);
+    if(c.length>0)_seenContent.add(fp);
     return true;
   });
   const removed=before-state.docs.length;
   if(!removed){toast('Không có trang trùng','info');return;}
   persistNow();renderSidebar();
   toast(`Đã xóa ${removed} trang trùng (còn ${state.docs.length} trang)`,'success');
-  if(_projDir)_projSaveJSON(); // sync data.json immediately
+  if(_projDir)_projSaveJSON();
 }
 
 // Collect all unique media IDs referenced in a list of docs
