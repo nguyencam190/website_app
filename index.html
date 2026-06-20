@@ -1938,7 +1938,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
     <div class="sb-search-row">
       <div class="sb-search"><i class="ti ti-search"></i><input type="text" placeholder="Search pages..." id="searchInput" oninput="filterDocs()"></div>
       <button class="sb-new-btn" onclick="_quickNewRootDoc()" title="Trang mới"><i class="ti ti-plus"></i></button>
-      <button class="sb-new-btn sb-import-btn" onclick="_sbImportClickSmart()" title="Click: chọn thư mục · Kéo thả: thư mục hoặc file ZIP"><i class="ti ti-file-import"></i></button>
+      <button class="sb-new-btn sb-import-btn" onclick="_sbImportClickSmart(this)" title="Click: chọn thư mục hoặc ZIP · Kéo thả: thư mục hoặc file ZIP"><i class="ti ti-file-import"></i></button>
     </div>
 
     <!-- Nav tree -->
@@ -11251,18 +11251,42 @@ async function _openProjectFile(){
   };
   input.click();
 }
-function _sbImportClickSmart(){
-  // Click → file picker for ZIP only.
-  // Drag-drop folder onto the button → folder import (auto-detected).
-  const input=document.createElement('input');
-  input.type='file';
-  input.accept='.zip,application/zip,application/x-zip-compressed';
-  input.onchange=async e=>{
-    const file=e.target.files[0];
-    if(!file)return;
-    await _sbImportProcessFile(file);
+function _sbImportClickSmart(btnEl){
+  // Show mini popup with folder + ZIP options near the button
+  const existing=document.getElementById('_sbImportMiniPop');
+  if(existing){existing.remove();return;}
+  const pop=document.createElement('div');
+  pop.id='_sbImportMiniPop';
+  pop.style.cssText='position:fixed;background:var(--bg2,#1e1e2e);border:1px solid var(--border,#333);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.4);padding:6px;display:flex;gap:6px;z-index:99999;';
+  const rect=btnEl.getBoundingClientRect();
+  pop.style.top=(rect.bottom+6)+'px';
+  pop.style.left=rect.left+'px';
+
+  const mkBtn=(icon,label,fn)=>{
+    const b=document.createElement('button');
+    b.style.cssText='display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;background:transparent;border:none;border-radius:6px;cursor:pointer;color:var(--fg,#cdd6f4);font-size:11px;white-space:nowrap;';
+    b.innerHTML=`<i class="ti ${icon}" style="font-size:18px"></i>${label}`;
+    b.onmouseenter=()=>b.style.background='var(--bg3,#313244)';
+    b.onmouseleave=()=>b.style.background='transparent';
+    b.onclick=()=>{pop.remove();fn();};
+    return b;
   };
-  input.click();
+
+  pop.appendChild(mkBtn('ti-folder','Thư mục',()=>importMergePagesFromFolder()));
+  pop.appendChild(mkBtn('ti-file-zip','ZIP',()=>{
+    const input=document.createElement('input');
+    input.type='file';
+    input.accept='.zip,application/zip,application/x-zip-compressed';
+    input.onchange=async e=>{const file=e.target.files[0];if(!file)return;await _sbImportProcessFile(file);};
+    input.click();
+  }));
+
+  document.body.appendChild(pop);
+  // Close on outside click
+  setTimeout(()=>{
+    const close=e=>{if(!pop.contains(e.target)&&e.target!==btnEl){pop.remove();document.removeEventListener('mousedown',close);}};
+    document.addEventListener('mousedown',close);
+  },0);
 }
 // Wire drag-and-drop folder support onto import buttons (called once on init)
 function _sbImportWireDrop(){
