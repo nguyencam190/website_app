@@ -2802,8 +2802,7 @@ function persist(){
     if(el){el.className='save-dirty';el.innerHTML='<i class="ti ti-alert-triangle" style="font-size:12px"></i> Bộ nhớ đầy';}
     console.warn('localStorage quota exceeded',e);
   }
-  // Also auto-save to project folder if connected
-  if(typeof _projSaveJSON==='function')_projSaveJSON();
+  // Project folder is saved only on manual Push — not auto-saved here
 }
 
 function markDirty(){
@@ -4014,8 +4013,8 @@ function _idbPut(id,blob){
     const tx=db.transaction('blobs','readwrite');
     tx.objectStore('blobs').put(blob,id);
     tx.oncomplete=()=>{
-      // Mirror asset to project folder if connected
-      if(typeof _projSaveAsset==='function'&&blob instanceof Blob)_projSaveAsset(id,blob);
+      // Assets are queued for folder on manual Push only
+      if(typeof _pendingFolderSaves!=='undefined'&&blob instanceof Blob)_pendingFolderSaves.set(id,blob);
       res();
     };
     tx.onerror=rej;
@@ -4068,7 +4067,7 @@ function _purgeDocTree(docId){
   state.docs=state.docs.filter(d=>d.id!==docId);
   state.recent=(state.recent||[]).filter(r=>r.id!==docId);
   state.starred=(state.starred||[]).filter(id=>id!==docId);
-  if(_projDir)_projSaveJSON(); // sync data.json immediately on delete
+  // data.json saved on manual Push only
 }
 // Blob → base64 DataURL (only used for export)
 function _blobToB64(blob){
@@ -11633,25 +11632,8 @@ async function doImportMerge(){
   toast('✅ '+_parts.join(' · '),'success');
   // Initial quick re-render (for images already in IDB/cache from ZIP loading)
   setTimeout(()=>_reloadEditorImages(),200);
-  if(_projDir){
-    // Load any folder images missing from IDB (handles: JSON-without-embed import,
-    // race where startup _projLoadFolderAssets hadn't finished when openDoc ran)
-    const loadedFromFolder=await _projLoadFolderAssets(_projDir);
-    if(loadedFromFolder>0)_reloadEditorImages();
-    // Save any imported images that landed in IDB but not yet in folder
-    const ids=_collectDocAssetIds([...imported,...toUpdate.map(u=>u.existing)]);
-    let synced=0;
-    for(const id of ids){
-      if(_projSavedIds.has(id)){synced++;continue;}
-      const blob=await _idbGet(id);
-      if(blob){await _projSaveAsset(id,blob);if(_projSavedIds.has(id))synced++;}
-    }
-    if(synced)toast(`📁 Đã lưu ${synced} ảnh/video vào "${_projDirName}"`,'success');
-    // Final re-render after all folder-loads and saves complete
-    _reloadEditorImages();
-  } else if(_pendingFolderSaves.size>0){
-    toast('⚠️ Chưa kết nối thư mục — ảnh tự đồng bộ khi Reconnect','warning');
-  }
+  // Images loaded into IDB — Push button will save to folder when user clicks it
+  setTimeout(()=>_reloadEditorImages(),400);
 }
 
 function closeWelcomeAndStart(){
