@@ -11357,19 +11357,24 @@ function _sbImportShowMergeModal(sourceName,docs,mediaCount){
   info.style.display='';
   const _destInfo=_projDir?`<span style="color:var(--accent);margin-left:8px;font-size:11px">→ lưu vào 📁 ${escH(_projDirName)}</span>`:'';
   info.innerHTML=`<i class="ti ti-file-import" style="font-size:14px;margin-right:6px;color:var(--accent)"></i><strong>${escH(sourceName)}</strong> — ${docs.length} trang${mediaCount?' · '+mediaCount+' ảnh/video':''}${_destInfo}`;
+  // Build conflict sets so modal can flag pages that will update existing ones
+  const _existingImportedFrom=new Set(state.docs.filter(d=>d.importedFrom).map(d=>d.importedFrom));
+  const _existingTitles=new Set(state.docs.map(d=>(d.title||'').trim().toLowerCase()).filter(Boolean));
   list.innerHTML=`<div style="display:flex;gap:8px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border)">
     <button onclick="document.querySelectorAll('#importMergeList input').forEach(i=>i.checked=true)" style="font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);cursor:pointer;color:var(--text)">✓ Chọn tất cả</button>
     <button onclick="document.querySelectorAll('#importMergeList input').forEach(i=>i.checked=false)" style="font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);cursor:pointer;color:var(--text)">✕ Bỏ chọn</button>
   </div>`;
   docs.forEach(d=>{
+    const isUpdate=_existingImportedFrom.has(d.id)||_existingTitles.has((d.title||'').trim().toLowerCase());
     const row=document.createElement('label');row.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:13px;transition:background .1s';
     row.onmouseenter=()=>row.style.background='var(--surface2)';row.onmouseleave=()=>row.style.background='';
     const chk=document.createElement('input');chk.type='checkbox';chk.value=d.id;chk.checked=true;chk.style.accentColor='var(--accent)';
-    const icon=document.createElement('i');icon.className='ti ti-file-text';icon.style.cssText='font-size:13px;color:var(--text2);flex-shrink:0';
+    const icon=document.createElement('i');icon.className=isUpdate?'ti ti-refresh':'ti ti-file-text';icon.style.cssText=`font-size:13px;color:${isUpdate?'var(--warning,#f59e0b)':'var(--text2)'};flex-shrink:0`;
     const title=document.createElement('span');title.style.flex='1';title.textContent=d.title||'Untitled';
-    const preview=document.createElement('span');preview.style.cssText='font-size:11px;color:var(--text3);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+    const badge=isUpdate?Object.assign(document.createElement('span'),{textContent:'cập nhật',style:'font-size:10px;padding:1px 5px;border-radius:3px;background:var(--warning,#f59e0b);color:#fff;flex-shrink:0'}):'';
+    const preview=document.createElement('span');preview.style.cssText='font-size:11px;color:var(--text3);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
     preview.textContent=(d.content||'').replace(/<[^>]+>/g,' ').trim().slice(0,60)||'(trống)';
-    row.appendChild(chk);row.appendChild(icon);row.appendChild(title);row.appendChild(preview);
+    row.appendChild(chk);row.appendChild(icon);row.appendChild(title);if(badge)row.appendChild(badge);row.appendChild(preview);
     list.appendChild(row);
   });
   openModal('importMergeModal');
@@ -11572,22 +11577,41 @@ async function doImportMerge(){
   if(!checkedIds.length){toast('Chọn ít nhất 1 trang','error');return;}
   const selected=_importMergeDocs.filter(d=>checkedIds.includes(d.id));
   const targetSec=state.sections[0]||'default';
-  // Dedup: skip pages already imported (same importedFrom ID or identical content fingerprint)
-  const existingImportedFrom=new Set(state.docs.map(d=>d.importedFrom).filter(Boolean));
-  const existingContent=new Set(state.docs.map(d=>{const c=d.content||'';return c.length>0?c.length+':'+c.slice(0,300):null;}).filter(Boolean));
-  const toImport=selected.filter(d=>{
-    if(existingImportedFrom.has(d.id))return false;
-    const c=d.content||'';if(c.length>0&&existingContent.has(c.length+':'+c.slice(0,300)))return false;
-    return true;
-  });
-  const skipped=selected.length-toImport.length;
-  if(!toImport.length){toast(`Tất cả ${selected.length} trang đã tồn tại — không nhập trùng`,'warning');return;}
-  const imported=toImport.map(d=>({...d,id:uid(),section:targetSec,parentId:null,importedFrom:d.id,updatedAt:new Date().toISOString()}));
+  // Build lookup maps for conflict detection
+  const _byImportedFrom=new Map(state.docs.filter(d=>d.importedFrom).map(d=>[d.importedFrom,d]));
+  const _byTitle=new Map(state.docs.map(d=>[(d.title||'').trim().toLowerCase(),d]).filter(([k])=>k));
+  const _existingContent=new Set(state.docs.map(d=>{const c=d.content||'';return c.length>0?c.length+':'+c.slice(0,300):null;}).filter(Boolean));
+  // Separate into: UPDATE existing page vs CREATE new page
+  const toCreate=[];
+  const toUpdate=[];// [{existing,incoming}]
+  for(const d of selected){
+    const c=d.content||'';
+    if(c.length>0&&_existingContent.has(c.length+':'+c.slice(0,300)))continue;// identical content — skip
+    const byImpFrom=_byImportedFrom.get(d.id);
+    if(byImpFrom){toUpdate.push({existing:byImpFrom,incoming:d});continue;}
+    const byTitle=_byTitle.get((d.title||'').trim().toLowerCase());
+    if(byTitle){toUpdate.push({existing:byTitle,incoming:d});continue;}
+    toCreate.push(d);
+  }
+  if(!toCreate.length&&!toUpdate.length){toast(`Tất cả ${selected.length} trang đã có nội dung giống hệt — không có gì thay đổi`,'warning');return;}
+  // Apply updates (overwrite content + updatedAt of existing doc)
+  for(const{existing,incoming}of toUpdate){
+    existing.content=incoming.content||existing.content;
+    existing.images=incoming.images||existing.images;
+    existing.updatedAt=new Date().toISOString();
+    existing.importedFrom=incoming.id;
+  }
+  // Create new pages
+  const imported=toCreate.map(d=>({...d,id:uid(),section:targetSec,parentId:null,importedFrom:d.id,updatedAt:new Date().toISOString()}));
   state.docs.push(...imported);
   persistNow();renderSidebar();
   closeModal('importMergeModal');
-  if(imported.length)openDoc(imported[0].id);
-  toast(`Đã nhập ${imported.length} trang${skipped?` · bỏ qua ${skipped} trang trùng`:''}`,'success');
+  const firstDoc=imported[0]||toUpdate[0]?.existing;
+  if(firstDoc)openDoc(firstDoc.id);
+  const _parts=[];
+  if(imported.length)_parts.push(`${imported.length} trang mới`);
+  if(toUpdate.length)_parts.push(`${toUpdate.length} trang đã cập nhật`);
+  toast('✅ '+_parts.join(' · '),'success');
   // Initial quick re-render (for images already in IDB/cache from ZIP loading)
   setTimeout(()=>_reloadEditorImages(),200);
   if(_projDir){
@@ -11596,7 +11620,7 @@ async function doImportMerge(){
     const loadedFromFolder=await _projLoadFolderAssets(_projDir);
     if(loadedFromFolder>0)_reloadEditorImages();
     // Save any imported images that landed in IDB but not yet in folder
-    const ids=_collectDocAssetIds(imported);
+    const ids=_collectDocAssetIds([...imported,...toUpdate.map(u=>u.existing)]);
     let synced=0;
     for(const id of ids){
       if(_projSavedIds.has(id)){synced++;continue;}
