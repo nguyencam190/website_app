@@ -18,8 +18,10 @@ Sau **mỗi lần thay đổi code** trong dự án này, bắt buộc phải:
 - Kéo thả → nhận thư mục hoặc file ZIP
 - KHÔNG dùng `<input type="file">` cho click — browser không cho phép chọn cả folder lẫn file ZIP trong cùng một dialog
 
-### Nút 📁 trên header (`_projOpenFolder`)
+### "Open project" trong menu 💾 (`_projOpenFolder`)
 - **Mở thư mục project** — tải cả data.json + ảnh/video cùng lúc
 - Gọi `_projOpenFolder()` — KHÔNG gọi `_openProjectFile()`
+- Nằm trong dropdown menu 💾 (item đầu tiên), KHÔNG còn nút 📁 riêng trên header
+- Header chỉ còn nút **Push** (`_projToggleLive`) bên cạnh menu 💾
 
-**Hai nút này có chức năng riêng biệt, không được gộp hay nhầm lẫn.**
+**Nút import sidebar và "Open project" có chức năng riêng biệt, không được gộp hay nhầm lẫn.**

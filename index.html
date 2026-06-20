@@ -1692,9 +1692,9 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
         <i class="ti ti-device-floppy"></i>
       </button>
       <div class="hdr-dd" id="hdrExportDd" style="right:0">
-        <div class="hdr-dd-item" onclick="exportProject();hdrCloseAll()"><i class="ti ti-file-zip"></i> Xuất ZIP backup (có ảnh)</div>
+        <div class="hdr-dd-item" onclick="_projOpenFolder();hdrCloseAll()"><i class="ti ti-folder-open" style="color:var(--accent)"></i> <strong>Open project</strong></div>
         <div class="hdr-dd-sep"></div>
-        <div class="hdr-dd-item" onclick="_projOpenFolder();hdrCloseAll()"><i class="ti ti-folder-cog"></i> Set project folder</div>
+        <div class="hdr-dd-item" onclick="exportProject();hdrCloseAll()"><i class="ti ti-file-zip"></i> Xuất ZIP backup (có ảnh)</div>
         <div class="hdr-dd-sep"></div>
         <div class="hdr-dd-item" onclick="_resetApp();hdrCloseAll()" style="color:#f38ba8"><i class="ti ti-sparkles" style="color:#f38ba8"></i> New project</div>
       </div>
@@ -1702,7 +1702,6 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 
     <!-- Project folder -->
     <div style="display:flex;align-items:center;gap:4px">
-      <button class="header-icon-btn" onclick="_projOpenFolder()" title="Mở thư mục project (tải cả ảnh/video)"><i class="ti ti-folder-open"></i></button>
       <button class="proj-live-btn" id="projLiveBtn" onclick="_projToggleLive()" title="Lưu tất cả dữ liệu và ảnh vào thư mục project">
         <span class="proj-live-dot" id="projLiveDot"></span>Push
       </button>
