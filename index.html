@@ -1698,6 +1698,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
         <div class="hdr-dd-sep"></div>
         <div class="hdr-dd-item" onclick="_projOpenFolder();hdrCloseAll()"><i class="ti ti-folder-cog"></i> Set project folder</div>
         <div class="hdr-dd-sep"></div>
+        <div class="hdr-dd-item" onclick="_resetApp();hdrCloseAll()" style="color:#f38ba8"><i class="ti ti-trash" style="color:#f38ba8"></i> Dự án mới (xoá tất cả)</div>
       </div>
     </div>
 
@@ -11221,6 +11222,61 @@ let _importMergeDocs=[];
 
 // Single smart import: file picker for ZIP/JSON, auto-detect images folder when needed.
 // Drag a folder onto the import button → triggers folder import directly.
+
+async function _resetApp(){
+  if(!confirm('Xoá toàn bộ dữ liệu và bắt đầu dự án mới?\n\nHành động này không thể hoàn tác.\nNên xuất ZIP backup trước nếu cần giữ lại.'))return;
+
+  // 1. Clear all IDB blobs (media + project folder handle)
+  try{
+    const db=await _openIDB();
+    await new Promise(res=>{
+      const tx=db.transaction('blobs','readwrite');
+      tx.objectStore('blobs').clear();
+      tx.oncomplete=res;tx.onerror=res;
+    });
+    _idb=null; // force re-open next time
+  }catch(e){}
+
+  // 2. Revoke all object URLs
+  for(const id of Object.keys(_objUrls)){
+    try{URL.revokeObjectURL(_objUrls[id]);}catch(e){}
+    delete _objUrls[id];
+  }
+  _objUrlOrder.length=0;
+
+  // 3. Clear runtime state
+  _projDir=null;_projDirName='';
+  _projSavedIds.clear();
+  _pendingFolderSaves.clear();
+
+  // 4. Clear localStorage
+  localStorage.removeItem(STORE_KEY);
+
+  // 5. Reset state to blank project
+  const newId=uid();
+  Object.assign(state,{
+    projectName:'My Project',username:'User',
+    sections:['default'],docs:[],
+    currentDocId:null,recent:[],starred:[]
+  });
+
+  // 6. Hide reconnect banner & update badge
+  document.getElementById('projReconnectBanner')?.classList.remove('on');
+  _projUpdateBadge();
+
+  // 7. Re-render to welcome/blank state
+  document.getElementById('projectNameEl').textContent=state.projectName;
+  const spTxt=document.getElementById('sbSpaceIconText');
+  if(spTxt)spTxt.textContent='M';
+  renderSidebar();
+  document.getElementById('editor').innerHTML='';
+
+  // 8. Show welcome modal so user can start fresh
+  const wm=document.getElementById('welcomeModal');
+  if(wm)wm.style.display='flex';
+
+  toast('✅ Đã xoá toàn bộ — sẵn sàng cho dự án mới','success');
+}
 
 async function _openProjectFile(){
   const input=document.createElement('input');
