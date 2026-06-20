@@ -11231,10 +11231,8 @@ async function _sbImportAll(){
         try{JSZip=await _loadJSZip();}catch(er){toast('Không tải được JSZip','error');return;}
         const zip=await JSZip.loadAsync(file);
         if(zip.file('data.json')){
-          if(!_projDir)await _projConnectFolderOnly();
           await _importMergeFromZip(zip,file.name);
         }else if(zip.file('page.json')){
-          if(!_projDir)await _projConnectFolderOnly();
           await _importSinglePageFromZip(zip);
         }else{
           toast('File ZIP không nhận dạng được — cần có data.json hoặc page.json','error');
@@ -11259,11 +11257,8 @@ async function _sbImportAll(){
               mediaCount=await _projLoadFolderAssets(pageFolder);
             }catch(e){} // user cancelled is OK
           }
-          // Connect project folder for Push (separate step)
-          if(!_projDir)await _projConnectFolderOnly();
           _sbImportShowMergeModal(file.name,_importMergeDocs,mediaCount);
         }else if(data.docs&&Array.isArray(data.docs)){
-          if(!_projDir)await _projConnectFolderOnly();
           _importMergeDocs=data.docs;
           _sbImportShowMergeModal(data.projectName||file.name,data.docs,0);
         }else{
