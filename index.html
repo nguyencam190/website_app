@@ -3504,6 +3504,7 @@ function _renderDocNodes(container,sec,parentId,depth,filter){
       }
       // Single click: expand children (1 level) then open
       if(hasKids&&_nodeCollapsed[doc.id]!==false) _nodeCollapsed[doc.id]=false;
+      document.getElementById('sbPagesHomeBtn')?.classList.remove('active');
       openDoc(doc.id);
     };
 
