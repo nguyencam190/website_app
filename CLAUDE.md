@@ -14,9 +14,9 @@ Sau **mỗi lần thay đổi code** trong dự án này, bắt buộc phải:
 
 ### Nút import trên sidebar (`_sbImportClickSmart`)
 - **Chỉ chấp nhận ZIP và thư mục** — KHÔNG nhận file JSON
-- Click → mở file picker chỉ cho `.zip`
+- Click → mở **folder picker** (`importMergePagesFromFolder()`) — KHÔNG mở file picker
 - Kéo thả → nhận thư mục hoặc file ZIP
-- `accept='.zip,application/zip,application/x-zip-compressed'` — KHÔNG thêm `.json`
+- KHÔNG dùng `<input type="file">` cho click — browser không cho phép chọn cả folder lẫn file ZIP trong cùng một dialog
 
 ### Nút 📁 trên header (`_openProjectFile`)
 - **Chỉ mở file JSON** — đây là nơi duy nhất để mở JSON data
