@@ -11332,14 +11332,21 @@ async function _openProjectFile(){
 }
 function _sbImportToggleDd(){
   const dd=document.getElementById('_sbImportDd');
-  if(!dd)return;
+  const btn=document.querySelector('#_sbImportWrap .sb-import-btn');
+  if(!dd||!btn)return;
   const isOpen=dd.classList.contains('on');
   hdrCloseAll();
   if(!isOpen){
+    // Use fixed positioning to escape sidebar overflow:hidden
+    const r=btn.getBoundingClientRect();
+    dd.style.position='fixed';
+    dd.style.top=(r.bottom+4)+'px';
+    dd.style.left=r.left+'px';
+    dd.style.right='auto';
     dd.classList.add('on');
     setTimeout(()=>{
       const close=e=>{
-        if(!document.getElementById('_sbImportWrap')?.contains(e.target)){
+        if(!dd.contains(e.target)&&e.target!==btn){
           _sbImportCloseDd();document.removeEventListener('mousedown',close);
         }
       };
