@@ -1703,7 +1703,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 
     <!-- Project folder -->
     <div style="display:flex;align-items:center;gap:4px">
-      <button class="header-icon-btn" onclick="_openProjectFile()" title="Mở file JSON đã lưu"><i class="ti ti-folder-open"></i></button>
+      <button class="header-icon-btn" onclick="_projOpenFolder()" title="Mở thư mục project (tải trang + ảnh/video)"><i class="ti ti-folder-open"></i></button>
       <button class="proj-live-btn" id="projLiveBtn" onclick="_projToggleLive()" title="Lưu tất cả dữ liệu và ảnh vào thư mục project">
         <span class="proj-live-dot" id="projLiveDot"></span>Push
       </button>
@@ -11771,32 +11771,6 @@ async function _projFullSync(){
   try{
     toast('⏳ Đang lưu toàn bộ dữ liệu...','info');
 
-    // 0. Dedup pages — triple check: importedFrom, title, content fingerprint
-    const _beforeDedup=state.docs.length;
-    const _seenSrc=new Set(),_seenTitle=new Set(),_seenContent=new Set();
-    state.docs=state.docs.filter(d=>{
-      const src=d.importedFrom||'';
-      const title=(d.title||'').trim().toLowerCase();
-      const c=d.content||'';
-      // content fingerprint: length + first 300 chars (fast, no crypto needed)
-      const fp=c.length+':'+c.slice(0,300);
-      const hasSrc=!!src,hasTitle=!!title,hasContent=c.length>0;
-      if(hasSrc&&_seenSrc.has(src))return false;
-      if(hasTitle&&_seenTitle.has(title))return false;
-      if(hasContent&&_seenContent.has(fp))return false;
-      // Deduplicate fully-empty pages — keep only the first one
-      if(!hasSrc&&!hasTitle&&!hasContent){
-        if(_seenContent.has('__blank__'))return false;
-        _seenContent.add('__blank__');return true;
-      }
-      if(hasSrc)_seenSrc.add(src);
-      if(hasTitle)_seenTitle.add(title);
-      if(hasContent)_seenContent.add(fp);
-      return true;
-    });
-    const _dedupRemoved=_beforeDedup-state.docs.length;
-    if(_dedupRemoved>0){persistNow();renderSidebar();}
-
     await _projSaveJSON();
     const referencedIds=_collectDocAssetIds(state.docs);
 
@@ -11866,7 +11840,6 @@ async function _projFullSync(){
 
     const total=saved+skipped;
     let msg=`✅ Push xong: ${state.docs.length} trang · ${total} ảnh/video${htmlName?' · '+htmlName:''} → 📁 "${_projDirName}"`;
-    if(_dedupRemoved)msg+=` · xóa ${_dedupRemoved} trang trùng`;
     if(dupes)msg+=` · bỏ ${dupes} ảnh trùng`;
     if(deletedFiles||deletedIdb)msg+=` · xóa ${deletedFiles} file thừa`;
     toast(msg,'success');
