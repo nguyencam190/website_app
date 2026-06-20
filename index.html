@@ -5156,7 +5156,8 @@ async function _fmLoadSrc(fm){
     }
     return;
   }
-  if(el&&!el.src){
+  // Set src; also overwrite stale blob: URLs from previous sessions
+  if(el&&(!el.src||(el.src.startsWith('blob:')&&el.src!==src))){
     el.src=src;
     const ph=fm.querySelector('.fmedia-placeholder');if(ph)ph.remove();
   }
@@ -9448,8 +9449,10 @@ function _cfImgLoadAll(editor){
   editor.querySelectorAll('.cf-img-block[data-cfimgid]').forEach(async block=>{
     const id=block.dataset.cfimgid;if(!id)return;
     const media=block.querySelector('img,video');if(!media)return;
-    // Load src from IDB/cache only if not already set (e.g. first load or src was revoked)
-    if(!media.src){
+    // Reload if src is missing OR is a stale blob: URL from a previous session
+    const _staleSrc=media.src&&media.src.startsWith('blob:')&&!_objUrls[id];
+    if(!media.src||_staleSrc){
+      if(_staleSrc)media.removeAttribute('src');
       let src=_objUrls[id]||'';
       if(!src){try{const b=await _idbGet(id);if(b){src=URL.createObjectURL(b);_cacheUrl(id,src);}}catch(e){}}
       if(src){
@@ -12009,13 +12012,20 @@ async function _projLoadFromFolder(){
   }catch(e){toast('Lỗi tải từ thư mục: '+e.message,'error');console.error('[projLoad]',e);}
 }
 
+// Strip blob: src attributes from serialized content HTML (fast regex, no DOM parse)
+function _stripContentBlobSrcs(html){
+  if(!html||!html.includes('blob:'))return html;
+  return html.replace(/\ssrc="blob:[^"]*"/g,'').replace(/\ssrc='blob:[^']*'/g,'');
+}
+
 async function _projSaveJSON(){
   if(!_projDir)return;
   try{
     const toSave=JSON.parse(JSON.stringify(state));
-    // Strip deleted docs and sanitize image src blobs
+    // Strip deleted docs and sanitize image src blobs (both doc.images and inline content)
     toSave.docs=(toSave.docs||[]).filter(d=>!d._deleted);
     toSave.docs.forEach(doc=>{
+      if(doc.content)doc.content=_stripContentBlobSrcs(doc.content);
       if(doc.images)doc.images=doc.images.map(m=>{const{src,...meta}=m;return src&&src.startsWith('data:')?{...meta,src}:meta;});
     });
     const fh=await _projDir.getFileHandle('data.json',{create:true});
@@ -12097,6 +12107,7 @@ async function _buildHtmlBlob(){
   const toSave=JSON.parse(JSON.stringify(state));
   toSave.docs=(toSave.docs||[]).filter(d=>!d._deleted);
   toSave.docs.forEach(doc=>{
+    if(doc.content)doc.content=_stripContentBlobSrcs(doc.content);
     if(doc.images)doc.images=doc.images.map(m=>{const{src,...meta}=m;return src&&src.startsWith('data:')?{...meta,src}:meta;});
   });
   const embedTag='<script id="pd-embedded-state" type="application/json">\n'+JSON.stringify(toSave)+'\n<\/script>\n';
@@ -12182,6 +12193,7 @@ async function exportProject(){
     const toSave=JSON.parse(JSON.stringify(state));
     toSave.docs=(toSave.docs||[]).filter(d=>!d._deleted);
     toSave.docs.forEach(doc=>{
+      if(doc.content)doc.content=_stripContentBlobSrcs(doc.content);
       if(doc.images)doc.images=doc.images.map(m=>{const{src,...meta}=m;return src&&src.startsWith('data:')?{...meta,src}:meta;});
     });
     zip.file('data.json',JSON.stringify(toSave,null,2));
