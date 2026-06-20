@@ -11247,9 +11247,27 @@ async function _openProjectFile(){
   input.click();
 }
 async function _sbImportClickSmart(){
-  // Click → folder picker (direct, no intermediate UI).
-  // Drag-drop onto the button auto-detects folder vs ZIP file.
-  await importMergePagesFromFolder();
+  // Click: ZIP/JSON file picker opens first.
+  // If user presses Cancel (they have a folder, not a file) → folder picker opens automatically.
+  // Drag-drop on the button auto-detects folder vs ZIP/JSON file.
+  if(!window.showOpenFilePicker){
+    // Old browser fallback: just open ZIP file input (no cancel-chain possible)
+    _sbImportFromZip();
+    return;
+  }
+  try{
+    const[handle]=await window.showOpenFilePicker({
+      multiple:false,
+      types:[{description:'ZIP / JSON',accept:{'application/zip':['.zip'],'application/json':['.json']}}]
+    });
+    const file=await handle.getFile();
+    await _sbImportProcessFile(file);
+  }catch(e){
+    // AbortError = user pressed Cancel → automatically open folder picker
+    if(e.name==='AbortError'){
+      try{await importMergePagesFromFolder();}catch(_){}
+    }
+  }
 }
 // Wire drag-and-drop folder support onto import buttons (called once on init)
 function _sbImportWireDrop(){
