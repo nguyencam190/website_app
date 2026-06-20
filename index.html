@@ -11871,12 +11871,14 @@ async function _projPublishWebsite(){
   const docs=state.docs.filter(d=>!d._deleted);
   if(!docs.length)return null;
   const accent=localStorage.getItem('accent_color')||'#2563eb';
+  const safeName=(state.projectName||'project').replace(/[^a-zA-Z0-9\-_]/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'')||'project';
   return await doExportOptimized({
     targetDir:_projDir,
     reuseAssets:true,
     docs:docs,
     title:state.projectName||'Project Docs',
-    accent:accent
+    accent:accent,
+    htmlName:safeName+'.html'
   });
 }
 
@@ -11954,15 +11956,15 @@ async function _projFullSync(){
       toast('⚠️ Không xuất được HTML: '+e.message,'warning');
     }
 
-    // 5. Publish optimized website (index.html) into the same folder — reuses images/
-    let webPublished=false;
+    // 5. Publish optimized website ({projectName}.html) into the same folder — reuses images/
+    let webPublished=false,webHtmlName='';
     try{
       const wr=await _projPublishWebsite();
-      if(wr&&wr.ok)webPublished=true;
+      if(wr&&wr.ok){webPublished=true;webHtmlName=wr.htmlName||'';}
     }catch(e){console.error('[Push Website]',e);}
 
     const total=saved+skipped;
-    let msg=`✅ Push xong: ${state.docs.length} trang · ${total} ảnh/video${webPublished?' · 🌐 index.html':''} → 📁 "${_projDirName}"`;
+    let msg=`✅ Push xong: ${state.docs.length} trang · ${total} ảnh/video${webPublished?' · 🌐 '+webHtmlName:''} → 📁 "${_projDirName}"`;
     if(dupes)msg+=` · bỏ ${dupes} ảnh trùng`;
     if(deletedFiles||deletedIdb)msg+=` · xóa ${deletedFiles} file thừa`;
     toast(msg,'success');
@@ -12369,7 +12371,7 @@ async function _buildHtmlBlob(){
   });
   const embedTag='<script id="pd-embedded-state" type="application/json">\n'+JSON.stringify(toSave)+'\n<\/script>\n';
   html=html.replace('</head>',embedTag+'</head>');
-  const fname=(state.projectName||'project-docs').replace(/[^a-zA-Z0-9\-_]/g,'-')+'.html';
+  const fname=(state.projectName||'project-docs').replace(/[^a-zA-Z0-9\-_]/g,'-')+'-editor.html';
   return{blob:new Blob([html],{type:'text/html'}),fname};
 }
 
@@ -14633,14 +14635,15 @@ async function doExportOptimized(opts){
     '</html>'
   ].join('\n');
 
-  // ── Folder mode: write index.html straight into the project folder ──
+  // ── Folder mode: write viewer HTML into the project folder ──
   if(_folderMode){
-    const fh=await opts.targetDir.getFileHandle('index.html',{create:true});
+    const _outName=opts.htmlName||'index.html';
+    const fh=await opts.targetDir.getFileHandle(_outName,{create:true});
     const wr=await fh.createWritable();
     await wr.write(htmlStr);
     await wr.close();
     _showExportProgress(0,0,'');
-    return {ok:true,pages:docs.length};
+    return {ok:true,pages:docs.length,htmlName:_outName};
   }
 
   // ── Pack into ZIP ─────────────────────────────────────────
