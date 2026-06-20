@@ -4046,7 +4046,9 @@ function _purgeDocMedia(doc){
       if(_objUrls&&_objUrls[id]){URL.revokeObjectURL(_objUrls[id]);delete _objUrls[id];}
       _pendingFolderSaves.delete(id);
       _projSavedIds.delete(id);
-      if(_projDir)_projDeleteFolderAsset(id);
+      // Don't delete from folder here — let Push orphan-cleanup handle it.
+      // This allows images to be restored from folder if the user re-opens
+      // an old JSON file that references these assets.
     }
   }
 }
@@ -11237,9 +11239,12 @@ async function _openProjectFile(){
       localStorage.setItem('projectdocs_v3',JSON.stringify(data));
       renderSidebar();
       if(state.docs&&state.docs.length>0){
+        // Load folder assets into IDB FIRST so tblAttachAll finds them when openDoc renders
+        if(_projDir){
+          try{await _projLoadFolderAssets(_projDir);}catch(e){}
+        }
         openDoc(state.docs[0].id);
-        setTimeout(()=>_reloadEditorImages(),200);
-        if(_projDir)_projLoadFolderAssets(_projDir).then(()=>_reloadEditorImages()).catch(()=>{});
+        setTimeout(()=>_reloadEditorImages(),300);
       }
       toast(`✅ Đã mở "${file.name}" — ${data.docs.length} trang`,'success');
     }catch(err){toast('Lỗi đọc file: '+err.message,'error');}
