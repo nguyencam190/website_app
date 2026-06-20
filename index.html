@@ -13303,7 +13303,7 @@ async function doExportWebsite(){
   const _wsHome=docs.find(d=>d.isHomePage);
   if(_wsHome){
     const hrow=document.createElement('div');hrow.className='ws-nav-tree-row';
-    const hb=document.createElement('span');hb.className='ws-nav-bullet';hb.style.marginLeft='8px';hb.innerHTML='<i class="ti ti-home" style="font-size:13px;color:var(--accent)"></i>';hrow.appendChild(hb);
+    const hb=document.createElement('span');hb.className='ws-nav-bullet';hb.style.marginLeft='8px';hb.innerHTML='<i class="ti ti-home" style="font-size:18px;color:var(--accent)"></i>';hrow.appendChild(hb);
     const hi=document.createElement('div');hi.className='ws-nav-item ws-home-item';hi.id='nav-'+_wsHome.id;hi.dataset.docid=_wsHome.id;hi.innerHTML='<span class="ws-nav-title">'+escH(_wsHome.title||'Giới thiệu dự án')+'</span><button class="ws-star-btn" data-docid="'+escH(_wsHome.id)+'" title="Starred">☆</button>';hrow.appendChild(hi);
     pagesPanel.appendChild(hrow);
     const sep=document.createElement('div');sep.className='ws-sb-sep';pagesPanel.appendChild(sep);
@@ -14295,7 +14295,7 @@ async function doExportOptimized(opts){
   const _optHome=docs.find(d=>d.isHomePage);
   if(_optHome){
     const hrow=document.createElement('div');hrow.className='ws-nav-tree-row';
-    const hb=document.createElement('span');hb.className='ws-nav-bullet';hb.style.marginLeft='8px';hb.innerHTML='<i class="ti ti-home" style="font-size:13px;color:var(--accent)"></i>';hrow.appendChild(hb);
+    const hb=document.createElement('span');hb.className='ws-nav-bullet';hb.style.marginLeft='8px';hb.innerHTML='<i class="ti ti-home" style="font-size:18px;color:var(--accent)"></i>';hrow.appendChild(hb);
     const hi=document.createElement('div');hi.className='ws-nav-item ws-home-item';hi.id='nav-'+_optHome.id;hi.dataset.docid=_optHome.id;hi.innerHTML='<span class="ws-nav-title">'+escH(_optHome.title||'Giới thiệu dự án')+'</span><button class="ws-star-btn" data-docid="'+escH(_optHome.id)+'" title="Starred">☆</button>';hrow.appendChild(hi);
     pagesPanel.appendChild(hrow);
     const sep=document.createElement('div');sep.className='ws-sb-sep';pagesPanel.appendChild(sep);
