@@ -1914,7 +1914,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
         <i class="ti ti-chevron-right sb-primary-arrow"></i>
       </div>
       
-      <div class="sb-primary-item active" id="sbPagesHomeBtn" onclick="openPagesHome()" style="cursor:pointer" title="Trang giới thiệu dự án">
+      <div class="sb-primary-item" id="sbPagesHomeBtn" onclick="openPagesHome()" style="cursor:pointer" title="Trang giới thiệu dự án">
         <i class="ti ti-files"></i> Pages
       </div>
     </div>
@@ -2849,6 +2849,7 @@ function toggleFlyout(mode,triggerEl){
   if(_flyoutMode===mode){closeFlyout();return;}
   _flyoutMode=mode;
   document.querySelectorAll('.sb-primary-item').forEach(el=>el.classList.remove('flyout-open'));
+  document.getElementById('sbPagesHomeBtn')?.classList.remove('active');
   if(triggerEl)triggerEl.classList.add('flyout-open');
   const sb=document.getElementById('sidebar');
   const flyout=document.getElementById('sbFlyout');
@@ -3601,6 +3602,8 @@ function _pagesHomeTemplate(){
     +`<ul><li>Tài liệu kỹ thuật</li><li>Repository / Source code</li><li>Kênh liên lạc</li></ul>`;
 }
 function openPagesHome(){
+  document.querySelectorAll('.sb-primary-item').forEach(el=>el.classList.remove('active','flyout-open'));
+  document.getElementById('sbPagesHomeBtn')?.classList.add('active');
   let home=state.docs.find(d=>d.isHomePage);
   if(!home){
     home={
