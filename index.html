@@ -11237,11 +11237,7 @@ function _sbImportWireDrop(){
       // Folder drop — use FileSystemEntry API
       const entry=item.webkitGetAsEntry&&item.webkitGetAsEntry();
       if(entry&&entry.isDirectory){
-        // Convert FileSystemDirectoryEntry to a FileSystemDirectoryHandle
-        if(window.showDirectoryPicker){
-          // Can't convert entry → prompt user to use folder picker
-          toast('Kéo thư mục không được hỗ trợ — hãy dùng Ctrl+Shift+I hoặc nhấn nút và chọn thư mục','info');
-        }
+        await _importFromDirectoryEntry(entry);
         return;
       }
       // File drop — process directly
@@ -11374,6 +11370,58 @@ function _sbImportShowMergeModal(sourceName,docs,mediaCount){
 
 function importMergePages(){
   document.getElementById('importMergeInput').click();
+}
+
+// Handle a directory dragged onto the import button (FileSystemEntry API — no picker dialog needed)
+async function _importFromDirectoryEntry(dirEntry){
+  const _readText=(fe)=>new Promise((res,rej)=>{fe.file(f=>f.text().then(res).catch(rej),rej);});
+  const _readBlob=(fe)=>new Promise((res,rej)=>{fe.file(f=>f.arrayBuffer().then(buf=>res(new Blob([buf],{type:f.type}))).catch(rej),rej);});
+  const _getFile=(de,name)=>new Promise((res,rej)=>{de.getFile(name,{},res,()=>rej(new Error('nf')));});
+  const _getDir=(de,name)=>new Promise((res,rej)=>{de.getDirectory(name,{},res,()=>rej(new Error('nf')));});
+  const _readAllEntries=(de)=>new Promise((res,rej)=>{
+    const rdr=de.createReader();const all=[];
+    const next=()=>rdr.readEntries(batch=>{if(!batch.length)res(all);else{all.push(...batch);next();}},rej);
+    next();
+  });
+  // 1. Find data.json or page.json
+  let imported=null;
+  for(const[fname,single]of[['data.json',false],['page.json',true]]){
+    try{
+      const fe=await _getFile(dirEntry,fname);
+      const text=await _readText(fe);
+      const parsed=JSON.parse(text);
+      if(single){if(parsed.type==='camnguyen-page'&&parsed.doc){imported={docs:[parsed.doc]};break;}}
+      else{if(parsed&&Array.isArray(parsed.docs)){imported=parsed;break;}}
+    }catch(e){}
+  }
+  if(!imported){toast('Không tìm thấy data.json hoặc page.json trong thư mục này','error');return;}
+  // 2. Load images/videos into IDB + ObjectURL cache (same as ZIP import)
+  let mediaCount=0;
+  toast('⏳ Đang tải ảnh/video từ thư mục...','info');
+  for(const subName of['images','videos']){
+    try{
+      const subDir=await _getDir(dirEntry,subName);
+      const fileEntries=await _readAllEntries(subDir);
+      for(const fe of fileEntries){
+        if(!fe.isFile)continue;
+        try{
+          const origExt=(fe.name.split('.').pop()||'').toLowerCase();
+          const rawBlob=await _readBlob(fe);
+          const blob=_ensureBlobMime(rawBlob,origExt);
+          const id=fe.name.replace(/\.[^.]+$/,'');
+          if(id&&blob.size>0){
+            await _idbPut(id,blob);
+            if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}
+            mediaCount++;
+          }
+        }catch(e){console.warn('[importDir]',fe.name,e);}
+      }
+    }catch(e){}
+  }
+  if(mediaCount)toast('✅ Đã tải '+mediaCount+' ảnh/video','success');
+  // 3. Show merge modal
+  _importMergeDocs=imported.docs;
+  _sbImportShowMergeModal('📁 '+dirEntry.name,imported.docs,mediaCount);
 }
 
 async function importMergePagesFromFolder(){
@@ -14458,6 +14506,7 @@ document.addEventListener('keydown',e=>{
   }
   if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();persist();const el=document.getElementById('saveStatusEl');el.className='save-ok';el.innerHTML='<i class="ti ti-circle-check" style="font-size:12px"></i> Đã lưu';toast('Đã lưu','success');}
   if((e.ctrlKey||e.metaKey)&&e.key==='n'){e.preventDefault();newDoc();}
+  if((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key.toLowerCase()==='i'){e.preventDefault();importMergePagesFromFolder();}
   if(e.key==='k'&&!e.ctrlKey&&!e.metaKey&&!e.altKey){const _ae=document.activeElement;if(!_ae||_ae.tagName==='BODY'||(!_ae.isContentEditable&&_ae.tagName!=='INPUT'&&_ae.tagName!=='TEXTAREA')){e.preventDefault();openQS();}}
   if(e.key==='F11'){e.preventDefault();toggleFocusMode();}
   if(e.key==='Escape'){
