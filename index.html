@@ -9451,19 +9451,15 @@ function _cfImgLoadAll(editor){
   editor.querySelectorAll('.cf-img-block[data-cfimgid]').forEach(async block=>{
     const id=block.dataset.cfimgid;if(!id)return;
     const media=block.querySelector('img,video');if(!media)return;
-    // Reload if src is missing OR is a stale blob: URL from a previous session
-    const _staleSrc=media.src&&media.src.startsWith('blob:')&&!_objUrls[id];
-    if(!media.src||_staleSrc){
-      if(_staleSrc)media.removeAttribute('src');
-      let src=_objUrls[id]||'';
-      if(!src){try{const b=await _idbGet(id);if(b){src=URL.createObjectURL(b);_cacheUrl(id,src);}}catch(e){}}
-      if(src){
-        media.src=src;
-        if(media.tagName==='VIDEO'){
-          media.muted=true;media.loop=true;media.autoplay=true;
-          media.controls=true;media.setAttribute('playsinline','');
-          media.play().catch(()=>{});
-        }
+    // Always resolve from cache/IDB — overwrites any stale blob:, filename, or empty src
+    let src=_objUrls[id]||'';
+    if(!src){try{const b=await _idbGet(id);if(b){src=URL.createObjectURL(b);_cacheUrl(id,src);}}catch(e){}}
+    if(src&&media.src!==src){
+      media.src=src;
+      if(media.tagName==='VIDEO'){
+        media.muted=true;media.loop=true;media.autoplay=true;
+        media.controls=true;media.setAttribute('playsinline','');
+        media.play().catch(()=>{});
       }
     }
     // Always rewire events — after undo/redo the DOM is rebuilt from HTML so
@@ -11735,6 +11731,8 @@ async function _projInit(){
     const perm=await handle.queryPermission({mode:'readwrite'});
     if(perm==='granted'){
       _projDir=handle;_projDirName=handle.name;_projUpdateBadge();
+      // Load images/videos from folder into IDB in background so pages render correctly
+      _projLoadFolderAssets(handle).catch(()=>{});
     }else{
       // Permission revoked after page reload — show reconnect banner
       _projDirName=handle.name||'';
@@ -11825,7 +11823,9 @@ async function _projConnectFolderOnly(){
   toast('📁 Đã kết nối ổ project "'+handle.name+'"'+(mc?' · tải '+mc+' ảnh/video':''),'success');
 }
 
-// Load all files from images/ and videos/ subdirs of a folder handle into IDB + ObjectURL cache
+// Load all files from images/ and videos/ subdirs of a folder handle into IDB + ObjectURL cache.
+// Skips files already tracked in _projSavedIds (already in IDB from this session) — only
+// reads the file bytes for new/unknown assets to keep startup fast.
 async function _projLoadFolderAssets(handle){
   let count=0;
   for(const sub of['images','videos']){
@@ -11833,11 +11833,16 @@ async function _projLoadFolderAssets(handle){
     for await(const[,entry]of subDir.entries()){
       if(entry.kind!=='file')continue;
       try{
+        const id=entry.name.replace(/\.[^.]+$/,'');
+        if(_projSavedIds.has(id)){
+          // Already in IDB — just ensure an ObjectURL exists for rendering
+          if(!_objUrls[id]){const b=await _idbGet(id);if(b){const url=URL.createObjectURL(b);_cacheUrl(id,url);}}
+          count++;continue;
+        }
         const f=await entry.getFile();
         const origExt=(entry.name.split('.').pop()||'').toLowerCase();
         const rawBlob=new Blob([await f.arrayBuffer()],{type:f.type});
         const blob=_ensureBlobMime(rawBlob,origExt);
-        const id=entry.name.replace(/\.[^.]+$/,'');
         await _idbPut(id,blob);
         if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}
         _projSavedIds.add(id);
@@ -11936,6 +11941,8 @@ async function _projReconnect(){
       document.getElementById('projReconnectBanner')?.classList.remove('on');
       _projUpdateBadge();
       toast('📁 Đã kết nối lại: '+handle.name,'success');
+      // Load images from folder into IDB so pages render correctly
+      _projLoadFolderAssets(handle).catch(()=>{});
       await _projSaveJSON();
       await _projFlushPendingSaves();
       await _projMigrateToFolder();
