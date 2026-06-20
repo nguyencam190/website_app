@@ -11642,11 +11642,21 @@ async function _projFullSync(){
     }
 
     // 4. Publish HTML to project folder (overwrite existing)
-    const{blob:htmlBlob,fname:htmlName}=await _buildHtmlBlob();
-    await _projExportHTML(htmlBlob,htmlName);
+    let htmlName='';
+    try{
+      const r=await _buildHtmlBlob();
+      htmlName=r.fname;
+      const fh=await _projDir.getFileHandle(r.fname,{create:true});
+      const wr=await fh.createWritable();
+      await wr.write(r.blob);
+      await wr.close();
+    }catch(e){
+      console.error('[Push HTML]',e);
+      toast('⚠️ Không xuất được HTML: '+e.message,'warning');
+    }
 
     const total=saved+skipped;
-    let msg=`✅ Đã push ${state.docs.length} trang · ${total} ảnh/video · HTML → 📁 "${_projDirName}"`;
+    let msg=`✅ Push xong: ${state.docs.length} trang · ${total} ảnh/video${htmlName?' · '+htmlName:''} → 📁 "${_projDirName}"`;
     if(dupes)msg+=` · bỏ ${dupes} trùng`;
     if(deletedFiles||deletedIdb)msg+=` · xóa ${deletedFiles} file thừa`;
     toast(msg,'success');
@@ -12027,8 +12037,15 @@ async function _projExportHTML(htmlBlob,htmlName){
 }
 
 async function _buildHtmlBlob(){
-  const resp=await fetch(location.href);
-  let html=await resp.text();
+  let html;
+  try{
+    const resp=await fetch(location.href);
+    if(!resp.ok)throw new Error('fetch failed '+resp.status);
+    html=await resp.text();
+  }catch(e){
+    // Fallback: serialize current DOM
+    html='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
+  }
   html=html.replace(/<script id="pd-embedded-state"[\s\S]*?<\/script>\s*/g,'');
   const toSave=JSON.parse(JSON.stringify(state));
   toSave.docs.forEach(doc=>{
