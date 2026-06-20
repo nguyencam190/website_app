@@ -18,8 +18,8 @@ Sau **mỗi lần thay đổi code** trong dự án này, bắt buộc phải:
 - Kéo thả → nhận thư mục hoặc file ZIP
 - KHÔNG dùng `<input type="file">` cho click — browser không cho phép chọn cả folder lẫn file ZIP trong cùng một dialog
 
-### Nút 📁 trên header (`_openProjectFile`)
-- **Chỉ mở file JSON** — đây là nơi duy nhất để mở JSON data
-- `accept='.json'`
+### Nút 📁 trên header (`_projOpenFolder`)
+- **Mở thư mục project** — tải cả data.json + ảnh/video cùng lúc
+- Gọi `_projOpenFolder()` — KHÔNG gọi `_openProjectFile()`
 
 **Hai nút này có chức năng riêng biệt, không được gộp hay nhầm lẫn.**
