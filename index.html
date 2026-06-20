@@ -11942,19 +11942,16 @@ async function _projFullSync(){
       deletedIdb++;
     }
 
-    // 4. Publish HTML editor snapshot to project folder (overwrite existing)
-    let htmlName='';
+    // 4. Remove any stale "-editor.html" snapshots left by older Push versions.
+    //    The folder (data.json + images/ + videos/) is the single source of truth;
+    //    re-open for editing via the 📁 button, not a bundled editor file.
     try{
-      const r=await _buildHtmlBlob();
-      htmlName=r.fname;
-      const fh=await _projDir.getFileHandle(r.fname,{create:true});
-      const wr=await fh.createWritable();
-      await wr.write(r.blob);
-      await wr.close();
-    }catch(e){
-      console.error('[Push HTML]',e);
-      toast('⚠️ Không xuất được HTML: '+e.message,'warning');
-    }
+      const toRemove=[];
+      for await(const[name,h] of _projDir.entries()){
+        if(h.kind==='file'&&/-editor\.html$/i.test(name))toRemove.push(name);
+      }
+      for(const name of toRemove){try{await _projDir.removeEntry(name);}catch(e){}}
+    }catch(e){console.error('[Push cleanup editor.html]',e);}
 
     // 5. Publish optimized website ({projectName}.html) into the same folder — reuses images/
     let webPublished=false,webHtmlName='';
