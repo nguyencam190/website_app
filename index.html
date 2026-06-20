@@ -11278,7 +11278,7 @@ function _sbImportWireDrop(){
 async function _sbImportFromFile(){
   const input=document.createElement('input');
   input.type='file';
-  input.accept='.zip,.json,.camnguyen.json';
+  input.accept='.zip,.json,.camnguyen.json,application/zip,application/x-zip-compressed,application/octet-stream';
   input.onchange=async e=>{
     const file=e.target.files[0];if(!file)return;
     await _sbImportProcessFile(file);
