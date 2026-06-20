@@ -11574,6 +11574,14 @@ async function _projToggleLive(){
   });
 }
 
+async function _blobHash(blob){
+  try{
+    const buf=await blob.arrayBuffer();
+    const hash=await crypto.subtle.digest('SHA-256',buf);
+    return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }catch(e){return null;}
+}
+
 async function _projFullSync(){
   if(!_projDir){toast('Chưa kết nối thư mục project','error');return;}
   if(_projLiveSaving)return;
@@ -11582,15 +11590,21 @@ async function _projFullSync(){
     toast('⏳ Đang lưu toàn bộ dữ liệu...','info');
     await _projSaveJSON();
     const ids=_collectDocAssetIds(state.docs);
-    let saved=0,skipped=0;
+    let saved=0,skipped=0,dupes=0;
+    const seenHashes=new Set();
     for(const id of ids){
       if(_projSavedIds.has(id)){skipped++;continue;}
       const blob=await _idbGet(id);
-      if(blob){await _projSaveAsset(id,blob);saved++;}
+      if(!blob)continue;
+      const hash=await _blobHash(blob);
+      if(hash&&seenHashes.has(hash)){dupes++;continue;} // same content already saved
+      if(hash)seenHashes.add(hash);
+      await _projSaveAsset(id,blob);saved++;
     }
     await _projFlushPendingSaves();
     const total=saved+skipped;
-    toast(`✅ Đã lưu ${state.docs.length} trang · ${total} ảnh/video vào 📁 "${_projDirName}"`,'success');
+    const dupeMsg=dupes?` · bỏ ${dupes} ảnh trùng`:'';
+    toast(`✅ Đã lưu ${state.docs.length} trang · ${total} ảnh/video vào 📁 "${_projDirName}"${dupeMsg}`,'success');
   }catch(e){toast('Lỗi lưu: '+e.message,'error');console.error(e);}
   finally{_projLiveSaving=false;}
 }
