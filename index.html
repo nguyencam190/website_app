@@ -1692,8 +1692,6 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
         <i class="ti ti-device-floppy"></i>
       </button>
       <div class="hdr-dd" id="hdrExportDd" style="right:0">
-        <div class="hdr-dd-item" onclick="exportSelfContained();hdrCloseAll()"><i class="ti ti-file-code" style="color:var(--accent)"></i> <strong>Lưu file HTML (có data)</strong></div>
-        <div class="hdr-dd-sep"></div>
         <div class="hdr-dd-item" onclick="exportProject();hdrCloseAll()"><i class="ti ti-file-zip"></i> Xuất ZIP backup (có ảnh)</div>
         <div class="hdr-dd-sep"></div>
         <div class="hdr-dd-item" onclick="_projOpenFolder();hdrCloseAll()"><i class="ti ti-folder-cog"></i> Set project folder</div>
@@ -12316,29 +12314,6 @@ async function _projExportHTML(htmlBlob,htmlName){
   }catch(e){console.warn('[projExportHTML]',e);toast('Lỗi lưu HTML vào thư mục: '+e.message,'error');}
 }
 
-async function _buildHtmlBlob(){
-  let html;
-  try{
-    const resp=await fetch(location.href);
-    if(!resp.ok)throw new Error('fetch failed '+resp.status);
-    html=await resp.text();
-  }catch(e){
-    // Fallback: serialize current DOM
-    html='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
-  }
-  html=html.replace(/<script id="pd-embedded-state"[\s\S]*?<\/script>\s*/g,'');
-  const toSave=JSON.parse(JSON.stringify(state));
-  toSave.docs=(toSave.docs||[]).filter(d=>!d._deleted);
-  toSave.docs.forEach(doc=>{
-    if(doc.content)doc.content=_stripContentBlobSrcs(doc.content);
-    if(doc.images)doc.images=doc.images.map(m=>{const{src,...meta}=m;return src&&src.startsWith('data:')?{...meta,src}:meta;});
-  });
-  const embedTag='<script id="pd-embedded-state" type="application/json">\n'+JSON.stringify(toSave)+'\n<\/script>\n';
-  html=html.replace('</head>',embedTag+'</head>');
-  const fname=(state.projectName||'project-docs').replace(/[^a-zA-Z0-9\-_]/g,'-')+'-editor.html';
-  return{blob:new Blob([html],{type:'text/html'}),fname};
-}
-
 function _deduplicatePages(){
   const before=state.docs.length;
   const _seenSrc=new Set(),_seenTitle=new Set(),_seenContent=new Set();
@@ -12430,15 +12405,6 @@ async function exportProject(){
   }catch(err){toast('Lỗi xuất ZIP: '+err.message,'error');console.error(err);}
 }
 
-async function exportSelfContained(){
-  toast('Đang tạo file...','info');
-  try{
-    const{blob:htmlBlob,fname}=await _buildHtmlBlob();
-    const ok=await _saveFile(htmlBlob,fname,[{description:'Self-contained HTML',accept:{'text/html':['.html']}}]);
-    if(ok)toast('✅ File HTML có sẵn dữ liệu — mở bất kỳ đâu đều đúng project','success');
-    if(_projDir)await _projExportHTML(htmlBlob,fname);
-  }catch(err){toast('Lỗi: '+err.message,'error');}
-}
 function importProject(){document.getElementById('importInput').click();}
 async function handleImport(e){
   const file=e.target.files[0];if(!file)return;
