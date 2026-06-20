@@ -11863,6 +11863,23 @@ async function _blobHash(blob){
   }catch(e){return null;}
 }
 
+// Publish the optimized viewer website (index.html) into the SAME project folder.
+// Reuses the images/ + videos/ files Push already saved (no compress, no copy) so
+// the website and editor source stay perfectly in sync from one set of assets.
+async function _projPublishWebsite(){
+  if(!_projDir)return null;
+  const docs=state.docs.filter(d=>!d._deleted);
+  if(!docs.length)return null;
+  const accent=localStorage.getItem('accent_color')||'#2563eb';
+  return await doExportOptimized({
+    targetDir:_projDir,
+    reuseAssets:true,
+    docs:docs,
+    title:state.projectName||'Project Docs',
+    accent:accent
+  });
+}
+
 async function _projFullSync(){
   if(!_projDir){toast('Chưa kết nối thư mục project','error');return;}
   if(_projLiveSaving)return;
@@ -11923,7 +11940,7 @@ async function _projFullSync(){
       deletedIdb++;
     }
 
-    // 4. Publish HTML to project folder (overwrite existing)
+    // 4. Publish HTML editor snapshot to project folder (overwrite existing)
     let htmlName='';
     try{
       const r=await _buildHtmlBlob();
@@ -11937,8 +11954,15 @@ async function _projFullSync(){
       toast('⚠️ Không xuất được HTML: '+e.message,'warning');
     }
 
+    // 5. Publish optimized website (index.html) into the same folder — reuses images/
+    let webPublished=false;
+    try{
+      const wr=await _projPublishWebsite();
+      if(wr&&wr.ok)webPublished=true;
+    }catch(e){console.error('[Push Website]',e);}
+
     const total=saved+skipped;
-    let msg=`✅ Push xong: ${state.docs.length} trang · ${total} ảnh/video${htmlName?' · '+htmlName:''} → 📁 "${_projDirName}"`;
+    let msg=`✅ Push xong: ${state.docs.length} trang · ${total} ảnh/video${webPublished?' · 🌐 index.html':''} → 📁 "${_projDirName}"`;
     if(dupes)msg+=` · bỏ ${dupes} ảnh trùng`;
     if(deletedFiles||deletedIdb)msg+=` · xóa ${deletedFiles} file thừa`;
     toast(msg,'success');
@@ -14195,12 +14219,16 @@ async function doExportWebsite(){
   }
 }
 
-async function doExportOptimized(){
+async function doExportOptimized(opts){
+  opts=opts||{};
+  const _folderMode=!!opts.targetDir; // write index.html into a project folder instead of ZIP
   try{
-  // ── Load JSZip ────────────────────────────────────────────
-  let JSZip;
-  try{JSZip=await _loadJSZip();}catch(e){toast('Không tải được JSZip. Kiểm tra kết nối mạng.','error');return;}
-  const zip=new JSZip();
+  // ── Load JSZip (only needed for ZIP download mode) ─────────
+  let JSZip,zip=null;
+  if(!_folderMode){
+    try{JSZip=await _loadJSZip();}catch(e){toast('Không tải được JSZip. Kiểm tra kết nối mạng.','error');return;}
+    zip=new JSZip();
+  }
 
   // ── Phase 0: Flush editor state ──────────────────────────
   fmSaveAll();tbSaveAll();
@@ -14221,12 +14249,16 @@ async function doExportOptimized(){
   }
   persist();
 
-  const title=(document.getElementById('webTitle')?.value.trim()||state.projectName||'Project Docs');
-  const accent=document.querySelector('input[name="webTheme"]:checked')?.value||'#2563eb';
+  const title=(opts.title||document.getElementById('webTitle')?.value.trim()||state.projectName||'Project Docs');
+  const accent=opts.accent||document.querySelector('input[name="webTheme"]:checked')?.value||'#2563eb';
   const exportDark=document.documentElement.getAttribute('data-theme')==='dark';
-  const checkedIds=Array.from(document.querySelectorAll('#webDocList input[type=checkbox]:checked')).map(i=>i.value);
-  const docs=state.docs.filter(d=>!d._deleted&&checkedIds.includes(d.id));
-  if(!docs.length){toast('Chọn ít nhất một tài liệu','error');return;}
+  let docs;
+  if(opts.docs){docs=opts.docs;}
+  else{
+    const checkedIds=Array.from(document.querySelectorAll('#webDocList input[type=checkbox]:checked')).map(i=>i.value);
+    docs=state.docs.filter(d=>!d._deleted&&checkedIds.includes(d.id));
+  }
+  if(!docs.length){if(_folderMode)return null;toast('Chọn ít nhất một tài liệu','error');return;}
 
   // ── Asset registry (id → relative path) ──────────────────
   const _assetMap=new Map();
@@ -14249,6 +14281,16 @@ async function doExportOptimized(){
     if(cached){try{const r=await fetch(cached);blob=await r.blob();}catch(e){}}
     if(!blob){try{blob=await _idbGet(id);}catch(e){}}
     if(!blob)return null;
+    if(_folderMode&&opts.reuseAssets){
+      // Reference the files Push already wrote to images/ or videos/ — no compress, no copy.
+      // Path logic MUST match _projSaveAsset so the URLs resolve.
+      const mime=blob.type||'image/jpeg';
+      const ext=_mimeToExt(mime)||'.bin';
+      const isVideo=mime.startsWith('video/');
+      const relPath='./'+(isVideo?'videos':'images')+'/'+id+ext;
+      _assetMap.set(id,relPath);
+      return relPath;
+    }
     const finalBlob=await _compressForExportBlob(blob);
     if(!finalBlob)return null;
     const mime=finalBlob.type||blob.type||'image/jpeg';
@@ -14591,6 +14633,16 @@ async function doExportOptimized(){
     '</body>',
     '</html>'
   ].join('\n');
+
+  // ── Folder mode: write index.html straight into the project folder ──
+  if(_folderMode){
+    const fh=await opts.targetDir.getFileHandle('index.html',{create:true});
+    const wr=await fh.createWritable();
+    await wr.write(htmlStr);
+    await wr.close();
+    _showExportProgress(0,0,'');
+    return {ok:true,pages:docs.length};
+  }
 
   // ── Pack into ZIP ─────────────────────────────────────────
   zip.file('index.html', htmlStr);
