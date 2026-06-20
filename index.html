@@ -11298,6 +11298,22 @@ async function _openProjectFile(){
         // Load folder assets into IDB FIRST so tblAttachAll finds them when openDoc renders
         if(_projDir){
           try{await _projLoadFolderAssets(_projDir);}catch(e){}
+        } else {
+          // No folder connected — check if any doc has image references
+          const hasImages=_collectDocAssetIds(state.docs).size>0;
+          if(hasImages){
+            toast(`✅ Đã mở "${file.name}" — ${data.docs.length} trang`,'success');
+            openDoc(state.docs[0].id);
+            // Prompt user to connect folder so images can load
+            if(confirm('Trang có chứa ảnh/video.\nKết nối thư mục project để tải ảnh về?')){
+              await _projOpenFolder();
+              if(_projDir){
+                try{await _projLoadFolderAssets(_projDir);}catch(e){}
+                setTimeout(()=>_reloadEditorImages(),300);
+              }
+            }
+            return;
+          }
         }
         openDoc(state.docs[0].id);
         setTimeout(()=>_reloadEditorImages(),300);
