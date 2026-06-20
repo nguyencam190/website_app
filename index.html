@@ -3637,8 +3637,17 @@ function _expandAncestors(id){
   let pid=doc.parentId;
   while(pid){_nodeCollapsed[pid]=false;const par=state.docs.find(d=>d.id===pid);pid=par?par.parentId:null;}
 }
+// Pause + unload every <video> inside root so it stops playing audio after being
+// detached from the DOM (removing a node alone doesn't always halt media playback).
+function _stopVideosIn(root){
+  if(!root)return;
+  const vids=root.tagName==='VIDEO'?[root]:root.querySelectorAll('video');
+  vids.forEach(v=>{try{v.pause();v.muted=true;v.removeAttribute('src');v.load();}catch(e){}});
+}
 function openDoc(id){
   const doc=state.docs.find(d=>d.id===id);if(!doc)return;
+  // Stop any video still playing in the editor before its content is replaced
+  _stopVideosIn(document.getElementById('editor'));
   // Save undo history of departing page
   const _prevDocId=state.currentDocId;
   if(_prevDocId&&_prevDocId!==id&&(_undoStack.length>1||_redoStack.length)){
@@ -5112,6 +5121,7 @@ function fmDelete(fmId){
   const fm=document.getElementById(fmId);if(!fm)return;
   const doc=currentDoc();if(!doc)return;
   const mid=fm.dataset.mediaid;
+  _stopVideosIn(fm);
   fm.remove();
   // Find media entry
   const mediaEntry=doc.images&&doc.images.find(m=>m.id===mid);
@@ -5123,7 +5133,7 @@ function fmDelete(fmId){
     _idbDel(mid).catch(()=>{});
   }
   if(doc.images)doc.images=doc.images.filter(i=>i.id!==mid);
-  if(doc.content){const tmp=document.createElement('div');tmp.innerHTML=doc.content;tmp.querySelectorAll('[data-mediaid="'+mid+'"],[data-imgid="'+mid+'"]').forEach(e=>e.remove());doc.content=tmp.innerHTML;document.getElementById('editor').innerHTML=doc.content;tblAttachAll();}
+  if(doc.content){const tmp=document.createElement('div');tmp.innerHTML=doc.content;tmp.querySelectorAll('[data-mediaid="'+mid+'"],[data-imgid="'+mid+'"]').forEach(e=>e.remove());doc.content=tmp.innerHTML;_stopVideosIn(document.getElementById('editor'));document.getElementById('editor').innerHTML=doc.content;tblAttachAll();}
   markDirty();toast('Da xoa','info');
 }
 function fmOpenImg(fmId){const fm=document.getElementById(fmId);if(!fm)return;const img=fm.querySelector('img');if(!img)return;const imgs=Array.from(document.querySelectorAll('.fmedia img'));lbOpen(imgs.indexOf(img));}
@@ -8806,6 +8816,7 @@ function _cfBuildImgToolbar(block){
     {icon:'ti-trash',label:'Xóa',danger:true,fn:()=>{
       const id=block.dataset.cfimgid;
       if(id){_revokeUrl(id);_idbDel(id).catch(()=>{});}
+      _stopVideosIn(block);
       block.remove();onContentChange();
     }},
   ];
@@ -8904,6 +8915,7 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Delete'&&_cfImgSelected&&document.activeElement===document.body){
     const id=_cfImgSelected.dataset.cfimgid;
     if(id){_revokeUrl(id);_idbDel(id).catch(()=>{});}
+    _stopVideosIn(_cfImgSelected);
     _cfImgSelected.remove();_cfImgSelected=null;onContentChange();
   }
 });
