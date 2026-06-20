@@ -11252,11 +11252,11 @@ async function _openProjectFile(){
   input.click();
 }
 function _sbImportClickSmart(){
-  // Click → file picker for ZIP or JSON.
+  // Click → file picker for ZIP only.
   // Drag-drop folder onto the button → folder import (auto-detected).
   const input=document.createElement('input');
   input.type='file';
-  input.accept='.zip,.json';
+  input.accept='.zip,application/zip,application/x-zip-compressed';
   input.onchange=async e=>{
     const file=e.target.files[0];
     if(!file)return;
