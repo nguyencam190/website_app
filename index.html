@@ -3672,6 +3672,9 @@ function openDoc(id){
     _cfImgLoadAll(document.getElementById('editor'));
     _cfToggleLoadAll(document.getElementById('editor'));
     document.querySelectorAll('.cf-checklist').forEach(cl=>_cfWireChecklist(cl));
+    document.getElementById('editor').querySelectorAll('.cf-tabs').forEach(b=>_cfTabsRewire(b));
+    document.getElementById('editor').querySelectorAll('.cf-progress').forEach(b=>_cfProgressRewire(b));
+    document.getElementById('editor').querySelectorAll('.cf-status').forEach(el=>_cfStatusRewire(el));
     _cfFileLoadAll(document.getElementById('editor'));
     _cfAddCodeCopyBtns(document.getElementById('editor'));
     if(!_cachedUndo)_undoSnapshot(); // initial snapshot (skip if restoring from cache)
