@@ -1703,7 +1703,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 
     <!-- Project folder -->
     <div style="display:flex;align-items:center;gap:4px">
-      <button class="header-icon-btn" onclick="_sbImportAll()" title="Nhập trang (ZIP / JSON / thư mục)"><i class="ti ti-file-import"></i></button>
+      <button class="header-icon-btn" onclick="_sbImportAll()" title="Nhập trang từ thư mục (kéo thả ZIP/JSON)"><i class="ti ti-file-import"></i></button>
       <button class="proj-live-btn" id="projLiveBtn" onclick="_projToggleLive()" title="Lưu tất cả dữ liệu và ảnh vào thư mục project">
         <span class="proj-live-dot" id="projLiveDot"></span>Push
       </button>
@@ -1938,7 +1938,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
     <div class="sb-search-row">
       <div class="sb-search"><i class="ti ti-search"></i><input type="text" placeholder="Search pages..." id="searchInput" oninput="filterDocs()"></div>
       <button class="sb-new-btn" onclick="_quickNewRootDoc()" title="Trang mới"><i class="ti ti-plus"></i></button>
-      <button class="sb-new-btn" onclick="_sbImportAll()" title="Nhập trang"><i class="ti ti-file-import"></i></button>
+      <button class="sb-new-btn" onclick="_sbImportAll()" title="Nhập trang từ thư mục (kéo thả ZIP/JSON)"><i class="ti ti-file-import"></i></button>
     </div>
 
     <!-- Nav tree -->
@@ -11221,7 +11221,14 @@ let _importMergeDocs=[];
 // Single smart import: file picker for ZIP/JSON, auto-detect images folder when needed.
 // Drag a folder onto the import button → triggers folder import directly.
 function _sbImportAll(triggerEl){
-  _sbImportFromFile();
+  // Primary: folder picker — reads data.json / page.json + images/ + videos/ in one step.
+  // ZIP / JSON files: drag onto this button instead.
+  if(window.showDirectoryPicker){
+    importMergePagesFromFolder();
+  }else{
+    // Fallback for browsers without showDirectoryPicker (Firefox)
+    _sbImportFromFile();
+  }
 }
 // Wire drag-and-drop folder support onto import buttons (called once on init)
 function _sbImportWireDrop(){
@@ -11283,7 +11290,7 @@ async function _sbImportProcessFile(file){
           if(!b64)continue;
           try{const blob=_dataUrlToBlob(b64);if(blob){await _idbPut(id,blob);if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}mediaCount++;}}catch(er){}
         }
-        // No popup — ảnh sẽ tự load từ _projDir sau khi merge (doImportMerge → _projLoadFolderAssets)
+        if(!mediaCount)toast('ℹ️ File JSON không chứa ảnh nhúng — kéo thả THƯMỤC vào nút nhập để load ảnh kèm theo.','warning');
         _sbImportShowMergeModal(file.name,_importMergeDocs,mediaCount);
       }else if(data.docs&&Array.isArray(data.docs)){
         _importMergeDocs=data.docs;
