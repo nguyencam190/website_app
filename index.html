@@ -11287,35 +11287,7 @@ async function _sbImportProcessFile(file){
           if(!b64)continue;
           try{const blob=_dataUrlToBlob(b64);if(blob){await _idbPut(id,blob);if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}mediaCount++;}}catch(er){}
         }
-        if(mediaCount===0&&Object.keys(media).length===0&&window.showDirectoryPicker){
-          // No embedded images — auto-ask for the images folder
-          toast('Đang tải ảnh từ thư mục...','info');
-          try{
-            const dir=await window.showDirectoryPicker({mode:'read',startIn:'downloads'});
-            let loaded=0;
-            for(const subName of['images','videos']){
-              let sub;try{sub=await dir.getDirectoryHandle(subName);}catch(e){continue;}
-              for await(const[,entry]of sub.entries()){
-                if(entry.kind!=='file')continue;
-                try{
-                  const f=await entry.getFile();
-                  const origExt=(entry.name.split('.').pop()||'').toLowerCase();
-                  const rawBlob=new Blob([await f.arrayBuffer()],{type:f.type});
-                  const blob=_ensureBlobMime(rawBlob,origExt);
-                  const id=entry.name.replace(/\.[^.]+$/,'');
-                  await _idbPut(id,blob);
-                  if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}
-                  loaded++;
-                }catch(e){}
-              }
-            }
-            mediaCount=loaded;
-            if(loaded)toast('✅ Đã tải '+loaded+' ảnh/video','success');
-          }catch(e){
-            if(e.name!=='AbortError')console.warn('[import] folder picker error',e);
-            // user cancelled = no images, continue without
-          }
-        }
+        // No popup — ảnh sẽ tự load từ _projDir sau khi merge (doImportMerge → _projLoadFolderAssets)
         _sbImportShowMergeModal(file.name,_importMergeDocs,mediaCount);
       }else if(data.docs&&Array.isArray(data.docs)){
         _importMergeDocs=data.docs;
