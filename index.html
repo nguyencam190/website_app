@@ -1698,8 +1698,6 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
         <div class="hdr-dd-sep"></div>
         <div class="hdr-dd-item" onclick="_projOpenFolder();hdrCloseAll()"><i class="ti ti-folder-cog"></i> Set project folder</div>
         <div class="hdr-dd-sep"></div>
-        <div class="hdr-dd-item" onclick="_deduplicatePages();hdrCloseAll()" style="color:#e11d48"><i class="ti ti-copy-off" style="color:#e11d48"></i> Xóa trang trùng lặp</div>
-        <div class="hdr-dd-item" onclick="if(confirm('Xóa TẤT CẢ trang khỏi project?')){state.docs=[];state.currentDocId=null;persistNow();renderSidebar();document.getElementById('editorPanel').style.display='none';document.getElementById('emptyState').style.display='';if(_projDir)_projSaveJSON();toast('Đã xóa tất cả trang','success');}hdrCloseAll()" style="color:#e11d48"><i class="ti ti-trash" style="color:#e11d48"></i> Xóa tất cả trang</div>
       </div>
     </div>
 
@@ -11602,6 +11600,22 @@ async function _projFullSync(){
   _projLiveSaving=true;
   try{
     toast('⏳ Đang lưu toàn bộ dữ liệu...','info');
+
+    // 0. Dedup pages: remove duplicate titles/sources before saving
+    const _beforeDedup=state.docs.length;
+    const _seenTitles=new Set(),_seenSrc=new Set();
+    state.docs=state.docs.filter(d=>{
+      const key=(d.title||'').trim().toLowerCase();
+      const src=d.importedFrom||'';
+      if(src&&_seenSrc.has(src))return false;
+      if(key&&_seenTitles.has(key))return false;
+      if(src)_seenSrc.add(src);
+      if(key)_seenTitles.add(key);
+      return true;
+    });
+    const _dedupRemoved=_beforeDedup-state.docs.length;
+    if(_dedupRemoved>0)persistNow();
+
     await _projSaveJSON();
     const referencedIds=_collectDocAssetIds(state.docs);
 
@@ -11671,7 +11685,8 @@ async function _projFullSync(){
 
     const total=saved+skipped;
     let msg=`✅ Push xong: ${state.docs.length} trang · ${total} ảnh/video${htmlName?' · '+htmlName:''} → 📁 "${_projDirName}"`;
-    if(dupes)msg+=` · bỏ ${dupes} trùng`;
+    if(_dedupRemoved)msg+=` · xóa ${_dedupRemoved} trang trùng`;
+    if(dupes)msg+=` · bỏ ${dupes} ảnh trùng`;
     if(deletedFiles||deletedIdb)msg+=` · xóa ${deletedFiles} file thừa`;
     toast(msg,'success');
   }catch(e){toast('Lỗi lưu: '+e.message,'error');console.error(e);}
