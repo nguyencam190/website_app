@@ -12749,6 +12749,9 @@ function _buildViewerShellCss(accent){
     '.ws-nav-chev.open i{transform:rotate(90deg)}',
     '.ws-nav-bullet{width:20px;height:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--text3)}',
     '.ws-nav-children.collapsed{display:none}',
+    '.ws-sb-tree-label{padding:10px 14px 4px;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.9px}',
+    '.ws-sb-sep{height:1px;background:var(--border);margin:6px 14px 2px}',
+    '.ws-home-item .ws-nav-title{font-weight:600}',
     '.ws-main{flex:1;overflow-y:auto;overflow-x:hidden;background:var(--bg);transition:background var(--tr)}',
     /* Page toolbar (breadcrumb bar above canvas) */
     '.ws-pab-wrapper{overflow:hidden;height:44px;flex-shrink:0;transition:height 250ms cubic-bezier(.4,0,.2,1)}',
@@ -13265,7 +13268,7 @@ async function doExportWebsite(){
 
   // Pages panel — recursive tree
   function buildWsNavTree(container,parentId,depth){
-    const kids=docs.filter(d=>(d.parentId||null)===(parentId||null));
+    const kids=docs.filter(d=>(d.parentId||null)===(parentId||null)&&!d.isHomePage);
     kids.forEach(d=>{
       const hasKids=docs.some(k=>k.parentId===d.id);
       const indent=8+depth*16;
@@ -13294,6 +13297,15 @@ async function doExportWebsite(){
     });
   }
   const pagesPanel=document.createElement('div');pagesPanel.id='wsSbPages';pagesPanel.className='ws-sb-panel';
+  const _wsHome=docs.find(d=>d.isHomePage);
+  if(_wsHome){
+    const hrow=document.createElement('div');hrow.className='ws-nav-tree-row';
+    const hb=document.createElement('span');hb.className='ws-nav-bullet';hb.style.marginLeft='8px';hb.innerHTML='<i class="ti ti-home" style="font-size:13px;color:var(--accent)"></i>';hrow.appendChild(hb);
+    const hi=document.createElement('div');hi.className='ws-nav-item ws-home-item';hi.id='nav-'+_wsHome.id;hi.dataset.docid=_wsHome.id;hi.innerHTML='<span class="ws-nav-title">'+escH(_wsHome.title||'Giới thiệu dự án')+'</span><button class="ws-star-btn" data-docid="'+escH(_wsHome.id)+'" title="Starred">☆</button>';hrow.appendChild(hi);
+    pagesPanel.appendChild(hrow);
+    const sep=document.createElement('div');sep.className='ws-sb-sep';pagesPanel.appendChild(sep);
+  }
+  const _wsTreeLabel=document.createElement('div');_wsTreeLabel.className='ws-sb-tree-label';_wsTreeLabel.textContent='Page Tree';pagesPanel.appendChild(_wsTreeLabel);
   buildWsNavTree(pagesPanel,null,0);
   navRoot.appendChild(pagesPanel);
 
@@ -14267,7 +14279,7 @@ async function doExportOptimized(opts){
   navRoot.appendChild(pnav);
   const sbSrch=document.createElement('div');sbSrch.className='ws-sb-search-row';sbSrch.innerHTML='<div class="ws-sb-search"><i class="ti ti-search"></i><input type="text" id="wsSbSearch" placeholder="Search pages..." autocomplete="off"></div>';navRoot.appendChild(sbSrch);
   function _optBuildNavTree(container,parentId,depth){
-    docs.filter(d=>(d.parentId||null)===(parentId||null)).forEach(d=>{
+    docs.filter(d=>(d.parentId||null)===(parentId||null)&&!d.isHomePage).forEach(d=>{
       const hasKids=docs.some(k=>k.parentId===d.id);const indent=8+depth*16;
       const row=document.createElement('div');row.className='ws-nav-tree-row';
       if(hasKids){const chev=document.createElement('button');chev.className='ws-nav-chev';chev.dataset.treeid=d.id;chev.style.marginLeft=indent+'px';chev.innerHTML='<i class="ti ti-chevron-right"></i>';row.appendChild(chev);}
@@ -14276,7 +14288,17 @@ async function doExportOptimized(opts){
       if(hasKids){const ch=document.createElement('div');ch.className='ws-nav-children collapsed';ch.id='ws-nav-ch-'+d.id;_optBuildNavTree(ch,d.id,depth+1);container.appendChild(ch);}
     });
   }
-  const pagesPanel=document.createElement('div');pagesPanel.id='wsSbPages';pagesPanel.className='ws-sb-panel';_optBuildNavTree(pagesPanel,null,0);navRoot.appendChild(pagesPanel);
+  const pagesPanel=document.createElement('div');pagesPanel.id='wsSbPages';pagesPanel.className='ws-sb-panel';
+  const _optHome=docs.find(d=>d.isHomePage);
+  if(_optHome){
+    const hrow=document.createElement('div');hrow.className='ws-nav-tree-row';
+    const hb=document.createElement('span');hb.className='ws-nav-bullet';hb.style.marginLeft='8px';hb.innerHTML='<i class="ti ti-home" style="font-size:13px;color:var(--accent)"></i>';hrow.appendChild(hb);
+    const hi=document.createElement('div');hi.className='ws-nav-item ws-home-item';hi.id='nav-'+_optHome.id;hi.dataset.docid=_optHome.id;hi.innerHTML='<span class="ws-nav-title">'+escH(_optHome.title||'Giới thiệu dự án')+'</span><button class="ws-star-btn" data-docid="'+escH(_optHome.id)+'" title="Starred">☆</button>';hrow.appendChild(hi);
+    pagesPanel.appendChild(hrow);
+    const sep=document.createElement('div');sep.className='ws-sb-sep';pagesPanel.appendChild(sep);
+  }
+  const _optTreeLabel=document.createElement('div');_optTreeLabel.className='ws-sb-tree-label';_optTreeLabel.textContent='Page Tree';pagesPanel.appendChild(_optTreeLabel);
+  _optBuildNavTree(pagesPanel,null,0);navRoot.appendChild(pagesPanel);
   const sbFooter=document.createElement('div');sbFooter.className='ws-sb-footer-bar';sbFooter.innerHTML='<button class="ws-sb-collapse-btn" id="wsSbCollapse" title="Thu gọn sidebar"><i class="ti ti-chevrons-left"></i></button>';navRoot.appendChild(sbFooter);
   const navHTML=navRoot.innerHTML;
   const docIndexJSON=JSON.stringify(docIndex);
