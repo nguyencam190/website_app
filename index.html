@@ -11772,39 +11772,6 @@ function closeWelcomeAndStart(){
   }
 }
 
-function handleWelcomeRestore(e){
-  const file=e.target.files[0];if(!file)return;
-  const reader=new FileReader();
-  reader.onload=ev=>{
-    const text=ev.target.result;
-    const ext=(file.name.split('.').pop()||'').toLowerCase();
-    try{
-      let data=null;
-      if(ext==='json'){
-        data=JSON.parse(text);
-      } else if(ext==='html'||ext==='htm'){
-        // Extract embedded state from HTML
-        const parser=new DOMParser();
-        const doc2=parser.parseFromString(text,'text/html');
-        const embedded=doc2.getElementById('pd-embedded-state');
-        if(embedded) data=JSON.parse(embedded.textContent);
-        else{toast('File HTML này không chứa dữ liệu project','error');return;}
-      }
-      if(!data||!Array.isArray(data.docs)){toast('File không hợp lệ','error');return;}
-      // Load data into localStorage and reload state
-      localStorage.setItem('projectdocs_v3',JSON.stringify(data));
-      Object.assign(state,data);
-      document.getElementById('welcomeModal').style.display='none';
-      renderSidebar();
-      if(state.docs&&state.docs.length>0){
-        openDoc(state.docs[0].id);
-        toast('Đã khôi phục '+state.docs.length+' trang','success');
-      }
-    }catch(err){toast('Lỗi đọc file: '+err.message,'error');}
-  };
-  reader.readAsText(file);e.target.value='';
-}
-
 // ── File Save helper: uses File System Access API (native folder picker) with fallback ──
 async function _saveFile(blob, suggestedName, types){
   if(window.showSaveFilePicker){
