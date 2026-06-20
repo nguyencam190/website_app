@@ -3935,7 +3935,7 @@ async function importPageJson(){
           }catch(er){console.warn('[importPage zip] skip',path,er);}
         }
       }else{
-        // Legacy .camnguyen.json format (base64 media)
+        // JSON format: may have embedded base64 media or separate images/ folder
         const text=await file.text();
         const data=JSON.parse(text);
         if(data.type!=='camnguyen-page'||!data.doc){toast('File không hợp lệ (phải là .camnguyen.json hoặc .camnguyen.zip)','error');return;}
@@ -3951,6 +3951,14 @@ async function importPageJson(){
             if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}
             _importOk++;
           }catch(e){_importFail++;}
+        }
+        // No embedded media → load from the folder containing page.json + images/
+        if(_importOk===0&&Object.keys(media).length===0&&window.showDirectoryPicker){
+          toast('Chọn thư mục chứa file page.json này để tải ảnh','info');
+          try{
+            const pageFolder=await window.showDirectoryPicker({mode:'read',startIn:'desktop'});
+            await _projLoadFolderAssets(pageFolder);
+          }catch(e){}
         }
         if(_importFail>0)console.warn('[import] Failed to restore',_importFail,'media items;',_importOk,'ok');
       }
@@ -11235,14 +11243,25 @@ async function _sbImportAll(){
         const text=await file.text();
         const data=JSON.parse(text);
         if(data.type==='camnguyen-page'&&data.doc){
-          if(!_projDir)await _projConnectFolderOnly();
           _importMergeDocs=[JSON.parse(JSON.stringify(data.doc))];
           const media=data.media||{};
+          let mediaCount=0;
+          // Load embedded base64 media (legacy format)
           for(const[id,b64]of Object.entries(media)){
             if(!b64)continue;
-            try{const blob=_dataUrlToBlob(b64);if(blob){await _idbPut(id,blob);if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}}}catch(er){}
+            try{const blob=_dataUrlToBlob(b64);if(blob){await _idbPut(id,blob);if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}mediaCount++;}}catch(er){}
           }
-          _sbImportShowMergeModal(file.name,_importMergeDocs,0);
+          // No embedded media → load from the folder containing page.json + images/
+          if(mediaCount===0&&window.showDirectoryPicker){
+            toast('Chọn thư mục chứa file page.json này để tải ảnh','info');
+            try{
+              const pageFolder=await window.showDirectoryPicker({mode:'read',startIn:'desktop'});
+              mediaCount=await _projLoadFolderAssets(pageFolder);
+            }catch(e){} // user cancelled is OK
+          }
+          // Connect project folder for Push (separate step)
+          if(!_projDir)await _projConnectFolderOnly();
+          _sbImportShowMergeModal(file.name,_importMergeDocs,mediaCount);
         }else if(data.docs&&Array.isArray(data.docs)){
           if(!_projDir)await _projConnectFolderOnly();
           _importMergeDocs=data.docs;
