@@ -3952,14 +3952,8 @@ async function importPageJson(){
             _importOk++;
           }catch(e){_importFail++;}
         }
-        // No embedded media → load from the folder containing page.json + images/
-        if(_importOk===0&&Object.keys(media).length===0&&window.showDirectoryPicker){
-          toast('Chọn thư mục chứa file page.json này để tải ảnh','info');
-          try{
-            const pageFolder=await window.showDirectoryPicker({mode:'read',startIn:'desktop'});
-            await _projLoadFolderAssets(pageFolder);
-          }catch(e){}
-        }
+        if(_importOk===0&&Object.keys(media).length===0)
+          toast('ℹ️ Ảnh chưa được tải — nhấn Push hoặc "Set project folder" để tải ảnh từ thư mục','info');
         if(_importFail>0)console.warn('[import] Failed to restore',_importFail,'media items;',_importOk,'ok');
       }
 
@@ -11249,14 +11243,8 @@ async function _sbImportAll(){
             if(!b64)continue;
             try{const blob=_dataUrlToBlob(b64);if(blob){await _idbPut(id,blob);if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}mediaCount++;}}catch(er){}
           }
-          // No embedded media → load from the folder containing page.json + images/
-          if(mediaCount===0&&window.showDirectoryPicker){
-            toast('Chọn thư mục chứa file page.json này để tải ảnh','info');
-            try{
-              const pageFolder=await window.showDirectoryPicker({mode:'read',startIn:'desktop'});
-              mediaCount=await _projLoadFolderAssets(pageFolder);
-            }catch(e){} // user cancelled is OK
-          }
+          if(mediaCount===0&&Object.keys(media).length===0)
+            toast('ℹ️ Ảnh chưa được tải — nhấn Push hoặc "Set project folder" để tải ảnh từ thư mục','info');
           _sbImportShowMergeModal(file.name,_importMergeDocs,mediaCount);
         }else if(data.docs&&Array.isArray(data.docs)){
           _importMergeDocs=data.docs;
@@ -11795,8 +11783,6 @@ async function _projHandleJsonOpen(e){
       document.getElementById('emptyState').style.display='';
       document.getElementById('editorPanel').style.display='none';
       toast(`✅ Đã mở "${state.projectName||'Project'}" — ${state.docs.length} tài liệu${mediaCount?' · '+mediaCount+' ảnh/video':''}`, 'success');
-      // Offer to connect the folder for auto-save + image sync
-      if(!_projDir)await _projConnectFolderOnly();
     }else{
       // Plain JSON
       const text=await file.text();
@@ -11816,8 +11802,6 @@ async function _projHandleJsonOpen(e){
       document.getElementById('editorPanel').style.display='none';
       if(state.docs.length>0)openDoc(state.docs[0].id);
       toast(`✅ Đã mở "${state.projectName||'Project'}" — ${state.docs.length} tài liệu`,'success');
-      // Offer to connect folder for auto-save + images
-      if(!_projDir)await _projConnectFolderOnly();
     }
   }catch(err){toast('Lỗi mở file: '+err.message,'error');console.error(err);}
 }
