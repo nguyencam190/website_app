@@ -1551,11 +1551,12 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 .proj-folder-badge:hover{border-color:var(--accent);color:var(--accent)}
 .proj-folder-badge.on{color:var(--accent);background:var(--accent-light);border:1px solid var(--accent);border-style:solid}
 @keyframes _livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
-.proj-live-btn{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border:1px solid var(--border);border-radius:20px;background:var(--surface2);cursor:pointer;color:var(--text2);transition:.15s;white-space:nowrap}
-.proj-live-btn:hover{border-color:#22c55e;color:#16a34a}
-.proj-live-btn.active{background:#dcfce7;border-color:#22c55e;color:#15803d}
-.proj-live-dot{width:7px;height:7px;border-radius:50%;background:#94a3b8;flex-shrink:0;transition:background .2s}
-.proj-live-btn.active .proj-live-dot{background:#22c55e;animation:_livePulse 1.2s infinite}
+.proj-live-btn{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border:1px solid transparent;border-radius:3px;background:#e3fcef;cursor:pointer;color:#006644;transition:.15s;white-space:nowrap}
+.proj-live-btn:hover{background:#c6f6d5;color:#004d33}
+.proj-live-btn.active{background:#c6f6d5;color:#004d33}
+[data-theme="dark"] .proj-live-btn{background:rgba(0,212,170,.15);color:#00d4aa;border-color:transparent}
+[data-theme="dark"] .proj-live-btn:hover{background:rgba(0,212,170,.25);color:#00d4aa}
+[data-theme="dark"] .proj-live-btn.active{background:rgba(0,212,170,.25);color:#00d4aa}
 .proj-reconnect-banner{display:none;position:fixed;top:0;left:0;right:0;z-index:10000;background:#f59e0b;color:#1c1917;font-size:13px;padding:8px 16px;align-items:center;gap:8px}
 .proj-reconnect-banner.on{display:flex}
 /* Unified import panel */
