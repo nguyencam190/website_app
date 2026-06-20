@@ -1938,7 +1938,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
     <div class="sb-search-row">
       <div class="sb-search"><i class="ti ti-search"></i><input type="text" placeholder="Search pages..." id="searchInput" oninput="filterDocs()"></div>
       <button class="sb-new-btn" onclick="_quickNewRootDoc()" title="Trang mới"><i class="ti ti-plus"></i></button>
-      <button class="sb-new-btn" onclick="_sbImportAll()" title="Nhập trang từ ZIP / JSON (kéo thả thư mục)"><i class="ti ti-file-import"></i></button>
+      <button class="sb-new-btn sb-import-btn" onclick="_sbImportFromFile()" title="Nhập trang từ ZIP / JSON (kéo thả thư mục)"><i class="ti ti-file-import"></i></button>
     </div>
 
     <!-- Nav tree -->
@@ -11220,11 +11220,7 @@ let _importMergeDocs=[];
 
 // Single smart import: file picker for ZIP/JSON, auto-detect images folder when needed.
 // Drag a folder onto the import button → triggers folder import directly.
-function _sbImportAll(triggerEl){
-  // File picker: ZIP hoặc JSON → xử lý qua _sbImportProcessFile
-  // Kéo thả folder → _importFromDirectoryEntry (wired in _sbImportWireDrop)
-  _sbImportFromFile();
-}
+
 async function _openProjectFile(){
   const input=document.createElement('input');
   input.type='file';
@@ -11253,7 +11249,7 @@ async function _openProjectFile(){
 }
 // Wire drag-and-drop folder support onto import buttons (called once on init)
 function _sbImportWireDrop(){
-  document.querySelectorAll('[onclick*="_sbImportAll"]').forEach(btn=>{
+  document.querySelectorAll('.sb-import-btn').forEach(btn=>{
     if(btn._importDropWired)return;
     btn._importDropWired=true;
     btn.addEventListener('dragover',e=>{e.preventDefault();btn.style.outline='2px solid var(--accent)';});
