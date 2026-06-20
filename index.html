@@ -11572,13 +11572,11 @@ async function doImportMerge(){
   if(!checkedIds.length){toast('Chọn ít nhất 1 trang','error');return;}
   const selected=_importMergeDocs.filter(d=>checkedIds.includes(d.id));
   const targetSec=state.sections[0]||'default';
-  // Dedup: skip pages already imported (same importedFrom ID, same title, or same content fingerprint)
+  // Dedup: skip pages already imported (same importedFrom ID or identical content fingerprint)
   const existingImportedFrom=new Set(state.docs.map(d=>d.importedFrom).filter(Boolean));
-  const existingTitles=new Set(state.docs.map(d=>(d.title||'').trim().toLowerCase()).filter(Boolean));
   const existingContent=new Set(state.docs.map(d=>{const c=d.content||'';return c.length>0?c.length+':'+c.slice(0,300):null;}).filter(Boolean));
   const toImport=selected.filter(d=>{
     if(existingImportedFrom.has(d.id))return false;
-    if(existingTitles.has((d.title||'').trim().toLowerCase()))return false;
     const c=d.content||'';if(c.length>0&&existingContent.has(c.length+':'+c.slice(0,300)))return false;
     return true;
   });
