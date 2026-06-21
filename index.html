@@ -8413,6 +8413,26 @@ function _cfInsertBlockAtRange(block, savedRange){
   // Fallback: append to editor
   if(!insertParent){insertParent=editor;insertBefore=null;}
 
+  // Media blocks (image / carousel / video) inside a table cell must be the cell's
+  // ONLY content: the cell gets .tbl-has-img (line-height:0; overflow:hidden; padding:0),
+  // which collapses any leftover text on top of the image — the "broken / overlapping
+  // content" bug. Clear the cell's text & other blocks first (keep UI overlays), mirroring
+  // the paste/drop path (_tblInsertImgBlock).
+  const _inCell=insertParent.tagName==='TD'||insertParent.tagName==='TH';
+  const _isMedia=block.classList.contains('cf-img-block')||block.classList.contains('cf-carousel')||block.classList.contains('cf-car-block');
+  const _inCellMedia=_inCell&&_isMedia;
+  if(_inCellMedia){
+    const _UIKEEP=['tbl-cell-drop','tbl-row-resize-handle','tbl-row-sel','tbl-col-resize-handle','tbl-col-sel','tbl-img-btn','tbl-shadow-btn'];
+    Array.from(insertParent.childNodes).forEach(node=>{
+      if(node===block)return;
+      if(node.nodeType===Node.TEXT_NODE||
+         (node.nodeType===Node.ELEMENT_NODE&&!_UIKEEP.some(c=>node.classList.contains(c))))
+        node.remove();
+    });
+    insertBefore=insertParent.querySelector('.tbl-img-btn,.tbl-cell-drop')||null;
+    insertParent.classList.add('tbl-has-img');
+  }
+
   // Insert block
   insertParent.insertBefore(block, insertBefore);
   block.classList.add('cf-block-inserted');
@@ -8426,10 +8446,11 @@ function _cfInsertBlockAtRange(block, savedRange){
   // Only add trailing <p> when needed: block is the last child or followed by another
   // non-editable block, AND we are NOT inside a cf-column-item (the column item is itself
   // contentEditable so the browser can place a cursor there without an explicit <p>).
+  // A media-only cell needs no trailing <p> (it would collapse under line-height:0 anyway).
   const _nextEl=block.nextSibling;
   const _inColItem=insertParent.classList?.contains('cf-column-item');
   const _inToggleBody=insertParent.classList?.contains('cf-toggle-body');
-  const _needsTrail=!_inColItem&&(!_nextEl||
+  const _needsTrail=!_inColItem&&!_inCellMedia&&(!_nextEl||
     (_nextEl.nodeType===Node.ELEMENT_NODE&&_nextEl.contentEditable==='false'));
   if(_needsTrail){const p=document.createElement('p');p.innerHTML='<br>';if(_inToggleBody)p.contentEditable='true';insertParent.insertBefore(p,block.nextSibling);}
   // Scroll the inserted block into view after layout settles
