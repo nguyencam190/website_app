@@ -6787,7 +6787,7 @@ function _cfTabsAddTab(block){
   btn.textContent='Tab '+(idx+1);btn.contentEditable='true';
   btn.addEventListener('click',e=>{if(!e.target.isContentEditable||window.getSelection().toString())return;_cfTabsActivate(block,idx);});
   btn.addEventListener('keydown',e=>{if(e.key==='Enter')e.preventDefault();});
-  btn.addEventListener('input',function(){const d=btn.querySelector('.cf-tab-del');const blk=[...btn.children].filter(n=>!n.classList.contains('cf-tab-del'));if(blk.length){const txt=btn.textContent.replace('×','');btn.textContent=txt;if(d)btn.appendChild(d);if(btn.firstChild&&btn.firstChild.nodeType===3){const r=document.createRange();r.setStart(btn.firstChild,btn.firstChild.length);r.collapse(true);const sel=window.getSelection();if(sel){sel.removeAllRanges();sel.addRange(r);}}}});
+  btn.addEventListener('input',function(){const d=btn.querySelector('.cf-tab-del');const blk=[...btn.children].filter(n=>!n.classList.contains('cf-tab-del')&&n.tagName!=='BR');if(blk.length){const txt=btn.textContent.replace('×','');btn.textContent=txt;if(d)btn.appendChild(d);if(btn.firstChild&&btn.firstChild.nodeType===3){const r=document.createRange();r.setStart(btn.firstChild,btn.firstChild.length);r.collapse(true);const sel=window.getSelection();if(sel){sel.removeAllRanges();sel.addRange(r);}}}});
   const del=document.createElement('span');del.className='cf-tab-del';del.contentEditable='false';del.title='Xóa tab này';del.textContent='×';
   del.addEventListener('mousedown',e=>{e.preventDefault();e.stopPropagation();});
   del.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();_cfTabsDeleteTab(block,idx);});
@@ -7835,8 +7835,8 @@ function _cfTabsRewire(block){
     });
     // Prevent Enter key from creating <br>/<div> inside the contentEditable button
     fresh.addEventListener('keydown',e=>{if(e.key==='Enter')e.preventDefault();});
-    // Strip any block elements browser inserts on backspace/paste to keep label single-line
-    fresh.addEventListener('input',function(){const del=fresh.querySelector('.cf-tab-del');const blk=[...fresh.children].filter(n=>!n.classList.contains('cf-tab-del'));if(blk.length){const txt=fresh.textContent.replace('×','');fresh.textContent=txt;if(del)fresh.appendChild(del);if(fresh.firstChild&&fresh.firstChild.nodeType===3){const r=document.createRange();r.setStart(fresh.firstChild,fresh.firstChild.length);r.collapse(true);const sel=window.getSelection();if(sel){sel.removeAllRanges();sel.addRange(r);}}}});
+    // Strip block elements (div/p) browser inserts — but keep <br> so cursor stays in empty button
+    fresh.addEventListener('input',function(){const del=fresh.querySelector('.cf-tab-del');const blk=[...fresh.children].filter(n=>!n.classList.contains('cf-tab-del')&&n.tagName!=='BR');if(blk.length){const txt=fresh.textContent.replace('×','');fresh.textContent=txt;if(del)fresh.appendChild(del);if(fresh.firstChild&&fresh.firstChild.nodeType===3){const r=document.createRange();r.setStart(fresh.firstChild,fresh.firstChild.length);r.collapse(true);const sel=window.getSelection();if(sel){sel.removeAllRanges();sel.addRange(r);}}}});
     // Add del span if not present (e.g. tabs created before this feature was added)
     let del=fresh.querySelector('.cf-tab-del');
     if(!del){del=document.createElement('span');del.className='cf-tab-del';del.contentEditable='false';del.title='Xóa tab này';del.textContent='×';fresh.appendChild(del);}
