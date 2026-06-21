@@ -261,7 +261,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .sb-nav::-webkit-scrollbar{width:4px}
 .sb-nav::-webkit-scrollbar-thumb{background:var(--sb-border);border-radius:4px}
 .sb-nav::-webkit-scrollbar-track{background:transparent}
-.sb-section-label{padding:10px 14px 4px;font-size:11px;font-weight:700;color:var(--sb-txt2);text-transform:uppercase;letter-spacing:.9px;display:flex;align-items:center;justify-content:space-between}
+.sb-section-label{padding:6px 14px 6px;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.9px;display:flex;align-items:center;background:color-mix(in srgb,var(--accent) 8%,transparent);border-radius:6px;margin:4px 6px 2px}
 /* Doc tree items */
 .doc-item{display:flex;align-items:center;padding:5px 10px 5px 4px;cursor:pointer;color:var(--sb-txt);transition:background .12s,color .12s;font-size:13.5px;position:relative;border-radius:4px;margin:1px 6px 1px 8px;gap:0;user-select:none}
 .doc-item:hover{background:var(--sb-active-bg);color:var(--sb-txt)}
@@ -289,8 +289,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .sb-tree-row.sb-drag-src>.doc-item{opacity:.35}
 .sb-tree-row.sb-drag-child>.doc-item{background:var(--accent-light)!important;outline:2px solid var(--accent);outline-offset:-2px;border-radius:4px}
 /* Page Tree header add button */
-.sb-tree-add-btn{display:flex;align-items:center;gap:5px;padding:5px 9px;border:none;background:transparent;color:var(--sb-txt2);cursor:pointer;font-size:12px;font-weight:500;border-radius:4px;transition:.12s;font-family:var(--font)}
-.sb-tree-add-btn:hover{background:var(--sb-active-bg);color:var(--sb-active-text)}
 /* Tree guide line — vertical line showing parent-child */
 .doc-tree-children{position:relative}
 /* Search row in header */
@@ -3318,12 +3316,7 @@ function renderSidebar(filter=''){
 
   // PAGE TREE label
   const treeLabel=document.createElement('div');treeLabel.className='sb-section-label';
-  treeLabel.innerHTML='<span>Page Tree</span>';
-  const addPageBtn=document.createElement('button');
-  addPageBtn.className='sb-tree-add-btn';addPageBtn.title='New page';
-  addPageBtn.innerHTML='<i class="ti ti-plus" style="font-size:11px"></i> New page';
-  addPageBtn.onclick=()=>_quickNewRootDoc();
-  treeLabel.appendChild(addPageBtn);
+  treeLabel.innerHTML='<i class="ti ti-layout-list" style="font-size:12px;margin-right:5px"></i><span>Page Tree</span>';
   nav.appendChild(treeLabel);
 
   const roots=_getChildren(null,null);
@@ -13252,7 +13245,7 @@ async function doExportWebsite(){
   // Comprehensive viewer-mode JS: sidebar resize, navigation, carousels, lightbox, theme, search
   const wsJsLines=[
     'var _cur=null,_wsTM='+tm+',_wsHL='+hl+';',
-    'function wsSwapColors(){var dk=document.documentElement.getAttribute("data-theme")==="dark";document.querySelectorAll(".cp-mapped[data-cptype=\'text\']").forEach(function(s){var r=parseInt(s.dataset.cprow),c=parseInt(s.dataset.cpcol);if(_wsTM[r]&&_wsTM[r][c])s.style.color=_wsTM[r][c][dk?1:0];});document.querySelectorAll(".cp-mapped[data-cptype=\'hl\']").forEach(function(s){var c=parseInt(s.dataset.cpcol);if(_wsHL[c])s.style.backgroundColor=_wsHL[c][dk?1:0];});}',
+    'function wsSwapColors(){var dk=document.documentElement.getAttribute("data-theme")==="dark";document.querySelectorAll(".cp-mapped[data-cptype=\'text\']").forEach(function(s){var r=parseInt(s.dataset.cprow),c=parseInt(s.dataset.cpcol);if(_wsTM[r]&&_wsTM[r][c])s.style.color=_wsTM[r][c][dk?1:0];});document.querySelectorAll(".cp-mapped[data-cptype=\'hl\']").forEach(function(s){var c=parseInt(s.dataset.cpcol);if(_wsHL[c])s.style.backgroundColor=_wsHL[c][dk?1:0];});document.querySelectorAll("td[data-cpbgrow],th[data-cpbgrow]").forEach(function(cell){var r=parseInt(cell.dataset.cpbgrow),c=parseInt(cell.dataset.cpbgcol);if(_wsTM[r]&&_wsTM[r][c])cell.style.background=_wsTM[r][c][dk?1:0];});document.querySelectorAll("td[data-cell-row],th[data-cell-row]").forEach(function(cell){var r=parseInt(cell.dataset.cellRow),c=parseInt(cell.dataset.cellCol);if(_wsTM[r]&&_wsTM[r][c])cell.style.backgroundColor=_wsTM[r][c][dk?1:0];});}',
     'var _WS_ACCENT_PRESETS=[["#2563eb","Xanh dương"],["#7c3aed","Tím"],["#059669","Xanh lá"],["#dc2626","Đỏ"],["#d97706","Cam"],["#db2777","Hồng"],["#0891b2","Cyan"],["#374151","Xám"]];',
     'var _WS_ACCENT_DEFAULT='+JSON.stringify(accent)+';',
     'var _WS_ACCENT_KEY="ws_accent_"+location.pathname;',
@@ -14071,7 +14064,7 @@ async function doExportOptimized(opts){
   // Build the same JS as doExportWebsite — copy the wsJsLines array approach
   const wsJs=[
     'var _cur=null,_wsTM='+tm+',_wsHL='+hl+';',
-    'function wsSwapColors(){var dk=document.documentElement.getAttribute("data-theme")==="dark";document.querySelectorAll(".cp-mapped[data-cptype=\'text\']").forEach(function(s){var r=parseInt(s.dataset.cprow),c=parseInt(s.dataset.cpcol);if(_wsTM[r]&&_wsTM[r][c])s.style.color=_wsTM[r][c][dk?1:0];});document.querySelectorAll(".cp-mapped[data-cptype=\'hl\']").forEach(function(s){var c=parseInt(s.dataset.cpcol);if(_wsHL[c])s.style.backgroundColor=_wsHL[c][dk?1:0];});}',
+    'function wsSwapColors(){var dk=document.documentElement.getAttribute("data-theme")==="dark";document.querySelectorAll(".cp-mapped[data-cptype=\'text\']").forEach(function(s){var r=parseInt(s.dataset.cprow),c=parseInt(s.dataset.cpcol);if(_wsTM[r]&&_wsTM[r][c])s.style.color=_wsTM[r][c][dk?1:0];});document.querySelectorAll(".cp-mapped[data-cptype=\'hl\']").forEach(function(s){var c=parseInt(s.dataset.cpcol);if(_wsHL[c])s.style.backgroundColor=_wsHL[c][dk?1:0];});document.querySelectorAll("td[data-cpbgrow],th[data-cpbgrow]").forEach(function(cell){var r=parseInt(cell.dataset.cpbgrow),c=parseInt(cell.dataset.cpbgcol);if(_wsTM[r]&&_wsTM[r][c])cell.style.background=_wsTM[r][c][dk?1:0];});document.querySelectorAll("td[data-cell-row],th[data-cell-row]").forEach(function(cell){var r=parseInt(cell.dataset.cellRow),c=parseInt(cell.dataset.cellCol);if(_wsTM[r]&&_wsTM[r][c])cell.style.backgroundColor=_wsTM[r][c][dk?1:0];});}',
     'var _WS_ACCENT_PRESETS=[["#2563eb","Xanh dương"],["#7c3aed","Tím"],["#059669","Xanh lá"],["#dc2626","Đỏ"],["#d97706","Cam"],["#db2777","Hồng"],["#0891b2","Cyan"],["#374151","Xám"]];',
     'var _WS_ACCENT_DEFAULT='+JSON.stringify(accent)+';',
     'var _WS_ACCENT_KEY="ws_accent_"+location.pathname;',
