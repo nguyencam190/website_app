@@ -8434,11 +8434,16 @@ function _cfInsertBlockAtRange(block, savedRange){
     });
     if(_hasRealContent){
       _cellHasText=true;
-      // Cell has text: keep it, insert image below (before UI overlays).
-      // Only remove the specific empty <p> the slash command was on — do NOT
-      // remove other empty <p>s which may be intentional spacing by the user.
+      // Keep all existing text. Image always goes at the END of the cell (before UI chrome).
+      // Only remove the slash-origin empty <p> when it is already the LAST real element
+      // in the cell (i.e. the user typed "/" on a new empty line BELOW the text).
+      // If it sits above or between text nodes, leave it so the text doesn't shift.
       const _slashOriginP=insertBefore;
-      if(_slashOriginP&&(_slashOriginP.tagName==='P'||_slashOriginP.tagName==='DIV')&&
+      const _lastRealEl=Array.from(insertParent.children).filter(el=>
+        !_UIKEEP.some(c=>el.classList.contains(c))&&el!==block
+      ).at(-1)||null;
+      if(_slashOriginP&&_slashOriginP===_lastRealEl&&
+         (_slashOriginP.tagName==='P'||_slashOriginP.tagName==='DIV')&&
          !_slashOriginP.textContent.trim()&&_slashOriginP.children.length<=1&&
          !_slashOriginP.classList.contains('cf-img-block'))
         _slashOriginP.remove();
