@@ -3334,6 +3334,8 @@ function renderSidebar(filter=''){
   treeLabel.onclick=()=>{
     _treeHeaderActive=true;
     treeLabel.classList.add('active');
+    // Deselect home item visually (no page navigation needed)
+    document.querySelectorAll('#sbNav .doc-item.active').forEach(el=>el.classList.remove('active'));
     const nowCollapsed=treeLabel.classList.toggle('collapsed');
     treeWrap.classList.toggle('collapsed',nowCollapsed);
     localStorage.setItem('sb_tree_collapsed',nowCollapsed?'1':'0');
