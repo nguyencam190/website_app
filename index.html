@@ -388,7 +388,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .doc-comment-cancel:hover{background:var(--surface2)}
 .meta-chip{display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text3)}
 .meta-tag{background:var(--accent-light);color:var(--accent);padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
-.editor-content{outline:none;min-height:320px;font-size:16px;line-height:1.4;color:var(--text);position:relative}
+.editor-content{outline:none;min-height:320px;font-size:16px;line-height:1.6;color:var(--text);position:relative}
 /* Placeholder shown when editor has only an empty <p><br></p> */
 .editor-content>p:only-child:has(>br:only-child)::before{content:'Type / to insert a block, or just start writing...';color:var(--text3);pointer-events:none;display:block;font-size:15px;font-style:italic}
 /* Empty paragraph hint — shows when cursor is on empty line */
@@ -424,7 +424,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .editor-content h4{font-size:0.9375rem;font-weight:600;line-height:20px;margin:16px 0 6px;color:var(--text2)}
 .editor-content h5{font-size:0.75rem;font-weight:600;line-height:16px;margin:12px 0 5px;letter-spacing:.01em}
 .editor-content h6{font-size:0.6875rem;font-weight:600;line-height:14px;margin:10px 0 4px;text-transform:uppercase;letter-spacing:.04em;color:var(--text2)}
-.editor-content p{margin-bottom:12px;font-size:1rem;line-height:1.4}.editor-content [style*="text-align"]{display:block}
+.editor-content p{margin-bottom:12px;font-size:1rem;line-height:1.6}.editor-content [style*="text-align"]{display:block}
 .editor-content ul,.editor-content ol{padding-left:24px;margin-bottom:12px}
 .editor-content li{margin-bottom:5px}
 .editor-content blockquote{border-left:3px solid var(--accent);background:var(--accent-light);padding:12px 18px;border-radius:0 8px 8px 0;margin:14px 0;color:var(--text2);font-style:italic}
@@ -12483,7 +12483,7 @@ function _buildViewerShellCss(accent){
     '.ws-related-card-date{font-size:10.5px;color:var(--text3);margin-top:1px}',
     '.ws-canvas-wrap{border-radius:4px;min-height:40px;margin:0 auto;max-width:100%;overflow-x:auto}',
     '.ws-canvas{position:relative;padding:20px 52px;font-family:var(--font);background:var(--bg);transform-origin:top left;transition:background var(--tr);-webkit-text-size-adjust:100%;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased}',
-    '.ws-canvas .editor-content{font-size:16px;line-height:1.4;color:var(--text);word-wrap:break-word;overflow-wrap:break-word;min-height:120px}',
+    '.ws-canvas .editor-content{font-size:16px;line-height:1.6;color:var(--text);word-wrap:break-word;overflow-wrap:break-word;min-height:120px}',
     '.ws-canvas .editor-content *{max-width:100%;box-sizing:border-box}',
     '.ws-canvas .editor-content p{margin-bottom:12px}',
     '.ws-canvas .editor-content h1{font-size:1.5rem;font-weight:600;margin:24px 0 10px}',
