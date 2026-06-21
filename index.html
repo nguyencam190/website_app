@@ -3260,12 +3260,6 @@ function _buildPabBreadcrumb(doc){
   spaceEl.textContent=state.projectName||'My Project';spaceEl.title=state.projectName||'My Project';
   nav.appendChild(spaceEl);
   if(!doc)return;
-  const ancestors=[];let cur=doc;
-  while(cur.parentId){const par=state.docs.find(d=>d.id===cur.parentId);if(!par)break;ancestors.unshift(par);cur=par;}
-  ancestors.forEach(anc=>{
-    const sep=document.createElement('span');sep.className='pab-sep';sep.textContent='›';nav.appendChild(sep);
-    const el=document.createElement('span');el.className='pab-bc-anc';el.textContent=anc.title||'Untitled';el.title=anc.title||'Untitled';el.onclick=()=>openDoc(anc.id);nav.appendChild(el);
-  });
   const sep2=document.createElement('span');sep2.className='pab-sep';sep2.textContent='›';nav.appendChild(sep2);
   const curEl=document.createElement('span');curEl.className='pab-bc-cur';curEl.textContent=doc.title||'Untitled';curEl.title=doc.title||'Untitled';nav.appendChild(curEl);
 }
