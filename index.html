@@ -10325,6 +10325,22 @@ function _onEditorMouseMove(e){
     // Hide bar when mouse is on row selector area (immediate path already did this,
     // but handle the timer path too)
     if(el.closest('.tbl-row-sel')||el.closest('.tbl-row-num')){_hideBlockBar();return;}
+    // If mouse is inside a data cell that has element content blocks (e.g. <p>, cf-checklist),
+    // show a nested bar at that block rather than walking up to the table frame and showing
+    // the gutter bar — prevents gutter bar from competing with row/col selector handles.
+    // Empty cells (no element children) fall through to normal logic.
+    const dataCell=el.closest('td:not(.tbl-row-num),th:not(.tbl-row-num)');
+    if(dataCell){
+      const UI_SKIP='.tbl-cell-drop,.tbl-row-resize-handle,.tbl-row-sel,.tbl-shadow-btn,.tbl-img-btn';
+      const blocks=Array.from(dataCell.children).filter(c=>!c.matches(UI_SKIP));
+      if(blocks.length>0){
+        let pick=blocks[0];
+        for(const b of blocks){const br=b.getBoundingClientRect();if(e.clientY>=br.top&&e.clientY<br.bottom){pick=b;break;}}
+        _showBlockBar(pick);
+        return;
+      }
+      // No element blocks in cell — fall through to show the table-level gutter bar
+    }
     const result=_findBlockInContainer(el);
     if(!result){_hideBlockBar();return;}
     const {block}=result;
