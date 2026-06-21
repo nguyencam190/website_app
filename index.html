@@ -10259,10 +10259,8 @@ function _showBlockBar(targetEl){
   const bar=_getBlockBar();
   const rect=targetEl.getBoundingClientRect();
   const container=targetEl.parentElement;
-  // Don't show block bar inside table cells (conflicts with row/col selector dots),
-  // unless slash menu is open — then show so user can see the current block.
-  if(targetEl.closest('td,th')&&!_slashVisible){_hideBlockBar();return;}
   const isNested=container&&(
+    container.tagName==='TD'||container.tagName==='TH'||
     container.classList.contains('cf-column-item')||
     container.classList.contains('cf-panel-content')||
     container.classList.contains('cf-toggle-body')||
@@ -10302,10 +10300,12 @@ function _updateBlockBar(){
     if(block.tagName==='P'&&!block.textContent.trim()&&block.children.length<=1){
       block.classList.add('slash-hint');
     }
-    // For nested containers (td, column) with content: don't show bar while typing —
+    // For nested containers (column, panel…) with content: don't show bar while typing —
     // unless slash menu is open (user typed /), then always show so bar is visible.
+    // Table cells (td/th) are excluded from this guard — user explicitly wants the bar there.
     const isNested=container!==editor;
-    if(isNested&&block.textContent.trim()&&!_slashVisible){_hideBlockBar();return;}
+    const isTdTh=container&&(container.tagName==='TD'||container.tagName==='TH');
+    if(isNested&&!isTdTh&&block.textContent.trim()&&!_slashVisible){_hideBlockBar();return;}
     _showBlockBar(block);
   },50);
 }
