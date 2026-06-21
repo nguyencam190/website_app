@@ -920,6 +920,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .cf-checklist-title:empty::before{content:attr(data-placeholder);color:var(--text3);pointer-events:none}
 .cf-checklist-cam-btn{width:26px;height:26px;border:none;background:transparent;color:var(--text3);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;border-radius:4px;transition:.12s;flex-shrink:0}
 .cf-checklist-cam-btn:hover{background:var(--surface3);color:var(--text)}
+.cf-cl-del-btn{display:none;width:22px;height:22px;border:none;background:transparent;color:var(--text3);cursor:pointer;font-size:13px;align-items:center;justify-content:center;border-radius:4px;transition:.12s;flex-shrink:0}
+.cf-checklist-head:hover .cf-cl-del-btn{display:flex}
+.cf-cl-del-btn:hover{background:rgba(220,38,38,.12)!important;color:#dc2626!important}
 .cf-checklist-btn{width:22px;height:22px;border:none;background:transparent;color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;border-radius:4px;flex-shrink:0;transition:.12s}
 .cf-checklist-btn:hover{background:var(--surface3)}
 .cf-checklist-btn i{transition:transform .18s;display:block}
@@ -934,9 +937,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 td .cf-checklist,th .cf-checklist,.cf-column-item .cf-checklist{margin:4px 0;font-size:13px}
 td .cf-checklist-head,.cf-column-item .cf-checklist-head{padding:6px 10px 6px 8px}
 td .cf-checklist-body,.cf-column-item .cf-checklist-body{padding:8px 10px 10px 10px}
-/* Collapse the trailing empty <p> that is inserted after a non-editable block inside a
-   table cell. The paragraph stays in the DOM (cursor target) but takes no visual space. */
-td>*[contenteditable="false"]+p:last-child,th>*[contenteditable="false"]+p:last-child{height:0;overflow:hidden;margin:0;padding:0}
 /* ═══ TOC BLOCK ═════════════════════════════════════════════ */
 .cf-toc{border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin:12px 0;background:var(--surface2);position:relative}
 .cf-toc-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
@@ -7993,7 +7993,7 @@ function _cfWireChecklist(cl){
   badge.addEventListener('click',e=>{e.stopPropagation();_cycleStatus();});
   if(head){
     head.addEventListener('click',e=>{
-      if(e.target.closest('.cf-checklist-status-btn,.cf-checklist-cam-btn,.cf-cl-badge'))return;
+      if(e.target.closest('.cf-checklist-status-btn,.cf-checklist-cam-btn,.cf-cl-badge,.cf-cl-del-btn'))return;
       // When open: clicking title allows editing — don't toggle
       if(cl.dataset.open==='true'&&e.target.closest('.cf-checklist-title'))return;
       const _opening=cl.dataset.open!=='true';
@@ -8037,6 +8037,24 @@ function _cfWireChecklist(cl){
         requestAnimationFrame(()=>_showBlockBar(block));
       });
       inp.click();
+    });
+  }
+  // Delete button — shown on hover, allows removing the block (especially inside table cells
+  // where the floating block bar is suppressed to avoid conflict with row/col selectors)
+  let clDelBtn=cl.querySelector('.cf-cl-del-btn');
+  if(!clDelBtn&&head){
+    clDelBtn=document.createElement('button');clDelBtn.type='button';
+    clDelBtn.className='cf-cl-del-btn';clDelBtn.title='Xóa checklist';
+    clDelBtn.innerHTML='<i class="ti ti-x"></i>';
+    clDelBtn.setAttribute('contenteditable','false');
+    const chev=head.querySelector('.cf-checklist-btn');
+    if(chev)chev.before(clDelBtn);else head.appendChild(clDelBtn);
+  }
+  if(clDelBtn){
+    clDelBtn.addEventListener('click',e=>{
+      e.preventDefault();e.stopPropagation();
+      cl.remove();onContentChange();
+      toast('Đã xóa checklist','info');
     });
   }
   if(titleEl){
