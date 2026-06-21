@@ -10269,7 +10269,13 @@ function _showBlockBar(targetEl){
   bar.style.position='fixed';
   if(isNested){
     bar.style.top=rect.top+'px';
-    bar.style.left=rect.left+'px';
+    let barLeft=rect.left;
+    // When row-num column is hidden, .tbl-row-sel lives in the first data cell at left:0 (14px wide).
+    // Shift the bar right past it to avoid overlap.
+    if(container&&container.querySelector(':scope>.tbl-row-sel')){
+      barLeft=Math.max(barLeft,container.getBoundingClientRect().left+16);
+    }
+    bar.style.left=barLeft+'px';
     bar.classList.add('on-nested');
   } else {
     // All non-nested blocks (text, fmedia, image, carousel, table…): left gutter
