@@ -261,9 +261,14 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .sb-nav::-webkit-scrollbar{width:4px}
 .sb-nav::-webkit-scrollbar-thumb{background:var(--sb-border);border-radius:4px}
 .sb-nav::-webkit-scrollbar-track{background:transparent}
-.sb-section-label{padding:6px 14px 6px;font-size:11px;font-weight:700;color:var(--sb-txt2);text-transform:uppercase;letter-spacing:.9px;display:flex;align-items:center;border-radius:6px;margin:4px 6px 2px;transition:background .2s,color .2s}
+.sb-section-label{padding:6px 14px 6px;font-size:11px;font-weight:700;color:var(--sb-txt2);text-transform:uppercase;letter-spacing:.9px;display:flex;align-items:center;border-radius:6px;margin:4px 6px 2px;transition:background .2s,color .2s;cursor:pointer;user-select:none}
+.sb-section-label:hover{background:var(--sb-active-bg)}
 .sb-section-label.active{color:var(--accent);background:color-mix(in srgb,var(--accent) 18%,transparent)}
-.sb-tree-wrap{border-left:2px solid color-mix(in srgb,var(--accent) 30%,transparent);margin:2px 6px 4px 12px;padding:2px 0}
+.sb-section-label.active:hover{background:color-mix(in srgb,var(--accent) 25%,transparent)}
+.sb-section-label .sb-tree-chev{margin-left:auto;font-size:11px;transition:transform .2s;color:inherit;opacity:.7}
+.sb-section-label.collapsed .sb-tree-chev{transform:rotate(-90deg)}
+.sb-tree-wrap{border-left:2px solid color-mix(in srgb,var(--accent) 30%,transparent);margin:2px 6px 4px 12px;padding:2px 0;overflow:hidden;transition:opacity .2s}
+.sb-tree-wrap.collapsed{display:none}
 /* Doc tree items */
 .doc-item{display:flex;align-items:center;padding:5px 10px 5px 4px;cursor:pointer;color:var(--sb-txt);transition:background .12s,color .12s;font-size:13.5px;position:relative;border-radius:4px;margin:1px 6px 1px 8px;gap:0;user-select:none}
 .doc-item:hover{background:var(--sb-active-bg);color:var(--sb-txt)}
@@ -3316,16 +3321,22 @@ function renderSidebar(filter=''){
     nav.appendChild(sep);
   }
 
-  // PAGE TREE label — active only when a page is open
+  // PAGE TREE label — active when a page is open, collapsible
+  const _treeCollapsed=localStorage.getItem('sb_tree_collapsed')==='1';
   const treeLabel=document.createElement('div');
   const _treeActive=!!currentDoc();
-  treeLabel.className='sb-section-label'+(_treeActive?' active':'');
-  treeLabel.innerHTML='<i class="ti ti-layout-list" style="font-size:12px;margin-right:5px"></i><span>Page Tree</span>';
+  treeLabel.className='sb-section-label'+(_treeActive?' active':'')+(_treeCollapsed?' collapsed':'');
+  treeLabel.innerHTML='<i class="ti ti-layout-list" style="font-size:12px;margin-right:5px"></i><span>Page Tree</span><i class="ti ti-chevron-down sb-tree-chev"></i>';
+  treeLabel.onclick=()=>{
+    const nowCollapsed=treeLabel.classList.toggle('collapsed');
+    treeWrap.classList.toggle('collapsed',nowCollapsed);
+    localStorage.setItem('sb_tree_collapsed',nowCollapsed?'1':'0');
+  };
   nav.appendChild(treeLabel);
 
   // Wrapper gives tree items a visual "inside" feel
   const treeWrap=document.createElement('div');
-  treeWrap.className='sb-tree-wrap';
+  treeWrap.className='sb-tree-wrap'+(_treeCollapsed?' collapsed':'');
   nav.appendChild(treeWrap);
 
   const roots=_getChildren(null,null);
@@ -12315,8 +12326,12 @@ function _buildViewerShellCss(accent){
     '.ws-nav-chev.open i{transform:rotate(90deg)}',
     '.ws-nav-bullet{width:20px;height:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--text3)}',
     '.ws-nav-children.collapsed{display:none}',
-    '.ws-sb-tree-label{padding:6px 14px 6px;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.9px;display:flex;align-items:center;gap:5px;background:color-mix(in srgb,var(--accent) 18%,transparent);border-radius:6px;margin:4px 6px 2px}',
+    '.ws-sb-tree-label{padding:6px 14px 6px;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.9px;display:flex;align-items:center;gap:5px;background:color-mix(in srgb,var(--accent) 18%,transparent);border-radius:6px;margin:4px 6px 2px;cursor:pointer;user-select:none;transition:background .2s}',
+    '.ws-sb-tree-label:hover{background:color-mix(in srgb,var(--accent) 25%,transparent)}',
+    '.ws-sb-tree-label .ws-tree-chev{margin-left:auto;font-size:11px;transition:transform .2s;opacity:.8}',
+    '.ws-sb-tree-label.collapsed .ws-tree-chev{transform:rotate(-90deg)}',
     '.ws-sb-tree-wrap{border-left:2px solid color-mix(in srgb,var(--accent) 30%,transparent);margin:2px 6px 4px 12px;padding:2px 0}',
+    '.ws-sb-tree-wrap.collapsed{display:none}',
     '.ws-sb-sep{height:1px;background:var(--border);margin:6px 14px 2px}',
     '.ws-home-item .ws-nav-title{font-weight:600}',
     '.ws-main{flex:1;overflow-y:auto;overflow-x:hidden;background:var(--bg);transition:background var(--tr)}',
@@ -12917,8 +12932,10 @@ async function doExportWebsite(){
     const hi=document.createElement('div');hi.className='ws-nav-item ws-home-item';hi.id='nav-'+_wsHome.id;hi.dataset.docid=_wsHome.id;hi.innerHTML='<i class="ti ti-home ws-nav-icon" style="font-size:18px;color:var(--accent)"></i><span class="ws-nav-title">'+escH(_wsHome.title||'Giới thiệu dự án')+'</span><button class="ws-star-btn" data-docid="'+escH(_wsHome.id)+'" title="Starred">☆</button>';pagesPanel.appendChild(hi);
     const sep=document.createElement('div');sep.className='ws-sb-sep';pagesPanel.appendChild(sep);
   }
-  const _wsTreeLabel=document.createElement('div');_wsTreeLabel.className='ws-sb-tree-label';_wsTreeLabel.innerHTML='<i class="ti ti-layout-list" style="font-size:12px"></i>Page Tree';pagesPanel.appendChild(_wsTreeLabel);
+  const _wsTreeLabel=document.createElement('div');_wsTreeLabel.className='ws-sb-tree-label';_wsTreeLabel.innerHTML='<i class="ti ti-layout-list" style="font-size:12px"></i>Page Tree<i class="ti ti-chevron-down ws-tree-chev" style="margin-left:auto"></i>';pagesPanel.appendChild(_wsTreeLabel);
   const _wsTreeWrap=document.createElement('div');_wsTreeWrap.className='ws-sb-tree-wrap';pagesPanel.appendChild(_wsTreeWrap);
+  _wsTreeLabel.addEventListener('click',function(){var c=_wsTreeLabel.classList.toggle('collapsed');_wsTreeWrap.classList.toggle('collapsed',c);try{localStorage.setItem('ws_tree_col',c?'1':'0');}catch(e){}});
+  if(typeof localStorage!=='undefined'&&localStorage.getItem('ws_tree_col')==='1'){_wsTreeLabel.classList.add('collapsed');_wsTreeWrap.classList.add('collapsed');}
   buildWsNavTree(_wsTreeWrap,null,0);
   navRoot.appendChild(pagesPanel);
 
@@ -13905,8 +13922,10 @@ async function doExportOptimized(opts){
     const hi=document.createElement('div');hi.className='ws-nav-item ws-home-item';hi.id='nav-'+_optHome.id;hi.dataset.docid=_optHome.id;hi.innerHTML='<i class="ti ti-home ws-nav-icon" style="font-size:18px;color:var(--accent)"></i><span class="ws-nav-title">'+escH(_optHome.title||'Giới thiệu dự án')+'</span><button class="ws-star-btn" data-docid="'+escH(_optHome.id)+'" title="Starred">☆</button>';pagesPanel.appendChild(hi);
     const sep=document.createElement('div');sep.className='ws-sb-sep';pagesPanel.appendChild(sep);
   }
-  const _optTreeLabel=document.createElement('div');_optTreeLabel.className='ws-sb-tree-label';_optTreeLabel.innerHTML='<i class="ti ti-layout-list" style="font-size:12px"></i>Page Tree';pagesPanel.appendChild(_optTreeLabel);
+  const _optTreeLabel=document.createElement('div');_optTreeLabel.className='ws-sb-tree-label';_optTreeLabel.innerHTML='<i class="ti ti-layout-list" style="font-size:12px"></i>Page Tree<i class="ti ti-chevron-down ws-tree-chev" style="margin-left:auto"></i>';pagesPanel.appendChild(_optTreeLabel);
   const _optTreeWrap=document.createElement('div');_optTreeWrap.className='ws-sb-tree-wrap';pagesPanel.appendChild(_optTreeWrap);
+  _optTreeLabel.addEventListener('click',function(){var c=_optTreeLabel.classList.toggle('collapsed');_optTreeWrap.classList.toggle('collapsed',c);try{localStorage.setItem('ws_tree_col',c?'1':'0');}catch(e){}});
+  if(typeof localStorage!=='undefined'&&localStorage.getItem('ws_tree_col')==='1'){_optTreeLabel.classList.add('collapsed');_optTreeWrap.classList.add('collapsed');}
   _optBuildNavTree(_optTreeWrap,null,0);navRoot.appendChild(pagesPanel);
   const sbFooter=document.createElement('div');sbFooter.className='ws-sb-footer-bar';sbFooter.innerHTML='<button class="ws-sb-collapse-btn" id="wsSbCollapse" title="Thu gọn sidebar"><i class="ti ti-chevrons-left"></i></button>';navRoot.appendChild(sbFooter);
   const navHTML=navRoot.innerHTML;
