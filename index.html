@@ -862,7 +862,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .cf-tabs{border:1px solid var(--border);border-radius:10px;margin:12px 0;overflow:hidden;background:var(--surface)}
 .cf-tabs-header{display:flex;align-items:flex-end;gap:0;padding:0 4px;background:var(--surface2);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap}
 .cf-tabs-header::-webkit-scrollbar{display:none}
-.cf-tab-btn{position:relative;padding:9px 28px 9px 16px;font-size:13px;font-weight:500;color:var(--text2);background:transparent;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;font-family:var(--font);transition:color .12s,border-color .12s;flex-shrink:0;margin-bottom:-1px;outline:none;overflow:hidden;line-height:1.4}
+.cf-tab-btn{position:relative;height:36px;padding:9px 28px 9px 16px;font-size:13px;font-weight:500;color:var(--text2);background:transparent;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;font-family:var(--font);transition:color .12s,border-color .12s;flex-shrink:0;margin-bottom:-1px;outline:none;overflow:hidden;line-height:1.4}
 .cf-tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--surface)}
 .cf-tab-btn:hover:not(.active){color:var(--text);background:var(--surface3)}
 .cf-tab-del{opacity:0;position:absolute;top:50%;right:4px;transform:translateY(-50%);width:15px;height:15px;border:none;background:transparent;color:var(--text3);cursor:pointer;border-radius:3px;font-size:12px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;transition:opacity .12s,background .12s,color .12s}
@@ -6787,6 +6787,7 @@ function _cfTabsAddTab(block){
   btn.textContent='Tab '+(idx+1);btn.contentEditable='true';
   btn.addEventListener('click',e=>{if(!e.target.isContentEditable||window.getSelection().toString())return;_cfTabsActivate(block,idx);});
   btn.addEventListener('keydown',e=>{if(e.key==='Enter')e.preventDefault();});
+  btn.addEventListener('input',function(){const d=btn.querySelector('.cf-tab-del');const blk=[...btn.children].filter(n=>!n.classList.contains('cf-tab-del'));if(blk.length){const txt=btn.textContent.replace('×','');btn.textContent=txt;if(d)btn.appendChild(d);if(btn.firstChild&&btn.firstChild.nodeType===3){const r=document.createRange();r.setStart(btn.firstChild,btn.firstChild.length);r.collapse(true);const sel=window.getSelection();if(sel){sel.removeAllRanges();sel.addRange(r);}}}});
   const del=document.createElement('span');del.className='cf-tab-del';del.contentEditable='false';del.title='Xóa tab này';del.textContent='×';
   del.addEventListener('mousedown',e=>{e.preventDefault();e.stopPropagation();});
   del.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();_cfTabsDeleteTab(block,idx);});
@@ -7834,6 +7835,8 @@ function _cfTabsRewire(block){
     });
     // Prevent Enter key from creating <br>/<div> inside the contentEditable button
     fresh.addEventListener('keydown',e=>{if(e.key==='Enter')e.preventDefault();});
+    // Strip any block elements browser inserts on backspace/paste to keep label single-line
+    fresh.addEventListener('input',function(){const del=fresh.querySelector('.cf-tab-del');const blk=[...fresh.children].filter(n=>!n.classList.contains('cf-tab-del'));if(blk.length){const txt=fresh.textContent.replace('×','');fresh.textContent=txt;if(del)fresh.appendChild(del);if(fresh.firstChild&&fresh.firstChild.nodeType===3){const r=document.createRange();r.setStart(fresh.firstChild,fresh.firstChild.length);r.collapse(true);const sel=window.getSelection();if(sel){sel.removeAllRanges();sel.addRange(r);}}}});
     // Add del span if not present (e.g. tabs created before this feature was added)
     let del=fresh.querySelector('.cf-tab-del');
     if(!del){del=document.createElement('span');del.className='cf-tab-del';del.contentEditable='false';del.title='Xóa tab này';del.textContent='×';fresh.appendChild(del);}
@@ -12545,6 +12548,7 @@ function _buildViewerShellCss(accent){
     '[data-theme="dark"] .ws-canvas .cf-checklist[data-status="minor"] .cf-cl-badge{color:#93c5fd}',
     '[data-theme="dark"] .ws-canvas .cf-checklist[data-status="major"] .cf-cl-badge{color:#fdba74}',
     '[data-theme="dark"] .ws-canvas .cf-checklist[data-status="critical"] .cf-cl-badge{color:#fca5a5}',
+    '.ws-canvas .cf-cl-del-btn{display:none!important}',
     '.ws-canvas .cf-checklist-status-btn{font-size:18px;flex-shrink:0;cursor:default;border:none;background:transparent;padding:2px;line-height:1;border-radius:4px;position:relative}',
     '.ws-canvas .cf-checklist-status-btn::after{content:attr(data-label);position:absolute;bottom:calc(100% + 5px);left:50%;transform:translateX(-50%);background:rgba(0,0,0,.78);color:#fff;font-size:11px;font-weight:500;padding:3px 7px;border-radius:4px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;font-family:sans-serif}',
     '.ws-canvas .cf-checklist-status-btn:hover::after{opacity:1}',
@@ -12574,6 +12578,7 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .cf-tab-btn{padding:9px 16px;font-size:13px;font-weight:500;color:var(--text2);background:transparent;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;font-family:var(--font);transition:color .12s,border-color .12s;flex-shrink:0;margin-bottom:-1px}',
     '.ws-canvas .cf-tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--surface)}',
     '.ws-canvas .cf-tab-btn:hover:not(.active){background:var(--surface3)}',
+    '.ws-canvas .cf-tab-del{display:none}',
     '.ws-canvas .cf-tab-panel{max-height:0;overflow:hidden;opacity:0;padding:0 16px;transition:max-height .35s cubic-bezier(.4,0,.2,1),opacity .25s ease,padding .3s ease}',
     '.ws-canvas .cf-tab-panel.active{max-height:2000px;opacity:1;padding:14px 16px;min-height:48px}',
     /* ── Status Badge ── */
@@ -13007,7 +13012,7 @@ async function doExportWebsite(){
       '.cf-panel-actions','.cf-car-toolbar','.cf-embed-toolbar',
       '.cf-car-add-slide','.editor-block-bar','.slash-hint','.pab-logo-menu',
       '.cf-toc-del','.cf-btn-toolbar','.cf-file-del',
-      '.cf-tab-add','.cf-progress-del','.cf-checklist-cam-btn','.cf-code-copy'
+      '.cf-tab-add','.cf-tab-del','.cf-progress-del','.cf-checklist-cam-btn','.cf-code-copy','.cf-cl-del-btn'
     ].join(',')).forEach(e=>e.remove());
 
     // ─ 3b. Clean State: strip all editor-mode attributes ───
@@ -13970,7 +13975,7 @@ async function doExportOptimized(opts){
       w.querySelectorAll('.tbl-edge-h,.tbl-options-btn').forEach(e=>e.remove());
       w.style.cssText='display:block;margin:14px 0;width:100%;overflow-x:auto;overflow-y:visible';
     });
-    tmp.querySelectorAll(['.tbl-row-num','.tbl-col-resize-handle','.tbl-row-resize-handle','.tbl-col-sel','.tbl-row-sel','.tbl-img-btn','.tbl-shadow-btn','.tbl-cell-drop','.tbl-merge-bar','colgroup','.fmedia','.txtbox','script','style','.cf-col-toolbar','.cf-col-count-dd','.cf-col-more-dd','.cf-img-toolbar','.cf-img-resize-h','.cf-img-ctx','.cf-panel-actions','.cf-car-toolbar','.cf-embed-toolbar','.cf-car-add-slide','.editor-block-bar','.slash-hint','.pab-logo-menu','.cf-toc-del','.cf-btn-toolbar','.cf-file-del','.cf-tab-add','.cf-progress-del','.cf-checklist-cam-btn','.cf-code-copy'].join(',')).forEach(e=>e.remove());
+    tmp.querySelectorAll(['.tbl-row-num','.tbl-col-resize-handle','.tbl-row-resize-handle','.tbl-col-sel','.tbl-row-sel','.tbl-img-btn','.tbl-shadow-btn','.tbl-cell-drop','.tbl-merge-bar','colgroup','.fmedia','.txtbox','script','style','.cf-col-toolbar','.cf-col-count-dd','.cf-col-more-dd','.cf-img-toolbar','.cf-img-resize-h','.cf-img-ctx','.cf-panel-actions','.cf-car-toolbar','.cf-embed-toolbar','.cf-car-add-slide','.editor-block-bar','.slash-hint','.pab-logo-menu','.cf-toc-del','.cf-btn-toolbar','.cf-file-del','.cf-tab-add','.cf-tab-del','.cf-progress-del','.cf-checklist-cam-btn','.cf-code-copy','.cf-cl-del-btn'].join(',')).forEach(e=>e.remove());
     tmp.querySelectorAll('[contenteditable]').forEach(el=>el.removeAttribute('contenteditable'));
     tmp.querySelectorAll('[spellcheck]').forEach(el=>el.removeAttribute('spellcheck'));
     tmp.querySelectorAll('[oninput],[onfocus],[onblur],[onkeydown]').forEach(el=>{['oninput','onfocus','onblur','onkeydown'].forEach(a=>el.removeAttribute(a));});
