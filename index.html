@@ -11780,6 +11780,21 @@ async function _projOpenFolder(saveOnly=false){
       await _projMigrateToFolder();
       return;
     }
+    // Safety net: preserve local pages not yet pushed to this folder.
+    // If the folder's project overlaps the current one (shared doc id or same
+    // name), it's a re-open of the SAME project → carry over any local-only
+    // pages so newly-created (unpushed) pages are never silently dropped.
+    const _impIds=new Set((imported.docs||[]).map(d=>d.id));
+    const _curDocs=(state.docs||[]);
+    const _sameProject=(imported.projectName&&imported.projectName===state.projectName)
+      ||_curDocs.some(d=>_impIds.has(d.id));
+    if(_sameProject){
+      const _localOnly=_curDocs.filter(d=>d&&d.id&&!d._deleted&&!_impIds.has(d.id));
+      if(_localOnly.length){
+        imported.docs=(imported.docs||[]).concat(_localOnly);
+        toast(`📌 Giữ lại ${_localOnly.length} trang mới chưa push`,'info');
+      }
+    }
     // Load state
     state=imported;
     if(!state.docs)state.docs=[];
