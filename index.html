@@ -391,7 +391,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .meta-tag{background:var(--accent-light);color:var(--accent);padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
 .editor-content{outline:none;min-height:320px;font-size:16px;line-height:1.9;color:var(--text);position:relative}
 /* Placeholder shown when editor has only an empty <p><br></p> */
-.editor-content>p:only-child:has(>br:only-child)::before{content:'Gõ / để chèn block, hoặc bắt đầu viết...';color:var(--text3);pointer-events:none;display:block;font-size:15px;font-style:italic}
+.editor-content>p:only-child:has(>br:only-child)::before{content:'Type / to insert a block, or just start writing...';color:var(--text3);pointer-events:none;display:block;font-size:15px;font-style:italic}
 /* Empty paragraph hint — shows when cursor is on empty line */
 .editor-content p.slash-hint::before{
   content:'Gõ  /  để chèn nội dung';
@@ -1603,7 +1603,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
   <i class="ti ti-folder-exclamation"></i>
   <span>Thư mục project "<span id="projReconnectName"></span>" cần được cấp lại quyền truy cập.</span>
   <button class="reconnect-btn" onclick="_projReconnect()">Kết nối lại</button>
-  <button class="reconnect-close" onclick="document.getElementById('projReconnectBanner').classList.remove('on')" title="Đóng">✕</button>
+  <button class="reconnect-close" onclick="document.getElementById('projReconnectBanner').classList.remove('on')" title="Close">✕</button>
 </div>
 <!-- ── TOP NAV (CamNguyen style) ── -->
 <div class="header" id="mainHeader">
@@ -1613,7 +1613,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
       <i class="ti ti-grid-dots"></i>
     </button>
     <div class="hdr-dd" id="hdrAppDd" style="left:0;min-width:180px">
-      <div style="padding:8px 12px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px">Ứng dụng</div>
+      <div style="padding:8px 12px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px">Apps</div>
       <div class="app-grid-dd">
         <div class="app-cell"><i class="ti ti-files"></i><span>Docs</span></div>
         <div class="app-cell"><i class="ti ti-layout-board-split"></i><span>Board</span></div>
@@ -1626,7 +1626,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
   </div>
 
   <!-- Logo -->
-  <div class="header-logo" id="headerLogoWrap" onclick="hdrLogoClick()" title="Click để thay đổi logo" style="cursor:pointer">
+  <div class="header-logo" id="headerLogoWrap" onclick="hdrLogoClick()" title="Click to change logo" style="cursor:pointer">
     <div class="logo-box" id="hdrLogoBox"><span id="hdrLogoText">P</span></div>
     <input type="file" accept="image/*" id="hdrLogoFile" style="display:none" onchange="hdrLogoUpload(event)">
   </div>
@@ -1655,21 +1655,21 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
   <div class="header-center">
     <div class="header-search-wrap" id="hdrSearchWrap">
       <i class="ti ti-search header-search-icon"></i>
-      <input class="header-search-inp" id="hdrSearchInp" type="text" placeholder="Tìm trang, nội dung..."
+      <input class="header-search-inp" id="hdrSearchInp" type="text" placeholder="Search pages, content..."
         autocomplete="off" onfocus="hdrOpenSearch()" oninput="hdrHandleSearch(this.value)">
       <div class="header-search-drop" id="hdrSearchDrop">
-        <div class="hsd-section">Gần đây</div>
+        <div class="hsd-section">Recent</div>
         <div class="hsd-item" id="hsdRecent1"><div class="hsd-item-icon"><i class="ti ti-file-text"></i></div><div><div>—</div><div class="hsd-item-meta">—</div></div></div>
         <div class="hsd-item" id="hsdRecent2"><div class="hsd-item-icon"><i class="ti ti-file-text"></i></div><div><div>—</div><div class="hsd-item-meta">—</div></div></div>
         <div class="hsd-item" id="hsdRecent3"><div class="hsd-item-icon"><i class="ti ti-file-text"></i></div><div><div>—</div><div class="hsd-item-meta">—</div></div></div>
         <div id="hsdResultSection" style="display:none">
-          <div class="hsd-section">Kết quả</div>
+          <div class="hsd-section">Results</div>
           <div id="hsdResults"></div>
         </div>
         <div style="border-top:1px solid var(--border);padding:9px 14px">
           <div class="hsd-item" style="padding:0;color:var(--accent);font-size:13px;gap:6px">
             <i class="ti ti-search" style="font-size:14px"></i>
-            <span id="hsdAdvancedLbl">Tìm kiếm...</span>
+            <span id="hsdAdvancedLbl">Search...</span>
           </div>
         </div>
       </div>
@@ -1681,37 +1681,37 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
   <div style="margin-left:auto;display:flex;align-items:center;gap:4px">
     <!-- Notifications -->
     <div style="position:relative">
-      <button class="header-icon-btn" onclick="hdrToggleDd('hdrNotifDd')" aria-label="Thông báo" style="position:relative">
+      <button class="header-icon-btn" onclick="hdrToggleDd('hdrNotifDd')" aria-label="Notifications" style="position:relative">
         <i class="ti ti-bell"></i>
         <span class="notif-badge" id="notifBadge"></span>
       </button>
       <div class="hdr-dd" id="hdrNotifDd" style="right:0;min-width:300px">
         <div style="padding:12px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:14px;font-weight:600;color:var(--text)">Thông báo</span>
-          <span style="font-size:12px;color:var(--accent);cursor:pointer">Đánh dấu đã đọc</span>
+          <span style="font-size:14px;font-weight:600;color:var(--text)">Notifications</span>
+          <span style="font-size:12px;color:var(--accent);cursor:pointer">Mark all read</span>
         </div>
         <div id="notifList" style="max-height:280px;overflow-y:auto"></div>
         <div style="padding:10px 14px;border-top:1px solid var(--border);text-align:center">
-          <span style="font-size:13px;color:var(--accent);cursor:pointer">Xem tất cả thông báo</span>
+          <span style="font-size:13px;color:var(--accent);cursor:pointer">View all notifications</span>
         </div>
       </div>
     </div>
 
     <!-- Help -->
-    <button class="header-icon-btn" aria-label="Trợ giúp" onclick="hdrToggleDd('hdrHelpDd')" style="position:relative">
+    <button class="header-icon-btn" aria-label="Help" onclick="hdrToggleDd('hdrHelpDd')" style="position:relative">
       <i class="ti ti-help-circle"></i>
     </button>
     <div class="hdr-dd" id="hdrHelpDd" style="right:0;min-width:200px">
-      <div style="padding:10px 14px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px">Trợ giúp</div>
-      <div class="hdr-dd-item" onclick="showKeyboardShortcuts();hdrCloseAll()"><i class="ti ti-keyboard"></i> Phím tắt</div>
-      <div class="hdr-dd-item" onclick="hdrCloseAll()"><i class="ti ti-book"></i> Hướng dẫn sử dụng</div>
+      <div style="padding:10px 14px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px">Help</div>
+      <div class="hdr-dd-item" onclick="showKeyboardShortcuts();hdrCloseAll()"><i class="ti ti-keyboard"></i> Keyboard shortcuts</div>
+      <div class="hdr-dd-item" onclick="hdrCloseAll()"><i class="ti ti-book"></i> User guide</div>
       <div class="hdr-dd-sep"></div>
-      <div class="hdr-dd-item" onclick="hdrCloseAll()"><i class="ti ti-info-circle"></i> Về Project Docs</div>
+      <div class="hdr-dd-item" onclick="hdrCloseAll()"><i class="ti ti-info-circle"></i> About Project Docs</div>
     </div>
 
     <!-- Export actions -->
     <div style="position:relative">
-      <button class="header-icon-btn" onclick="hdrToggleDd('hdrExportDd')" title="Lưu / Mở project" aria-label="Export">
+      <button class="header-icon-btn" onclick="hdrToggleDd('hdrExportDd')" title="Save / Open project" aria-label="Export">
         <i class="ti ti-device-floppy"></i>
       </button>
       <div class="hdr-dd" id="hdrExportDd" style="right:0">
@@ -1725,7 +1725,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 
     <!-- Project folder -->
     <div style="display:flex;align-items:center;gap:4px">
-      <button class="proj-live-btn" id="projLiveBtn" onclick="_projToggleLive()" title="Lưu tất cả dữ liệu và ảnh vào thư mục project">
+      <button class="proj-live-btn" id="projLiveBtn" onclick="_projToggleLive()" title="Save all data and images to the project folder">
         <i class="ti ti-world-upload" style="font-size:13px"></i>Published
       </button>
     </div>
@@ -1733,18 +1733,18 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
     <button class="header-icon-btn" id="focusModeBtn" onclick="toggleFocusMode()" title="Focus mode (F11)"><i class="ti ti-focus-2"></i></button>
     <!-- Accent color picker -->
     <div style="position:relative" id="accentBtnWrap">
-      <button class="header-icon-btn" id="accentPopBtn" onclick="toggleAccentPop()" title="Màu nhấn (Accent color)"><span id="accentBtnDot"></span></button>
+      <button class="header-icon-btn" id="accentPopBtn" onclick="toggleAccentPop()" title="Accent color"><span id="accentBtnDot"></span></button>
       <div class="accent-pop" id="accentPop">
-        <div class="accent-pop-label">Màu nhấn</div>
+        <div class="accent-pop-label">Accent color</div>
         <div class="accent-swatches" id="accentPopSwatches"></div>
       </div>
     </div>
     <!-- Theme toggle -->
-    <button class="header-icon-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Chuyển sáng/tối" style="font-size:16px">&#9728;</button>
+    <button class="header-icon-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle light/dark" style="font-size:16px">&#9728;</button>
 
     <!-- User avatar -->
     <div style="position:relative">
-      <div class="hdr-user-av" id="hdrUserAv" onclick="hdrToggleDd('hdrUserDd')" role="button" tabindex="0" aria-label="Menu người dùng">G</div>
+      <div class="hdr-user-av" id="hdrUserAv" onclick="hdrToggleDd('hdrUserDd')" role="button" tabindex="0" aria-label="User menu">G</div>
       <div class="hdr-dd" id="hdrUserDd" style="right:0">
         <div class="hdr-dd-head">
           <div class="hdr-dd-av">G</div>
@@ -1753,12 +1753,12 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
             <div style="font-size:11px;color:var(--text3)">guest@example.com</div>
           </div>
         </div>
-        <div class="hdr-dd-item"><i class="ti ti-user"></i> Hồ sơ</div>
-        <div class="hdr-dd-item" onclick="openSettings();hdrCloseAll()"><i class="ti ti-settings"></i> Cài đặt</div>
+        <div class="hdr-dd-item"><i class="ti ti-user"></i> Profile</div>
+        <div class="hdr-dd-item" onclick="openSettings();hdrCloseAll()"><i class="ti ti-settings"></i> Settings</div>
         <div class="hdr-dd-sep"></div>
-        <div class="hdr-dd-item" onclick="toggleTheme();hdrCloseAll()"><i class="ti ti-sun"></i> Chuyển theme</div>
+        <div class="hdr-dd-item" onclick="toggleTheme();hdrCloseAll()"><i class="ti ti-sun"></i> Toggle theme</div>
         <div class="hdr-dd-sep"></div>
-        <div class="hdr-dd-item danger"><i class="ti ti-logout"></i> Đăng xuất</div>
+        <div class="hdr-dd-item danger"><i class="ti ti-logout"></i> Sign out</div>
       </div>
     </div>
   </div>
@@ -1846,7 +1846,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
   <div class="modal" style="width:520px;max-height:80vh;display:flex;flex-direction:column">
     <div class="modal-header">
       <div class="modal-title"><i class="ti ti-file-import" style="margin-right:6px;color:var(--accent)"></i>Nhập trang từ người dùng khác</div>
-      <button class="modal-close" onclick="closeModal('importMergeModal')" aria-label="Đóng"><i class="ti ti-x"></i></button>
+      <button class="modal-close" onclick="closeModal('importMergeModal')" aria-label="Close"><i class="ti ti-x"></i></button>
     </div>
     <div style="padding:10px 20px;background:var(--accent-light);border-bottom:1px solid var(--border);font-size:12.5px;color:var(--text2);display:flex;align-items:center;gap:8px">
       <i class="ti ti-info-circle" style="color:var(--accent);font-size:15px;flex-shrink:0"></i>
@@ -1867,7 +1867,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 <!-- SHARE MODAL -->
 <div class="modal-bg" id="shareModal" onclick="if(event.target===this)closeModal('shareModal')">
   <div class="modal" style="width:480px">
-    <div class="modal-header"><div class="modal-title">Chia sẻ trang</div><button class="modal-close" onclick="closeModal('shareModal')" aria-label="Đóng"><i class="ti ti-x"></i></button></div>
+    <div class="modal-header"><div class="modal-title">Chia sẻ trang</div><button class="modal-close" onclick="closeModal('shareModal')" aria-label="Close"><i class="ti ti-x"></i></button></div>
     <div class="modal-body">
       <div class="field"><label>Mời người dùng</label><input type="text" placeholder="Nhập tên hoặc email..."></div>
       <div class="field">
@@ -1894,7 +1894,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 <div class="layout">
   <!-- SIDEBAR (CamNguyen style) -->
   <div class="sidebar" id="sidebar">
-    <div class="sb-resizer" id="sbResizer" title="Kéo để thay đổi độ rộng"></div>
+    <div class="sb-resizer" id="sbResizer" title="Drag to resize"></div>
 
     <!-- Space header -->
     <!-- Sidebar logo dropdown menu -->
@@ -1918,9 +1918,9 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
       </div>
     </div>
     <div class="sb-space-header">
-      <div class="sb-space-icon" id="sbSpaceIcon" onclick="sbLogoToggle()" title="Click để thêm logo dự án"><span id="sbSpaceIconText">P</span></div>
-      <span class="sb-space-name" id="projectNameEl" onclick="editProjectName()" title="Click để đổi tên">My Project</span>
-      <button class="sb-star-btn" title="Đánh dấu yêu thích" aria-label="Đánh dấu yêu thích"><i class="ti ti-star"></i></button>
+      <div class="sb-space-icon" id="sbSpaceIcon" onclick="sbLogoToggle()" title="Click to add project logo"><span id="sbSpaceIconText">P</span></div>
+      <span class="sb-space-name" id="projectNameEl" onclick="editProjectName()" title="Click to rename">My Project</span>
+      <button class="sb-star-btn" title="Add to favorites" aria-label="Add to favorites"><i class="ti ti-star"></i></button>
     </div>
 
     <!-- Primary nav -->
@@ -1934,7 +1934,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
         <i class="ti ti-chevron-right sb-primary-arrow"></i>
       </div>
       
-      <div class="sb-primary-item" id="sbPagesHomeBtn" onclick="openPagesHome()" style="cursor:pointer" title="Trang giới thiệu dự án">
+      <div class="sb-primary-item" id="sbPagesHomeBtn" onclick="openPagesHome()" style="cursor:pointer" title="Project home">
         <i class="ti ti-files"></i> Pages
       </div>
     </div>
@@ -1944,11 +1944,11 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
     <div class="sb-flyout" id="sbFlyout">
       <div class="sb-flyout-header">
         <span class="sb-flyout-title" id="sbFlyoutTitle">Recent</span>
-        <button class="sb-flyout-close" onclick="closeFlyout()" aria-label="Đóng"><i class="ti ti-x"></i></button>
+        <button class="sb-flyout-close" onclick="closeFlyout()" aria-label="Close"><i class="ti ti-x"></i></button>
       </div>
       <div class="sb-flyout-search">
         <i class="ti ti-search"></i>
-        <input type="text" id="sbFlyoutSearch" placeholder="Lọc..." oninput="filterFlyout(this.value)">
+        <input type="text" id="sbFlyoutSearch" placeholder="Filter..." oninput="filterFlyout(this.value)">
       </div>
       <div class="sb-flyout-list" id="sbFlyoutList"></div>
       <div class="sb-flyout-footer" id="sbFlyoutFooter"></div>
@@ -1957,8 +1957,8 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 
     <div class="sb-search-row">
       <div class="sb-search"><i class="ti ti-search"></i><input type="text" placeholder="Search pages..." id="searchInput" oninput="filterDocs()"></div>
-      <button class="sb-new-btn" onclick="_quickNewRootDoc()" title="Trang mới"><i class="ti ti-plus"></i></button>
-      <button class="sb-new-btn sb-import-btn" id="_sbImportBtn" onclick="_sbImportToggleDd(this)" title="Import thư mục hoặc file ZIP"><i class="ti ti-file-import"></i></button>
+      <button class="sb-new-btn" onclick="_quickNewRootDoc()" title="New page"><i class="ti ti-plus"></i></button>
+      <button class="sb-new-btn sb-import-btn" id="_sbImportBtn" onclick="_sbImportToggleDd(this)" title="Import folder or ZIP file"><i class="ti ti-file-import"></i></button>
     </div>
 
     <!-- Nav tree -->
@@ -1970,14 +1970,14 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
         <i class="ti ti-settings" style="font-size:15px"></i> Space tools
         <i class="ti ti-chevron-down" style="font-size:11px;margin-left:auto"></i>
       </button>
-      <button class="sb-collapse-btn" id="sbCollapseBtn" onclick="sbCollapse()" title="Thu gọn sidebar">
+      <button class="sb-collapse-btn" id="sbCollapseBtn" onclick="sbCollapse()" title="Collapse sidebar">
         <i class="ti ti-chevrons-left"></i>
       </button>
     </div>
   </div>
 
   <!-- Expand button (shown when sidebar collapsed) -->
-  <button class="sb-expand-btn" id="sbExpandBtn" onclick="sbExpand()" title="Mở rộng sidebar">
+  <button class="sb-expand-btn" id="sbExpandBtn" onclick="sbExpand()" title="Expand sidebar">
     <i class="ti ti-chevrons-right"></i>
   </button>
 
@@ -1996,16 +1996,16 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
         <div class="pab-left">
           <!-- Project logo (CamNguyen-style space icon) -->
           <div style="position:relative;flex-shrink:0">
-            <div class="pab-logo" id="pabLogo" onclick="pabLogoToggle()" title="Logo dự án — click để thay đổi">
+            <div class="pab-logo" id="pabLogo" onclick="pabLogoToggle()" title="Project logo — click to change">
               <span id="pabLogoText">P</span>
             </div>
             <div class="pab-logo-menu" id="pabLogoMenu">
               <label class="pab-logo-menu-item" style="cursor:pointer">
-                <i class="ti ti-upload" style="font-size:14px;color:var(--text2)"></i> Tải ảnh logo lên
+                <i class="ti ti-upload" style="font-size:14px;color:var(--text2)"></i> Upload logo image
                 <input type="file" accept="image/*" style="display:none" onchange="pabLogoUpload(event)">
               </label>
               <div class="pab-logo-menu-item" onclick="pabLogoReset()">
-                <i class="ti ti-refresh" style="font-size:14px;color:var(--text2)"></i> Dùng chữ cái
+                <i class="ti ti-refresh" style="font-size:14px;color:var(--text2)"></i> Use initial letter
               </div>
               <div class="pab-logo-colors">
                 <div class="pab-logo-color" style="background:#2563eb" onclick="pabLogoColor('#2563eb')"></div>
@@ -2019,38 +2019,38 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
               </div>
             </div>
           </div>
-          <nav class="pab-breadcrumb" id="pabBreadcrumb" aria-label="Vị trí trang">
+          <nav class="pab-breadcrumb" id="pabBreadcrumb" aria-label="Breadcrumb">
             <span class="pab-bc-space" id="pabBcSpace">My Project</span>
           </nav>
         </div>
         <div class="pab-right">
           <span class="pab-meta" id="pabDate"></span>
           <div class="pab-avatar" id="pabAvatar">G</div>
-          <button class="pab-icon-btn" id="pabWatchBtn" onclick="hdrToggleWatch()" title="Theo dõi trang">
+          <button class="pab-icon-btn" id="pabWatchBtn" onclick="hdrToggleWatch()" title="Watch page">
             <i class="ti ti-bell"></i>
           </button>
-          <button class="pab-icon-btn" id="pabStarBtn" onclick="hdrToggleStar()" title="Đánh dấu yêu thích">
+          <button class="pab-icon-btn" id="pabStarBtn" onclick="hdrToggleStar()" title="Add to favorites">
             <i class="ti ti-star"></i>
           </button>
-          <button class="pab-icon-btn" id="pabLockBtn" onclick="toggleDocLock()" title="Khóa trang (chỉ đọc)">
+          <button class="pab-icon-btn" id="pabLockBtn" onclick="toggleDocLock()" title="Lock page (read-only)">
             <i class="ti ti-lock-open"></i>
           </button>
-          <button class="pab-icon-btn" id="pabUndoBtn" onclick="editorUndo()" title="Hoàn tác (Ctrl+Z)" style="display:none"><i class="ti ti-arrow-back-up"></i></button>
-          <button class="pab-icon-btn" id="pabRedoBtn" onclick="editorRedo()" title="Làm lại (Ctrl+Y)" style="display:none"><i class="ti ti-arrow-forward-up"></i></button>
+          <button class="pab-icon-btn" id="pabUndoBtn" onclick="editorUndo()" title="Undo (Ctrl+Z)" style="display:none"><i class="ti ti-arrow-back-up"></i></button>
+          <button class="pab-icon-btn" id="pabRedoBtn" onclick="editorRedo()" title="Redo (Ctrl+Y)" style="display:none"><i class="ti ti-arrow-forward-up"></i></button>
           <button class="pab-btn" onclick="openShareModal()">
             <i class="ti ti-share" style="font-size:13px"></i> Share
           </button>
           <div style="position:relative">
-            <button class="pab-more-btn" onclick="hdrToggleDd('pabMoreDd')" aria-label="Thêm tùy chọn">
+            <button class="pab-more-btn" onclick="hdrToggleDd('pabMoreDd')" aria-label="More options">
               <i class="ti ti-dots"></i>
             </button>
             <div class="hdr-dd" id="pabMoreDd" style="right:0;top:36px">
-              <div class="hdr-dd-item" onclick="hdrCopyLink();hdrCloseAll()"><i class="ti ti-link"></i> Copy link trang</div>
-              <div class="hdr-dd-item" onclick="hdrDuplicatePage();hdrCloseAll()"><i class="ti ti-copy"></i> Sao chép trang</div>
-              <div class="hdr-dd-item" onclick="hdrExportCurrentJson();hdrCloseAll()"><i class="ti ti-file-zip"></i> Xuất ZIP trang (có ảnh)</div>
-              <div class="hdr-dd-item" onclick="reloadAllMedia();hdrCloseAll()"><i class="ti ti-refresh"></i> Reload lại tất cả ảnh/video</div>
+              <div class="hdr-dd-item" onclick="hdrCopyLink();hdrCloseAll()"><i class="ti ti-link"></i> Copy page link</div>
+              <div class="hdr-dd-item" onclick="hdrDuplicatePage();hdrCloseAll()"><i class="ti ti-copy"></i> Duplicate page</div>
+              <div class="hdr-dd-item" onclick="hdrExportCurrentJson();hdrCloseAll()"><i class="ti ti-file-zip"></i> Export page ZIP (with images)</div>
+              <div class="hdr-dd-item" onclick="reloadAllMedia();hdrCloseAll()"><i class="ti ti-refresh"></i> Reload all media</div>
               <div class="hdr-dd-sep"></div>
-              <div class="hdr-dd-item danger" onclick="hdrDeletePage()"><i class="ti ti-trash"></i> Xóa trang</div>
+              <div class="hdr-dd-item danger" onclick="hdrDeletePage()"><i class="ti ti-trash"></i> Delete page</div>
             </div>
           </div>
           <button class="pab-btn primary" id="pabEditBtn" onclick="hdrToggleEdit()">
@@ -2061,9 +2061,9 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
       </div><!-- /#pabWrapper -->
       <div class="doc-body">
         <div class="editor-wrap" id="editorWrap">
-          <div class="drop-overlay" id="dropOverlay"><i class="ti ti-photo-up"></i><span>Thả ảnh/video vào đây</span></div>
+          <div class="drop-overlay" id="dropOverlay"><i class="ti ti-photo-up"></i><span>Drop image/video here</span></div>
           <div class="editor-scroll" id="editorScroll">
-            <input class="doc-title-edit" id="docTitleInput" placeholder="Tiêu đề tài liệu..." oninput="onTitleChange()">
+            <input class="doc-title-edit" id="docTitleInput" placeholder="Document title..." oninput="onTitleChange()">
             <div class="doc-meta" id="docMeta"></div>
             <div class="editor-content" id="editor" contenteditable="true" spellcheck="true" oninput="onContentChange()"></div>
             <div class="doc-blank-hint" id="docBlankHint">
@@ -2082,9 +2082,9 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 
 <button class="scroll-top-btn" id="scrollTopBtn" title="Lên đầu trang" onclick="document.getElementById('editorScroll').scrollTo({top:0,behavior:'smooth'})"><i class="ti ti-arrow-up"></i></button>
 <div class="statusbar">
-  <span id="saveStatusEl" class="save-ok"><i class="ti ti-circle-check" style="font-size:12px"></i> Đã lưu</span>
+  <span id="saveStatusEl" class="save-ok"><i class="ti ti-circle-check" style="font-size:12px"></i> Saved</span>
   <span id="wordCountEl" style="color:var(--text3)"></span>
-  <span><kbd>Ctrl+S</kbd> lưu &nbsp;·&nbsp; <kbd>Ctrl+Shift+V</kbd> dán thuần &nbsp;·&nbsp; <kbd>/</kbd> chèn block</span>
+  <span><kbd>Ctrl+S</kbd> save &nbsp;·&nbsp; <kbd>Ctrl+Shift+V</kbd> paste plain &nbsp;·&nbsp; <kbd>/</kbd> insert block</span>
 </div>
 
 <!-- CONTEXT MENU image -->
@@ -2129,7 +2129,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
   <div class="modal ndoc-modal" onclick="event.stopPropagation()">
     <div class="ndoc-modal-header">
       <div class="ndoc-modal-title">Tạo trang mới</div>
-      <button class="modal-close" onclick="closeModal('newDocModal')" aria-label="Đóng"><i class="ti ti-x"></i></button>
+      <button class="modal-close" onclick="closeModal('newDocModal')" aria-label="Close"><i class="ti ti-x"></i></button>
     </div>
     <div class="ndoc-search-row">
       <i class="ti ti-pencil"></i>
@@ -2268,14 +2268,14 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
   <button class="bb" id="bbStrike" onmousedown="event.preventDefault();bbFmt('strikeThrough')" title="Strikethrough"><s>S</s></button>
   <div class="bb-sep"></div>
   <!-- Alignment -->
-  <button class="bb" id="bbAlignL" onmousedown="event.preventDefault();bbAlign('justifyLeft')" title="Căn trái"><i class="ti ti-align-left" style="font-size:14px"></i></button>
-  <button class="bb" id="bbAlignC" onmousedown="event.preventDefault();bbAlign('justifyCenter')" title="Căn giữa"><i class="ti ti-align-center" style="font-size:14px"></i></button>
-  <button class="bb" id="bbAlignR" onmousedown="event.preventDefault();bbAlign('justifyRight')" title="Căn phải"><i class="ti ti-align-right" style="font-size:14px"></i></button>
-  <button class="bb" id="bbAlignJ" onmousedown="event.preventDefault();bbAlign('justifyFull')" title="Căn đều hai bên"><i class="ti ti-align-justified" style="font-size:14px"></i></button>
+  <button class="bb" id="bbAlignL" onmousedown="event.preventDefault();bbAlign('justifyLeft')" title="Align left"><i class="ti ti-align-left" style="font-size:14px"></i></button>
+  <button class="bb" id="bbAlignC" onmousedown="event.preventDefault();bbAlign('justifyCenter')" title="Align center"><i class="ti ti-align-center" style="font-size:14px"></i></button>
+  <button class="bb" id="bbAlignR" onmousedown="event.preventDefault();bbAlign('justifyRight')" title="Align right"><i class="ti ti-align-right" style="font-size:14px"></i></button>
+  <button class="bb" id="bbAlignJ" onmousedown="event.preventDefault();bbAlign('justifyFull')" title="Justify"><i class="ti ti-align-justified" style="font-size:14px"></i></button>
   <div class="bb-sep"></div>
   <!-- Text color — works in editor, text box, table cell -->
-  <div class="bb-color-wrap" title="Mau chu" id="textColorWrap">
-    <button class="bb-color-btn" onmousedown="event.preventDefault();saveRange();toggleColorPalette('textCP',this)" title="Mau chu">
+  <div class="bb-color-wrap" title="Text color" id="textColorWrap">
+    <button class="bb-color-btn" onmousedown="event.preventDefault();saveRange();toggleColorPalette('textCP',this)" title="Text color">
       <span style="font-weight:700;font-size:13px;line-height:1;color:#e2e8f0">A</span>
       <span class="bb-color-bar" id="bbTextBar" style="background:#ef4444"></span>
     </button>
@@ -2283,8 +2283,8 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
   <!-- Table cell background — only visible when in table -->
   <div id="bbTableCellWrap" style="display:none;align-items:center">
     <div class="bb-sep"></div>
-    <div class="bb-color-wrap" title="Mau nen o bang">
-      <button class="bb-color-btn" onmousedown="event.preventDefault();saveRange();toggleColorPalette('tableCellCP',this)" title="Mau nen o bang">
+    <div class="bb-color-wrap" title="Table cell background">
+      <button class="bb-color-btn" onmousedown="event.preventDefault();saveRange();toggleColorPalette('tableCellCP',this)" title="Table cell background">
         <i class="ti ti-layout-grid" style="font-size:12px;line-height:1;color:#e2e8f0"></i>
         <span class="bb-color-bar" id="bbCellBar" style="background:#f1f5f9"></span>
       </button>
@@ -2292,17 +2292,17 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
   </div>
   <div class="bb-sep"></div>
   <div class="bb-size-wrap" id="bbSpacingWrap" onmouseleave="bbCloseSpacingDD()">
-    <button class="bb" onmouseenter="bbOpenSpacingDD()" onmousedown="event.preventDefault();bbOpenSpacingDD()" title="Gian dong"><i class="ti ti-line-height" style="font-size:14px"></i></button>
+    <button class="bb" onmouseenter="bbOpenSpacingDD()" onmousedown="event.preventDefault();bbOpenSpacingDD()" title="Line spacing"><i class="ti ti-line-height" style="font-size:14px"></i></button>
     <div class="bb-spacing-dropdown" id="bbSpacingDD" style="min-width:170px"></div>
   </div>
   <div class="bb-sep"></div>
-  <button class="bb" id="bbLinkBtn" onmousedown="event.preventDefault();bbOpenLinkRow()" title="Chèn liên kết"><i class="ti ti-link"></i></button>
-  <button class="bb" onmousedown="event.preventDefault();bbClear()" title="Xóa định dạng" aria-label="Xóa định dạng" style="font-size:10px;font-weight:700;color:#64748b">xA</button>
+  <button class="bb" id="bbLinkBtn" onmousedown="event.preventDefault();bbOpenLinkRow()" title="Insert link"><i class="ti ti-link"></i></button>
+  <button class="bb" onmousedown="event.preventDefault();bbClear()" title="Clear formatting" aria-label="Clear formatting" style="font-size:10px;font-weight:700;color:#64748b">xA</button>
   <div class="bb-link-row" id="bbLinkRow">
     <div class="bb-sep"></div>
     <input class="bb-link-inp" id="bbLinkInp" type="url" placeholder="https://" autocomplete="off" spellcheck="false">
-    <button class="bb-link-ok" id="bbLinkOk" title="Áp dụng"><i class="ti ti-check"></i></button>
-    <button class="bb-link-cancel" id="bbLinkCancel" title="Huỷ"><i class="ti ti-x"></i></button>
+    <button class="bb-link-ok" id="bbLinkOk" title="Apply"><i class="ti ti-check"></i></button>
+    <button class="bb-link-cancel" id="bbLinkCancel" title="Cancel"><i class="ti ti-x"></i></button>
   </div>
 </div>
 
@@ -2388,7 +2388,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 <!-- Focus mode exit button -->
 <button class="focus-exit-btn" onclick="toggleFocusMode()"><i class="ti ti-focus-off"></i> Thoát focus</button>
 <div class="lightbox" id="lightbox" onclick="lbBgClick(event)">
-  <button class="lb-close" onclick="lbClose()" aria-label="Đóng"><i class="ti ti-x"></i></button>
+  <button class="lb-close" onclick="lbClose()" aria-label="Close"><i class="ti ti-x"></i></button>
   <button class="lb-arrow lb-prev" id="lbPrev" onclick="lbGo(-1)" aria-label="Ảnh trước"><i class="ti ti-chevron-left"></i></button>
   <img class="lb-img" id="lbImg" src="" alt="">
   <button class="lb-arrow lb-next" id="lbNext" onclick="lbGo(1)" aria-label="Ảnh sau"><i class="ti ti-chevron-right"></i></button>
@@ -2822,7 +2822,7 @@ function persist(){
     localStorage.setItem(STORE_KEY,JSON.stringify(toSave));
   }catch(e){
     const el=document.getElementById('saveStatusEl');
-    if(el){el.className='save-dirty';el.innerHTML='<i class="ti ti-alert-triangle" style="font-size:12px"></i> Bộ nhớ đầy';}
+    if(el){el.className='save-dirty';el.innerHTML='<i class="ti ti-alert-triangle" style="font-size:12px"></i> Storage full';}
     console.warn('localStorage quota exceeded',e);
   }
   // Project folder is saved only on manual Push — not auto-saved here
@@ -2831,9 +2831,9 @@ function persist(){
 function markDirty(){
   dirty=true;
   const el=document.getElementById('saveStatusEl');
-  el.className='save-dirty';el.innerHTML='<i class="ti ti-loader" style="font-size:12px"></i> Đang lưu...';
+  el.className='save-dirty';el.innerHTML='<i class="ti ti-loader" style="font-size:12px"></i> Saving...';
   clearTimeout(saveTimer);
-  saveTimer=setTimeout(()=>{persist();dirty=false;el.className='save-ok';el.innerHTML='<i class="ti ti-circle-check" style="font-size:12px"></i> Đã lưu';},1000);
+  saveTimer=setTimeout(()=>{persist();dirty=false;el.className='save-ok';el.innerHTML='<i class="ti ti-circle-check" style="font-size:12px"></i> Saved';},1000);
 }
 
 // SIDEBAR
@@ -2933,7 +2933,7 @@ function buildFlyoutList(filter){
 function _mkFlyoutItem(it){
   const el=document.createElement('div');el.className='sb-flyout-item';
   const isS=(state.starred||[]).includes(it.id);
-  el.innerHTML=`<div class="sb-flyout-item-icon"><i class="ti ti-file-text"></i></div><div class="sb-flyout-item-info"><div class="sb-flyout-item-title">${escH(it.title||'Untitled')}</div><div class="sb-flyout-item-meta">${it.openedAt?_relTime(it.openedAt):''}</div></div><button class="sb-flyout-item-action${isS?' starred':''}" onclick="event.stopPropagation();toggleStar('${it.id}',this)" title="${isS?'Bỏ đánh dấu':'Đánh dấu'}"><i class="ti ti-star${isS?'-filled':''}"></i></button>`;
+  el.innerHTML=`<div class="sb-flyout-item-icon"><i class="ti ti-file-text"></i></div><div class="sb-flyout-item-info"><div class="sb-flyout-item-title">${escH(it.title||'Untitled')}</div><div class="sb-flyout-item-meta">${it.openedAt?_relTime(it.openedAt):''}</div></div><button class="sb-flyout-item-action${isS?' starred':''}" onclick="event.stopPropagation();toggleStar('${it.id}',this)" title="${isS?'Unstar':'Star'}"><i class="ti ti-star${isS?'-filled':''}"></i></button>`;
   el.onclick=()=>{openDoc(it.id);closeFlyout();};
   return el;
 }
@@ -2943,7 +2943,7 @@ function toggleStar(id,btn){
   if(!state.starred)state.starred=[];
   const idx=state.starred.indexOf(id);
   if(idx>=0){state.starred.splice(idx,1);btn.classList.remove('starred');btn.innerHTML='<i class="ti ti-star"></i>';btn.title='Đánh dấu';}
-  else{state.starred.push(id);btn.classList.add('starred');btn.innerHTML='<i class="ti ti-star-filled"></i>';btn.title='Bỏ đánh dấu';}
+  else{state.starred.push(id);btn.classList.add('starred');btn.innerHTML='<i class="ti ti-star-filled"></i>';btn.title='Unstar';}
   persist();renderSidebar();
   if(_flyoutMode==='starred')buildFlyoutList(document.getElementById('sbFlyoutSearch')?.value||'');
 }
@@ -3080,7 +3080,7 @@ function _updateLockBtn(doc){
   if(!btn)return;
   btn.innerHTML=locked?'<i class="ti ti-lock"></i>':'<i class="ti ti-lock-open"></i>';
   btn.classList.toggle('pab-locked',locked);
-  btn.title=locked?'Mở khóa trang':'Khóa trang (chỉ đọc)';
+  btn.title=locked?'Unlock page':'Lock page (read-only)';
 }
 function toggleDocLock(){
   const doc=currentDoc();if(!doc)return;
@@ -3101,7 +3101,7 @@ function hdrToggleWatch(){
   const btn=document.getElementById('pabWatchBtn');if(!btn)return;
   const now=btn.classList.toggle('watching');
   btn.innerHTML=`<i class="ti ti-bell${now?'':'-off'}"></i>`;
-  btn.title=now?'Đang theo dõi – click để hủy':'Theo dõi trang';
+  btn.title=now?'Watching – click to stop':'Watch page';
   toast(now?'Đang theo dõi trang này':'Đã hủy theo dõi','info');
 }
 function hdrCopyLink(){
@@ -3320,7 +3320,7 @@ function _updatePabStar(){
   const doc=currentDoc();const btn=document.getElementById('pabStarBtn');if(!btn)return;
   const starred=doc&&(state.starred||[]).includes(doc.id);
   btn.classList.toggle('starred',!!starred);
-  btn.title=starred?'Bỏ đánh dấu yêu thích':'Đánh dấu yêu thích';
+  btn.title=starred?'Remove from favorites':'Add to favorites';
   btn.innerHTML=`<i class="ti ti-star${starred?'-filled':''}"></i>`;
 }
 function updatePageActionBar(){
@@ -3335,7 +3335,7 @@ function updatePageActionBar(){
   const d=new Date(doc.updatedAt||doc.createdAt||Date.now());
   if(dateEl){
     const now=Date.now(),diff=now-d.getTime(),sec=Math.floor(diff/1000),min=Math.floor(sec/60),hr=Math.floor(min/60),day=Math.floor(hr/24);
-    const rel=sec<60?'vừa xong':min<60?min+' phút trước':hr<24?hr+' giờ trước':day<7?day+' ngày trước':d.toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'});
+    const rel=sec<60?'just now':min<60?min+' min ago':hr<24?hr+' h ago':day<7?day+' d ago':d.toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'});
     dateEl.textContent='Edited '+rel;dateEl.title=d.toLocaleString('vi-VN');
   }
   if(statusEl){const editing=typeof _hdrIsEditing!=='undefined'&&_hdrIsEditing;statusEl.innerHTML=(editing?'<i class="ti ti-pencil" style="font-size:11px"></i>Editing':'<i class="ti ti-world-upload" style="font-size:11px"></i>Published');statusEl.className='pab-status'+(editing?' editing':'');statusEl.onclick=editing?null:openExportWebsiteModal;statusEl.style.cursor=editing?'default':'pointer';}
@@ -3373,8 +3373,8 @@ function renderSidebar(filter=''){
   const treeLabel=document.createElement('div');treeLabel.className='sb-section-label';
   treeLabel.innerHTML='<span>Page Tree</span>';
   const addPageBtn=document.createElement('button');
-  addPageBtn.className='sb-tree-add-btn';addPageBtn.title='Tạo trang mới';
-  addPageBtn.innerHTML='<i class="ti ti-plus" style="font-size:11px"></i> Trang mới';
+  addPageBtn.className='sb-tree-add-btn';addPageBtn.title='New page';
+  addPageBtn.innerHTML='<i class="ti ti-plus" style="font-size:11px"></i> New page';
   addPageBtn.onclick=()=>_quickNewRootDoc();
   treeLabel.appendChild(addPageBtn);
   nav.appendChild(treeLabel);
@@ -3387,7 +3387,7 @@ function renderSidebar(filter=''){
   if(!hasAny&&!filter){
     const hint=document.createElement('div');
     hint.style.cssText='padding:24px 16px;font-size:12px;color:var(--sb-txt3);text-align:center';
-    hint.textContent='Chưa có trang nào. Nhấn + để tạo.';
+    hint.textContent='No pages yet. Press + to create.';
     nav.appendChild(hint);
   }
 }
@@ -3508,7 +3508,7 @@ function _renderDocNodes(container,sec,parentId,depth,filter){
     const starBtn=document.createElement('button');
     const _isStar=(state.starred||[]).includes(doc.id);
     starBtn.className='doc-star'+(_isStar?' starred':'');
-    starBtn.title=_isStar?'Bỏ đánh dấu':'Đánh dấu yêu thích';
+    starBtn.title=_isStar?'Unstar':'Add to favorites';
     starBtn.innerHTML='<i class="ti ti-star'+(_isStar?'-filled':'')+'"></i>';
     starBtn.onclick=(e)=>{e.stopPropagation();toggleStar(doc.id,starBtn);};
     item.appendChild(starBtn);
@@ -3700,7 +3700,7 @@ function openDoc(id){
   _expandAncestors(id);
   // Reset watch button per-page (watch state is session-only)
   const _wb=document.getElementById('pabWatchBtn');
-  if(_wb){_wb.classList.remove('watching');_wb.innerHTML='<i class="ti ti-bell"></i>';_wb.title='Theo dõi trang';}
+  if(_wb){_wb.classList.remove('watching');_wb.innerHTML='<i class="ti ti-bell"></i>';_wb.title='Watch page';}
   renderMeta(doc);renderSidebar(document.getElementById('searchInput').value.toLowerCase());updatePageActionBar();hdrBuildNotif();
   _applyDocLock(doc);
   // Restore undo history for this page if cached, otherwise reset
@@ -14877,7 +14877,7 @@ document.addEventListener('keydown',e=>{
     }).catch(()=>{});
     return;
   }
-  if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();persist();const el=document.getElementById('saveStatusEl');el.className='save-ok';el.innerHTML='<i class="ti ti-circle-check" style="font-size:12px"></i> Đã lưu';toast('Đã lưu','success');}
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();persist();const el=document.getElementById('saveStatusEl');el.className='save-ok';el.innerHTML='<i class="ti ti-circle-check" style="font-size:12px"></i> Saved';toast('Đã lưu','success');}
   if((e.ctrlKey||e.metaKey)&&e.key==='n'){e.preventDefault();newDoc();}
   if((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key.toLowerCase()==='i'){e.preventDefault();importMergePagesFromFolder();}
   if(e.key==='k'&&!e.ctrlKey&&!e.metaKey&&!e.altKey){const _ae=document.activeElement;if(!_ae||_ae.tagName==='BODY'||(!_ae.isContentEditable&&_ae.tagName!=='INPUT'&&_ae.tagName!=='TEXTAREA')){e.preventDefault();openQS();}}
