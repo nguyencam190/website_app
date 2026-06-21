@@ -1303,18 +1303,18 @@ td .cf-checklist[data-open="true"] .cf-checklist-body,.cf-column-item .cf-checkl
 .emoji-btn:hover{background:var(--surface2)}
 .emoji-cat{padding:8px 6px 3px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;grid-column:1/-1}
 
-.bubble-toolbar{position:fixed;z-index:800;display:none;align-items:center;gap:2px;padding:5px 7px;background:#1e293b;border:1px solid #334155;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.28);white-space:nowrap}
+.bubble-toolbar{position:fixed;z-index:800;display:none;align-items:center;gap:3px;padding:6px 10px;background:#1e293b;border:1px solid #334155;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.28);white-space:nowrap}
 .bubble-toolbar.on{display:flex;animation:bubblePop .15s ease}
 @keyframes bubblePop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .bubble-toolbar::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:#1e293b}
-.bb{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;cursor:pointer;border:none;background:transparent;color:#94a3b8;font-size:13px;transition:.1s;font-family:var(--font)}
+.bb{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:6px;cursor:pointer;border:none;background:transparent;color:#94a3b8;font-size:16px;transition:.1s;font-family:var(--font)}
 .bb:hover{background:#334155;color:#fff}
 .bb.active{background:#2563eb;color:#fff}
-.bb-sep{width:1px;height:16px;background:#334155;margin:0 2px}
-.bb-select{font-size:11.5px;padding:3px 6px;border-radius:5px;border:1px solid #334155;background:#0f172a;color:#94a3b8;cursor:pointer;font-family:var(--font);font-weight:500;outline:none;max-width:100px}
+.bb-sep{width:1px;height:20px;background:#334155;margin:0 3px}
+.bb-select{font-size:14px;padding:4px 8px;border-radius:5px;border:1px solid #334155;background:#0f172a;color:#94a3b8;cursor:pointer;font-family:var(--font);font-weight:500;outline:none;max-width:110px}
 .bb-select:focus,.bb-select:hover{border-color:#2563eb;color:#e2e8f0}
 .bb-size-wrap{position:relative;display:inline-flex;align-items:center}
-.bb-size-input{width:36px;text-align:center;font-size:12px;font-family:var(--mono);font-weight:700;color:#e2e8f0;background:#0f172a;border:1px solid #334155;border-radius:5px;padding:3px 4px;cursor:pointer;outline:none}
+.bb-size-input{width:42px;text-align:center;font-size:14px;font-family:var(--mono);font-weight:700;color:#e2e8f0;background:#0f172a;border:1px solid #334155;border-radius:5px;padding:4px 4px;cursor:pointer;outline:none}
 .bb-link-row{display:none;align-items:center;gap:5px;padding:0 2px}
 .bb-link-row.on{display:flex}
 .bb-link-inp{width:220px;font-size:12px;font-family:var(--font);color:#e2e8f0;background:#0f172a;border:1px solid #334155;border-radius:6px;padding:4px 8px;outline:none}
@@ -2261,7 +2261,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
   </div>
   <div class="bb-sep"></div>
   <button class="bb" id="bbLinkBtn" onmousedown="event.preventDefault();bbOpenLinkRow()" title="Insert link"><i class="ti ti-link"></i></button>
-  <button class="bb" onmousedown="event.preventDefault();bbClear()" title="Clear formatting" aria-label="Clear formatting" style="font-size:10px;font-weight:700;color:#64748b">xA</button>
+  <button class="bb" onmousedown="event.preventDefault();bbClear()" title="Clear formatting" aria-label="Clear formatting" style="font-size:13px;font-weight:700;color:#64748b">xA</button>
   <div class="bb-link-row" id="bbLinkRow">
     <div class="bb-sep"></div>
     <input class="bb-link-inp" id="bbLinkInp" type="url" placeholder="https://" autocomplete="off" spellcheck="false">
