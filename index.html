@@ -2255,11 +2255,6 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
     </div>
   </div>
   <div class="bb-sep"></div>
-  <div class="bb-size-wrap" id="bbSpacingWrap" onmouseleave="bbCloseSpacingDD()">
-    <button class="bb" onmouseenter="bbOpenSpacingDD()" onmousedown="event.preventDefault();bbOpenSpacingDD()" title="Line spacing"><i class="ti ti-line-height" style="font-size:14px"></i></button>
-    <div class="bb-spacing-dropdown" id="bbSpacingDD" style="min-width:170px"></div>
-  </div>
-  <div class="bb-sep"></div>
   <button class="bb" id="bbLinkBtn" onmousedown="event.preventDefault();bbOpenLinkRow()" title="Insert link"><i class="ti ti-link"></i></button>
   <button class="bb" onmousedown="event.preventDefault();bbClear()" title="Clear formatting" aria-label="Clear formatting" style="font-size:13px;font-weight:700;color:#64748b">xA</button>
   <div class="bb-link-row" id="bbLinkRow">
@@ -11018,9 +11013,7 @@ function _bbCancelLink(){
     if(cancel)cancel.addEventListener('mousedown',e=>{e.preventDefault();_bbCancelLink();});
   },200);
 })();
-function bbOpenSpacingDD(){clearTimeout(_spacingCloseTimer);saveRange();const dd=document.getElementById('bbSpacingDD');const sel=window.getSelection();let curLH='1.15';if(sel&&sel.rangeCount){const node=sel.anchorNode;const el=node&&node.nodeType===3?node.parentElement:node;if(el){const lh=window.getComputedStyle(el).lineHeight;curLH=lh==='normal'?'1.15':parseFloat(lh).toFixed(2);}}dd.innerHTML=BB_SPACINGS.map(s=>`<div class="bb-spacing-opt${parseFloat(s.val).toFixed(2)===parseFloat(curLH).toFixed(2)?' active':''}" onmousedown="event.preventDefault();bbApplySpacing('${s.val}')">${s.label}</div>`).join('');const wrap=document.getElementById('bbSpacingWrap');const r=wrap.getBoundingClientRect();dd.style.visibility='hidden';dd.classList.add('on');const ddH=dd.offsetHeight||200;let top=r.bottom+2;if(top+ddH>window.innerHeight-8)top=r.top-ddH-2;dd.style.top=top+'px';dd.style.left=r.left+'px';dd.style.visibility='';}
-function bbCloseSpacingDD(){_spacingCloseTimer=setTimeout(()=>document.getElementById('bbSpacingDD').classList.remove('on'),120);}
-function bbApplySpacing(val){restoreRange();const sel=window.getSelection();if(!sel||!sel.rangeCount)return;const range=sel.getRangeAt(0);const editor=document.getElementById('editor');const blocks=new Set();const walker=document.createTreeWalker(editor,NodeFilter.SHOW_TEXT);let node;while(node=walker.nextNode()){if(range.intersectsNode(node)){let block=node.parentElement;while(block&&block!==editor&&!['P','H1','H2','H3','LI','DIV','BLOCKQUOTE'].includes(block.tagName)){block=block.parentElement;}if(block&&block!==editor)blocks.add(block);}}if(blocks.size===0){const span=document.createElement('span');span.style.lineHeight=val;try{range.surroundContents(span);}catch(e){}}else{blocks.forEach(b=>b.style.lineHeight=val);}document.getElementById('bbSpacingDD').classList.remove('on');onContentChange();setTimeout(bbShow,10);}
+
 
 function _checkBubble(){
   const sel=window.getSelection();
