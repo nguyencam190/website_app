@@ -1283,6 +1283,17 @@ td .cf-checklist[data-open="true"] .cf-checklist-body,.cf-column-item .cf-checkl
 /* ═══ EMOJI PICKER ═════════════════════════════════════════ */
 .emoji-picker{position:fixed;z-index:850;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.18);width:340px;display:none;flex-direction:column;overflow:hidden;animation:cpFade .12s ease}
 .emoji-picker.on{display:flex}
+/* Resizable inline emoji — size is independent of the surrounding block (no need to
+   use a heading to make it big). Click it to open the size slider below. */
+.cf-emoji{display:inline-block;line-height:1;vertical-align:middle;cursor:pointer;border-radius:5px;outline:2px solid transparent;outline-offset:1px;transition:outline-color .12s}
+.cf-emoji:hover{outline-color:color-mix(in srgb,var(--accent) 45%,transparent)}
+.cf-emoji.cf-emoji-active{outline-color:var(--accent)}
+.emoji-size-pop{position:fixed;z-index:860;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.18);padding:8px 12px;display:none;align-items:center;gap:10px;animation:cpFade .12s ease}
+.emoji-size-pop.on{display:flex}
+.emoji-size-pop input[type=range]{width:140px;accent-color:var(--accent);cursor:pointer}
+.emoji-size-val{font-size:12px;color:var(--text2);font-variant-numeric:tabular-nums;min-width:34px;text-align:right}
+.emoji-size-reset{border:none;background:transparent;color:var(--text3);cursor:pointer;font-size:15px;width:24px;height:24px;border-radius:5px;display:flex;align-items:center;justify-content:center;transition:.12s}
+.emoji-size-reset:hover{background:var(--surface3);color:var(--text)}
 .emoji-search{padding:10px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
 .emoji-search input{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:7px;outline:none;padding:7px 12px;font-size:13px;color:var(--text);font-family:var(--font);transition:border .15s}
 .emoji-search input:focus{border-color:var(--accent);background:var(--surface)}
@@ -2377,6 +2388,13 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 <div class="emoji-picker" id="emojiPicker">
   <div class="emoji-search"><input type="text" placeholder="Tìm emoji..." oninput="emojiFilter(this.value)" id="emojiSearchInp"></div>
   <div class="emoji-grid" id="emojiGrid"></div>
+</div>
+<!-- Emoji size slider (shown when an inserted emoji is clicked) -->
+<div class="emoji-size-pop" id="emojiSizePop">
+  <i class="ti ti-text-size" style="font-size:15px;color:var(--text3)"></i>
+  <input type="range" id="emojiSizeRange" min="16" max="160" step="2" oninput="emojiSizeApply(this.value)">
+  <span class="emoji-size-val" id="emojiSizeVal">32</span>
+  <button class="emoji-size-reset" id="emojiSizeReset" title="Kích thước mặc định" onclick="emojiSizeReset()"><i class="ti ti-rotate"></i></button>
 </div>
 <!-- FMEDIA SHADOW PANEL -->
 <div class="fm-shadow-panel" id="fmShadowPanel"></div>
@@ -3871,6 +3889,8 @@ function _commitContent(){
   });
   // Strip cf-img-block toolbar/handles from saved content
   clone.querySelectorAll('.cf-img-toolbar,.cf-img-resize-h,.cf-img-ctx,.cf-col-toolbar,.cf-panel-actions,.editor-block-bar,.cf-code-copy').forEach(e=>e.remove());
+  // Drop the transient "being resized" highlight class from emojis before saving
+  clone.querySelectorAll('.cf-emoji-active').forEach(e=>e.classList.remove('cf-emoji-active'));
   // Preserve cp-mapped spans (theme-aware colors) in saved content
   doc.content=clone.innerHTML;doc.updatedAt=new Date().toISOString();
   fmSaveAll();tbSaveAll();markDirty();
@@ -9903,14 +9923,66 @@ function emojiInsert(emoji){
       sel.removeAllRanges();sel.addRange(r);restored=true;
     }catch(e){}
   }
-  document.execCommand('insertText',false,emoji);
+  // Insert as a resizable inline span so the emoji size is independent of the block
+  // (no need to use a heading to enlarge it). The trailing zero-width space gives the
+  // caret a landing spot after the atomic (contenteditable=false) emoji.
+  document.execCommand('insertHTML',false,'<span class="cf-emoji" contenteditable="false">'+emoji+'</span>​');
   onContentChange();
 }
+
+// ── Click an inserted emoji → size slider (independent of heading) ──
+let _emojiSizeTarget=null;
+function emojiOpenSizePop(span){
+  _emojiSizeTarget=span;
+  document.querySelectorAll('.cf-emoji-active').forEach(e=>e.classList.remove('cf-emoji-active'));
+  span.classList.add('cf-emoji-active');
+  const pop=document.getElementById('emojiSizePop');
+  const range=document.getElementById('emojiSizeRange');
+  const val=document.getElementById('emojiSizeVal');
+  let px=parseInt(span.style.fontSize)||Math.round(parseFloat(getComputedStyle(span).fontSize));
+  px=Math.min(160,Math.max(16,px));
+  range.value=px; val.textContent=px;
+  pop.classList.add('on');
+  const r=span.getBoundingClientRect();
+  const pw=pop.offsetWidth,ph=pop.offsetHeight,vw=window.innerWidth,vh=window.innerHeight;
+  let top=r.bottom+8,left=r.left;
+  if(top+ph>vh-8)top=Math.max(8,r.top-ph-8);
+  if(left+pw>vw-8)left=Math.max(8,vw-pw-8);
+  pop.style.top=top+'px';pop.style.left=left+'px';
+}
+function emojiSizeApply(v){
+  if(!_emojiSizeTarget)return;
+  _emojiSizeTarget.style.fontSize=v+'px';
+  document.getElementById('emojiSizeVal').textContent=v;
+  onContentChange();
+}
+function emojiSizeReset(){
+  if(!_emojiSizeTarget)return;
+  _emojiSizeTarget.style.fontSize='';
+  const px=Math.round(parseFloat(getComputedStyle(_emojiSizeTarget).fontSize));
+  document.getElementById('emojiSizeRange').value=Math.min(160,Math.max(16,px));
+  document.getElementById('emojiSizeVal').textContent=px;
+  onContentChange();
+}
+function emojiSizePopClose(){
+  document.getElementById('emojiSizePop')?.classList.remove('on');
+  document.querySelectorAll('.cf-emoji-active').forEach(e=>e.classList.remove('cf-emoji-active'));
+  _emojiSizeTarget=null;
+}
+document.addEventListener('click',e=>{
+  const em=e.target.closest('.cf-emoji');
+  if(em&&em.closest('#editor')){emojiOpenSizePop(em);}
+});
 document.addEventListener('mousedown',e=>{
   // Close emoji picker when clicking outside — use mousedown so it fires before click
   if(!e.target.closest('#emojiPicker')){
     const picker=document.getElementById('emojiPicker');
     if(picker?.classList.contains('on'))emojiClose();
+  }
+  // Close emoji size slider when clicking outside it (and not on an emoji)
+  if(!e.target.closest('#emojiSizePop')&&!e.target.closest('.cf-emoji')){
+    const sp=document.getElementById('emojiSizePop');
+    if(sp?.classList.contains('on'))emojiSizePopClose();
   }
   if(!e.target.closest('#slashMenu')&&_slashVisible)slashClose();
 });
