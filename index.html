@@ -169,12 +169,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .hdr-user-av{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;border:2px solid transparent;transition:border-color .15s}
 .hdr-user-av:hover{border-color:rgba(255,255,255,.4)}
 .notif-badge{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:#de350b;border:2px solid #1a1a1a}
-/* App switcher grid */
-.app-grid-dd{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:10px}
-.app-cell{aspect-ratio:1;border-radius:5px;background:var(--surface2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;transition:background .12s;padding:6px}
-.app-cell:hover{background:var(--surface3)}
-.app-cell i{font-size:20px;color:var(--accent)}
-.app-cell span{font-size:10px;color:var(--text);font-weight:500;text-align:center}
 /* Edit mode banner */
 .edit-banner{background:#fffae6;border-bottom:2px solid #f5cd47;padding:8px 16px;display:none;align-items:center;gap:10px;font-size:13px;color:#5e4300;flex-shrink:0}
 .edit-banner.on{display:flex}
@@ -1630,24 +1624,6 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 </div>
 <!-- ── TOP NAV (CamNguyen style) ── -->
 <div class="header" id="mainHeader">
-  <!-- App switcher -->
-  <div style="position:relative">
-    <button class="header-icon-btn" onclick="hdrToggleDd('hdrAppDd')" title="App switcher" aria-label="App switcher">
-      <i class="ti ti-grid-dots"></i>
-    </button>
-    <div class="hdr-dd" id="hdrAppDd" style="left:0;min-width:180px">
-      <div style="padding:8px 12px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px">Apps</div>
-      <div class="app-grid-dd">
-        <div class="app-cell"><i class="ti ti-files"></i><span>Docs</span></div>
-        <div class="app-cell"><i class="ti ti-layout-board-split"></i><span>Board</span></div>
-        <div class="app-cell"><i class="ti ti-calendar"></i><span>Calendar</span></div>
-        <div class="app-cell"><i class="ti ti-chart-bar"></i><span>Analytics</span></div>
-        <div class="app-cell"><i class="ti ti-users"></i><span>Teams</span></div>
-        <div class="app-cell"><i class="ti ti-apps"></i><span>More</span></div>
-      </div>
-    </div>
-  </div>
-
   <!-- Logo -->
   <div class="header-logo" id="headerLogoWrap" onclick="hdrLogoClick()" title="Click to change logo" style="cursor:pointer">
     <div class="logo-box" id="hdrLogoBox"><span id="hdrLogoText">P</span></div>
@@ -1709,14 +1685,10 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
         <span class="notif-badge" id="notifBadge"></span>
       </button>
       <div class="hdr-dd" id="hdrNotifDd" style="right:0;min-width:300px">
-        <div style="padding:12px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+        <div style="padding:12px 14px;border-bottom:1px solid var(--border)">
           <span style="font-size:14px;font-weight:600;color:var(--text)">Notifications</span>
-          <span style="font-size:12px;color:var(--accent);cursor:pointer">Mark all read</span>
         </div>
         <div id="notifList" style="max-height:280px;overflow-y:auto"></div>
-        <div style="padding:10px 14px;border-top:1px solid var(--border);text-align:center">
-          <span style="font-size:13px;color:var(--accent);cursor:pointer">View all notifications</span>
-        </div>
       </div>
     </div>
 
@@ -1727,9 +1699,6 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
     <div class="hdr-dd" id="hdrHelpDd" style="right:0;min-width:200px">
       <div style="padding:10px 14px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px">Help</div>
       <div class="hdr-dd-item" onclick="showKeyboardShortcuts();hdrCloseAll()"><i class="ti ti-keyboard"></i> Keyboard shortcuts</div>
-      <div class="hdr-dd-item" onclick="hdrCloseAll()"><i class="ti ti-book"></i> User guide</div>
-      <div class="hdr-dd-sep"></div>
-      <div class="hdr-dd-item" onclick="hdrCloseAll()"><i class="ti ti-info-circle"></i> About Project Docs</div>
     </div>
 
     <!-- Export actions -->
@@ -1776,12 +1745,9 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
             <div style="font-size:11px;color:var(--text3)">guest@example.com</div>
           </div>
         </div>
-        <div class="hdr-dd-item"><i class="ti ti-user"></i> Profile</div>
         <div class="hdr-dd-item" onclick="openSettings();hdrCloseAll()"><i class="ti ti-settings"></i> Settings</div>
         <div class="hdr-dd-sep"></div>
         <div class="hdr-dd-item" onclick="toggleTheme();hdrCloseAll()"><i class="ti ti-sun"></i> Toggle theme</div>
-        <div class="hdr-dd-sep"></div>
-        <div class="hdr-dd-item danger"><i class="ti ti-logout"></i> Sign out</div>
       </div>
     </div>
   </div>
@@ -1885,32 +1851,6 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
         <button class="hbtn primary" id="doImportMergeBtn" onclick="_doImportMergeBtnClick(this)"><i class="ti ti-file-import" style="font-size:13px"></i> Merge vào project của tôi</button>
       </div>
     </div>
-  </div>
-</div>
-<!-- SHARE MODAL -->
-<div class="modal-bg" id="shareModal" onclick="if(event.target===this)closeModal('shareModal')">
-  <div class="modal" style="width:480px">
-    <div class="modal-header"><div class="modal-title">Chia sẻ trang</div><button class="modal-close" onclick="closeModal('shareModal')" aria-label="Close"><i class="ti ti-x"></i></button></div>
-    <div class="modal-body">
-      <div class="field"><label>Mời người dùng</label><input type="text" placeholder="Nhập tên hoặc email..."></div>
-      <div class="field">
-        <label>Liên kết trang</label>
-        <div style="display:flex;gap:8px;margin-top:4px">
-          <input type="text" id="shareLink" value="https://projectdocs.app/page/..." readonly style="flex:1;background:var(--surface2)">
-          <button class="hbtn primary" id="shareCopyBtn" onclick="hdrCopyShareLink()"><i class="ti ti-copy"></i> Copy</button>
-        </div>
-      </div>
-      <div style="background:var(--surface2);border-radius:6px;padding:12px;margin-top:4px">
-        <p style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px">Quyền truy cập</p>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-          <span style="font-size:13px;color:var(--text)">Bất kỳ ai có liên kết</span>
-          <select style="font-size:12px;border:1px solid var(--border);border-radius:4px;padding:3px 8px;background:var(--surface);color:var(--text)">
-            <option>Có thể xem</option><option>Có thể chỉnh sửa</option><option>Không có quyền</option>
-          </select>
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer"><button class="hbtn" onclick="closeModal('shareModal')">Đóng</button><button class="hbtn primary">Mời</button></div>
   </div>
 </div>
 
@@ -2060,15 +2000,11 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
           </button>
           <button class="pab-icon-btn" id="pabUndoBtn" onclick="editorUndo()" title="Undo (Ctrl+Z)" style="display:none"><i class="ti ti-arrow-back-up"></i></button>
           <button class="pab-icon-btn" id="pabRedoBtn" onclick="editorRedo()" title="Redo (Ctrl+Y)" style="display:none"><i class="ti ti-arrow-forward-up"></i></button>
-          <button class="pab-btn" onclick="openShareModal()">
-            <i class="ti ti-share" style="font-size:13px"></i> Share
-          </button>
           <div style="position:relative">
             <button class="pab-more-btn" onclick="hdrToggleDd('pabMoreDd')" aria-label="More options">
               <i class="ti ti-dots"></i>
             </button>
             <div class="hdr-dd" id="pabMoreDd" style="right:0;top:36px">
-              <div class="hdr-dd-item" onclick="hdrCopyLink();hdrCloseAll()"><i class="ti ti-link"></i> Copy page link</div>
               <div class="hdr-dd-item" onclick="hdrDuplicatePage();hdrCloseAll()"><i class="ti ti-copy"></i> Duplicate page</div>
               <div class="hdr-dd-item" onclick="hdrExportCurrentJson();hdrCloseAll()"><i class="ti ti-file-zip"></i> Export page ZIP (with images)</div>
               <div class="hdr-dd-item" onclick="reloadAllMedia();hdrCloseAll()"><i class="ti ti-refresh"></i> Reload all media</div>
@@ -3134,12 +3070,6 @@ function hdrToggleWatch(){
   btn.title=now?'Watching – click to stop':'Watch page';
   toast(now?'Đang theo dõi trang này':'Đã hủy theo dõi','info');
 }
-function hdrCopyLink(){
-  const doc=currentDoc();if(!doc)return;
-  const url=window.location.href.split('?')[0]+'?doc='+doc.id;
-  navigator.clipboard?.writeText(url).catch(()=>{});
-  toast('Đã sao chép liên kết trang','success');
-}
 function hdrDuplicatePage(){
   const doc=currentDoc();if(!doc)return;
   const copy=JSON.parse(JSON.stringify(doc));
@@ -3167,20 +3097,7 @@ function hdrExportCurrentJson(){
   docCtxId=doc.id;
   docCtxExportJson();
 }
-function openShareModal(){
-  hdrCloseAll();
-  const doc=currentDoc();
-  const sl=document.getElementById('shareLink');
-  if(sl&&doc)sl.value=`projectdocs://page/${doc.id}`;
-  openModal('shareModal');
-}
-function hdrCopyShareLink(){
-  const sl=document.getElementById('shareLink');
-  if(sl)navigator.clipboard?.writeText(sl.value).catch(()=>{});
-  const btn=document.getElementById('shareCopyBtn');
-  if(btn){btn.innerHTML='<i class="ti ti-check"></i> Copied!';setTimeout(()=>{btn.innerHTML='<i class="ti ti-copy"></i> Copy';},2000);}
-  toast('Đã sao chép liên kết','success');
-}
+
 
 
 function hdrLogoClick(){
@@ -3993,96 +3910,6 @@ async function docCtxExportJson(){
   }
 }
 
-async function importPageJson(){
-  document.getElementById('docCtxMenu')?.classList.remove('on');
-  const input=document.createElement('input');
-  input.type='file';input.accept='.json,.zip';
-  input.onchange=async e=>{
-    const file=e.target.files[0];if(!file)return;
-    const ext=(file.name.split('.').pop()||'').toLowerCase();
-    try{
-      toast('Đang nhập trang...','info');
-      let importDoc,media={};
-
-      if(ext==='zip'){
-        // ZIP format: page.json + images/ + videos/
-        let JSZip;
-        try{JSZip=await _loadJSZip();}catch(er){toast('Không tải được JSZip','error');return;}
-        const zip=await JSZip.loadAsync(file);
-        const pf=zip.file('page.json');
-        if(!pf){toast('Không tìm thấy page.json trong ZIP','error');return;}
-        const data=JSON.parse(await pf.async('string'));
-        if(data.type!=='camnguyen-page'||!data.doc){toast('File ZIP không hợp lệ','error');return;}
-        importDoc=JSON.parse(JSON.stringify(data.doc));
-        // Load images + videos from ZIP into IDB
-        for(const[path,entry]of Object.entries(zip.files)){
-          if(entry.dir)continue;
-          if(!path.startsWith('images/')&&!path.startsWith('videos/'))continue;
-          try{
-            const blob=await entry.async('blob');
-            const id=path.replace(/^(images|videos)\//,'').replace(/\.[^.]+$/,'');
-            if(id&&blob.size>0){
-              await _idbPut(id,blob);
-              if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}
-            }
-          }catch(er){console.warn('[importPage zip] skip',path,er);}
-        }
-      }else{
-        // JSON format: may have embedded base64 media or separate images/ folder
-        const text=await file.text();
-        const data=JSON.parse(text);
-        if(data.type!=='camnguyen-page'||!data.doc){toast('File không hợp lệ (phải là .camnguyen.json hoặc .camnguyen.zip)','error');return;}
-        importDoc=JSON.parse(JSON.stringify(data.doc));
-        media=data.media||{};
-        let _importOk=0,_importFail=0;
-        for(const[id,b64]of Object.entries(media)){
-          if(!b64)continue;
-          try{
-            const blob=_dataUrlToBlob(b64);
-            if(!blob){_importFail++;continue;}
-            await _idbPut(id,blob);
-            if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}
-            _importOk++;
-          }catch(e){_importFail++;}
-        }
-        if(_importOk===0&&Object.keys(media).length===0)
-          toast('ℹ️ Ảnh chưa được tải — nhấn Push hoặc "Set project folder" để tải ảnh từ thư mục','info');
-        if(_importFail>0)console.warn('[import] Failed to restore',_importFail,'media items;',_importOk,'ok');
-      }
-
-      // Give a new ID to avoid collision with existing docs
-      const newId=uid();
-      importDoc.content=(importDoc.content||'').replace(new RegExp(importDoc.id,'g'),newId);
-      importDoc.id=newId;
-      importDoc.parentId=null;
-      importDoc.section=state.sections[0]||'default';
-      importDoc.createdAt=importDoc.createdAt||new Date().toISOString();
-      importDoc.updatedAt=new Date().toISOString();
-
-      // Re-attach base64 src for small floating images (legacy path only)
-      (importDoc.images||[]).forEach(m=>{
-        if(!m)return;
-        if(media[m.id]&&(!m.src||m.src.startsWith('blob:'))){
-          if((m.size||0)<=512*1024)m.src=media[m.id];else delete m.src;
-        }else if(m.src&&m.src.startsWith('blob:'))delete m.src;
-        if(m.type==='carousel'&&m.slides){
-          m.slides.forEach(sl=>{
-            if(!sl)return;
-            if(media[sl.id]&&(!sl.src||sl.src.startsWith('blob:'))){
-              if((sl.size||0)<=512*1024)sl.src=media[sl.id];else delete sl.src;
-            }else if(sl.src&&sl.src.startsWith('blob:'))delete sl.src;
-          });
-        }
-      });
-
-      state.docs.push(importDoc);
-      persist();renderSidebar();openDoc(newId);
-      toast(`✅ Đã nhập "${importDoc.title||'Untitled'}"`, 'success');
-    }catch(ex){toast('Lỗi nhập file: '+ex.message,'error');console.error(ex);}
-  };
-  input.click();
-}
-
 // MEDIA (image/video/gif)
 // ─── INDEXEDDB BLOB STORE ─────────────────────────────────
 const MEDIA_DB='pd_media_v1';
@@ -4143,17 +3970,7 @@ function _purgeDocMedia(doc){
       // an old JSON file that references these assets.
     }
   }
-}
-async function _projDeleteFolderAsset(id){
-  if(!_projDir||!id)return;
-  for(const sub of['images','videos']){
-    let dir;try{dir=await _projDir.getDirectoryHandle(sub);}catch(e){continue;}
-    for await(const[name] of dir.entries()){
-      if(name.replace(/\.[^.]+$/,'')===id){try{await dir.removeEntry(name);}catch(e){}break;}
-    }
-  }
-}
-function _purgeDocTree(docId){
+}function _purgeDocTree(docId){
   const doc=state.docs.find(d=>d.id===docId);
   if(!doc)return;
   _purgeDocMedia(doc);
@@ -4281,22 +4098,7 @@ function _cacheUrl(id,url){
   }
 }
 
-// ─── MEDIA UPLOAD ─────────────────────────────────────────
-function handleFileInput(e){
-  const files=Array.from(e.target.files);
-  e.target.value='';
-  if(!files.length)return;
-  // Separate images vs videos/gifs
-  const imgs=files.filter(f=>f.type.startsWith('image/')&&!isGif(f));
-  const others=files.filter(f=>!imgs.includes(f));
-  // Single file: normal fmedia
-  if(files.length===1){loadMedia(files[0]);return;}
-  // Multiple images only → carousel
-  if(imgs.length>=2&&others.length===0){loadCarousel(imgs);return;}
-  // Mixed or multiple: each individually
-  files.forEach(loadMedia);
-}
-function isVideo(f){return f.type.startsWith('video/')||/\.(mp4|webm|ogg|mov)$/i.test(f.name);}
+// ─── MEDIA UPLOAD ─────────────────────────────────────────function isVideo(f){return f.type.startsWith('video/')||/\.(mp4|webm|ogg|mov)$/i.test(f.name);}
 function isGif(f){return f.type==='image/gif'||/\.gif$/i.test(f.name);}
 
 async function loadMedia(file){
@@ -4321,8 +4123,6 @@ async function loadMedia(file){
   insertMediaInEditor({...media,src:objUrl});
   doc.updatedAt=new Date().toISOString();markDirty();
 }
-function loadImage(f){loadMedia(f);}
-
 // ─── IMAGE CAROUSEL (fmedia type) ─────────────────────────
 
 /** Upload multiple image files → store each blob → create carousel fmedia */
@@ -4521,9 +4321,7 @@ function addMedia(src,name,type='image'){
   doc.images.push(media);
   insertMediaInEditor(media);
   doc.updatedAt=new Date().toISOString();markDirty();
-}
-function addImage(src,name){addMedia(src,name,'image');}
-function insertMediaInEditor(media){
+}function insertMediaInEditor(media){
   const scroll=document.getElementById('editorScroll');
   const editor=document.getElementById('editor');
   const existing=scroll.querySelectorAll('.fmedia').length;
@@ -5063,10 +4861,6 @@ function _snapApplyResize(el, nl, nt, nw, nh, dir, targets) {
   return { l: fl, t: ft, w: fw, h: fh };
 }
 
-function fmDragStart(e,fm){
-  fmDragFromPos(e.clientX,e.clientY,fm);
-}
-
 // Auto-size fmedia container to match image's natural aspect ratio
 function _fmAutoHeight(imgEl){
   const fm=imgEl.closest('.fmedia');if(!fm)return;
@@ -5350,11 +5144,7 @@ function lbGoTo(i){lbIndex=i;lbRender();}
 function lbClose(){document.getElementById('lightbox').classList.remove('on');document.body.style.overflow='';}
 function lbBgClick(e){if(e.target===document.getElementById('lightbox'))lbClose();}
 function lbDownload(){const img=lbImages[lbIndex];if(!img)return;const a=document.createElement('a');a.href=img.src;a.download=img.name;a.click();}
-function selImg(el){document.querySelectorAll('.editor-content img').forEach(i=>i.classList.remove('sel'));el.classList.add('sel');}
-function selImgAndOpen(el){selImg(el);const imgs=Array.from(document.querySelectorAll('.editor-content img,.fmedia img'));lbOpen(imgs.indexOf(el));}
-function imgCtx(e,el){selImg(el);const doc=currentDoc();if(!doc)return;ctxImgIdx=(doc.images||[]).findIndex(i=>i.id===el.dataset.imgid);showCtx('ctxMenu',e);}
-
-// DRAG & DROP
+function selImg(el){document.querySelectorAll('.editor-content img').forEach(i=>i.classList.remove('sel'));el.classList.add('sel');}// DRAG & DROP
 const ew=document.getElementById('editorWrap');
 const ov=document.getElementById('dropOverlay');
 ew.addEventListener('dragover',e=>{e.preventDefault();if(state.currentDocId)ov.classList.add('on');});
@@ -5386,9 +5176,7 @@ const dd=document.getElementById('bbSizeDD');if(dd&&!dd.contains(e.target)&&e.ta
 });
 
 // TOOLBAR
-function fmt(cmd){_undoSnapshot();document.execCommand(cmd,false,null);document.getElementById('editor')?.focus({preventScroll:true});}
-function applyBlock(tag){_undoSnapshot();document.execCommand('formatBlock',false,tag);document.getElementById('editor')?.focus({preventScroll:true});}
-function insertCode(savedRange){
+function fmt(cmd){_undoSnapshot();document.execCommand(cmd,false,null);document.getElementById('editor')?.focus({preventScroll:true});}function insertCode(savedRange){
   const editor=document.getElementById('editor');if(!editor)return;
   const pre=document.createElement('pre');
   const codeNode=document.createTextNode('// code here');pre.appendChild(codeNode);
@@ -5413,8 +5201,6 @@ document.addEventListener('click',e=>{
   const code=tmp.textContent;
   navigator.clipboard?.writeText(code).then(()=>{btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',1500)}).catch(()=>{});
 });
-function insertLink(){const url=prompt('Nhap URL:');if(!url)return;const text=prompt('Nhap text:',url)||url;document.getElementById('editor')?.focus({preventScroll:true});document.execCommand('insertHTML',false,`<a href="${escH(url)}" target="_blank">${escH(text)}</a>`);}
-
 // CTX IMAGE
 function ctxInsert(){const doc=currentDoc();if(!doc||ctxImgIdx===null)return;insertImageInEditor(doc.images[ctxImgIdx]);document.getElementById('ctxMenu').classList.remove('on');}
 function ctxResize(){const doc=currentDoc();if(!doc||ctxImgIdx===null)return;const img=doc.images[ctxImgIdx];document.getElementById('modalPreview').src=img.src;document.getElementById('mWidth').value=500;document.getElementById('mAlign').value='left';openModal('resizeModal');document.getElementById('ctxMenu').classList.remove('on');}
@@ -5497,8 +5283,6 @@ function updateUserUI(){
   const avatarEl=document.getElementById('sbAvatarEl');if(avatarEl)avatarEl.textContent=(state.username||'U').charAt(0).toUpperCase();
 }
 function editProjectName(){const name=prompt('Doi ten du an:',state.projectName);if(name!==null&&name.trim()){state.projectName=name.trim();persist();const el=document.getElementById('projectNameEl');if(el)el.textContent=state.projectName;const spTxt=document.getElementById('sbSpaceIconText');if(spTxt&&!(state.projectLogo&&state.projectLogo.imgDataUrl))spTxt.textContent=state.projectName.charAt(0).toUpperCase();_pabLogoInit();_hdrLogoInit();}}
-function editUser(){const name=prompt('Doi ten:',state.username);if(name!==null){state.username=name||state.username;persist();updateUserUI();}}
-
 // MODALS
 function openModal(id){document.getElementById(id).classList.add('on');}
 function _closeModalEl(bg){if(!bg||!bg.classList.contains('on'))return;bg.classList.add('closing');setTimeout(()=>bg.classList.remove('on','closing'),150);}
@@ -5741,18 +5525,6 @@ document.addEventListener('mousedown',e=>{
 },{capture:true});
 
 // ── Toggle số thứ tự hàng ───────────────────────────────────
-function tblToggleRowNums(){
-  const td=_activeTd;if(!td)return;
-  const table=td.closest('table');if(!table)return;
-  const current=table.dataset.rownums!=='0'; // currently showing?
-  table.dataset.rownums=current?'0':'1';     // toggle
-  tblHideDropdown();
-  tblEqualizeColumns(table);
-  tblAttachTable(table);
-  onContentChange();
-  toast(current?'Da an cot so thu tu':'Da hien cot so thu tu','info');
-}
-
 // ── Wrap table in .tbl-outer (for edge resize) ──────────────
 function _tblWrapOuter(table){
   const par=table.parentElement;if(!par)return;
@@ -5940,41 +5712,9 @@ function tblGetCellIndex(td){
   // Offset by 1 to skip the .tbl-row-num column
   const idx=Array.from(td.parentElement.cells).indexOf(td);
   return idx;
-}
-function tblRealColIndex(td){
-  // The actual data column index (0-based, excluding row-num col)
-  return tblGetCellIndex(td)-1;
-}
-function tblGetRowIndex(td){return Array.from(td.closest('table').rows).indexOf(td.parentElement);}
+}function tblGetRowIndex(td){return Array.from(td.closest('table').rows).indexOf(td.parentElement);}
 
 function tblHideDropdown(){const dd=document.getElementById('tblDropdown');if(dd)dd.classList.remove('on');_activeTd=null;}
-function tblAddRowBelow(){const td=_activeTd;if(!td)return;const table=td.closest('table');
-  // Count data columns only (skip row-num col)
-  const dataCols=table.rows[0].cells.length-1;
-  const nr=table.insertRow(tblGetRowIndex(td)+1);
-  for(let i=0;i<dataCols;i++){nr.insertCell(i).innerHTML='Dữ liệu';}
-  tblHideDropdown();onContentChange();tblAttachAll();toast('Đã thêm hàng','success');}
-function tblAddRowAbove(){const td=_activeTd;if(!td)return;const table=td.closest('table');
-  const dataCols=table.rows[0].cells.length-1;
-  const nr=table.insertRow(tblGetRowIndex(td));
-  for(let i=0;i<dataCols;i++){nr.insertCell(i).innerHTML='Dữ liệu';}
-  tblHideDropdown();onContentChange();tblAttachAll();toast('Đã thêm hàng','success');}
-function tblAddColRight(){const td=_activeTd;if(!td)return;const table=td.closest('table');const ci=tblGetCellIndex(td);Array.from(table.rows).forEach((row,ri)=>{const cell=ri===0?document.createElement('th'):document.createElement('td');cell.innerHTML=ri===0?'Cột mới':'Dữ liệu';row.insertBefore(cell,row.cells[ci+1]||null);});tblEqualizeColumns(table);tblHideDropdown();onContentChange();tblAttachAll();toast('Đã thêm cột','success');}
-function tblAddColLeft(){const td=_activeTd;if(!td)return;const table=td.closest('table');const ci=tblGetCellIndex(td);Array.from(table.rows).forEach((row,ri)=>{const cell=ri===0?document.createElement('th'):document.createElement('td');cell.innerHTML=ri===0?'Cột mới':'';row.insertBefore(cell,row.cells[ci]);});const cg=table.querySelector('colgroup');if(cg)cg.dataset.auto='1';tblEqualizeColumns(table);tblHideDropdown();onContentChange();tblAttachAll();toast('Đã thêm cột','success');}
-function tblDelRow(){const td=_activeTd;if(!td)return;const table=td.closest('table');if(table.rows.length<=1){toast('Phải có ít nhất 1 hàng','error');return;}table.deleteRow(tblGetRowIndex(td));tblHideDropdown();onContentChange();tblAttachAll();toast('Đã xoá hàng','info');}
-function tblDelCol(){const td=_activeTd;if(!td)return;const table=td.closest('table');if(table.rows[0].cells.length<=1){toast('Phải có ít nhất 1 cột','error');return;}const ci=tblGetCellIndex(td);Array.from(table.rows).forEach(row=>{if(row.cells[ci])row.deleteCell(ci);});tblEqualizeColumns(table);tblHideDropdown();onContentChange();tblAttachAll();toast('Đã xoá cột','info');}
-function tblDelTable(){
-  const td=_activeTd;if(!td)return;
-  const table=td.closest('table');if(!table)return;
-  if(!confirm('Xóa bảng này?'))return;
-  // Remove .tbl-frame wrapper if exists, else .tbl-outer or just the table
-  const frame=table.closest('.tbl-frame');
-  if(frame)frame.remove();else{const outer=table.closest('.tbl-outer');if(outer)outer.remove();else table.remove();}
-  _activeTd=null;
-  tblHideDropdown();
-  onContentChange();
-  toast('Đã xóa bảng','info');
-}
 
 // ═══════════════════════════════════════════════════════════
 // MERGE & CENTER ENGINE — virtual grid for correct span handling
@@ -6236,13 +5976,6 @@ document.addEventListener('keydown',e=>{
 
 
 // ── Smart entry: 1 file → image, 2+ files → carousel ──────────
-async function tblInsertImages(cell, files){
-  const imgs=Array.from(files).filter(f=>f&&f.type&&f.type.startsWith('image/'));
-  if(!imgs.length)return;
-  if(imgs.length===1){await tblInsertImage(cell,imgs[0]);}
-  else{await tblInsertCarousel(cell,imgs);}
-}
-
 // ── Insert multiple images as carousel in a table cell ──────────
 async function tblInsertCarousel(cell,files){
   const srcs=[];
@@ -6482,90 +6215,6 @@ function _tblApplyCellColor(color,r,c,scope){
   }
   onContentChange();
   tblHideDropdown();
-}
-
-function tblBuildCellColorGrid(container){
-  const dark=_isDarkMode();
-  const wrap=document.createElement('div');
-  wrap.style.cssText='padding:6px 8px;border-top:1px solid var(--border)';
-
-  // ── Scope tab header ──────────────────────────────────────
-  const header=document.createElement('div');
-  header.style.cssText='display:flex;align-items:center;justify-content:space-between;margin-bottom:6px';
-  const title=document.createElement('div');
-  title.style.cssText='font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px';
-  title.textContent='Màu nền';
-  header.appendChild(title);
-
-  const tabs=document.createElement('div');tabs.className='tbl-scope-tabs';
-  const scopeLabels=[['cell','Ô'],['row','Hàng'],['col','Cột']];
-  let _scope='cell';
-  scopeLabels.forEach(([val,label])=>{
-    const tab=document.createElement('button');tab.className='tbl-scope-tab'+(val==='cell'?' active':'');
-    tab.textContent=label;tab.type='button';
-    tab.onmousedown=e=>e.preventDefault();
-    tab.onclick=e=>{
-      e.stopPropagation();
-      _scope=val;
-      tabs.querySelectorAll('.tbl-scope-tab').forEach(t=>t.classList.remove('active'));
-      tab.classList.add('active');
-      // Update title
-      const labels={cell:'Màu nền — Ô',row:'Màu nền — Cả hàng',col:'Màu nền — Cả cột'};
-      title.textContent=labels[val];
-    };
-    tabs.appendChild(tab);
-  });
-  header.appendChild(tabs);
-  wrap.appendChild(header);
-
-  // ── Color grid ────────────────────────────────────────────
-  const grid=document.createElement('div');
-  grid.style.cssText='display:grid;grid-template-columns:repeat(8,1fr);gap:3px';
-
-  // "No color" reset cell
-  const none=document.createElement('div');
-  none.style.cssText='width:18px;height:18px;border-radius:4px;cursor:pointer;border:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text3)';
-  none.innerHTML='✕';none.title='Xóa màu nền';
-  none.addEventListener('mouseenter',()=>{none.style.borderColor='var(--danger)';none.style.color='var(--danger)';});
-  none.addEventListener('mouseleave',()=>{none.style.borderColor='var(--border)';none.style.color='var(--text3)';});
-  none.addEventListener('mousedown',e=>{e.preventDefault();e.stopPropagation();_tblApplyCellColor(null,null,null,_scope);});
-  grid.appendChild(none);
-
-  // Palette swatches
-  TEXT_MATRIX.forEach((row,r)=>{
-    row.slice(0,7).forEach(([lc,dc],c)=>{
-      const color=dark?dc:lc;
-      const sw=document.createElement('div');
-      sw.style.cssText='width:18px;height:18px;border-radius:4px;cursor:pointer;border:2px solid transparent;transition:transform .1s;background:'+color;
-      sw.title=color;
-      sw.addEventListener('mouseenter',()=>sw.style.transform='scale(1.22)');
-      sw.addEventListener('mouseleave',()=>sw.style.transform='');
-      sw.addEventListener('mousedown',e=>{
-        e.preventDefault();e.stopPropagation();
-        _tblApplyCellColor(color,r,c,_scope);
-      });
-      grid.appendChild(sw);
-    });
-  });
-  wrap.appendChild(grid);
-
-  // ── Custom color ──────────────────────────────────────────
-  const customRow=document.createElement('div');
-  customRow.style.cssText='display:flex;align-items:center;gap:6px;margin-top:6px;padding-top:5px;border-top:1px solid var(--border)';
-  const customLbl=document.createElement('span');customLbl.style.cssText='font-size:10.5px;color:var(--text2);flex:1';customLbl.textContent='Màu tùy chỉnh';
-  const customBtn=document.createElement('div');
-  customBtn.style.cssText='width:22px;height:22px;border-radius:5px;border:1.5px dashed var(--border2);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text3);position:relative;overflow:hidden';
-  customBtn.innerHTML='<i class="ti ti-plus" style="font-size:11px;pointer-events:none"></i>';
-  const customInp=document.createElement('input');customInp.type='color';customInp.value='#ffffff';
-  customInp.style.cssText='position:absolute;inset:-4px;opacity:0;cursor:pointer;width:200%;height:200%';
-  customInp.addEventListener('change',function(){
-    _tblApplyCellColor(this.value,null,null,_scope);
-  });
-  customBtn.appendChild(customInp);
-  customRow.appendChild(customLbl);customRow.appendChild(customBtn);
-  wrap.appendChild(customRow);
-
-  container.appendChild(wrap);
 }
 
 function tblShowDropdown(td,triggerEl){
@@ -7006,36 +6655,7 @@ function tblRowResizeStart(e,row){
 document.addEventListener('mousedown',e=>{const dd=document.getElementById('tblDropdown');if(dd&&!dd.contains(e.target)&&!e.target.classList.contains('tbl-trigger'))tblHideDropdown();});
 
 // TABLE GRID PICKER
-const TG_ROWS=8,TG_COLS=10;let _tgHideTimer=null;
-function showTableGrid(triggerEl){
-  clearTimeout(_tgHideTimer);
-  const grid=document.getElementById('tableGrid');
-  if(!grid)return;
-  let html='<div>';
-  for(let r=0;r<TG_ROWS;r++){html+='<div class="tg-row">';for(let c=0;c<TG_COLS;c++){html+=`<div class="tg-cell" data-r="${r}" data-c="${c}" onmouseenter="tgHover(${r},${c})" onmousedown="event.preventDefault();tgInsert(${r+1},${c+1})"></div>`;}html+='</div>';}
-  html+='</div>';
-  html+='<div class="tg-label" id="tgLabel">Bảng</div>';
-  html+='<div class="tg-manual">';
-  html+='<input type="number" id="tgManualCols" min="1" max="20" value="3" title="Số cột">';
-  html+='<span>×</span>';
-  html+='<input type="number" id="tgManualRows" min="1" max="50" value="3" title="Số hàng">';
-  html+='<button onmousedown="event.preventDefault();tgManualInsert()">Tạo</button>';
-  html+='</div>';
-  grid.innerHTML=html;
-  // Position: near trigger element or near cursor
-  const wrap=document.getElementById('drawTableWrap');
-  if(wrap){
-    const ref=triggerEl||document.getElementById('editor');
-    const rect=ref.getBoundingClientRect();
-    const vw=window.innerWidth,vh=window.innerHeight;
-    let top=rect.bottom+4,left=rect.left;
-    if(top+340>vh)top=Math.max(8,rect.top-344);
-    if(left+290>vw)left=Math.max(8,vw-294);
-    wrap.style.top=top+'px';wrap.style.left=left+'px';
-  }
-  grid.classList.add('on');
-}
-function hideTableGrid(){const g=document.getElementById('tableGrid');if(g)g.classList.remove('on');}
+const TG_ROWS=8,TG_COLS=10;let _tgHideTimer=null;function hideTableGrid(){const g=document.getElementById('tableGrid');if(g)g.classList.remove('on');}
 function tgHover(row,col){
   document.querySelectorAll('.tg-cell').forEach(cell=>{
     const r2=parseInt(cell.dataset.r),c2=parseInt(cell.dataset.c);
@@ -8574,18 +8194,6 @@ function _cfInitLayout(layout){
   // Re-wire any checklists that were inside the cloned column items
   layout.querySelectorAll('.cf-checklist').forEach(cl=>_cfWireChecklist(cl));
 }
-
-function slashAddCol(btn){
-  const layout=btn.closest('.cf-column-layout');if(!layout)return;
-  const n=parseInt(layout.dataset.cols||2)+1;
-  _cfSetCols(layout,Math.min(6,n));
-}
-function slashRemoveCol(btn){
-  const layout=btn.closest('.cf-column-layout');if(!layout)return;
-  const n=parseInt(layout.dataset.cols||2)-1;
-  _cfSetCols(layout,Math.max(1,n));
-}
-
 // Get caret bounding rect
 function _slashGetCaretRect(){
   // Try _slashSavedRange first — it's set when '/' was typed, more reliable than live selection
@@ -10742,53 +10350,6 @@ function _tbCompressImg(file){
   });
 }
 
-async function tbInsertImages(id,inputEl,filesOverride){
-  const box=document.getElementById(id);if(!box)return;
-  const bodyEl=box.querySelector('.txtbox-body');if(!bodyEl)return;
-  const files=filesOverride||Array.from(inputEl.files||[]);
-  if(!files.length)return;
-  if(inputEl.value!==undefined)inputEl.value=''; // reset file input
-
-  // Focus textbox body and place cursor at end
-  bodyEl.focus();
-  const sel=window.getSelection();
-  const range=document.createRange();
-  range.selectNodeContents(bodyEl);range.collapse(false);
-  sel.removeAllRanges();sel.addRange(range);
-
-  // Insert images: if single → block, if multiple → gallery row
-  const srcs=[];
-  for(const file of files.filter(f=>f&&f.type&&f.type.startsWith('image/'))){
-    const src=await _tbCompressImg(file);
-    if(src)srcs.push({src,name:file.name||'image'});
-  }
-  if(!srcs.length)return;
-
-  if(srcs.length===1){
-    // Single image: block, click → lightbox
-    const img=document.createElement('img');
-    img.src=srcs[0].src;img.alt=srcs[0].name;
-    img.style.cssText='max-width:100%;display:block;margin:6px 0;border-radius:6px;cursor:zoom-in';
-    img.addEventListener('dblclick',()=>{const _all=Array.from(document.querySelectorAll('.fmedia img,.editor-content img'));lbOpen(Math.max(0,_all.indexOf(img)));});
-    const br=document.createElement('br');
-    const curSel=window.getSelection();
-    if(curSel&&curSel.rangeCount){
-      const r=curSel.getRangeAt(0);r.deleteContents();r.insertNode(br);r.insertNode(img);r.setStartAfter(br);r.collapse(true);curSel.removeAllRanges();curSel.addRange(r);
-    } else {bodyEl.appendChild(img);bodyEl.appendChild(br);}
-  } else {
-    // Multiple images: IMAGE CAROUSEL
-    const carousel=tbBuildCarousel(srcs);
-    const curSel=window.getSelection();
-    if(curSel&&curSel.rangeCount){
-      const r=curSel.getRangeAt(0);r.deleteContents();r.insertNode(carousel);r.setStartAfter(carousel);r.collapse(true);curSel.removeAllRanges();curSel.addRange(r);
-    } else {bodyEl.appendChild(carousel);}
-    // Init swipe on touch
-    tbCarInitSwipe(carousel);
-  }
-  tbSaveAll();
-  toast(srcs.length>1?srcs.length+' anh da duoc them':'Anh da duoc them','success');
-}
-
 // ═══ IMAGE CAROUSEL — full version ══════════════════════════
 function tbBuildCarousel(srcs){
   const total=srcs.length;
@@ -11019,11 +10580,7 @@ function bbFmt(cmd){
   if(!inBox&&!inTbl)document.getElementById('editor')?.focus({preventScroll:true});
   onContentChange();bbUpdateState();setTimeout(bbShow,10);
 }
-function bbApplyBlock(val){document.execCommand('formatBlock',false,val);document.getElementById('editor')?.focus({preventScroll:true});onContentChange();setTimeout(bbShow,10);}
-function bbApplyFont(font){document.execCommand('fontName',false,font);document.getElementById('editor')?.focus({preventScroll:true});onContentChange();setTimeout(bbShow,10);}
-function bbOpenSizeDD(e){if(e){e.stopPropagation();e.preventDefault();}clearTimeout(_sizeCloseTimer);saveRange();const dd=document.getElementById('bbSizeDD');const cur=parseInt(document.getElementById('bbSizeNum').value)||16;dd.innerHTML=BB_SIZES.map(s=>`<div class="bb-size-opt${s===cur?' active':''}" onmousedown="event.preventDefault();bbApplySize(${s})">${s}</div>`).join('');const inp=document.getElementById('bbSizeNum');const r=inp.getBoundingClientRect();dd.style.visibility='hidden';dd.classList.add('on');const ddH=dd.offsetHeight||200;let top=r.bottom+2;if(top+ddH>window.innerHeight-8)top=r.top-ddH-2;dd.style.top=top+'px';dd.style.left=r.left+'px';dd.style.visibility='';setTimeout(()=>{const a=dd.querySelector('.active');if(a)a.scrollIntoView({block:'center'});},50);}
-function bbCloseSizeDD(){_sizeCloseTimer=setTimeout(()=>document.getElementById('bbSizeDD').classList.remove('on'),120);}
-function bbApplySize(size){const editor=document.getElementById('editor');restoreRange();editor.focus({preventScroll:true});document.execCommand('fontSize',false,'7');editor.querySelectorAll('font[size="7"]').forEach(f=>{const span=document.createElement('span');span.style.fontSize=size+'px';span.innerHTML=f.innerHTML;f.replaceWith(span);});document.getElementById('bbSizeNum').value=size;document.getElementById('bbSizeDD').classList.remove('on');onContentChange();setTimeout(bbShow,10);}
+function bbApplyBlock(val){document.execCommand('formatBlock',false,val);document.getElementById('editor')?.focus({preventScroll:true});onContentChange();setTimeout(bbShow,10);}function bbApplySize(size){const editor=document.getElementById('editor');restoreRange();editor.focus({preventScroll:true});document.execCommand('fontSize',false,'7');editor.querySelectorAll('font[size="7"]').forEach(f=>{const span=document.createElement('span');span.style.fontSize=size+'px';span.innerHTML=f.innerHTML;f.replaceWith(span);});document.getElementById('bbSizeNum').value=size;document.getElementById('bbSizeDD').classList.remove('on');onContentChange();setTimeout(bbShow,10);}
 function bbTextColor(color){
   document.getElementById('bbTextBar').style.background=color;
   document.getElementById('textColorBar').style.background=color;
@@ -11380,14 +10937,6 @@ function toggleColorPalette(paletteId,triggerEl){
   _activePalette=paletteId;
 }
 
-function applyColorFromPalette(paletteId,color,mode){
-  restoreRange();
-  if(mode==='text'){bbTextColor(color);}
-  else{bbHighlight(color);}
-  closeAllPalettes();
-  setTimeout(bbShow,10);
-}
-
 function closeAllPalettes(){
   document.querySelectorAll('.color-palette').forEach(el=>el.classList.remove('on'));
   _activePalette=null;
@@ -11397,9 +10946,6 @@ function closeAllPalettes(){
 document.addEventListener('mousedown',e=>{
   if(!e.target.closest('.color-palette')&&!e.target.closest('.bb-color-btn'))closeAllPalettes();
 });
-function applyTextColor(color){document.getElementById('textColorBar').style.background=color;document.getElementById('editor')?.focus({preventScroll:true});document.execCommand('foreColor',false,color);onContentChange();}
-function applyHighlight(color){document.getElementById('bgColorBar').style.background=color;document.getElementById('editor')?.focus({preventScroll:true});document.execCommand('hiliteColor',false,color);onContentChange();}
-function bbRemoveHighlight(){restoreRange();document.getElementById('editor')?.focus({preventScroll:true});document.execCommand('hiliteColor',false,'transparent');onContentChange();setTimeout(bbShow,10);}
 function bbClear(){document.execCommand('removeFormat',false,null);onContentChange();setTimeout(bbShow,10);}
 
 function bbAlign(cmd){
@@ -11529,52 +11075,6 @@ async function _resetApp(){
 
   toast('✅ Đã xoá toàn bộ — sẵn sàng cho dự án mới','success');
 }
-
-async function _openProjectFile(){
-  const input=document.createElement('input');
-  input.type='file';
-  input.accept='.json';
-  input.onchange=async e=>{
-    const file=e.target.files[0];if(!file)return;
-    try{
-      const text=await file.text();
-      const data=JSON.parse(text);
-      if(!data||!Array.isArray(data.docs)){toast('File không hợp lệ — không tìm thấy danh sách trang','error');return;}
-      if(state.docs&&state.docs.length>0){
-        if(!confirm(`Mở "${file.name}" sẽ thay thế ${state.docs.length} trang hiện tại.\nBạn có muốn tiếp tục?`))return;
-      }
-      Object.assign(state,data);
-      localStorage.setItem('projectdocs_v3',JSON.stringify(data));
-      renderSidebar();
-      if(state.docs&&state.docs.length>0){
-        // Load folder assets into IDB FIRST so tblAttachAll finds them when openDoc renders
-        if(_projDir){
-          try{await _projLoadFolderAssets(_projDir);}catch(e){}
-        } else {
-          // No folder connected — check if any doc has image references
-          const hasImages=_collectDocAssetIds(state.docs).size>0;
-          if(hasImages){
-            toast(`✅ Đã mở "${file.name}" — ${data.docs.length} trang`,'success');
-            openDoc(state.docs[0].id);
-            // Prompt user to connect folder so images can load
-            if(confirm('Trang có chứa ảnh/video.\nKết nối thư mục project để tải ảnh về?')){
-              await _projOpenFolder();
-              if(_projDir){
-                try{await _projLoadFolderAssets(_projDir);}catch(e){}
-                setTimeout(()=>_reloadEditorImages(),300);
-              }
-            }
-            return;
-          }
-        }
-        openDoc(state.docs[0].id);
-        setTimeout(()=>_reloadEditorImages(),300);
-      }
-      toast(`✅ Đã mở "${file.name}" — ${data.docs.length} trang`,'success');
-    }catch(err){toast('Lỗi đọc file: '+err.message,'error');}
-  };
-  input.click();
-}
 function _sbImportToggleDd(btn){
   const dd=document.getElementById('_sbImportDd');
   if(!dd)return;
@@ -11627,26 +11127,6 @@ function _sbImportWireDrop(){
       await _sbImportProcessFile(file);
     });
   });
-}
-async function _sbImportFromFile(){
-  const input=document.createElement('input');
-  input.type='file';
-  input.accept='.zip,.json,.camnguyen.json,application/zip,application/x-zip-compressed,application/octet-stream';
-  input.onchange=async e=>{
-    const file=e.target.files[0];if(!file)return;
-    await _sbImportProcessFile(file);
-  };
-  input.click();
-}
-async function _sbImportFromZip(){
-  const input=document.createElement('input');
-  input.type='file';
-  input.accept='.zip,application/zip,application/x-zip-compressed';
-  input.onchange=async e=>{
-    const file=e.target.files[0];if(!file)return;
-    await _sbImportProcessFile(file);
-  };
-  input.click();
 }
 async function _sbImportProcessFile(file){
   const ext=(file.name.split('.').pop()||'').toLowerCase();
@@ -11762,10 +11242,6 @@ function _sbImportShowMergeModal(sourceName,docs,mediaCount){
     list.appendChild(row);
   });
   openModal('importMergeModal');
-}
-
-function importMergePages(){
-  document.getElementById('importMergeInput').click();
 }
 
 // Handle a directory dragged onto the import button (FileSystemEntry API — no picker dialog needed)
@@ -12213,85 +11689,6 @@ async function _projInit(){
   }catch(e){console.warn('[projInit]',e);}
 }
 
-async function _projHandleJsonOpen(e){
-  const file=e.target.files[0];e.target.value='';if(!file)return;
-  const ext=(file.name.split('.').pop()||'').toLowerCase();
-  try{
-    if(ext==='zip'){
-      // ZIP project file
-      let JSZip;
-      try{JSZip=await _loadJSZip();}catch(er){toast('Không tải được JSZip','error');return;}
-      const zip=await JSZip.loadAsync(file);
-      const jf=zip.file('data.json');
-      if(!jf){toast('Không tìm thấy data.json trong ZIP','error');return;}
-      const imported=JSON.parse(await jf.async('string'));
-      if(!imported?.docs)throw new Error('data.json không hợp lệ');
-      if(!confirm(`Mở project "${imported.projectName||'Unknown'}" (${imported.docs.length} tài liệu)?\nDữ liệu hiện tại sẽ bị ghi đè.`))return;
-      let mediaCount=0;
-      for(const[path,entry]of Object.entries(zip.files)){
-        if(entry.dir||(!path.startsWith('images/')&&!path.startsWith('videos/')))continue;
-        try{
-          const origExt=(path.split('.').pop()||'').toLowerCase();
-          const raw=await entry.async('blob');
-          const blob=_ensureBlobMime(raw,origExt);
-          const id=path.replace(/^(images|videos)\//,'').replace(/\.[^.]+$/,'');
-          if(id&&blob.size>0){await _idbPut(id,blob);mediaCount++;}
-        }catch(er){}
-      }
-      state=imported;
-      if(!state.docs)state.docs=[];
-      if(!state.sections?.length)state.sections=['default'];
-      state.docs.forEach(d=>{d.section=state.sections[0]||'default';});
-      if(!state.recent)state.recent=[];if(!state.starred)state.starred=[];
-      persist();
-      document.getElementById('projectNameEl').textContent=state.projectName||'My Project';
-      updateUserUI();renderSidebar();
-      state.currentDocId=null;
-      document.getElementById('emptyState').style.display='';
-      document.getElementById('editorPanel').style.display='none';
-      toast(`✅ Đã mở "${state.projectName||'Project'}" — ${state.docs.length} tài liệu${mediaCount?' · '+mediaCount+' ảnh/video':''}`, 'success');
-    }else{
-      // Plain JSON
-      const text=await file.text();
-      const imported=JSON.parse(text);
-      if(!imported?.docs)throw new Error('File JSON không hợp lệ');
-      if(!confirm(`Mở project "${imported.projectName||'Unknown'}" (${imported.docs.length} tài liệu)?\nDữ liệu hiện tại sẽ bị ghi đè.`))return;
-      state=imported;
-      if(!state.docs)state.docs=[];
-      if(!state.sections?.length)state.sections=['default'];
-      state.docs.forEach(d=>{d.section=state.sections[0]||'default';});
-      if(!state.recent)state.recent=[];if(!state.starred)state.starred=[];
-      persist();
-      document.getElementById('projectNameEl').textContent=state.projectName||'My Project';
-      updateUserUI();renderSidebar();
-      state.currentDocId=null;
-      document.getElementById('emptyState').style.display='';
-      document.getElementById('editorPanel').style.display='none';
-      if(state.docs.length>0)openDoc(state.docs[0].id);
-      toast(`✅ Đã mở "${state.projectName||'Project'}" — ${state.docs.length} tài liệu`,'success');
-    }
-  }catch(err){toast('Lỗi mở file: '+err.message,'error');console.error(err);}
-}
-
-async function _projConnectFolderOnly(){
-  if(!window.showDirectoryPicker)return;
-  let handle;
-  try{handle=await window.showDirectoryPicker({mode:'readwrite',startIn:'documents'});}
-  catch(e){return;} // user cancelled = OK, no error shown
-  const db=await _openIDB();
-  await new Promise((res,rej)=>{
-    const tx=db.transaction('blobs','readwrite');
-    tx.objectStore('blobs').put(handle,PROJ_DIR_IDB_KEY);
-    tx.oncomplete=res;tx.onerror=rej;
-  });
-  _projDir=handle;_projDirName=handle.name;
-  document.getElementById('projReconnectBanner')?.classList.remove('on');
-  _projUpdateBadge();
-  // Load any existing images/videos from this folder into IDB so imported pages render correctly
-  const mc=await _projLoadFolderAssets(handle);
-  toast('📁 Đã kết nối ổ project "'+handle.name+'"'+(mc?' · tải '+mc+' ảnh/video':''),'success');
-}
-
 // Load all files from images/ and videos/ subdirs of a folder handle into IDB + ObjectURL cache.
 // Skips files already tracked in _projSavedIds (already in IDB from this session) — only
 // reads the file bytes for new/unknown assets to keep startup fast.
@@ -12421,73 +11818,6 @@ async function _projReconnect(){
   }catch(e){toast('Lỗi kết nối lại: '+e.message,'error');}
 }
 
-async function _projDisconnect(){
-  if(!confirm('Ngắt kết nối thư mục project?\nApp sẽ tiếp tục lưu vào trình duyệt như bình thường.'))return;
-  _projLiveSaving=false;
-  _projDir=null;_projDirName='';_projSavedIds.clear();_pendingFolderSaves.clear();
-  try{
-    const db=await _openIDB();
-    await new Promise(res=>{
-      const tx=db.transaction('blobs','readwrite');
-      tx.objectStore('blobs').delete(PROJ_DIR_IDB_KEY);
-      tx.oncomplete=res;tx.onerror=res;
-    });
-  }catch(e){}
-  document.getElementById('projReconnectBanner')?.classList.remove('on');
-  _projUpdateBadge();
-  toast('Đã ngắt kết nối thư mục project','info');
-}
-
-async function _projLoadFromFolder(){
-  if(!_projDir){toast('Chưa kết nối thư mục nào','error');return;}
-  try{
-    // 1. Đọc data.json
-    let fh;
-    try{fh=await _projDir.getFileHandle('data.json');}
-    catch(e){toast('Không tìm thấy data.json trong thư mục "'+_projDirName+'"','error');return;}
-    const file=await fh.getFile();
-    const text=await file.text();
-    let imported;
-    try{imported=JSON.parse(text);}
-    catch(e){toast('File data.json bị lỗi hoặc không đúng định dạng','error');return;}
-    if(!imported||!imported.docs){toast('File data.json không hợp lệ','error');return;}
-    // Lấy thời gian sửa đổi file
-    const modTime=file.lastModified?new Date(file.lastModified).toLocaleString('vi-VN'):'';
-    const msg='Tải project "'+(imported.projectName||'Unknown')+'" từ thư mục?\n'
-      +(modTime?'Lần lưu cuối: '+modTime+'\n':'')
-      +imported.docs.length+' tài liệu\n\nDữ liệu hiện tại trong trình duyệt sẽ bị ghi đè.';
-    if(!confirm(msg))return;
-    // 2. Load state
-    state=imported;
-    if(!state.docs)state.docs=[];
-    if(!state.sections||!state.sections.length)state.sections=['default'];
-    const _defSec=state.sections[0]||'default';
-    state.docs.forEach(d=>{d.section=_defSec;});
-    if(!state.recent)state.recent=[];
-    if(!state.starred)state.starred=[];
-    persist();
-    // 3. Import ảnh & video từ images/ và videos/ vào IDB + ObjectURL cache
-    toast('⏳ Đang tải ảnh/video vào trình duyệt...','info');
-    const mediaCount=await _projLoadFolderAssets(_projDir);
-    // 4. Cập nhật UI
-    const nameEl=document.getElementById('projectNameEl');
-    if(nameEl)nameEl.textContent=state.projectName||'My Project';
-    const spTxt=document.getElementById('sbSpaceIconText');
-    if(spTxt)spTxt.textContent=(state.projectName||'P').charAt(0).toUpperCase();
-    updateUserUI();
-    renderSidebar();
-    if(state.currentDocId&&state.docs.find(d=>d.id===state.currentDocId)){
-      openDoc(state.currentDocId);
-    }else if(state.docs.length>0){
-      openDoc(state.docs[0].id);
-    }else{
-      document.getElementById('emptyState').style.display='';
-      document.getElementById('editorPanel').style.display='none';
-    }
-    toast('✅ Đã tải '+imported.docs.length+' tài liệu'+(mediaCount?' và '+mediaCount+' ảnh/video':'')+' từ "'+_projDirName+'"','success');
-  }catch(e){toast('Lỗi tải từ thư mục: '+e.message,'error');console.error('[projLoad]',e);}
-}
-
 // Strip blob: src attributes from serialized content HTML (fast regex, no DOM parse)
 function _stripContentBlobSrcs(html){
   if(!html||!html.includes('blob:'))return html;
@@ -12568,29 +11898,6 @@ async function _projExportHTML(htmlBlob,htmlName){
     await wr.write(htmlBlob);
     await wr.close();
   }catch(e){console.warn('[projExportHTML]',e);toast('Lỗi lưu HTML vào thư mục: '+e.message,'error');}
-}
-
-function _deduplicatePages(){
-  const before=state.docs.length;
-  const _seenSrc=new Set(),_seenTitle=new Set(),_seenContent=new Set();
-  state.docs=state.docs.filter(d=>{
-    const src=d.importedFrom||'';
-    const title=(d.title||'').trim().toLowerCase();
-    const c=d.content||'';
-    const fp=c.length+':'+c.slice(0,300);
-    if(src&&_seenSrc.has(src))return false;
-    if(title&&_seenTitle.has(title))return false;
-    if(c.length>0&&_seenContent.has(fp))return false;
-    if(src)_seenSrc.add(src);
-    if(title)_seenTitle.add(title);
-    if(c.length>0)_seenContent.add(fp);
-    return true;
-  });
-  const removed=before-state.docs.length;
-  if(!removed){toast('Không có trang trùng','info');return;}
-  persistNow();renderSidebar();
-  toast(`Đã xóa ${removed} trang trùng (còn ${state.docs.length} trang)`,'success');
-  if(_projDir)_projSaveJSON();
 }
 
 // Collect all unique media IDs referenced in a list of docs
