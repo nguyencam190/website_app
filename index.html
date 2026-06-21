@@ -7730,10 +7730,11 @@ function _cfWireChecklist(cl){
   if(head){
     head.addEventListener('click',e=>{
       if(e.target.closest('.cf-checklist-status-btn,.cf-checklist-cam-btn,.cf-cl-badge,.cf-cl-del-btn'))return;
-      // When open: clicking title allows editing — don't toggle
-      if(cl.dataset.open==='true'&&e.target.closest('.cf-checklist-title'))return;
+      // Clicking title always allows editing — don't toggle (regardless of open state)
+      if(e.target.closest('.cf-checklist-title'))return;
       const _opening=cl.dataset.open!=='true';
-      if(_opening){document.querySelectorAll('.cf-checklist[data-open="true"]').forEach(o=>{if(o!==cl)o.dataset.open='false';});}
+      // Only close sibling checklists, never ancestor checklists (which contain this one)
+      if(_opening){document.querySelectorAll('.cf-checklist[data-open="true"]').forEach(o=>{if(o!==cl&&!o.contains(cl))o.dataset.open='false';});}
       cl.dataset.open=_opening?'true':'false';
       onContentChange();
       if(_opening){const body=cl.querySelector('.cf-checklist-body');if(body)setTimeout(()=>body.scrollIntoView({block:'center',behavior:'smooth'}),340);}
