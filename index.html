@@ -3324,7 +3324,7 @@ function renderSidebar(filter=''){
   // PAGE TREE label — active when a page is open, collapsible
   const _treeCollapsed=localStorage.getItem('sb_tree_collapsed')==='1';
   const treeLabel=document.createElement('div');
-  const _treeActive=!!currentDoc();
+  const _treeActive=!!currentDoc()&&!currentDoc().isHomePage;
   treeLabel.className='sb-section-label'+(_treeActive?' active':'')+(_treeCollapsed?' collapsed':'');
   treeLabel.innerHTML='<i class="ti ti-layout-list" style="font-size:12px;margin-right:5px"></i><span>Page Tree</span><i class="ti ti-chevron-down sb-tree-chev"></i>';
   treeLabel.onclick=()=>{
