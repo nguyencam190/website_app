@@ -507,11 +507,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .editor-content th.tbl-has-img{
   padding:0;overflow:hidden;vertical-align:middle;text-align:center;box-sizing:border-box;line-height:0;
 }
-/* Reveal resize handles outside cell edge when image block is selected */
-.editor-content td.tbl-has-img:has(.cf-img-block.selected),
-.editor-content th.tbl-has-img:has(.cf-img-block.selected){overflow:visible;}
 /* cf-img-block inside table cell — center like column layout */
 .editor-content td .cf-img-block,.editor-content th .cf-img-block{margin:0!important}
+/* Resize handles have no room in a cell — toolbar 50/75/100% handles sizing */
+.editor-content td .cf-img-resize-h,.editor-content th .cf-img-resize-h{display:none!important}
+/* Use inset box-shadow for selection so it stays within overflow:hidden cell boundary */
+.editor-content td .cf-img-block.selected .cf-img-inner,.editor-content th .cf-img-block.selected .cf-img-inner{outline:none;box-shadow:inset 0 0 0 2px var(--accent)}
 .editor-content td .cf-img-caption,.editor-content th .cf-img-caption{display:none!important}
 .editor-content td .cf-img-wrap,.editor-content th .cf-img-wrap{width:100%;display:flex;justify-content:center;align-items:center}
 .editor-content td .cf-img-inner,.editor-content th .cf-img-inner{display:block;max-width:100%;min-width:0}
