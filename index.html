@@ -9852,18 +9852,32 @@ function _initSlashCommands(){
         sel.removeAllRanges();sel.addRange(r);
       }
     } else if(e.key==='Enter'&&!e.shiftKey&&!e.ctrlKey&&!e.metaKey){
+      e.preventDefault();
       const range=sel.getRangeAt(0);
-      const anchorEl=anchor.nodeType===Node.TEXT_NODE?anchor.parentElement:anchor;
-      if(!anchorEl?.closest('p,h1,h2,h3,h4,h5,h6,li')){
-        // Cursor is directly inside the cell with no block wrapper — force a <p>
-        e.preventDefault();
-        const p=document.createElement('p');p.innerHTML='<br>';
-        range.deleteContents();range.insertNode(p);
-        const nr=document.createRange();nr.setStart(p,0);nr.collapse(true);
-        sel.removeAllRanges();sel.addRange(nr);
-        onContentChange();
+      if(!range.collapsed)range.deleteContents();
+      const anchor2=range.startContainer;
+      const anchorEl2=anchor2.nodeType===Node.TEXT_NODE?anchor2.parentElement:anchor2;
+      const curBlock=anchorEl2?.closest?.('p,h1,h2,h3,h4,h5,h6');
+      const newP=document.createElement('p');
+      if(curBlock&&cell.contains(curBlock)){
+        const tailRange=document.createRange();
+        tailRange.setStart(anchor2,range.startOffset);
+        tailRange.setEnd(curBlock,curBlock.childNodes.length);
+        const frag=tailRange.extractContents();
+        if(frag.childNodes.length)newP.appendChild(frag);
+        if(!newP.textContent&&!newP.querySelector('br,img'))newP.innerHTML='<br>';
+        if(!curBlock.textContent&&!curBlock.querySelector('br,img'))curBlock.innerHTML='<br>';
+        curBlock.after(newP);
+      } else {
+        newP.innerHTML='<br>';
+        const ref=anchor2.nodeType===Node.TEXT_NODE?anchor2.parentElement:anchor2;
+        if(ref!==cell&&cell.contains(ref)){ref.after(newP);}else{cell.appendChild(newP);}
       }
-      // Otherwise cursor is in a <p>/heading; let browser create the sibling block naturally
+      const fc=newP.firstChild;
+      const r2=document.createRange();
+      r2.setStart(fc&&fc.nodeType===Node.TEXT_NODE?fc:newP,0);
+      r2.collapse(true);sel.removeAllRanges();sel.addRange(r2);
+      onContentChange();
     }
   });
   editor.addEventListener('input',_editorSlashInput);
