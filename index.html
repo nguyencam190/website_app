@@ -11551,7 +11551,7 @@ function _projUpdateBadge(){
 async function _projToggleLive(){
   if(_projLiveSaving)return;
   if(!_projDir){
-    await _projOpenFolder();
+    await _projOpenFolder(true);
     if(!_projDir)return;
   }
   const btn=document.getElementById('projLiveBtn');
@@ -11731,7 +11731,7 @@ async function _projLoadFolderAssets(handle){
   return count;
 }
 
-async function _projOpenFolder(){
+async function _projOpenFolder(saveOnly=false){
   if(!window.showDirectoryPicker){toast('Trình duyệt không hỗ trợ (cần Chrome/Edge 86+)','error');return;}
   let handle;
   try{handle=await window.showDirectoryPicker({mode:'readwrite',startIn:'documents'});}
@@ -11754,7 +11754,15 @@ async function _projOpenFolder(){
   try{fh=await handle.getFileHandle('data.json');}catch(e){fh=null;}
 
   if(fh){
-    // Folder has an existing project → load it (like importProject)
+    if(saveOnly){
+      // Called from Publish — keep current state, save to folder
+      toast('📁 Đã kết nối thư mục "'+handle.name+'" — đang lưu...','info');
+      await _projSaveJSON();
+      await _projFlushPendingSaves();
+      await _projMigrateToFolder();
+      return;
+    }
+    // Called from "Open project" menu — load existing project from folder
     const file=await fh.getFile();
     const modTime=file.lastModified?new Date(file.lastModified).toLocaleString('vi-VN'):'';
     let imported;
