@@ -8434,12 +8434,14 @@ function _cfInsertBlockAtRange(block, savedRange){
     });
     if(_hasRealContent){
       _cellHasText=true;
-      // Cell has text: keep it, insert image below (before UI overlays)
-      // Remove empty <p> left by the slash command
-      Array.from(insertParent.children).forEach(el=>{
-        if(_UIKEEP.some(c=>el.classList.contains(c)))return;
-        if((el.tagName==='P'||el.tagName==='DIV')&&!el.textContent.trim()&&el.children.length<=1&&!el.classList.contains('cf-img-block'))el.remove();
-      });
+      // Cell has text: keep it, insert image below (before UI overlays).
+      // Only remove the specific empty <p> the slash command was on — do NOT
+      // remove other empty <p>s which may be intentional spacing by the user.
+      const _slashOriginP=insertBefore;
+      if(_slashOriginP&&(_slashOriginP.tagName==='P'||_slashOriginP.tagName==='DIV')&&
+         !_slashOriginP.textContent.trim()&&_slashOriginP.children.length<=1&&
+         !_slashOriginP.classList.contains('cf-img-block'))
+        _slashOriginP.remove();
       insertBefore=insertParent.querySelector('.tbl-img-btn,.tbl-cell-drop')||null;
       // tbl-has-img not applied: its line-height:0/padding:0 would collapse the text
     }else{
