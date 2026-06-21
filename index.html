@@ -946,6 +946,14 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 [data-theme="dark"] .cf-checklist-head:hover{background:var(--surface3)}
 /* Checklist inside table cell or column item */
 td .cf-checklist,th .cf-checklist,.cf-column-item .cf-checklist{margin:4px 0;font-size:13px}
+/* The empty trailing caret <p> that _cfInsertBlockAtRange adds after a block in a
+   table cell (the .tbl-cell-drop after it is position:absolute, so this <p> is the
+   last in-flow child). At line-height 1.8 + 12px margin it left ~40px of dead space
+   below e.g. a checklist — glaring in a narrow/short cell. Compact it to a thin click
+   target. Selector matches only the EMPTY trailing p right before .tbl-cell-drop, so a
+   <p> the user actually types into keeps its normal spacing. */
+.editor-content td>p:is(:empty,:has(>br:only-child)):has(+.tbl-cell-drop),
+.editor-content th>p:is(:empty,:has(>br:only-child)):has(+.tbl-cell-drop){margin:0;line-height:1.3;min-height:0}
 td .cf-checklist-head,.cf-column-item .cf-checklist-head{padding:6px 10px 6px 8px}
 td .cf-checklist-body,.cf-column-item .cf-checklist-body{padding:8px 10px 10px 10px}
 /* ═══ TOC BLOCK ═════════════════════════════════════════════ */
