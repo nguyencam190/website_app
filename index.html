@@ -2226,6 +2226,13 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
     <option value="h3">H3</option><option value="h4">H4</option><option value="h5">H5</option><option value="h6">H6</option>
   </select>
   <div class="bb-sep"></div>
+  <div class="bb-size-wrap" id="bbSizeWrap" onmouseleave="bbCloseSizeDD()">
+    <input class="bb-size-input" id="bbSizeNum" type="number" value="18" min="8" max="72" title="Cỡ chữ" readonly
+      onmousedown="event.preventDefault();saveRange();bbOpenSizeDD()"
+      onkeydown="if(event.key==='Enter'){event.preventDefault();bbApplySize(parseInt(this.value)||18);}">
+    <div class="bb-size-dropdown" id="bbSizeDD"></div>
+  </div>
+  <div class="bb-sep"></div>
   <button class="bb" id="bbBold" onmousedown="event.preventDefault();bbFmt('bold')" title="Bold"><b>B</b></button>
   <button class="bb" id="bbItalic" onmousedown="event.preventDefault();bbFmt('italic')" title="Italic"><i style="font-style:italic">I</i></button>
   <button class="bb" id="bbUnder" onmousedown="event.preventDefault();bbFmt('underline')" title="Underline" style="text-decoration:underline">U</button>
@@ -10589,6 +10596,9 @@ function bbUpdateState(){
   }
   [['bbBold','bold'],['bbItalic','italic'],['bbUnder','underline'],['bbStrike','strikeThrough']].forEach(([id,cmd])=>{const btn=document.getElementById(id);if(btn)btn.classList.toggle('active',document.queryCommandState(cmd));});
   _updateAlignBtns();
+  // Update font size picker — read computed size, default to 18
+  const sizeNum=document.getElementById('bbSizeNum');
+  if(sizeNum){const fs=window.getComputedStyle(el).fontSize;sizeNum.value=Math.round(parseFloat(fs))||18;}
 }
 function bbFmt(cmd){
   const activeEl=document.activeElement;
@@ -11018,6 +11028,8 @@ function _bbCancelLink(){
     if(cancel)cancel.addEventListener('mousedown',e=>{e.preventDefault();_bbCancelLink();});
   },200);
 })();
+function bbOpenSizeDD(){clearTimeout(_sizeCloseTimer);saveRange();const dd=document.getElementById('bbSizeDD');const num=document.getElementById('bbSizeNum');const curSize=parseInt(num.value)||18;dd.innerHTML=BB_SIZES.map(s=>`<div class="bb-size-opt${s===curSize?' active':''}" onmousedown="event.preventDefault();bbApplySize(${s})">${s}</div>`).join('');const wrap=document.getElementById('bbSizeWrap');const r=wrap.getBoundingClientRect();dd.style.visibility='hidden';dd.classList.add('on');const ddH=dd.offsetHeight||200;let top=r.bottom+2;if(top+ddH>window.innerHeight-8)top=r.top-ddH-2;dd.style.top=top+'px';dd.style.left=r.left+'px';dd.style.visibility='';}
+function bbCloseSizeDD(){_sizeCloseTimer=setTimeout(()=>document.getElementById('bbSizeDD')?.classList.remove('on'),120);}
 function bbOpenSpacingDD(){clearTimeout(_spacingCloseTimer);saveRange();const dd=document.getElementById('bbSpacingDD');const sel=window.getSelection();let curLH='1.15';if(sel&&sel.rangeCount){const node=sel.anchorNode;const el=node&&node.nodeType===3?node.parentElement:node;if(el){const lh=window.getComputedStyle(el).lineHeight;curLH=lh==='normal'?'1.15':parseFloat(lh).toFixed(2);}}dd.innerHTML=BB_SPACINGS.map(s=>`<div class="bb-spacing-opt${parseFloat(s.val).toFixed(2)===parseFloat(curLH).toFixed(2)?' active':''}" onmousedown="event.preventDefault();bbApplySpacing('${s.val}')">${s.label}</div>`).join('');const wrap=document.getElementById('bbSpacingWrap');const r=wrap.getBoundingClientRect();dd.style.visibility='hidden';dd.classList.add('on');const ddH=dd.offsetHeight||200;let top=r.bottom+2;if(top+ddH>window.innerHeight-8)top=r.top-ddH-2;dd.style.top=top+'px';dd.style.left=r.left+'px';dd.style.visibility='';}
 function bbCloseSpacingDD(){_spacingCloseTimer=setTimeout(()=>document.getElementById('bbSpacingDD').classList.remove('on'),120);}
 function bbApplySpacing(val){restoreRange();const sel=window.getSelection();if(!sel||!sel.rangeCount)return;const range=sel.getRangeAt(0);const editor=document.getElementById('editor');const blocks=new Set();const walker=document.createTreeWalker(editor,NodeFilter.SHOW_TEXT);let node;while(node=walker.nextNode()){if(range.intersectsNode(node)){let block=node.parentElement;while(block&&block!==editor&&!['P','H1','H2','H3','LI','DIV','BLOCKQUOTE'].includes(block.tagName)){block=block.parentElement;}if(block&&block!==editor)blocks.add(block);}}if(blocks.size===0){const span=document.createElement('span');span.style.lineHeight=val;try{range.surroundContents(span);}catch(e){}}else{blocks.forEach(b=>b.style.lineHeight=val);}document.getElementById('bbSpacingDD').classList.remove('on');onContentChange();setTimeout(bbShow,10);}
