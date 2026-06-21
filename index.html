@@ -262,6 +262,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .sb-nav::-webkit-scrollbar-thumb{background:var(--sb-border);border-radius:4px}
 .sb-nav::-webkit-scrollbar-track{background:transparent}
 .sb-section-label{padding:6px 14px 6px;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.9px;display:flex;align-items:center;background:color-mix(in srgb,var(--accent) 18%,transparent);border-radius:6px;margin:4px 6px 2px}
+.sb-tree-wrap{border-left:2px solid color-mix(in srgb,var(--accent) 30%,transparent);margin:2px 6px 4px 12px;padding:2px 0}
 /* Doc tree items */
 .doc-item{display:flex;align-items:center;padding:5px 10px 5px 4px;cursor:pointer;color:var(--sb-txt);transition:background .12s,color .12s;font-size:13.5px;position:relative;border-radius:4px;margin:1px 6px 1px 8px;gap:0;user-select:none}
 .doc-item:hover{background:var(--sb-active-bg);color:var(--sb-txt)}
@@ -3319,16 +3320,21 @@ function renderSidebar(filter=''){
   treeLabel.innerHTML='<i class="ti ti-layout-list" style="font-size:12px;margin-right:5px"></i><span>Page Tree</span>';
   nav.appendChild(treeLabel);
 
+  // Wrapper gives tree items a visual "inside" feel
+  const treeWrap=document.createElement('div');
+  treeWrap.className='sb-tree-wrap';
+  nav.appendChild(treeWrap);
+
   const roots=_getChildren(null,null);
   let hasAny=roots.length>0;
   if(!filter||roots.some(d=>_subtreeMatches(null,d.id,filter)))
-    _renderDocNodes(nav,null,null,0,filter);
+    _renderDocNodes(treeWrap,null,null,0,filter);
 
   if(!hasAny&&!filter){
     const hint=document.createElement('div');
     hint.style.cssText='padding:24px 16px;font-size:12px;color:var(--sb-txt3);text-align:center';
     hint.textContent='No pages yet. Press + to create.';
-    nav.appendChild(hint);
+    treeWrap.appendChild(hint);
   }
 }
 
