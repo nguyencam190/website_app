@@ -397,8 +397,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
   color:var(--text3);pointer-events:none;position:absolute;left:0;white-space:nowrap;font-size:.875rem;line-height:1.9
 }
 /* Floating block action bar (+ and drag handle) */
-.editor-block-bar{position:fixed;display:none;align-items:center;gap:2px;z-index:500}
-.editor-block-bar.on{display:flex}
+.editor-block-bar{position:fixed;display:flex;align-items:center;gap:2px;z-index:500;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .14s ease,visibility .14s ease}
+.editor-block-bar.on{opacity:1;visibility:visible;pointer-events:auto}
 /* Nested mode: overlaid inside cell — visible only on hover, not while typing */
 .editor-block-bar.on-nested{background:color-mix(in srgb,var(--surface) 88%,transparent);border:1px solid var(--border);border-radius:5px;box-shadow:0 1px 4px rgba(0,0,0,.1);padding:1px;backdrop-filter:blur(3px)}
 .editor-block-btn{width:24px;height:24px;border:none;background:transparent;border-radius:5px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text3);font-size:15px;transition:background .12s,color .12s;flex-shrink:0}
@@ -10160,17 +10160,17 @@ function _updateBlockBar(){
     const result=_findBlockInContainer(range.startContainer);
     editor.querySelectorAll('.slash-hint').forEach(el=>el.classList.remove('slash-hint'));
     if(!result){_hideBlockBar();return;}
-    const {block,container}=result;
+    const {block}=result;
     if(block.tagName==='P'&&!block.textContent.trim()&&block.children.length<=1){
       block.classList.add('slash-hint');
     }
-    // For nested containers (column, panel…) with content: don't show bar while typing —
-    // unless slash menu is open (user typed /), then always show so bar is visible.
-    // Table cells (td/th) are excluded from this guard — user explicitly wants the bar there.
-    const isNested=container!==editor;
-    const isTdTh=container&&(container.tagName==='TD'||container.tagName==='TH');
-    if(isNested&&!isTdTh&&block.textContent.trim()&&!_slashVisible){_hideBlockBar();return;}
-    _showBlockBar(block);
+    // Caret is inside a block → the user is editing / typing. Keep a clean writing
+    // surface (Notion-style) by hiding the block bar; it reappears on hover via
+    // _onEditorMouseMove (typing fires no mousemove, so the bar stays hidden while
+    // you write). Exception: while the slash menu is open the user invoked it from
+    // the + button, so keep the bar anchored to the active block.
+    if(_slashVisible){_showBlockBar(block);return;}
+    _hideBlockBar();
   },50);
 }
 
