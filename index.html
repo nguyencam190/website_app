@@ -2412,6 +2412,8 @@ let saveTimer,dirty=false,ctxImgIdx=null,docCtxId=null,_savedRange=null,_bubbleH
 
 // Bảo vệ dữ liệu chưa lưu khi đóng tab
 window.addEventListener('beforeunload',e=>{
+  // Commit any pending edits so the final save isn't lost on a quick reload/close
+  if(typeof flushContent==='function')flushContent();
   if(dirty){e.preventDefault();e.returnValue='Bạn có thay đổi chưa lưu. Bạn có chắc muốn rời khỏi trang?';return e.returnValue;}
 });
 
@@ -2784,6 +2786,7 @@ function editorRedo(){
 
 function persistNow(){
   // Immediate save — for critical operations like delete
+  flushContent();
   const toSave=JSON.parse(JSON.stringify(state));
   toSave.docs.forEach(doc=>{
     if(doc.images)doc.images=doc.images.map(m=>{const{src,...meta}=m;return src&&src.startsWith('data:')?{...meta,src}:meta;});
@@ -2793,6 +2796,7 @@ function persistNow(){
 function persist(){
   // Strip blob Object URLs from media before saving (only store metadata)
   // Blobs live in IndexedDB; Object URLs are session-only
+  if(typeof flushContent==='function')flushContent();
   const toSave=JSON.parse(JSON.stringify(state));
   toSave.docs.forEach(doc=>{
     if(doc.images){
@@ -3649,6 +3653,8 @@ function _stopVideosIn(root){
 }
 function openDoc(id){
   const doc=state.docs.find(d=>d.id===id);if(!doc)return;
+  // Commit any pending edits of the departing page before its content is read/replaced
+  flushContent();
   // Stop any video still playing in the editor before its content is replaced
   _stopVideosIn(document.getElementById('editor'));
   // Save undo history of departing page
@@ -3776,12 +3782,31 @@ function _updateWordCount(){
   const mins=Math.max(1,Math.round(words/200));
   el.textContent=words+' từ · '+chars+' ký tự · ~'+mins+' phút đọc';
 }
+// ── Heavy serialization is debounced off the per-keystroke path ──
+// onContentChange() runs only lightweight UI updates immediately, then schedules
+// the expensive clone+serialize+tblAttachAll work (~250ms after typing pauses).
+// flushContent() forces it to run NOW — must be called before any code that reads
+// doc.content (doc switch, persistNow, unload). Export paths re-serialize the live
+// editor DOM themselves, so they don't need a flush.
+let _commitTimer=null;
 function onContentChange(){
   const doc=currentDoc();if(!doc)return;
   if(typeof _undoSnapshotDebounced==='function')_undoSnapshotDebounced();
   const editor_el=document.getElementById('editor');if(!editor_el)return;
+  // Immediate, cheap — read live DOM, keep UI responsive
   _updateBlankHint();
   _updateWordCount();
+  // Defer the expensive work
+  clearTimeout(_commitTimer);
+  _commitTimer=setTimeout(_commitContent,250);
+}
+function flushContent(){
+  if(_commitTimer){clearTimeout(_commitTimer);_commitTimer=null;_commitContent();}
+}
+function _commitContent(){
+  _commitTimer=null;
+  const doc=currentDoc();if(!doc)return;
+  const editor_el=document.getElementById('editor');if(!editor_el)return;
   _cfRefreshTocs(editor_el);
   const clone=editor_el.cloneNode(true);
   // Strip interactive chrome (not content)
@@ -12344,6 +12369,7 @@ function _stripContentBlobSrcs(html){
 
 async function _projSaveJSON(){
   if(!_projDir)return;
+  flushContent();
   try{
     const toSave=JSON.parse(JSON.stringify(state));
     // Strip deleted docs and sanitize image src blobs (both doc.images and inline content)
