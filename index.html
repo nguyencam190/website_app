@@ -9818,6 +9818,54 @@ function _initSlashCommands(){
     if(e.key==='Enter'||e.key==='Backspace'||e.key==='Delete'||e.key==='Tab'){_undoSnapshot();}
     if((e.ctrlKey||e.metaKey)&&!e.altKey&&['b','i','u'].includes(e.key.toLowerCase())){_undoSnapshot();}
   });
+  // ── Table cell keyboard navigation ───────────────────────────────────────
+  // Tab/Shift+Tab: move caret to next/prev data cell; Tab on last cell appends a row.
+  // Enter (direct in cell, no block wrapper): insert <p> instead of browser <div>.
+  editor.addEventListener('keydown',e=>{
+    if(_slashVisible)return;
+    const sel=window.getSelection();if(!sel||!sel.rangeCount)return;
+    const anchor=sel.getRangeAt(0).startContainer;
+    const cell=anchor.nodeType===Node.TEXT_NODE
+      ?anchor.parentElement?.closest('td:not(.tbl-row-num),th:not(.tbl-row-num)')
+      :anchor.closest?.('td:not(.tbl-row-num),th:not(.tbl-row-num)');
+    if(!cell)return;
+    const table=cell.closest('table');if(!table)return;
+
+    if(e.key==='Tab'){
+      e.preventDefault();e.stopPropagation();
+      const allCells=Array.from(table.querySelectorAll('td:not(.tbl-row-num),th:not(.tbl-row-num)'));
+      const idx=allCells.indexOf(cell);
+      let next=allCells[e.shiftKey?idx-1:idx+1];
+      if(!next&&!e.shiftKey){
+        // Last cell — append a new row and move into its first data cell
+        const nCols=Array.from(table.rows[0]?.cells||[]).filter(c=>!c.classList.contains('tbl-row-num')).length||1;
+        const nr=table.insertRow(-1);
+        for(let i=0;i<nCols;i++){const td=nr.insertCell(i);td.innerHTML='<br>';}
+        onContentChange();tblAttachAll();
+        const refreshed=Array.from(table.querySelectorAll('td:not(.tbl-row-num),th:not(.tbl-row-num)'));
+        next=refreshed[idx+1];
+      }
+      if(next){
+        _activeTd=next;
+        next.focus();
+        const r=document.createRange();r.selectNodeContents(next);r.collapse(false);
+        sel.removeAllRanges();sel.addRange(r);
+      }
+    } else if(e.key==='Enter'&&!e.shiftKey&&!e.ctrlKey&&!e.metaKey){
+      const range=sel.getRangeAt(0);
+      const anchorEl=anchor.nodeType===Node.TEXT_NODE?anchor.parentElement:anchor;
+      if(!anchorEl?.closest('p,h1,h2,h3,h4,h5,h6,li')){
+        // Cursor is directly inside the cell with no block wrapper — force a <p>
+        e.preventDefault();
+        const p=document.createElement('p');p.innerHTML='<br>';
+        range.deleteContents();range.insertNode(p);
+        const nr=document.createRange();nr.setStart(p,0);nr.collapse(true);
+        sel.removeAllRanges();sel.addRange(nr);
+        onContentChange();
+      }
+      // Otherwise cursor is in a <p>/heading; let browser create the sibling block naturally
+    }
+  });
   editor.addEventListener('input',_editorSlashInput);
   editor.addEventListener('keyup',_updateBlockBar);
   editor.addEventListener('mouseup',_updateBlockBar);
