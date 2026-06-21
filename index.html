@@ -261,7 +261,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .sb-nav::-webkit-scrollbar{width:4px}
 .sb-nav::-webkit-scrollbar-thumb{background:var(--sb-border);border-radius:4px}
 .sb-nav::-webkit-scrollbar-track{background:transparent}
-.sb-section-label{padding:6px 14px 6px;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.9px;display:flex;align-items:center;background:color-mix(in srgb,var(--accent) 18%,transparent);border-radius:6px;margin:4px 6px 2px}
+.sb-section-label{padding:6px 14px 6px;font-size:11px;font-weight:700;color:var(--sb-txt2);text-transform:uppercase;letter-spacing:.9px;display:flex;align-items:center;border-radius:6px;margin:4px 6px 2px;transition:background .2s,color .2s}
+.sb-section-label.active{color:var(--accent);background:color-mix(in srgb,var(--accent) 18%,transparent)}
 .sb-tree-wrap{border-left:2px solid color-mix(in srgb,var(--accent) 30%,transparent);margin:2px 6px 4px 12px;padding:2px 0}
 /* Doc tree items */
 .doc-item{display:flex;align-items:center;padding:5px 10px 5px 4px;cursor:pointer;color:var(--sb-txt);transition:background .12s,color .12s;font-size:13.5px;position:relative;border-radius:4px;margin:1px 6px 1px 8px;gap:0;user-select:none}
@@ -3315,8 +3316,10 @@ function renderSidebar(filter=''){
     nav.appendChild(sep);
   }
 
-  // PAGE TREE label
-  const treeLabel=document.createElement('div');treeLabel.className='sb-section-label';
+  // PAGE TREE label — active only when a page is open
+  const treeLabel=document.createElement('div');
+  const _treeActive=!!currentDoc();
+  treeLabel.className='sb-section-label'+(_treeActive?' active':'');
   treeLabel.innerHTML='<i class="ti ti-layout-list" style="font-size:12px;margin-right:5px"></i><span>Page Tree</span>';
   nav.appendChild(treeLabel);
 
