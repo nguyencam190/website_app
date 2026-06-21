@@ -2813,6 +2813,7 @@ const _secCollapsed={};  // section collapse state
 const _nodeCollapsed={};  // per-doc node collapse state
 let _sbLastClickId=null,_sbLastClickTime=0;  // double-click detection across re-renders
 let _sbDragId=null,_sbDragLineEl=null;
+let _treeHeaderActive=false; // true when user clicked PAGE TREE header, cleared on home nav
 function _sbGetDragLine(){if(!_sbDragLineEl){_sbDragLineEl=document.createElement('div');_sbDragLineEl.id='_sbDragLine';_sbDragLineEl.style.cssText='position:fixed;height:2px;background:var(--accent,#2563eb);border-radius:2px;pointer-events:none;z-index:9999;display:none';document.body.appendChild(_sbDragLineEl);}return _sbDragLineEl;}
 function _sbClearDropTarget(){document.querySelectorAll('.sb-drag-child').forEach(el=>el.classList.remove('sb-drag-child'));const ln=document.getElementById('_sbDragLine');if(ln)ln.style.display='none';}
 function _sbClearDrag(){document.querySelectorAll('.sb-drag-src,.sb-drag-child').forEach(el=>el.classList.remove('sb-drag-src','sb-drag-child'));const ln=document.getElementById('_sbDragLine');if(ln)ln.style.display='none';}
@@ -3321,14 +3322,18 @@ function renderSidebar(filter=''){
     nav.appendChild(sep);
   }
 
-  // PAGE TREE label — active only when a non-home page is open, collapsible
+  // PAGE TREE label — active when: user clicked header OR a tree page is open
   const _treeCollapsed=localStorage.getItem('sb_tree_collapsed')==='1';
   const treeLabel=document.createElement('div');
   const _doc=currentDoc();
-  const _treeActive=!!_doc&&!_doc.isHomePage;
+  const _isHome=!!_doc&&!!_doc.isHomePage;
+  if(_isHome)_treeHeaderActive=false; // reset when navigating home
+  const _treeActive=_treeHeaderActive||(!!_doc&&!_isHome);
   treeLabel.className='sb-section-label'+(_treeActive?' active':'')+(_treeCollapsed?' collapsed':'');
   treeLabel.innerHTML='<i class="ti ti-layout-list" style="font-size:12px;margin-right:5px"></i><span>Page Tree</span><i class="ti ti-chevron-down sb-tree-chev"></i>';
   treeLabel.onclick=()=>{
+    _treeHeaderActive=true;
+    treeLabel.classList.add('active');
     const nowCollapsed=treeLabel.classList.toggle('collapsed');
     treeWrap.classList.toggle('collapsed',nowCollapsed);
     localStorage.setItem('sb_tree_collapsed',nowCollapsed?'1':'0');
