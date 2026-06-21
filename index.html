@@ -13314,6 +13314,53 @@ function _buildViewerShellCss(accent){
 //   Phase 5: Assemble lightweight viewer JS
 //   Phase 6: Build HTML template & download
 // ═══════════════════════════════════════════════════════════════════════════
+
+// ── Self-contained Publisher fonts/icons ──────────────────────────────────
+// Exported pages referenced the Tabler icon webfont via CDN, so a published
+// site showed empty boxes wherever an icon should be if jsdelivr was slow/down.
+// _wsBuildIconFontInline() best-effort fetches the icon CSS + its woff2 once
+// and returns a self-contained <style> with the font embedded as a data: URL.
+// Returns null on any failure (offline/CORS) → caller falls back to a
+// non-blocking CDN <link>. Cached for the session.
+const _WS_FONTS_URL='https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap';
+const _WS_ICONS_URL='https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.10.0/dist/tabler-icons.min.css';
+const _WS_ICONS_BASE='https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.10.0/dist/';
+let _wsIconInlineCache; // undefined=not tried, string=ok, null=failed
+async function _wsBuildIconFontInline(){
+  if(_wsIconInlineCache!==undefined)return _wsIconInlineCache;
+  try{
+    const cssTxt=await(await fetch(_WS_ICONS_URL)).text();
+    const m=cssTxt.match(/url\(\s*['"]?([^'")]+\.woff2)[^)]*\)/i);
+    if(!m)throw new Error('no woff2 url in tabler css');
+    let fontUrl=m[1].trim();
+    if(/^https?:|^data:/.test(fontUrl)){/* absolute */}
+    else if(fontUrl.startsWith('//'))fontUrl='https:'+fontUrl;
+    else fontUrl=_WS_ICONS_BASE+fontUrl.replace(/^\.?\//,'');
+    const blob=await(await fetch(fontUrl)).blob();
+    const dataUrl=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(blob);});
+    // Replace the @font-face src(s) with the embedded data: URL; keep all icon class rules
+    // Match the @font-face src up to the next ';' OR '}' (minified CSS often drops
+    // the final ';' before '}'), so the woff2 reference is reliably replaced.
+    const inlineCss=cssTxt.replace(/src\s*:[^;}]+;?/i,'src:url('+dataUrl+') format("woff2");');
+    _wsIconInlineCache='<style>'+inlineCss+'</style>';
+  }catch(e){
+    console.warn('icon font inline failed, falling back to CDN link',e);
+    _wsIconInlineCache=null;
+  }
+  return _wsIconInlineCache;
+}
+// Build the <head> font/icon section. Self-contained icons when possible, plus
+// non-blocking text fonts (graceful system-font fallback). Always returns a string.
+async function _wsFontHead(){
+  const pre='<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>';
+  const fonts='<link rel="stylesheet" href="'+_WS_FONTS_URL+'" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="'+_WS_FONTS_URL+'"></noscript>';
+  const inlineIcons=await _wsBuildIconFontInline();
+  if(inlineIcons)return pre+fonts+inlineIcons;
+  // Fallback: non-blocking CDN icon link
+  return pre+'<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>'+fonts+
+    '<link rel="stylesheet" href="'+_WS_ICONS_URL+'" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="'+_WS_ICONS_URL+'"></noscript>';
+}
+
 async function doExportWebsite(){
   const exportMode=(document.querySelector('input[name="exportMode"]:checked')?.value)||'optimized';
   if(exportMode==='optimized'){await doExportOptimized();return;}
@@ -14247,6 +14294,7 @@ async function doExportWebsite(){
   const jsTag='<script>\n'+wsJs+'\n'+'<'+'/script>';
 
   // ── Phase 6: Assemble complete self-contained HTML template ──
+  const _fontHeadHtml=await _wsFontHead();
   const htmlParts=[
     '<!DOCTYPE html>',
     '<html lang="vi"'+(exportDark?' data-theme="dark"':'')+'>',
@@ -14256,8 +14304,7 @@ async function doExportWebsite(){
     '<meta name="color-scheme" content="light dark">',
     '<meta http-equiv="Content-Security-Policy" content="default-src \'self\' \'unsafe-inline\' \'unsafe-eval\' data: blob:; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://www.tiktok.com https://platform.twitter.com https://www.instagram.com https://www.facebook.com https://www.dailymotion.com; img-src * data: blob:; media-src * data: blob:; font-src * data:; style-src \'unsafe-inline\' https://fonts.googleapis.com https://cdn.jsdelivr.net; connect-src *;">',
     '<title>'+escH(title)+'</title>',
-    '<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">',
-    '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.10.0/dist/tabler-icons.min.css">',
+    _fontHeadHtml,
     '<style>'+fullCss+'</style>',
     '</head>',
     '<body>',
@@ -14696,6 +14743,7 @@ async function doExportOptimized(opts){
   const jsTag='<script>\n'+wsJs+'\n'+'<'+'/script>';
 
   // ── Assemble HTML ─────────────────────────────────────────
+  const _fontHeadHtml=await _wsFontHead();
   const htmlStr=[
     '<!DOCTYPE html>',
     '<html lang="vi"'+(exportDark?' data-theme="dark"':'')+'>',
@@ -14705,8 +14753,7 @@ async function doExportOptimized(opts){
     '<meta name="color-scheme" content="light dark">',
     '<meta http-equiv="Content-Security-Policy" content="default-src \'self\' \'unsafe-inline\' \'unsafe-eval\' data: blob:; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://www.tiktok.com https://platform.twitter.com https://www.instagram.com https://www.facebook.com https://www.dailymotion.com; img-src * data: blob:; media-src * data: blob:; font-src * data:; style-src \'unsafe-inline\' https://fonts.googleapis.com https://cdn.jsdelivr.net; connect-src *;">',
     '<title>'+escH(title)+'</title>',
-    '<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">',
-    '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.10.0/dist/tabler-icons.min.css">',
+    _fontHeadHtml,
     '<style>'+fullCss+'</style>',
     '</head>',
     '<body>',
