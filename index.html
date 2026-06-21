@@ -898,7 +898,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .cf-toggle-head:hover{background:var(--surface3)}
 .cf-toggle-btn{background:none;border:none;color:var(--text3);cursor:pointer;padding:0;display:flex;align-items:center;font-size:13px;margin-top:1px;transition:transform .18s;line-height:1;flex-shrink:0}
 .cf-toggle[data-open="true"] .cf-toggle-btn{transform:rotate(90deg)}
-.cf-toggle-title{flex:1;font-size:1.25rem;font-weight:600;color:var(--text);min-height:1.4em;outline:none}
+.cf-toggle-title{flex:1;font-size:18px;font-weight:600;color:var(--text);min-height:1.4em;outline:none}
 .cf-toggle-title:empty::before{content:attr(data-placeholder);color:var(--text3);pointer-events:none}
 .cf-toggle-body{padding:0 14px 0 34px;border-top:1px solid transparent;max-height:0;overflow:hidden;opacity:0;transition:max-height .32s cubic-bezier(.4,0,.2,1),opacity .2s ease,padding .3s ease,border-color .25s ease}
 .cf-toggle[data-open="true"] .cf-toggle-body{padding:10px 14px 10px 34px;border-top:1px solid var(--border);max-height:1500px;opacity:1;min-height:36px}
@@ -926,7 +926,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 [data-theme="dark"] .cf-checklist[data-status="critical"] .cf-cl-badge{color:#fca5a5}
 .cf-checklist-status-btn{font-size:18px;flex-shrink:0;cursor:pointer;border:none;background:transparent;padding:2px;line-height:1;border-radius:4px;transition:transform .1s}
 .cf-checklist-status-btn:hover{transform:scale(1.25)}
-.cf-checklist-title{flex:1;font-size:1.25rem;font-weight:600;color:var(--text);outline:none;border:none;background:transparent;padding:0;font-family:var(--font);cursor:text;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cf-checklist-title{flex:1;font-size:18px;font-weight:600;color:var(--text);outline:none;border:none;background:transparent;padding:0;font-family:var(--font);cursor:text;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cf-checklist-title:empty::before{content:attr(data-placeholder);color:var(--text3);pointer-events:none}
 .cf-checklist-cam-btn{width:26px;height:26px;border:none;background:transparent;color:var(--text3);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;border-radius:4px;transition:.12s;flex-shrink:0}
 .cf-checklist-cam-btn:hover{background:var(--surface3);color:var(--text)}
@@ -12524,7 +12524,7 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .cf-toggle-head:hover{background:var(--surface3)}',
     '.ws-canvas .cf-toggle-btn{background:none;border:none;color:var(--text3);cursor:pointer;padding:0;display:flex;align-items:center;font-size:13px;margin-top:1px;transition:transform .18s;line-height:1;flex-shrink:0}',
     '.ws-canvas .cf-toggle[data-open="true"] .cf-toggle-btn{transform:rotate(90deg)}',
-    '.ws-canvas .cf-toggle-title{flex:1;font-size:1.25rem;font-weight:600;color:var(--text)}',
+    '.ws-canvas .cf-toggle-title{flex:1;font-size:18px;font-weight:600;color:var(--text)}',
     '.ws-canvas .cf-toggle-body{padding:0 14px 0 34px;border-top:1px solid transparent;max-height:0;overflow:hidden;opacity:0;transition:max-height .32s cubic-bezier(.4,0,.2,1),opacity .2s ease,padding .3s ease,border-color .25s ease}',
     '.ws-canvas .cf-toggle[data-open="true"] .cf-toggle-body{padding:10px 14px 10px 34px;border-top:1px solid var(--border);max-height:1500px;opacity:1;min-height:36px}',
     /* ── Viewer Checklist Block ── */
@@ -12552,7 +12552,7 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .cf-checklist-status-btn{font-size:18px;flex-shrink:0;cursor:default;border:none;background:transparent;padding:2px;line-height:1;border-radius:4px;position:relative}',
     '.ws-canvas .cf-checklist-status-btn::after{content:attr(data-label);position:absolute;bottom:calc(100% + 5px);left:50%;transform:translateX(-50%);background:rgba(0,0,0,.78);color:#fff;font-size:11px;font-weight:500;padding:3px 7px;border-radius:4px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;font-family:sans-serif}',
     '.ws-canvas .cf-checklist-status-btn:hover::after{opacity:1}',
-    '.ws-canvas .cf-checklist-title{flex:1;font-size:1.25rem;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+    '.ws-canvas .cf-checklist-title{flex:1;font-size:18px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
     '.ws-canvas .cf-checklist-btn{width:22px;height:22px;border:none;background:transparent;color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;border-radius:4px;flex-shrink:0}',
     '.ws-canvas .cf-checklist-btn i{transition:transform .18s;display:block}',
     '.ws-canvas .cf-checklist[data-open="true"] .cf-checklist-btn i{transform:rotate(90deg)}',
