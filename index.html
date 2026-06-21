@@ -7245,7 +7245,7 @@ const SLASH_ITEMS=[
   {id:'note',     icon:'<i class="ti ti-pin"></i>',             name:'Note Panel',   desc:'Hộp ghi chú nền tím',               cat:'Panel', alias:'note purple pin'},
 ];
 
-// Recently used command IDs (max 3, persisted in localStorage)
+// Recently used command IDs (max 5, persisted in localStorage)
 let _slashRecent=[];
 try{_slashRecent=JSON.parse(localStorage.getItem('slash_recent')||'[]');}catch(e){_slashRecent=[];}
 let _slashPinned=[];
@@ -7308,6 +7308,28 @@ function slashFilter(q){
   slashBuild(q.toLowerCase().trim());
 }
 
+// Strip Vietnamese diacritics + lowercase so accent-free typing still matches
+// (e.g. "tieu de" → "Tiêu đề", "trich dan" → "Trích dẫn", "duong ke" → "Đường kẻ").
+function _slashNorm(s){return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d');}
+// Relevance score so the BEST match lands at index 0 (the default active item),
+// instead of whatever happens to come first in SLASH_ITEMS. Higher = better.
+function _slashScore(item,nq){
+  const name=_slashNorm(item.name), alias=_slashNorm(item.alias||''),
+        desc=_slashNorm(item.desc), cat=_slashNorm(item.cat);
+  const aliasWords=alias.split(/\s+/).filter(Boolean);
+  if(name===nq||aliasWords.includes(nq))return 100;          // exact name / exact alias word
+  if(name.startsWith(nq))return 92;                            // name prefix
+  if(aliasWords.some(w=>w.startsWith(nq)))return 86;           // alias word prefix
+  if(name.includes(' '+nq))return 80;                          // word-start inside name
+  if(name.includes(nq))return 70;                              // substring in name
+  if(alias.includes(nq))return 60;                             // substring in alias
+  if(cat.includes(nq))return 45;                               // category match
+  if(desc.includes(nq))return 40;                              // substring in description
+  const fz=s=>{let qi=0;for(let si=0;si<s.length&&qi<nq.length;si++)if(s[si]===nq[qi])qi++;return qi===nq.length;};
+  if(fz(name)||fz(alias))return 20;                            // fuzzy subsequence (last resort)
+  return 0;
+}
+
 function slashBuild(q){
   const list=document.getElementById('slashMenuList');
   let items;
@@ -7329,18 +7351,28 @@ function slashBuild(q){
     items=[...pinnedItems,...recentItems,...rest];
     if(pinnedItems.length||recentItems.length)showingRecent=true;
   } else {
-    items=SLASH_ITEMS.filter(it=>{
-      const needle=q.toLowerCase();
-      if(it.name.toLowerCase().includes(needle)||it.desc.toLowerCase().includes(needle)||
-         it.cat.toLowerCase().includes(needle)||(it.alias||'').toLowerCase().includes(needle))return true;
-      const _fz=s=>{const sl=s.toLowerCase();let qi=0;for(let si=0;si<sl.length&&qi<needle.length;si++)if(sl[si]===needle[qi])qi++;return qi===needle.length;};
-      return _fz(it.name)||_fz(it.alias||'');
-    });
+    // Diacritic-insensitive + relevance-ranked: best match first so Enter picks it.
+    const nq=_slashNorm(q);
+    items=SLASH_ITEMS
+      .map(it=>({it,score:_slashScore(it,nq)}))
+      .filter(x=>x.score>0)
+      .sort((a,b)=>b.score-a.score||SLASH_ITEMS.indexOf(a.it)-SLASH_ITEMS.indexOf(b.it))
+      .map(x=>x.it);
   }
   _slashFiltered=items;
 
   if(!items.length){
     list.innerHTML=`<div class="slash-menu-empty"><i class="ti ti-search"></i>Không tìm thấy "<strong>${escH(q)}</strong>"<br><span style="font-size:11px;margin-top:4px;display:block;color:var(--text3)">Thử tìm: table, h1, image, panel...</span></div>`;
+    return;
+  }
+
+  // When filtering, render a flat relevance-ranked list (no category grouping) so the
+  // top result is always the active item. DOM order matches _slashFiltered → keyboard nav stays correct.
+  if(q){
+    const frag=document.createDocumentFragment();
+    items.forEach((item,i)=>frag.appendChild(_slashMakeItem(item,i)));
+    list.innerHTML='';
+    list.appendChild(frag);
     return;
   }
 
