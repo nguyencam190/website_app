@@ -46,3 +46,20 @@ Sau **mỗi lần thay đổi code** trong dự án này, bắt buộc phải:
 | Header search `.header-search-inp` | `.ws-search` | Cùng style dark (white text on dark header) |
 
 **Khi thêm tính năng mới có UI:** Luôn kiểm tra và cập nhật cả app CSS lẫn publisher CSS strings (có 2 đường: SPA ~line 12224+ và optimized ~line 14xxx).
+
+## Quy tắc Block tương tác — Phải REWIRE khi load lại nội dung
+
+**Nguyên tắc bất biến:** MỌI block tương tác (checklist, tabs, toggle, panel, layout cột, progress, status, carousel, embed, image, table…) PHẢI hoạt động đầy đủ chức năng edit sau khi `openDoc()` (mở lại trang), mở lại project, hoặc publish-rồi-edit-tiếp.
+
+### Vì sao dễ hỏng:
+- Nội dung lưu bằng `innerHTML` (`_commitContent`) → **mọi event listener bị mất**, và các thanh công cụ UI (`.cf-col-toolbar`, `.cf-panel-actions`, `.cf-img-toolbar`…) **bị strip khi lưu** (chúng là chrome, không phải content).
+- Khi load lại (`openDoc`), phải **rewire** lại listener VÀ **dựng lại** toolbar/actions đã bị strip, nếu không block mất khả năng edit (không resize được, không thêm/xóa được, không đổi loại được…).
+
+### Bắt buộc khi thêm block tương tác mới:
+1. Viết hàm rewire (`_cfWireXxx` / `_cfXxxRewire` / `_cfXxxLoadAll`) tái tạo listener + UI chrome.
+2. Thêm vào **`openDoc()`** (setTimeout block ~line 3668) — gọi cho mọi block trong editor.
+3. Thêm vào hàm hợp nhất **`_cfRewireBlock()`** (~line 7887) — dùng cho paste/clone.
+4. **Layout cột (`_cfInitLayout`) phải chạy TRƯỚC** các wiring chung, vì nó rebuild column-item từ innerHTML (block lồng bên trong sẽ được wiring chung quét lại sau).
+5. **Verify thực tế**: insert block → `_commitContent()` → `openDoc()` lại → kiểm tra toolbar/actions có mặt và listener còn sống (click thử). KHÔNG chỉ dựa vào việc đọc code.
+
+**Lịch sử lỗi:** panel mất nút action (`.cf-panel-actions`) và layout cột mất toolbar/resize sau khi mở lại — do `openDoc` thiếu `_cfInitLayout` và không dựng lại `.cf-panel-actions`. Đã fix bằng `_cfWirePanel`/`_cfPanelLoadAll` + gọi `_cfInitLayout` trong `openDoc`.

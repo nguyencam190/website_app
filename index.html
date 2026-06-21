@@ -3667,6 +3667,11 @@ function openDoc(id){
   const _snapDocId=id;
   setTimeout(()=>{
     if(state.currentDocId!==_snapDocId)return; // doc switched before timer fired
+    // Column layouts & panels first: _cfInitLayout rebuilds column items from
+    // saved HTML, so it must run BEFORE the generic block wiring below — that way
+    // any checklist/toggle/tabs nested inside the rebuilt columns get re-wired too.
+    document.getElementById('editor').querySelectorAll('.cf-column-layout').forEach(l=>_cfInitLayout(l));
+    _cfPanelLoadAll(document.getElementById('editor'));
     _cfImgLoadAll(document.getElementById('editor'));
     _cfToggleLoadAll(document.getElementById('editor'));
     document.querySelectorAll('.cf-checklist').forEach(cl=>_cfWireChecklist(cl));
@@ -7891,6 +7896,7 @@ function _cfRewireBlock(block){
   // ── Top-level block ─────────────────────────────
   if(cl.contains('cf-img-block'))        {_cfImgRewireBlock(block);}
   else if(cl.contains('cf-column-layout')){_cfInitLayout(block);}
+  else if(cl.contains('cf-panel'))       {_cfWirePanel(block);}
   else if(cl.contains('cf-checklist'))   {_cfWireChecklist(block);}
   else if(cl.contains('cf-toggle'))      {_cfWireToggle(block);}
   else if(cl.contains('cf-tabs'))        {_cfTabsRewire(block);}
@@ -7900,6 +7906,7 @@ function _cfRewireBlock(block){
   else if(cl.contains('cf-embed-block')) {_cfEmbedLoadAll(editor);}
   else if(cl.contains('cf-file-block'))  {_cfFileLoadAll(editor);}
   // ── Nested blocks inside containers ─────────────
+  block.querySelectorAll('.cf-panel').forEach(el=>_cfWirePanel(el));
   block.querySelectorAll('.cf-checklist').forEach(el=>_cfWireChecklist(el));
   block.querySelectorAll('.cf-toggle').forEach(el=>_cfWireToggle(el));
   block.querySelectorAll('.cf-tabs').forEach(b=>_cfTabsRewire(b));
@@ -8206,6 +8213,22 @@ function _cfInitLayout(layout){
   _cfRebuildCols(layout,n,dist,existing);
   // Re-wire any checklists that were inside the cloned column items
   layout.querySelectorAll('.cf-checklist').forEach(cl=>_cfWireChecklist(cl));
+}
+// Rebuild a panel's action buttons (type/delete). These are stripped on save
+// (UI chrome, not content) so they must be re-injected when content is loaded,
+// otherwise reopened/published-then-edited panels lose their edit controls.
+function _cfWirePanel(panel){
+  if(!panel)return;
+  // Ensure content stays editable even if the attribute was lost
+  const content=panel.querySelector('.cf-panel-content');
+  if(content&&content.getAttribute('contenteditable')!=='true')content.setAttribute('contenteditable','true');
+  if(panel.querySelector(':scope > .cf-panel-actions'))return; // already present
+  const actions=document.createElement('div');actions.className='cf-panel-actions';
+  actions.innerHTML='<button class="cf-panel-type-btn" onclick="cfPanelChangeType(this)" title="Đổi loại">⚙️</button><button class="cf-panel-del" onclick="this.closest(\'.cf-panel\').remove();onContentChange()" title="Xóa">✕</button>';
+  panel.appendChild(actions);
+}
+function _cfPanelLoadAll(root){
+  (root||document.getElementById('editor')).querySelectorAll('.cf-panel').forEach(p=>_cfWirePanel(p));
 }
 // Get caret bounding rect
 function _slashGetCaretRect(){
