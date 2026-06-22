@@ -63,3 +63,45 @@ Sau **mỗi lần thay đổi code** trong dự án này, bắt buộc phải:
 5. **Verify thực tế**: insert block → `_commitContent()` → `openDoc()` lại → kiểm tra toolbar/actions có mặt và listener còn sống (click thử). KHÔNG chỉ dựa vào việc đọc code.
 
 **Lịch sử lỗi:** panel mất nút action (`.cf-panel-actions`) và layout cột mất toolbar/resize sau khi mở lại — do `openDoc` thiếu `_cfInitLayout` và không dựng lại `.cf-panel-actions`. Đã fix bằng `_cfWirePanel`/`_cfPanelLoadAll` + gọi `_cfInitLayout` trong `openDoc`.
+
+## Quy tắc Push/Publisher — Ảnh phải xuất đầy đủ, không lưu trùng
+
+### Nguyên tắc bất biến:
+- **Mọi ảnh/video được referenced trong `state.docs` PHẢI có file trong thư mục project sau khi Push** — không được bỏ sót.
+- **Không lưu file trùng nội dung** vào folder — cùng blob content chỉ lưu 1 lần.
+
+### Kiến trúc Push (`_projFullSync`):
+
+**Phase 0 — Scan folder thực tế:**
+- Quét `images/` và `videos/` để biết chính xác file nào đang tồn tại → `folderFileIds`
+- Đồng thời build `folderHashMap` (hash → id) từ các file *đang được referenced* để dedup cross-session
+- Đảm bảo tất cả file này có blob trong IDB (tránh race condition với `_projLoadAssetsPromise`)
+- **KHÔNG dùng `_projSavedIds` làm nguồn sự thật** — `_projSavedIds` có thể stale nếu file bị xóa ngoài app
+
+**Phase 1 — Lưu ảnh mới, dedup:**
+- Với mỗi referenced id:
+  - Nếu đã có trong `folderFileIds` → skip (file confirmed exists)
+  - Lấy blob từ `_fetchAssetBlob(id)` (IDB → `_objUrls` → folder fallback)
+  - Compute SHA-256 hash
+  - Nếu hash đã có trong `folderHashMap` → dedup cross-session: lưu `idRedirects[id] = canonId`, không tạo file mới
+  - Nếu hash đã có trong `seenHashes` (session hiện tại) → dedup within-session tương tự
+  - Còn lại → save file, cập nhật `folderHashMap` và `seenHashes`
+- `idRedirects` được truyền sang `_projPublishWebsite` → `doExportOptimized`
+
+**Phase 2 — Xóa orphan + dedup files:**
+- File không còn được referenced → xóa
+- File là dedup non-canonical (đã có `idRedirects[id]`) → xóa
+
+**Phase 5 — Publish website:**
+- `_projPublishWebsite(idRedirects)` nhận map redirects
+- `idbToZipAsset(id)` trong reuseAssets mode: kiểm tra `opts.idRedirects` trước — nếu id là dedup, dùng canonical id's file path
+
+### Race condition đã fix:
+- `_projLoadFolderAssets` (startup reconnect) chạy background async — lưu promise vào `_projLoadAssetsPromise`
+- `_projFullSync` await `_projLoadAssetsPromise` trước khi làm gì — tránh `_idbGet` trả null cho ảnh chưa load vào IDB
+- `idbToZipAsset` có fallback đọc thẳng từ folder nếu IDB vẫn thiếu (defense-in-depth)
+
+### Khi thêm loại media mới:
+1. Thêm ID collection vào `_collectDocAssetIds` (cả `doc.images` array lẫn `innerHTML` scan)
+2. Thêm xử lý trong `idbToZipAsset` nếu cần format đặc biệt
+3. Verify: insert media → Push → kiểm tra file trong folder → mở website → ảnh hiển thị

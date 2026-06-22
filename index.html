@@ -11731,7 +11731,7 @@ async function _blobHash(blob){
 // Publish the optimized viewer website (index.html) into the SAME project folder.
 // Reuses the images/ + videos/ files Push already saved (no compress, no copy) so
 // the website and editor source stay perfectly in sync from one set of assets.
-async function _projPublishWebsite(){
+async function _projPublishWebsite(idRedirects){
   if(!_projDir)return null;
   const docs=state.docs.filter(d=>!d._deleted);
   if(!docs.length)return null;
@@ -11740,6 +11740,7 @@ async function _projPublishWebsite(){
   return await doExportOptimized({
     targetDir:_projDir,
     reuseAssets:true,
+    idRedirects:idRedirects||new Map(),
     docs:docs,
     title:state.projectName||'Project Docs',
     accent:accent,
@@ -11761,37 +11762,98 @@ async function _projFullSync(){
     await _projSaveJSON();
     const referencedIds=_collectDocAssetIds(state.docs);
 
-    // 1. Save new assets (skip already-saved and content duplicates)
+    // ── Phase 0: Scan folder once to know exactly which files exist ────────────
+    // _projSavedIds can be stale (file deleted externally, session cleared, etc.)
+    // so we verify against actual folder state on every Push.
+    const folderFileIds=new Set();     // ids that physically exist in folder
+    const folderHashMap=new Map();     // hash → id, for cross-session dedup
+    for(const sub of['images','videos']){
+      let subDir;try{subDir=await _projDir.getDirectoryHandle(sub);}catch(e){continue;}
+      for await(const[name,entry]of subDir.entries()){
+        if(entry.kind!=='file')continue;
+        const id=name.replace(/\.[^.]+$/,'');
+        folderFileIds.add(id);
+        // Build hash map from existing files so we can dedup cross-session
+        // Only hash if id is actually referenced (avoid reading unused orphaned files)
+        if(referencedIds.has(id)){
+          try{
+            const f=await entry.getFile();
+            const origExt=(name.split('.').pop()||'').toLowerCase();
+            const blob=_ensureBlobMime(new Blob([await f.arrayBuffer()],{type:f.type}),origExt);
+            const h=await _blobHash(blob);
+            if(h&&!folderHashMap.has(h))folderHashMap.set(h,id);
+            // Ensure blob is in IDB so website generator can reference it
+            if(!_projSavedIds.has(id)){
+              _projSavedIds.add(id);
+              await _idbPut(id,blob);
+              if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}
+            }
+          }catch(e){}
+        }
+      }
+    }
+
+    // ── Phase 1: Save new/missing assets ──────────────────────────────────────
+    // idRedirects: deduped id → canonical id (file already exists under canonical)
+    const idRedirects=new Map();
+    const seenHashes=new Map(); // hash → id, within this push session
     let saved=0,skipped=0,dupes=0;
-    const seenHashes=new Set();
+
     for(const id of referencedIds){
-      if(_projSavedIds.has(id)){skipped++;continue;}
-      const blob=await _idbGet(id);
-      if(!blob)continue;
+      // File already confirmed to exist in folder
+      if(folderFileIds.has(id)){skipped++;continue;}
+
+      const blob=await _fetchAssetBlob(id);
+      if(!blob){
+        // Last-resort: try reading from folder (shouldn't happen after Phase 0, but be safe)
+        console.warn('[Push] blob missing for referenced id:',id);
+        continue;
+      }
       const hash=await _blobHash(blob);
-      if(hash&&seenHashes.has(hash)){dupes++;continue;}
-      if(hash)seenHashes.add(hash);
-      await _projSaveAsset(id,blob);saved++;
+
+      // Cross-session dedup: same content already in folder under different id
+      if(hash&&folderHashMap.has(hash)){
+        const canonId=folderHashMap.get(hash);
+        idRedirects.set(id,canonId);
+        _projSavedIds.add(id);
+        dupes++;continue;
+      }
+      // Within-session dedup: same content saved earlier this push
+      if(hash&&seenHashes.has(hash)){
+        const canonId=seenHashes.get(hash);
+        idRedirects.set(id,canonId);
+        dupes++;continue;
+      }
+
+      await _projSaveAsset(id,blob);
+      folderFileIds.add(id);
+      if(hash){folderHashMap.set(hash,id);seenHashes.set(hash,id);}
+      saved++;
     }
     await _projFlushPendingSaves();
 
-    // 2. Delete orphaned files from project folder (not referenced in any doc)
+    // ── Phase 2: Delete orphaned files from folder ─────────────────────────────
+    // Also remove files whose id was deduped (redirect exists → canonical covers them)
     let deletedFiles=0;
     for(const subDirName of['images','videos']){
       let subDir;
       try{subDir=await _projDir.getDirectoryHandle(subDirName);}catch(e){continue;}
       const toDelete=[];
-      for await(const[name] of subDir.entries()){
+      for await(const[name]of subDir.entries()){
         const id=name.replace(/\.[^.]+$/,'');
-        if(!referencedIds.has(id))toDelete.push(name);
+        // Orphaned (not referenced) OR is a deduped non-canonical file
+        const isOrphan=!referencedIds.has(id);
+        const isDupeFile=idRedirects.has(id)&&folderFileIds.has(id);
+        if(isOrphan||isDupeFile)toDelete.push(name);
       }
       for(const name of toDelete){
         try{await subDir.removeEntry(name);deletedFiles++;}catch(e){}
         _projSavedIds.delete(name.replace(/\.[^.]+$/,''));
+        folderFileIds.delete(name.replace(/\.[^.]+$/,''));
       }
     }
 
-    // 3. Clean orphaned blobs from IDB
+    // ── Phase 3: Clean orphaned blobs from IDB ────────────────────────────────
     const db=await _openIDB();
     const allKeys=await new Promise(res=>{
       const tx=db.transaction('blobs','readonly');
@@ -11811,21 +11873,19 @@ async function _projFullSync(){
       deletedIdb++;
     }
 
-    // 4. Remove any stale "-editor.html" snapshots left by older Push versions.
-    //    The folder (data.json + images/ + videos/) is the single source of truth;
-    //    re-open for editing via the 📁 button, not a bundled editor file.
+    // ── Phase 4: Remove stale "-editor.html" snapshots ────────────────────────
     try{
       const toRemove=[];
-      for await(const[name,h] of _projDir.entries()){
+      for await(const[name,h]of _projDir.entries()){
         if(h.kind==='file'&&/-editor\.html$/i.test(name))toRemove.push(name);
       }
       for(const name of toRemove){try{await _projDir.removeEntry(name);}catch(e){}}
     }catch(e){console.error('[Push cleanup editor.html]',e);}
 
-    // 5. Publish optimized website ({projectName}.html) into the same folder — reuses images/
+    // ── Phase 5: Publish website — pass idRedirects so generator uses canonical paths ──
     let webPublished=false,webHtmlName='';
     try{
-      const wr=await _projPublishWebsite();
+      const wr=await _projPublishWebsite(idRedirects);
       if(wr&&wr.ok){webPublished=true;webHtmlName=wr.htmlName||'';}
     }catch(e){console.error('[Push Website]',e);}
 
@@ -14054,12 +14114,20 @@ async function doExportOptimized(opts){
 
   async function idbToZipAsset(id){
     if(_assetMap.has(id))return _assetMap.get(id);
+    // In reuseAssets mode: if this id was deduped, redirect to the canonical file
+    if(_folderMode&&opts.reuseAssets&&opts.idRedirects){
+      const canonId=opts.idRedirects.get(id);
+      if(canonId){
+        // Resolve the canonical path (recursively, in case of chained redirects)
+        const canonPath=await idbToZipAsset(canonId);
+        if(canonPath){_assetMap.set(id,canonPath);return canonPath;}
+      }
+    }
     let blob=null;
     const cached=_objUrls[id];
     if(cached){try{const r=await fetch(cached);blob=await r.blob();}catch(e){}}
     if(!blob){try{blob=await _idbGet(id);}catch(e){}}
-    // In reuseAssets mode, if blob not in memory/IDB yet, try reading from folder directly
-    // (handles race condition where _projLoadFolderAssets hasn't finished at push time)
+    // Fallback: read directly from folder (defense-in-depth for any remaining race conditions)
     if(!blob&&_folderMode&&opts.reuseAssets&&opts.targetDir){
       for(const sub of['images','videos']){
         try{
@@ -14071,7 +14139,6 @@ async function doExportOptimized(opts){
             const origExt=(entry.name.split('.').pop()||'').toLowerCase();
             const rawBlob=new Blob([await(await entry.getFile()).arrayBuffer()]);
             blob=_ensureBlobMime(rawBlob,origExt);
-            // Cache it so subsequent references and Push can use it
             _projSavedIds.add(id);
             await _idbPut(id,blob);
             if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}
