@@ -11699,6 +11699,7 @@ let _projDir=null,_projDirName='';
 const _projSavedIds=new Set();
 const _pendingFolderSaves=new Map(); // blobs queued while _projDir was null
 let _projLiveSaving=false;    // guard against concurrent saves
+let _projLoadAssetsPromise=null; // background _projLoadFolderAssets promise (startup reconnect)
 
 function _projUpdateBadge(){
   // Live button title reflects connection status
@@ -11752,6 +11753,10 @@ async function _projFullSync(){
   _projLiveSaving=true;
   try{
     toast('⏳ Đang lưu toàn bộ dữ liệu...','info');
+
+    // Wait for background folder-asset loading (from startup reconnect) to finish
+    // so all blobs are in IDB before we try to save/reference them
+    if(_projLoadAssetsPromise)await _projLoadAssetsPromise;
 
     await _projSaveJSON();
     const referencedIds=_collectDocAssetIds(state.docs);
@@ -11846,7 +11851,8 @@ async function _projInit(){
     if(perm==='granted'){
       _projDir=handle;_projDirName=handle.name;_projUpdateBadge();
       // Load images/videos from folder into IDB in background, then re-render current doc
-      _projLoadFolderAssets(handle).then(()=>_reloadEditorImages()).catch(()=>{});
+      // Track the promise so _projFullSync can await it before publishing
+      _projLoadAssetsPromise=_projLoadFolderAssets(handle).then(()=>{_reloadEditorImages();}).catch(()=>{}).finally(()=>{_projLoadAssetsPromise=null;});
     }else{
       // Permission revoked after page reload — show reconnect banner
       _projDirName=handle.name||'';
@@ -12002,7 +12008,7 @@ async function _projReconnect(){
       _projUpdateBadge();
       toast('📁 Đã kết nối lại: '+handle.name,'success');
       // Load images from folder into IDB, then re-render current doc images
-      _projLoadFolderAssets(handle).then(()=>_reloadEditorImages()).catch(()=>{});
+      _projLoadAssetsPromise=_projLoadFolderAssets(handle).then(()=>{_reloadEditorImages();}).catch(()=>{}).finally(()=>{_projLoadAssetsPromise=null;});
       await _projSaveJSON();
       await _projFlushPendingSaves();
       await _projMigrateToFolder();
@@ -14052,6 +14058,29 @@ async function doExportOptimized(opts){
     const cached=_objUrls[id];
     if(cached){try{const r=await fetch(cached);blob=await r.blob();}catch(e){}}
     if(!blob){try{blob=await _idbGet(id);}catch(e){}}
+    // In reuseAssets mode, if blob not in memory/IDB yet, try reading from folder directly
+    // (handles race condition where _projLoadFolderAssets hasn't finished at push time)
+    if(!blob&&_folderMode&&opts.reuseAssets&&opts.targetDir){
+      for(const sub of['images','videos']){
+        try{
+          const subDir=await opts.targetDir.getDirectoryHandle(sub);
+          for await(const[,entry]of subDir.entries()){
+            if(entry.kind!=='file')continue;
+            const entId=entry.name.replace(/\.[^.]+$/,'');
+            if(entId!==id)continue;
+            const origExt=(entry.name.split('.').pop()||'').toLowerCase();
+            const rawBlob=new Blob([await(await entry.getFile()).arrayBuffer()]);
+            blob=_ensureBlobMime(rawBlob,origExt);
+            // Cache it so subsequent references and Push can use it
+            _projSavedIds.add(id);
+            await _idbPut(id,blob);
+            if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}
+            break;
+          }
+        }catch(e){}
+        if(blob)break;
+      }
+    }
     if(!blob)return null;
     if(_folderMode&&opts.reuseAssets){
       // Reference the files Push already wrote to images/ or videos/ — no compress, no copy.
