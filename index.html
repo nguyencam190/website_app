@@ -11423,18 +11423,44 @@ async function _importFromDirectoryEntry(dirEntry){
     const next=()=>rdr.readEntries(batch=>{if(!batch.length)res(all);else{all.push(...batch);next();}},rej);
     next();
   });
-  // 1. Find data.json or page.json
+  // 1. Tìm file JSON project/page — quét linh hoạt (xem importMergePagesFromFolder):
+  //    đúng tên data.json/page.json → bất kỳ .json ở gốc → lặn xuống 1 cấp.
   let imported=null;
-  for(const[fname,single]of[['data.json',false],['page.json',true]]){
+  let foundJsonButInvalid=false;
+  const _tryJsonEntry=async(fe)=>{
     try{
-      const fe=await _getFile(dirEntry,fname);
       const text=await _readText(fe);
       const parsed=JSON.parse(text);
-      if(single){if(parsed.type==='camnguyen-page'&&parsed.doc){imported={docs:[parsed.doc]};break;}}
-      else{if(parsed&&Array.isArray(parsed.docs)){imported=parsed;break;}}
-    }catch(e){}
+      const r=_classifyImportJson(parsed);
+      if(r)return r;
+      foundJsonButInvalid=true;
+    }catch(e){foundJsonButInvalid=true;}
+    return null;
+  };
+  const _scanEntryForJson=async(de)=>{
+    for(const fname of['data.json','page.json']){
+      try{const fe=await _getFile(de,fname);const r=await _tryJsonEntry(fe);if(r)return r;}catch(e){}
+    }
+    let all=[];try{all=await _readAllEntries(de);}catch(e){}
+    for(const ent of all){
+      if(ent.isFile&&/\.json$/i.test(ent.name)){const r=await _tryJsonEntry(ent);if(r)return r;}
+    }
+    return null;
+  };
+  let r=await _scanEntryForJson(dirEntry);
+  if(!r){
+    let all=[];try{all=await _readAllEntries(dirEntry);}catch(e){}
+    for(const ent of all){
+      if(ent.isDirectory){const sub=await _scanEntryForJson(ent);if(sub){r=sub;dirEntry=ent;break;}}
+    }
   }
-  if(!imported){toast('Không tìm thấy data.json hoặc page.json trong thư mục này','error');return;}
+  if(r)imported=r.imported;
+  if(!imported){
+    toast(foundJsonButInvalid
+      ?'Tìm thấy file JSON nhưng sai định dạng — cần project ({docs:[...]}) hoặc page.json (camnguyen-page).'
+      :'Không tìm thấy file JSON nào trong thư mục này','error');
+    return;
+  }
   // 2. Load images/videos into IDB + ObjectURL cache (same as ZIP import)
   let mediaCount=0;
   toast('⏳ Đang tải ảnh/video từ thư mục...','info');
@@ -11464,31 +11490,66 @@ async function _importFromDirectoryEntry(dirEntry){
   _sbImportShowMergeModal('📁 '+dirEntry.name,imported.docs,mediaCount);
 }
 
+// Phân loại JSON đã parse → {imported,single} hoặc null.
+// Chấp nhận: project {docs:[...]}, page.json {type:'camnguyen-page',doc:{...}},
+// và một doc đơn lẻ {id,title,content,...} (phòng khi file json chỉ chứa 1 trang).
+function _classifyImportJson(parsed){
+  if(parsed&&Array.isArray(parsed.docs))return{imported:parsed,single:false};
+  if(parsed&&parsed.type==='camnguyen-page'&&parsed.doc)return{imported:{docs:[parsed.doc]},single:true};
+  if(parsed&&parsed.doc&&parsed.doc.id)return{imported:{docs:[parsed.doc]},single:true};
+  if(parsed&&parsed.id&&('content'in parsed||'title'in parsed))return{imported:{docs:[parsed]},single:true};
+  return null;
+}
 async function importMergePagesFromFolder(){
   if(!window.showDirectoryPicker){toast('Trình duyệt không hỗ trợ (cần Chrome/Edge 86+)','error');return;}
   let dir;
   try{dir=await window.showDirectoryPicker({mode:'read',startIn:'documents'});}
   catch(e){if(e.name!=='AbortError')toast('Lỗi chọn thư mục: '+e.message,'error');return;}
 
-  // Thử đọc data.json (project folder) rồi page.json (single-page export folder)
+  // Tìm file JSON project/page. Quét linh hoạt để KHÔNG báo "thiếu json" sai:
+  //   1) đúng tên data.json / page.json ở gốc thư mục
+  //   2) BẤT KỲ file .json nào ở gốc (tên khác cũng nhận, miễn đúng cấu trúc)
+  //   3) lặn xuống 1 cấp thư mục con (phòng khi user chọn thư mục cha)
   let imported=null;
   let isSinglePage=false;
-  for(const[fname,single]of[['data.json',false],['page.json',true]]){
+  let foundJsonButInvalid=false;
+  const _tryJsonHandle=async(fh)=>{
     try{
-      const fh=await dir.getFileHandle(fname);
       const text=await(await fh.getFile()).text();
       const parsed=JSON.parse(text);
-      if(single){
-        // page.json: {type:'camnguyen-page', doc:{...}}
-        if(parsed.type==='camnguyen-page'&&parsed.doc){imported={docs:[parsed.doc]};isSinglePage=true;break;}
-      }else{
-        // data.json: {docs:[...]}
-        if(parsed&&Array.isArray(parsed.docs)){imported=parsed;break;}
+      const r=_classifyImportJson(parsed);
+      if(r)return r;
+      foundJsonButInvalid=true; // có json, parse được, nhưng sai cấu trúc
+    }catch(e){foundJsonButInvalid=true;} // có json nhưng parse lỗi
+    return null;
+  };
+  const _scanDirForJson=async(d)=>{
+    // ưu tiên đúng tên trước
+    for(const fname of['data.json','page.json']){
+      try{const fh=await d.getFileHandle(fname);const r=await _tryJsonHandle(fh);if(r)return r;}catch(e){}
+    }
+    // rồi tới bất kỳ .json nào khác
+    for await(const[name,handle]of d.entries()){
+      if(handle.kind==='file'&&/\.json$/i.test(name)){
+        const r=await _tryJsonHandle(handle);if(r)return r;
       }
-    }catch(e){}
+    }
+    return null;
+  };
+  let r=await _scanDirForJson(dir);
+  if(!r){
+    // lặn xuống 1 cấp — nếu tìm thấy, dùng luôn thư mục con đó để load ảnh/video
+    for await(const[,handle]of dir.entries()){
+      if(handle.kind!=='directory')continue;
+      const sub=await _scanDirForJson(handle);
+      if(sub){r=sub;dir=handle;break;}
+    }
   }
+  if(r){imported=r.imported;isSinglePage=r.single;}
   if(!imported){
-    toast('Không tìm thấy data.json hoặc page.json trong thư mục này.\nHãy chọn thư mục project được tạo bởi "Lưu vào thư mục" hoặc giải nén từ file .zip','error');
+    toast(foundJsonButInvalid
+      ?'Tìm thấy file JSON nhưng sai định dạng — cần project ({docs:[...]}) hoặc page.json (camnguyen-page).'
+      :'Không tìm thấy file JSON nào trong thư mục này.\nHãy chọn thư mục project được tạo bởi "Lưu vào thư mục" hoặc giải nén từ file .zip','error');
     return;
   }
   // 2. Import ảnh + video vào IDB — _idbPut.oncomplete tự gọi _projSaveAsset
