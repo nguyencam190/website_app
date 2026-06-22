@@ -105,3 +105,36 @@ Sau **mỗi lần thay đổi code** trong dự án này, bắt buộc phải:
 1. Thêm ID collection vào `_collectDocAssetIds` (cả `doc.images` array lẫn `innerHTML` scan)
 2. Thêm xử lý trong `idbToZipAsset` nếu cần format đặc biệt
 3. Verify: insert media → Push → kiểm tra file trong folder → mở website → ảnh hiển thị
+
+## Quy tắc Dọn dẹp Media — Luôn xóa ảnh/video rác
+
+### Nguyên tắc bất biến:
+- **LUÔN xóa ảnh/video không còn được dùng** (orphan) khỏi folder project và IDB sau mỗi Push.
+- **LUÔN xóa file trùng nội dung** (deduped non-canonical) — chỉ giữ 1 file duy nhất cho mỗi content.
+- Mục tiêu: folder project không bao giờ chứa file rác, tiết kiệm dung lượng, tránh tích lũy theo thời gian.
+
+### Các nguồn sinh ra rác:
+- Xóa ảnh khỏi trang → id còn trong IDB và folder nhưng không ai reference
+- Import trang có ảnh trùng content với ảnh đã có → 2 file cùng nội dung khác id
+- Upload lại cùng 1 ảnh nhiều lần → nhiều id, cùng blob
+- Xóa trang nhưng ảnh của trang đó chưa được dọn
+
+### Cơ chế dọn dẹp hiện tại (đã implement):
+
+**Folder (mỗi Push — Phase 2 của `_projFullSync`):**
+- File không có id trong `referencedIds` → orphan → xóa ngay
+- File có `idRedirects[id]` (dedup non-canonical) → xóa ngay
+
+**IDB (mỗi Push — Phase 3 của `_projFullSync`):**
+- Key không có trong `referencedIds` và không phải `PROJ_DIR_IDB_KEY` → xóa khỏi IDB
+- Revoke `_objUrls[key]` để giải phóng memory
+- Xóa khỏi `_pendingFolderSaves`
+
+**Khi xóa trang (`_purgeDocMedia`):**
+- Dọn IDB và `_objUrls` ngay lập tức cho các id chỉ dùng bởi trang đó
+- KHÔNG xóa folder ngay — để Push orphan-cleanup xử lý (phòng case user undo)
+
+### Không được bỏ qua:
+- Khi thêm tính năng mới có media, phải đảm bảo `_collectDocAssetIds` thu thập đủ id → Phase 2/3 mới dọn được đúng
+- Không được xóa file khỏi folder trong luồng edit realtime (chỉ xóa khi Push) — tránh mất ảnh nếu user undo
+- Sau khi import trang có ảnh trùng → Push sẽ tự dedup và xóa file thừa, KHÔNG cần xóa thủ công
