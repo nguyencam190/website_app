@@ -6655,8 +6655,14 @@ function tblRowResizeStart(e,row){
         const stage=car.querySelector('.tcc-stage');
         if(stage)stage.style.minHeight=Math.max(40,newH-thumbH-8)+'px';
       }
-      // Images also scale via CSS (width:100%;height:100%)
-      if(cell.querySelectorAll('img').length||car)cell.classList.add('tbl-has-img');
+      // Only mark image-ONLY cells — mixed cells (text+image) must NOT get
+      // tbl-has-img (overflow:hidden+line-height:0 would clip text).
+      if(cell.querySelectorAll('img').length||car){
+        const _hasText=Array.from(cell.querySelectorAll('p,h1,h2,h3,h4,h5,h6,li,blockquote'))
+          .some(el=>el.textContent.trim().length>0);
+        if(!_hasText)cell.classList.add('tbl-has-img');
+        else cell.classList.remove('tbl-has-img');
+      }
     });
   }
   function up(){
@@ -8447,6 +8453,10 @@ function _cfInsertBlockAtRange(block, savedRange){
          !_slashOriginP.textContent.trim()&&_slashOriginP.children.length<=1&&
          !_slashOriginP.classList.contains('cf-img-block'))
         _slashOriginP.remove();
+      // Remove tbl-has-img if already on cell — it would clip text (overflow:hidden+line-height:0)
+      insertParent.classList.remove('tbl-has-img');
+      insertParent.style.height='';
+      const _mixedRow=insertParent.closest('tr');if(_mixedRow)_mixedRow.style.height='';
       insertBefore=insertParent.querySelector('.tbl-img-btn,.tbl-cell-drop')||null;
       // tbl-has-img not applied: its line-height:0/padding:0 would collapse the text
     }else{
@@ -8568,12 +8578,23 @@ function _cfBuildImgToolbar(block){
       const wrap=block.querySelector('.cf-img-wrap');
       if(inner){
         inner.style.width=wt.w;
-        // Vertical padding % is relative to container WIDTH in CSS, so it scales
-        // proportionally with the cell width when sidebar collapses (same as horizontal)
-        if(wrap&&inner.closest('td,th')){
-          const p=parseFloat(wt.w);
-          const vp=isNaN(p)?0:Math.max(0,(100-p)/2);
-          wrap.style.paddingTop=wrap.style.paddingBottom=vp>0?vp+'%':'';
+        const tdCell=inner.closest('td,th');
+        if(wrap&&tdCell){
+          // Mixed cell (text+image): no vertical padding, let height auto-expand
+          const _hasTxt=Array.from(tdCell.querySelectorAll('p,h1,h2,h3,h4,h5,h6,li,blockquote'))
+            .some(el=>el.textContent.trim().length>0);
+          if(_hasTxt){
+            wrap.style.paddingTop=wrap.style.paddingBottom='';
+            tdCell.classList.remove('tbl-has-img');
+            tdCell.style.height='';
+            const _tr=tdCell.closest('tr');if(_tr)_tr.style.height='';
+          }else{
+            // Vertical padding % is relative to container WIDTH in CSS, so it scales
+            // proportionally with the cell width when sidebar collapses (same as horizontal)
+            const p=parseFloat(wt.w);
+            const vp=isNaN(p)?0:Math.max(0,(100-p)/2);
+            wrap.style.paddingTop=wrap.style.paddingBottom=vp>0?vp+'%':'';
+          }
         }
         onContentChange();
       }
@@ -8634,7 +8655,7 @@ function _cfBuildImgToolbar(block){
   const ctxItems=[
     {icon:'ti-link',label:'Thêm liên kết',fn:()=>{const url=prompt('Nhập URL liên kết:');if(url){block.dataset.link=url;toast('Đã thêm link','success');}}},
     {icon:'ti-text-caption',label:'Thêm alt text',fn:()=>{const t=prompt('Nhập mô tả (alt text):',block.querySelector('img')?.alt||'');if(t!=null){const img=block.querySelector('img');if(img)img.alt=t;block.dataset.name=t;toast('Đã cập nhật alt text','success');}}},
-    {icon:'ti-resize',label:'Thay đổi kích thước',fn:()=>{const v=prompt('Nhập chiều rộng (%, vd: 80):',parseInt(block.querySelector('.cf-img-inner')?.style.width||'100'));if(v){const inner=block.querySelector('.cf-img-inner');const wrap=block.querySelector('.cf-img-wrap');if(inner){const p=Math.min(100,Math.max(10,parseInt(v)||100));inner.style.width=p+'%';if(wrap&&inner.closest('td,th')){const vp=(100-p)/2;wrap.style.paddingTop=wrap.style.paddingBottom=vp>0?vp+'%':'';}onContentChange();}}}},
+    {icon:'ti-resize',label:'Thay đổi kích thước',fn:()=>{const v=prompt('Nhập chiều rộng (%, vd: 80):',parseInt(block.querySelector('.cf-img-inner')?.style.width||'100'));if(v){const inner=block.querySelector('.cf-img-inner');const wrap=block.querySelector('.cf-img-wrap');if(inner){const p=Math.min(100,Math.max(10,parseInt(v)||100));inner.style.width=p+'%';const _td=inner.closest('td,th');if(wrap&&_td){const _hasTxt=Array.from(_td.querySelectorAll('p,h1,h2,h3,h4,h5,h6,li,blockquote')).some(el=>el.textContent.trim().length>0);if(_hasTxt){wrap.style.paddingTop=wrap.style.paddingBottom='';_td.classList.remove('tbl-has-img');_td.style.height='';const _tr2=_td.closest('tr');if(_tr2)_tr2.style.height='';}else{const vp=(100-p)/2;wrap.style.paddingTop=wrap.style.paddingBottom=vp>0?vp+'%':'';}}onContentChange();}}}},
     {sep:true},
     {icon:'ti-copy',label:'Sao chép',fn:()=>{
       const clone=block.cloneNode(true);_cfImgRewireBlock(clone);
