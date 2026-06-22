@@ -57,7 +57,7 @@
 .editor-content td img,.editor-content th img{display:none!important}
 .editor-content td img[src*="blob:"],.editor-content td img[src*="data:"],
 .editor-content th img[src*="blob:"],.editor-content th img[src*="data:"]{display:block!important}
-.editor-content td.tbl-has-img,.editor-content th.tbl-has-img{padding:0;overflow:hidden;vertical-align:middle;text-align:center;box-sizing:border-box;line-height:0}
+.editor-content td.tbl-has-img,.editor-content th.tbl-has-img{vertical-align:top;box-sizing:border-box}
 /* Table cell carousel */
 .tbl-cell-car{display:flex;flex-direction:column;width:100%;height:100%;min-height:100px;background:transparent;border-radius:6px;overflow:hidden;user-select:none;box-sizing:border-box}
 .tbl-cell-car .tcc-stage{position:relative;flex:1;overflow:hidden;cursor:grab;min-height:0;background:transparent}
