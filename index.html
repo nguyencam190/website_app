@@ -3857,52 +3857,48 @@ async function docCtxExportJson(){
   if(!doc){toast('Không tìm thấy trang','error');return;}
   // Flush unsaved editor content for the currently-open page before exporting
   if(docId===state.currentDocId)onContentChange();
-  toast('Đang chuẩn bị JSON...','info');
+  toast('Đang chuẩn bị ZIP...','info');
   try{
-    // Collect all media IDs referenced in this page
-    const mediaIds=new Set();
-    (doc.images||[]).forEach(m=>{
-      if(!m)return;
-      if(m.id)mediaIds.add(m.id);
-      // Floating carousel: individual slide blobs are under slides[i].id, not m.id
-      if(m.type==='carousel'&&m.slides)(m.slides).forEach(sl=>{if(sl&&sl.id)mediaIds.add(sl.id);});
-    });
-    const tmp=document.createElement('div');tmp.innerHTML=doc.content||'';
-    tmp.querySelectorAll('[data-cfimgid]').forEach(el=>mediaIds.add(el.dataset.cfimgid));
-    tmp.querySelectorAll('[data-tblimgid]').forEach(el=>mediaIds.add(el.dataset.tblimgid));
-    tmp.querySelectorAll('[data-carid]').forEach(el=>mediaIds.add(el.dataset.carid));
-    tmp.querySelectorAll('[data-carids]').forEach(el=>(el.dataset.carids||'').split(',').filter(Boolean).forEach(id=>mediaIds.add(id)));
-    tmp.querySelectorAll('[data-slideids]').forEach(el=>(el.dataset.slideids||'').split(',').filter(Boolean).forEach(id=>mediaIds.add(id)));
-
-    // Build base64 map — prefer already-stored src from doc.images, else load from IDB
-    const imgMap={};
-    (doc.images||[]).forEach(m=>{if(m&&m.id&&m.src&&m.src.startsWith('data:'))imgMap[m.id]=m.src;});
-    const media={};
-    for(const id of mediaIds){
-      if(!id)continue;
-      if(imgMap[id]){media[id]=imgMap[id];continue;}
-      // IDB is the primary source (reliable across sessions and file:// pages)
-      let blob=null;
-      try{blob=await _idbGet(id);}catch(e){}
-      // Fallback: cached blob URL from current session (for images not yet flushed to IDB)
-      if(!blob){
-        const cached=_objUrls&&_objUrls[id];
-        if(cached){try{const r=await fetch(cached);if(r.ok){const b=await r.blob();if(b&&b.size>0)blob=b;}}catch(e){}}
-      }
-      if(blob){try{media[id]=await _blobToB64(blob);}catch(e){console.warn('[export] _blobToB64 failed for',id,e);}}
-      else{console.warn('[export] No blob found for media id',id);}
+    // Collect this doc + all descendants recursively
+    function _collectTree(id){
+      const node=state.docs.find(d=>d.id===id);
+      if(!node)return[];
+      return[node,...state.docs.filter(d=>d.parentId===id).flatMap(ch=>_collectTree(ch.id))];
     }
+    const allDocs=_collectTree(docId);
 
-    // Deep-copy doc, strip session-only blob URLs
-    const docCopy=JSON.parse(JSON.stringify(doc));
-    (docCopy.images||[]).forEach(m=>{if(m&&m.src&&m.src.startsWith('blob:'))delete m.src;});
+    // Collect all media IDs from all docs in the tree
+    const mediaIds=new Set();
+    function _collectMediaFromDoc(d){
+      (d.images||[]).forEach(m=>{
+        if(!m)return;
+        if(m.id)mediaIds.add(m.id);
+        if(m.type==='carousel'&&m.slides)(m.slides).forEach(sl=>{if(sl&&sl.id)mediaIds.add(sl.id);});
+      });
+      const tmp=document.createElement('div');tmp.innerHTML=d.content||'';
+      tmp.querySelectorAll('[data-cfimgid]').forEach(el=>mediaIds.add(el.dataset.cfimgid));
+      tmp.querySelectorAll('[data-tblimgid]').forEach(el=>mediaIds.add(el.dataset.tblimgid));
+      tmp.querySelectorAll('[data-carid]').forEach(el=>mediaIds.add(el.dataset.carid));
+      tmp.querySelectorAll('[data-carids]').forEach(el=>(el.dataset.carids||'').split(',').filter(Boolean).forEach(id=>mediaIds.add(id)));
+      tmp.querySelectorAll('[data-slideids]').forEach(el=>(el.dataset.slideids||'').split(',').filter(Boolean).forEach(id=>mediaIds.add(id)));
+    }
+    allDocs.forEach(_collectMediaFromDoc);
 
-    // Build ZIP: page.json (no base64) + images/ + videos/
+    // Deep-copy all docs, strip session-only blob URLs
+    const docsCopy=JSON.parse(JSON.stringify(allDocs));
+    docsCopy.forEach(dc=>(dc.images||[]).forEach(m=>{if(m&&m.src&&m.src.startsWith('blob:'))delete m.src;}));
+
+    // Build ZIP: page.json + images/ + videos/
     let JSZip;
     try{JSZip=await _loadJSZip();}catch(er){toast('Không tải được JSZip','error');return;}
     const zip=new JSZip();
-    // page.json — no base64 media (files are separate in ZIP)
-    const pageJson=JSON.stringify({version:2,type:'camnguyen-page',exportedAt:new Date().toISOString(),doc:docCopy},null,2);
+    // Use multi-doc format when there are children, single-doc for backward compat
+    let pageJson;
+    if(docsCopy.length===1){
+      pageJson=JSON.stringify({version:2,type:'camnguyen-page',exportedAt:new Date().toISOString(),doc:docsCopy[0]},null,2);
+    }else{
+      pageJson=JSON.stringify({version:2,type:'camnguyen-pages',exportedAt:new Date().toISOString(),rootId:docId,docs:docsCopy},null,2);
+    }
     zip.file('page.json',pageJson);
     // Add image/video files
     let saved=0;
@@ -3923,9 +3919,9 @@ async function docCtxExportJson(){
     const zipBlob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
     const fname=(doc.title||'page').replace(/[\/\\?%*:|"<>]/g,'_')+'.camnguyen.zip';
     const ok=await _saveFile(zipBlob,fname,[{description:'CamNguyen Page ZIP',accept:{'application/zip':['.zip']}}]);
-    if(ok)toast('✅ Đã xuất ZIP trang ('+saved+' ảnh/video)','success');
+    if(ok)toast('✅ Đã xuất ZIP ('+allDocs.length+' trang · '+saved+' ảnh/video)','success');
   }catch(err){
-    toast('Lỗi xuất JSON: '+err.message,'error');
+    toast('Lỗi xuất ZIP: '+err.message,'error');
     console.error('[export] docCtxExportJson error:',err);
   }
 }
@@ -11354,7 +11350,9 @@ async function _importSinglePageFromZip(zip){
   const pf=zip.file('page.json');
   if(!pf){toast('Không tìm thấy page.json trong ZIP','error');return;}
   const data=JSON.parse(await pf.async('string'));
-  if(data.type!=='camnguyen-page'||!data.doc){toast('page.json không hợp lệ','error');return;}
+  const isMulti=data.type==='camnguyen-pages'&&Array.isArray(data.docs);
+  const isSingle=data.type==='camnguyen-page'&&data.doc;
+  if(!isMulti&&!isSingle){toast('page.json không hợp lệ','error');return;}
   let mediaCount=0;
   for(const[path,entry]of Object.entries(zip.files)){
     if(entry.dir||(!path.startsWith('images/')&&!path.startsWith('videos/')))continue;
@@ -11370,8 +11368,14 @@ async function _importSinglePageFromZip(zip){
       }
     }catch(er){}
   }
-  _importMergeDocs=[JSON.parse(JSON.stringify(data.doc))];
-  _sbImportShowMergeModal(data.doc.title||'Trang nhập',_importMergeDocs,mediaCount);
+  if(isMulti){
+    _importMergeDocs=JSON.parse(JSON.stringify(data.docs));
+    const root=data.docs.find(d=>d.id===data.rootId)||data.docs[0];
+    _sbImportShowMergeModal(root?.title||'Trang nhập',_importMergeDocs,mediaCount);
+  }else{
+    _importMergeDocs=[JSON.parse(JSON.stringify(data.doc))];
+    _sbImportShowMergeModal(data.doc.title||'Trang nhập',_importMergeDocs,mediaCount);
+  }
 }
 
 function _sbImportShowMergeModal(sourceName,docs,mediaCount){
@@ -11631,8 +11635,14 @@ async function doImportMerge(){
     existing.updatedAt=new Date().toISOString();
     existing.importedFrom=incoming.id;
   }
-  // Create new pages
-  const imported=toCreate.map(d=>({...d,id:uid(),section:targetSec,parentId:null,importedFrom:d.id,updatedAt:new Date().toISOString()}));
+  // Create new pages — preserve parent-child relationships within the imported set
+  const _idMap=new Map();
+  toCreate.forEach(d=>_idMap.set(d.id,uid()));
+  const imported=toCreate.map(d=>{
+    // parentId within the import set → remap to new ID; parentId pointing outside → null
+    const newParent=d.parentId&&_idMap.has(d.parentId)?_idMap.get(d.parentId):null;
+    return{...d,id:_idMap.get(d.id),section:targetSec,parentId:newParent,importedFrom:d.id,updatedAt:new Date().toISOString()};
+  });
   state.docs.push(...imported);
   persistNow();renderSidebar();
   const firstDoc=imported[0]||toUpdate[0]?.existing;
