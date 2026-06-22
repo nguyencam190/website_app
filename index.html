@@ -1097,10 +1097,8 @@ td .cf-checklist[data-open="true"] .cf-checklist-body,.cf-column-item .cf-checkl
 .cf-img-block.selected .cf-img-inner{outline:2px solid var(--accent);outline-offset:0}
 .cf-img-inner{position:relative;display:inline-block;max-width:100%;border-radius:4px;overflow:visible;line-height:0;transition:box-shadow .35s ease,outline-color .35s ease;cursor:zoom-in}
 .cf-img-inner img,.cf-img-inner video{display:block;max-width:100%;height:auto;border-radius:4px;pointer-events:none}
-/* Video block: accent border + glow to distinguish from image blocks */
-.cf-img-block[data-cfimgtype="video"] .cf-img-inner{outline:2px solid var(--accent);outline-offset:0;border-radius:6px}
-.cf-img-block[data-cfimgtype="video"] .cf-img-inner video{border-radius:4px;box-shadow:0 4px 18px var(--accent-glow)}
-.cf-img-block[data-cfimgtype="video"].selected .cf-img-inner{outline:2px solid var(--accent);outline-offset:3px;box-shadow:0 0 0 5px var(--accent-glow)}
+/* Video block uses the exact same accent treatment as image blocks: no ring at rest,
+   accent outline only when selected (.cf-img-block.selected .cf-img-inner above). */
 /* When inner has an explicit width (preset 50/75/100% or after resize), media fills it completely.
    Otherwise a low-res video/image renders at its intrinsic width, left-aligned, leaving whitespace on the right. */
 .cf-img-inner[style*="width"] img,.cf-img-inner[style*="width"] video{width:100%}
@@ -12862,9 +12860,6 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .cf-img-inner{position:relative;display:inline-block;max-width:100%;border-radius:4px;overflow:hidden;line-height:0;transition:box-shadow .35s ease,outline-color .35s ease}',
     '.ws-canvas .cf-img-inner img{display:block;max-width:100%;height:auto;border-radius:4px;cursor:zoom-in;margin:0}',
     '.ws-canvas .cf-img-inner video{display:block;max-width:100%;height:auto;border-radius:4px;pointer-events:auto!important;cursor:default;margin:0}',
-    /* Video block: accent border + glow to distinguish from image blocks (mirrors app .cf-img-block[data-cfimgtype="video"]). Glow lives on .cf-img-inner — publisher .cf-img-inner has overflow:hidden which would clip a glow on the child video. */
-    '.ws-canvas .cf-img-block[data-cfimgtype="video"] .cf-img-inner{outline:2px solid var(--accent);outline-offset:0;border-radius:6px;box-shadow:0 4px 18px var(--accent-glow)}',
-    '.ws-canvas .cf-img-block[data-cfimgtype="video"] .cf-img-inner video{border-radius:4px}',
     '.ws-canvas .cf-img-inner[style*="width"] img,.ws-canvas .cf-img-inner[style*="width"] video{width:100%}',
     '.ws-canvas .cf-img-caption{display:block;text-align:center;font-size:15px;color:var(--text3);padding:6px 8px;min-height:20px}',
     '.ws-canvas .cf-img-caption:empty{display:none}',
