@@ -11679,18 +11679,25 @@ async function doImportMerge(){
   // Build lookup maps for conflict detection
   const _byImportedFrom=new Map(state.docs.filter(d=>d.importedFrom).map(d=>[d.importedFrom,d]));
   const _byTitle=new Map(state.docs.map(d=>[(d.title||'').trim().toLowerCase(),d]).filter(([k])=>k));
-  const _existingContent=new Set(state.docs.map(d=>{const c=d.content||'';return c.length>0?c.length+':'+c.slice(0,300):null;}).filter(Boolean));
-  // Separate into: UPDATE existing page vs CREATE new page
+  const _existingContent=new Map();
+  state.docs.forEach(d=>{const c=d.content||'';if(c.length>0){const k=c.length+':'+c.slice(0,300);if(!_existingContent.has(k))_existingContent.set(k,d);}});
+  // Separate into: UPDATE existing page vs CREATE new page.
+  // _idMap ánh xạ id-import-cũ → id thật trong state cho MỌI trang được chọn:
+  // trang mới tạo (uid mới), trang cập nhật (id trang đã có), và trang bị bỏ qua vì
+  // trùng nội dung (id trang trùng). Nhờ vậy trang con luôn bám đúng trang cha — kể cả
+  // khi cha không phải trang mới. Dùng chung cho import ZIP / thư mục / JSON.
   const toCreate=[];
   const toUpdate=[];
+  const _idMap=new Map();
   for(const d of selected){
     const c=d.content||'';
-    if(c.length>0&&_existingContent.has(c.length+':'+c.slice(0,300)))continue;// identical — skip silently
+    const sig=c.length>0?c.length+':'+c.slice(0,300):null;
+    if(sig&&_existingContent.has(sig)){const dup=_existingContent.get(sig);if(dup)_idMap.set(d.id,dup.id);continue;}// identical — skip nhưng vẫn map cho con
     const byImpFrom=_byImportedFrom.get(d.id);
-    if(byImpFrom){toUpdate.push({existing:byImpFrom,incoming:d});continue;}
+    if(byImpFrom){toUpdate.push({existing:byImpFrom,incoming:d});_idMap.set(d.id,byImpFrom.id);continue;}
     const byTitle=_byTitle.get((d.title||'').trim().toLowerCase());
-    if(byTitle){toUpdate.push({existing:byTitle,incoming:d});continue;}
-    toCreate.push(d);
+    if(byTitle){toUpdate.push({existing:byTitle,incoming:d});_idMap.set(d.id,byTitle.id);continue;}
+    _idMap.set(d.id,uid());toCreate.push(d);
   }
   // Nothing to do — close silently, no spam
   if(!toCreate.length&&!toUpdate.length)return;
@@ -11701,11 +11708,8 @@ async function doImportMerge(){
     existing.updatedAt=new Date().toISOString();
     existing.importedFrom=incoming.id;
   }
-  // Create new pages — preserve parent-child relationships within the imported set
-  const _idMap=new Map();
-  toCreate.forEach(d=>_idMap.set(d.id,uid()));
+  // Create new pages — parentId bám vào _idMap (cha mới, cha đã cập nhật, hoặc cha trùng nội dung)
   const imported=toCreate.map(d=>{
-    // parentId within the import set → remap to new ID; parentId pointing outside → null
     const newParent=d.parentId&&_idMap.has(d.parentId)?_idMap.get(d.parentId):null;
     return{...d,id:_idMap.get(d.id),section:targetSec,parentId:newParent,importedFrom:d.id,updatedAt:new Date().toISOString()};
   });
