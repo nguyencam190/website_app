@@ -47,6 +47,25 @@ Sau **mỗi lần thay đổi code** trong dự án này, bắt buộc phải:
 
 **Khi thêm tính năng mới có UI:** Luôn kiểm tra và cập nhật cả app CSS lẫn publisher CSS strings (có 2 đường: SPA ~line 12224+ và optimized ~line 14xxx).
 
+## Quy tắc Chuyển tiếp (Transition) — Phải luôn mượt mà
+
+**Nguyên tắc bất biến:** MỌI chuyển tiếp trên **app** lẫn **web publisher** đều PHẢI mượt mà — không giật, không có trạng thái nửa-vời (half-state), không chậm. Áp dụng cho: đổi light/dark mode, đổi accent, mở/đóng sidebar, ẩn/hiện PAB, focus mode…
+
+### Đổi light/dark mode — bắt buộc swap tức thì (instant), không fade lệch nhau:
+- **Vấn đề kinh điển:** một số element có `transition` (body, main, canvas dùng `var(--tr)`) trong khi element khác KHÔNG có (ví dụ `.ws-header` màu cố định `#1a1a1a`→`#0d1117`). Khi đổi theme, cái thì fade 0.25s, cái thì snap ngay → tạo trạng thái nửa-vời xám xịt, trông như "lỗi/chậm".
+- **Cách fix đúng (đã áp dụng cho cả app lẫn publisher):**
+  1. Thêm class tắt transition: `html.no-transition *` (app) / `html.ws-anim-off *` (publisher) → `{transition:none!important;animation:none!important}`
+  2. Trong hàm toggle (`toggleTheme` / `wsToggleTheme`): **add class → đổi `data-theme` → swap màu/accent → `void html.offsetWidth` (FORCE REFLOW) → remove class**
+  3. **BẮT BUỘC dùng `void html.offsetWidth` để ép reflow, KHÔNG dùng `requestAnimationFrame`.** rAF chạy TRƯỚC khi browser paint → class bị gỡ trước khi theme mới được vẽ → transition vẫn chạy → class tắt-transition thành vô dụng. Force reflow commit style mới ngay trong lúc transition đang tắt → swap tức thì 1 frame.
+
+### Verify (bắt buộc, không chỉ đọc code):
+- Toggle theme → đọc `getComputedStyle(mainEl).backgroundColor` qua 6–8 frame liên tiếp (`requestAnimationFrame`). Nếu mượt-đúng: chỉ có **1 giá trị duy nhất** (light→dark trong 1 frame). Nếu còn nhiều giá trị trung gian → vẫn còn fade lệch, CHƯA đạt.
+- Chụp screenshot ngay sau toggle → KHÔNG được thấy vùng xám nửa-vời.
+
+### Khi thêm transition mới:
+- Nếu element đổi màu theo theme nhưng nằm ngoài luồng tắt-transition, phải đảm bảo nó cũng được class `*` quét tới (đặt selector đủ rộng).
+- KHÔNG để một element fade lâu hơn các element khác trong cùng một thao tác đổi theme.
+
 ## Quy tắc Block tương tác — Phải REWIRE khi load lại nội dung
 
 **Nguyên tắc bất biến:** MỌI block tương tác (checklist, tabs, toggle, panel, layout cột, progress, status, carousel, embed, image, table…) PHẢI hoạt động đầy đủ chức năng edit sau khi `openDoc()` (mở lại trang), mở lại project, hoặc publish-rồi-edit-tiếp.
