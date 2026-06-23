@@ -1439,6 +1439,11 @@ export function tblAttachTable(table){
     cell.style.position='relative';
     // Explicitly ensure every data cell is editable (row-num cells are false, data cells must be true)
     if(cell.contentEditable!=='true')cell.contentEditable='true';
+    // Guard: only wire event listeners once per cell element (tblAttachTable may be called
+    // multiple times — on openDoc, column/row ops, paste — accumulating duplicate handlers
+    // that would fire drop/paste N times and insert N duplicate images).
+    if(!cell._tblListened){
+    cell._tblListened=true;
     // Use 'click' (fires AFTER browser places cursor) — not 'mousedown' (fires BEFORE)
     // This prevents ANY interference with the browser's natural cursor placement
     cell.addEventListener('click',e=>{
@@ -1479,6 +1484,7 @@ export function tblAttachTable(table){
       const imgs=Array.from(e.clipboardData?.items||[]).filter(i=>i.type.startsWith('image/'));
       if(imgs.length){e.preventDefault();await tblInsertImages(cell,imgs.map(i=>i.getAsFile()));}
     });
+    } // end if(!cell._tblListened)
 
     // Mark cells with images/carousels
     if(cell.querySelectorAll('img').length||cell.querySelector('.tbl-cell-car'))cell.classList.add('tbl-has-img');

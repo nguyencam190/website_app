@@ -1494,15 +1494,18 @@ export function toast(msg, type = 'info') {
 
 // THEME / INIT FUNCTIONS
 export function toggleTheme() {
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const html = document.documentElement;
+  html.classList.add('no-transition');
+  const isDark = html.getAttribute('data-theme') === 'dark';
   const next = isDark ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', next);
+  html.setAttribute('data-theme', next);
   localStorage.setItem('theme', next);
   const btn = document.getElementById('themeToggleBtn');
   if (btn) btn.innerHTML = next === 'dark' ? '&#9790;' : '&#9728;';
-  document.documentElement.style.setProperty('color-scheme', next);
-  // Auto-swap all palette-mapped colors in editor
+  html.style.setProperty('color-scheme', next);
   swapThemeColors();
+  void html.offsetWidth;
+  html.classList.remove('no-transition');
 }
 
 export function updateUserUI() {

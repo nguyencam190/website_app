@@ -1193,7 +1193,10 @@ export function _cfEmbedLoadAll(editor){
       const newUrl=prompt('Nhập URL mới:',origUrl);if(!newUrl)return;
       const newEmbed=cfGetEmbedUrl(newUrl.trim());
       if(!newEmbed){toast('URL không hỗ trợ','error');return;}
-      if(iframe)iframe.src=newEmbed;block.dataset.embedUrl=newEmbed;block.dataset.origUrl=newUrl;onContentChange();
+      let _fr=block.querySelector('iframe');
+      if(!_fr&&wrap){_fr=document.createElement('iframe');_fr.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:none';_fr.setAttribute('allowfullscreen','');wrap.prepend(_fr);}
+      if(_fr){_fr.src=newEmbed;_fr.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen';_fr.setAttribute('referrerpolicy','strict-origin-when-cross-origin');}
+      block.dataset.embedUrl=newEmbed;block.dataset.origUrl=newUrl;onContentChange();
     });
     const delBtn=document.createElement('button');delBtn.className='cf-embed-tb-btn danger';
     delBtn.innerHTML='<i class="ti ti-trash" style="font-size:13px"></i>';delBtn.title='Xóa';
