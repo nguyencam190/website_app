@@ -876,7 +876,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .cf-tab-add{width:28px;height:28px;border:none;background:transparent;color:var(--text3);cursor:pointer;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;margin:4px 2px;transition:.12s}
 .cf-tab-add:hover{background:var(--surface3);color:var(--accent)}
 .cf-tab-panel{max-height:0;overflow:hidden;opacity:0;padding:0 16px;transition:max-height .35s cubic-bezier(.4,0,.2,1),opacity .25s ease,padding .3s ease}
-.cf-tab-panel.active{max-height:2000px;opacity:1;padding:14px 16px;min-height:48px}
+.cf-tab-panel.active{max-height:9999px;opacity:1;padding:14px 16px;min-height:48px}
 .cf-tab-panel .editor-content{min-height:36px}
 /* ═══ STATUS BADGE ══════════════════════════════════════════ */
 .cf-status{display:inline-flex;align-items:center;gap:5px;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;user-select:none;vertical-align:middle;transition:opacity .12s;font-family:var(--font);border:1.5px solid transparent;white-space:nowrap}
@@ -906,7 +906,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .cf-toggle-title{flex:1;font-size:18px;font-weight:400;color:var(--text);min-height:1.4em;outline:none}
 .cf-toggle-title:empty::before{content:attr(data-placeholder);color:var(--text3);pointer-events:none}
 .cf-toggle-body{padding:0 14px 0 34px;border-top:1px solid transparent;max-height:0;overflow:hidden;opacity:0;transition:max-height .32s cubic-bezier(.4,0,.2,1),opacity .2s ease,padding .3s ease,border-color .25s ease}
-.cf-toggle[data-open="true"] .cf-toggle-body{padding:10px 14px 10px 34px;border-top:1px solid var(--border);max-height:1500px;opacity:1;min-height:36px}
+.cf-toggle[data-open="true"] .cf-toggle-body{padding:10px 14px 10px 34px;border-top:1px solid var(--border);max-height:9999px;opacity:1;min-height:36px}
 /* ── Checklist Block (QA review) ── */
 .cf-checklist{border:1.5px solid var(--border);border-radius:10px;margin:10px 0;background:var(--surface);overflow:hidden;position:relative}
 .cf-checklist[data-status="minor"]{border-left:4px solid #3b82f6}
@@ -943,7 +943,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .cf-checklist-btn i{transition:transform .18s;display:block}
 .cf-checklist[data-open="true"] .cf-checklist-btn i{transform:rotate(90deg)}
 .cf-checklist-body{padding:0 14px 0 14px;border-top:1px solid transparent;max-height:0;overflow:hidden;opacity:0;outline:none;font-size:14px;line-height:1.7;color:var(--text);transition:max-height .32s cubic-bezier(.4,0,.2,1),opacity .2s ease,padding .3s ease,border-color .25s ease}
-.cf-checklist[data-open="true"] .cf-checklist-body{padding:10px 14px 12px 14px;border-top:1px solid var(--border);max-height:1500px;opacity:1;min-height:36px}
+.cf-checklist[data-open="true"] .cf-checklist-body{padding:10px 14px 12px 14px;border-top:1px solid var(--border);max-height:9999px;opacity:1;min-height:36px}
 .cf-checklist-body:empty::before{content:'Thêm nội dung...';color:var(--text3);pointer-events:none}
 [data-theme="dark"] .cf-checklist{background:var(--surface)}
 [data-theme="dark"] .cf-checklist-head{background:var(--surface2)}
@@ -7910,7 +7910,7 @@ function _cfStatusRewire(el){
 // Gọi thay cho _cfImgLoadAll+setTimeout carousel khi set editor.innerHTML từ history.
 function _cfRewireAllBlocks(editor){
   if(!editor)return;
-  _cfInitLayout(editor);       // column layouts trước (xây lại DOM bên trong)
+  editor.querySelectorAll('.cf-column-layout').forEach(l=>_cfInitLayout(l)); // column layouts trước (xây lại DOM bên trong)
   _cfImgLoadAll(editor);
   _cfPanelLoadAll(editor);
   _cfToggleLoadAll(editor);
@@ -12861,7 +12861,7 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .cf-toggle[data-open="true"] .cf-toggle-btn{transform:rotate(90deg)}',
     '.ws-canvas .cf-toggle-title{flex:1;font-size:18px;font-weight:400;color:var(--text)}',
     '.ws-canvas .cf-toggle-body{padding:0 14px 0 34px;border-top:1px solid transparent;max-height:0;overflow:hidden;opacity:0;transition:max-height .32s cubic-bezier(.4,0,.2,1),opacity .2s ease,padding .3s ease,border-color .25s ease}',
-    '.ws-canvas .cf-toggle[data-open="true"] .cf-toggle-body{padding:10px 14px 10px 34px;border-top:1px solid var(--border);max-height:1500px;opacity:1;min-height:36px}',
+    '.ws-canvas .cf-toggle[data-open="true"] .cf-toggle-body{padding:10px 14px 10px 34px;border-top:1px solid var(--border);max-height:9999px;opacity:1;min-height:36px}',
     /* ── Viewer Checklist Block ── */
     '.ws-canvas .cf-checklist{border:none;border-radius:10px;margin:10px 0;background:var(--surface);overflow:hidden}',
     '.ws-canvas .cf-checklist[data-status="minor"]{border-left:4px solid #3b82f6}',
@@ -12892,7 +12892,7 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .cf-checklist-btn i{transition:transform .18s;display:block}',
     '.ws-canvas .cf-checklist[data-open="true"] .cf-checklist-btn i{transform:rotate(90deg)}',
     '.ws-canvas .cf-checklist-body{padding:0 14px 0 14px;border-top:1px solid transparent;max-height:0;overflow:hidden;opacity:0;font-size:14px;line-height:1.7;color:var(--text);transition:max-height .32s cubic-bezier(.4,0,.2,1),opacity .2s ease,padding .3s ease,border-color .25s ease}',
-    '.ws-canvas .cf-checklist[data-open="true"] .cf-checklist-body{padding:10px 14px 12px 14px;border-top:1px solid var(--border);max-height:1500px;opacity:1;min-height:36px}',
+    '.ws-canvas .cf-checklist[data-open="true"] .cf-checklist-body{padding:10px 14px 12px 14px;border-top:1px solid var(--border);max-height:9999px;opacity:1;min-height:36px}',
     '.ws-canvas .cf-checklist-cam-btn{display:none!important}',
     /* ── TOC Block ── */
     '.ws-canvas .cf-toc{border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin:12px 0;background:var(--surface2)}',
@@ -12915,7 +12915,7 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .cf-tab-btn:hover:not(.active){background:var(--surface3)}',
     '.ws-canvas .cf-tab-del{display:none}',
     '.ws-canvas .cf-tab-panel{max-height:0;overflow:hidden;opacity:0;padding:0 16px;transition:max-height .35s cubic-bezier(.4,0,.2,1),opacity .25s ease,padding .3s ease}',
-    '.ws-canvas .cf-tab-panel.active{max-height:2000px;opacity:1;padding:14px 16px;min-height:48px}',
+    '.ws-canvas .cf-tab-panel.active{max-height:9999px;opacity:1;padding:14px 16px;min-height:48px}',
     /* ── Status Badge ── */
     '.ws-canvas .cf-status{display:inline-flex;align-items:center;gap:5px;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600;user-select:none;vertical-align:middle;font-family:var(--font);border:1.5px solid transparent;white-space:nowrap;cursor:default}',
     '.ws-canvas .cf-status[data-state="todo"]{background:rgba(148,163,184,.15);color:#64748b;border-color:rgba(148,163,184,.3)}',
