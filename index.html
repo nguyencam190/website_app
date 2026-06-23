@@ -15023,23 +15023,24 @@ function toggleFocusMode(){
 
   function replaceOne(){
     if(idx<0||idx>=matches.length)return;
-    if(typeof _undoSnapshot==='function')_undoSnapshot();
     const mk=matches[idx];
-    const rt=document.createTextNode(repInpEl.value);
+    const rep=repInpEl.value;
+    // Replace the current mark with the replacement text
+    const rt=document.createTextNode(rep);
     mk.parentNode.replaceChild(rt,mk);
     rt.parentNode&&rt.parentNode.normalize();
-    matches.splice(idx,1);
-    if(idx>=matches.length)idx=Math.max(0,matches.length-1);
-    if(matches.length){setCurrent();}
-    else{finpEl.classList.toggle('no-match',!!finpEl.value);}
-    countEl.textContent=matches.length?(idx+1)+'/'+matches.length:'0/0';
+    // Clear all remaining marks so the undo snapshot has no <mark> elements
+    clearHL();
+    if(typeof _undoSnapshot==='function')_undoSnapshot();
     if(typeof onContentChange==='function')onContentChange();
+    // Re-run search to restore highlights on remaining matches
+    run();
   }
 
   function replaceAll(){
     if(!matches.length)return;
-    if(typeof _undoSnapshot==='function')_undoSnapshot();
     const rt=repInpEl.value;const cnt=matches.length;
+    // Replace all marks first, THEN snapshot (so undo state has no <mark> elements)
     matches.forEach(function(mk){
       if(mk.parentNode)mk.parentNode.replaceChild(document.createTextNode(rt),mk);
     });
@@ -15047,6 +15048,7 @@ function toggleFocusMode(){
     matches=[];idx=-1;
     countEl.textContent='0/0';
     finpEl.classList.remove('no-match');
+    if(typeof _undoSnapshot==='function')_undoSnapshot();
     if(typeof onContentChange==='function')onContentChange();
     if(typeof toast==='function')toast('Đã thay thế '+cnt+' kết quả','success');
   }
