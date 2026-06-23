@@ -2777,7 +2777,11 @@ function persistNow(){
   toSave.docs.forEach(doc=>{
     if(doc.images)doc.images=doc.images.map(m=>{const{src,...meta}=m;return src&&src.startsWith('data:')?{...meta,src}:meta;});
   });
-  try{localStorage.setItem(STORE_KEY,JSON.stringify(toSave));}catch(e){console.warn('persistNow quota exceeded',e);}
+  try{localStorage.setItem(STORE_KEY,JSON.stringify(toSave));}catch(e){
+    const _el=document.getElementById('saveStatusEl');
+    if(_el){_el.className='save-dirty';_el.innerHTML='<i class="ti ti-alert-triangle" style="font-size:12px"></i> Storage full';}
+    console.warn('persistNow quota exceeded',e);
+  }
 }
 function persist(){
   // Strip blob Object URLs from media before saving (only store metadata)
@@ -7965,6 +7969,9 @@ function _cfToggleLoadAll(editor){
   editor.querySelectorAll('.cf-toggle').forEach(el=>{
     const btn=el.querySelector('.cf-toggle-btn');
     if(btn){const fresh=btn.cloneNode(true);btn.parentNode.replaceChild(fresh,btn);}
+    // Clone head to clear any accumulated click listeners from previous openDoc/rewire calls
+    const head=el.querySelector('.cf-toggle-head');
+    if(head){const freshHead=head.cloneNode(true);head.parentNode.replaceChild(freshHead,head);}
     _cfWireToggle(el);
   });
 }
@@ -9399,16 +9406,23 @@ function _cfImgLoadAll(editor){
       block.addEventListener('mouseenter',()=>{_hoveredTblImg=block;});
       block.addEventListener('mouseleave',()=>{if(_hoveredTblImg===block)_hoveredTblImg=null;});
     }
-    block.addEventListener('mousedown',ev=>{
-      if(ev.target.closest('.cf-img-caption'))return;
-      ev.preventDefault();_cfImgSelect(block);
-    });
-    const _rMedia=block.querySelector('img');
-    if(_rMedia)block.addEventListener('dblclick',ev=>{
-      if(ev.target.closest('.cf-img-caption'))return;
-      const _all=Array.from(document.querySelectorAll('.fmedia img,.editor-content img'));
-      lbOpen(Math.max(0,_all.indexOf(_rMedia)));
-    });
+    // Guard: only wire block-level listeners once — _cfImgLoadAll is called on every
+    // openDoc and after every undo/redo; without this guard, mousedown fires N times
+    // (harmless but wasteful) and dblclick opens the lightbox N times in rapid sequence.
+    if(!block._imgListened){
+      block._imgListened=true;
+      block.addEventListener('mousedown',ev=>{
+        if(ev.target.closest('.cf-img-caption'))return;
+        ev.preventDefault();_cfImgSelect(block);
+      });
+      const _rMedia=block.querySelector('img');
+      if(_rMedia)block.addEventListener('dblclick',ev=>{
+        if(ev.target.closest('.cf-img-caption'))return;
+        // Use same filter as lbOpen's domImgs to get a correct index
+        const _all=Array.from(document.querySelectorAll('.fmedia img,.editor-content img')).filter(img=>!img.closest('.tcc-thumb')&&!img.closest('.tcc-thumbs'));
+        lbOpen(Math.max(0,_all.indexOf(_rMedia)));
+      });
+    }
   });
 }
 
@@ -11597,8 +11611,12 @@ async function importMergePagesFromFolder(){
         const rawBlob=new Blob([await f.arrayBuffer()],{type:f.type});
         const blob=_ensureBlobMime(rawBlob,origExt);
         const id=entry.name.replace(/\.[^.]+$/,'');
-        await _idbPut(id,blob);
-        if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}
+        // Skip if already in memory — prevents overwriting an existing project's asset
+        // that happens to share the same ID (same project re-imported, or rare ID clash)
+        if(!_objUrls[id]){
+          await _idbPut(id,blob);
+          const url=URL.createObjectURL(blob);_cacheUrl(id,url);
+        }
         mediaCount++;
       }catch(e){console.warn('[mergeFolder] skip',entry.name,e);}
     }
