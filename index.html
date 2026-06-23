@@ -3540,7 +3540,7 @@ function _quickNewRootDoc(){
 function filterDocs(){renderSidebar(document.getElementById('searchInput').value.toLowerCase());}
 
 // DOCS
-function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,10);}
 let _ndocTpl='blank';
 function _ndocSelect(tpl,el){
   _ndocTpl=tpl;
@@ -3998,13 +3998,30 @@ function _purgeDocMedia(doc){
     }
   }
 }function _purgeDocTree(docId){
-  const doc=state.docs.find(d=>d.id===docId);
-  if(!doc)return;
-  _purgeDocMedia(doc);
-  state.docs.filter(d=>d.parentId===docId).forEach(child=>_purgeDocTree(child.id));
-  state.docs=state.docs.filter(d=>d.id!==docId);
-  state.recent=(state.recent||[]).filter(r=>r.id!==docId);
-  state.starred=(state.starred||[]).filter(id=>id!==docId);
+  // Collect ALL docs in the subtree first before touching state, so we can do a
+  // single cross-check: assets shared between parent and children were incorrectly
+  // kept alive when the per-doc recursive approach ran _purgeDocMedia while sibling
+  // docs were still present in state.docs.
+  const subtreeIds=new Set();
+  (function collectSubtree(id){
+    subtreeIds.add(id);
+    state.docs.filter(d=>d.parentId===id).forEach(child=>collectSubtree(child.id));
+  })(docId);
+  const subtreeDocs=state.docs.filter(d=>subtreeIds.has(d.id));
+  const stillUsed=_collectDocAssetIds(state.docs.filter(d=>!subtreeIds.has(d.id)));
+  const subtreeAssets=_collectDocAssetIds(subtreeDocs);
+  for(const id of subtreeAssets){
+    if(!stillUsed.has(id)){
+      _idbDel(id);
+      if(_objUrls&&_objUrls[id]){URL.revokeObjectURL(_objUrls[id]);delete _objUrls[id];}
+      _pendingFolderSaves.delete(id);
+      _projSavedIds.delete(id);
+    }
+  }
+  // Remove all subtree docs from state in one pass
+  state.docs=state.docs.filter(d=>!subtreeIds.has(d.id));
+  state.recent=(state.recent||[]).filter(r=>!subtreeIds.has(r.id));
+  state.starred=(state.starred||[]).filter(id=>!subtreeIds.has(id));
   // data.json saved on manual Push only
 }
 // Blob → base64 DataURL (only used for export)
@@ -5227,7 +5244,11 @@ document.addEventListener('click',e=>{
   const pre=btn.closest('pre');if(!pre)return;
   const tmp=pre.cloneNode(true);tmp.querySelectorAll('.cf-code-copy').forEach(b=>b.remove());
   const code=tmp.textContent;
-  navigator.clipboard?.writeText(code).then(()=>{btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',1500)}).catch(()=>{});
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(code).then(()=>{btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',1500);}).catch(()=>{btn.textContent='Error';setTimeout(()=>btn.textContent='Copy',1500);});
+  } else {
+    try{const ta=document.createElement('textarea');ta.value=code;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',1500);}catch(err){btn.textContent='Error';setTimeout(()=>btn.textContent='Copy',1500);}
+  }
 });
 // CTX IMAGE
 function ctxInsert(){const doc=currentDoc();if(!doc||ctxImgIdx===null)return;insertImageInEditor(doc.images[ctxImgIdx]);document.getElementById('ctxMenu').classList.remove('on');}
@@ -6822,6 +6843,9 @@ function _cfTabsAddTab(block){
   const panel=document.createElement('div');panel.className='cf-tab-panel';
   panel.contentEditable='true';panel.dataset.tabIdx=idx;panel.innerHTML='<br>';
   block.appendChild(panel);
+  // Rewire all buttons so delete-index closures are always fresh — without this,
+  // the captured `idx` becomes stale if a prior tab is deleted after this tab was added
+  _cfTabsRewire(block);
   _cfTabsActivate(block,idx);
   onContentChange();
 }
@@ -8238,6 +8262,9 @@ function _cfSetCols(layout,n){
   const oldTb=layout.querySelector('.cf-col-toolbar');if(oldTb)oldTb.remove();
   layout.insertBefore(_cfBuildToolbar(layout,n,dist),layout.firstChild);
   _cfRebuildCols(layout,n,dist,existing);
+  // Rewire any interactive blocks (tabs, images, progress, etc.) restored from existing
+  // column content — _cfRebuildCols restores innerHTML but loses all event listeners
+  _cfRewireAllBlocks(layout);
   onContentChange();
 }
 
