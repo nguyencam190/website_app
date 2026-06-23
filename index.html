@@ -1094,8 +1094,9 @@ td .cf-checklist[data-open="true"] .cf-checklist-body,.cf-column-item .cf-checkl
 .cf-img-block[data-align="left"] .cf-img-wrap{justify-content:flex-start}
 .cf-img-block[data-align="center"] .cf-img-wrap{justify-content:center}
 .cf-img-block[data-align="right"] .cf-img-wrap{justify-content:flex-end}
+.cf-img-block:not(.selected):hover .cf-img-inner{outline:2px solid var(--border2);outline-offset:0}
 .cf-img-block.selected .cf-img-inner{outline:2px solid var(--accent);outline-offset:0}
-.cf-img-inner{position:relative;display:inline-block;max-width:100%;border-radius:4px;overflow:visible;line-height:0;transition:box-shadow .35s ease,outline-color .35s ease;cursor:zoom-in}
+.cf-img-inner{position:relative;display:inline-block;max-width:100%;border-radius:4px;overflow:visible;line-height:0;transition:box-shadow .35s ease,outline-color .15s ease;cursor:zoom-in}
 .cf-img-inner img,.cf-img-inner video{display:block;max-width:100%;height:auto;border-radius:4px;pointer-events:none}
 /* Video block uses the exact same accent treatment as image blocks: no ring at rest,
    accent outline only when selected (.cf-img-block.selected .cf-img-inner above). */
@@ -12927,7 +12928,7 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .cf-img-block[data-align="left"] .cf-img-wrap{justify-content:flex-start}',
     '.ws-canvas .cf-img-block[data-align="center"] .cf-img-wrap{justify-content:center}',
     '.ws-canvas .cf-img-block[data-align="right"] .cf-img-wrap{justify-content:flex-end}',
-    '.ws-canvas .cf-img-inner{position:relative;display:inline-block;max-width:100%;border-radius:4px;overflow:hidden;line-height:0;transition:box-shadow .35s ease,outline-color .35s ease}',
+    '.ws-canvas .cf-img-inner{position:relative;display:inline-block;max-width:100%;border-radius:4px;overflow:hidden;line-height:0;transition:box-shadow .35s ease,outline-color .15s ease}',
     '.ws-canvas .cf-img-inner img{display:block;max-width:100%;height:auto;border-radius:4px;cursor:zoom-in;margin:0}',
     '.ws-canvas .cf-img-inner video{display:block;max-width:100%;height:auto;border-radius:4px;pointer-events:auto!important;cursor:default;margin:0}',
     '.ws-canvas .cf-img-inner[style*="width"] img,.ws-canvas .cf-img-inner[style*="width"] video{width:100%}',
