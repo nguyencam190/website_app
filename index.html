@@ -13149,6 +13149,13 @@ async function _wsFontHead(){
     '<link rel="stylesheet" href="'+_WS_ICONS_URL+'" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="'+_WS_ICONS_URL+'"></noscript>';
 }
 
+function _sanitizeHref(url){
+  const u=(url||'').trim();
+  if(!u)return'#';
+  const lo=u.toLowerCase();
+  if(lo.startsWith('javascript:')||lo.startsWith('data:')||lo.startsWith('vbscript:'))return'#';
+  return u;
+}
 async function doExportWebsite(){
   const exportMode=(document.querySelector('input[name="exportMode"]:checked')?.value)||'optimized';
   if(exportMode==='optimized'){await doExportOptimized();return;}
@@ -13521,7 +13528,7 @@ async function doExportWebsite(){
       if(!btnEl||!btnTxt)return;
       const a=document.createElement('a');
       a.className='cf-btn-el';
-      a.href=link||'#';
+      a.href=_sanitizeHref(link);
       if(link)a.target='_blank';a.rel='noopener';
       a.textContent=btnTxt.textContent||'Click here';
       btnEl.parentNode.replaceChild(a,btnEl);
@@ -14415,7 +14422,7 @@ async function doExportOptimized(opts){
       try{const blob=await _idbGet(id);if(blob){const b64=await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result);r.readAsDataURL(blob);});dlBtn.href=b64;dlBtn.download=block.dataset.filename||'file';block.removeAttribute('data-cffileid');}else{block.remove();}}catch(e){block.remove();}
     }
     // Buttons, headings, TOC
-    tmp.querySelectorAll('.cf-btn-block').forEach(btnBlock=>{const link=btnBlock.dataset.btnlink||'';const btnEl=btnBlock.querySelector('.cf-btn-el');const btnTxt=btnBlock.querySelector('.cf-btn-text');if(!btnEl||!btnTxt)return;const a=document.createElement('a');a.className='cf-btn-el';a.href=link||'#';if(link)a.target='_blank';a.rel='noopener';a.textContent=btnTxt.textContent||'Click here';btnEl.parentNode.replaceChild(a,btnEl);});
+    tmp.querySelectorAll('.cf-btn-block').forEach(btnBlock=>{const link=btnBlock.dataset.btnlink||'';const btnEl=btnBlock.querySelector('.cf-btn-el');const btnTxt=btnBlock.querySelector('.cf-btn-text');if(!btnEl||!btnTxt)return;const a=document.createElement('a');a.className='cf-btn-el';a.href=_sanitizeHref(link);if(link)a.target='_blank';a.rel='noopener';a.textContent=btnTxt.textContent||'Click here';btnEl.parentNode.replaceChild(a,btnEl);});
     const _docPfx2='pg'+d.id.slice(-6)+'-';
     let _hIdx=0;tmp.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach(h=>{if(!h.id){const slug=h.textContent.trim().toLowerCase().replace(/[^\w\s-]/g,'').replace(/\s+/g,'-').slice(0,50)||'h';h.id=_docPfx2+'h-'+(++_hIdx)+'-'+slug;}else _hIdx++;});
     tmp.querySelectorAll('.cf-toc').forEach(toc=>{const list=toc.querySelector('.cf-toc-list');if(!list)return;const heads=Array.from(tmp.querySelectorAll('h1,h2,h3,h4,h5,h6')).filter(h=>!h.closest('.cf-toc'));list.innerHTML='';if(!heads.length){list.innerHTML='<div class="cf-toc-empty">Chưa có tiêu đề</div>';return;}heads.forEach(h=>{const level=parseInt(h.tagName[1]);const item=document.createElement('div');item.className='cf-toc-item cf-toc-h'+level;const a=document.createElement('a');a.href='#'+h.id;a.textContent=h.textContent.trim()||'(Tiêu đề trống)';item.appendChild(a);list.appendChild(item);});});
