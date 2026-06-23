@@ -2752,8 +2752,7 @@ function editorUndo(){
   _redoStack.push(_undoStack.pop());
   _undoPaused=true;
   editor.innerHTML=_undoStack[_undoStack.length-1]||'<p><br></p>';
-  _cfImgLoadAll(editor);
-  setTimeout(async()=>{await _cfCarLoadAll(editor);_cfEmbedLoadAll(editor);},50);
+  _cfRewireAllBlocks(editor);
   _undoPaused=false;
   onContentChange();
   toast('Đã hoàn tác','info');
@@ -2765,8 +2764,7 @@ function editorRedo(){
   _undoStack.push(snap);
   _undoPaused=true;
   editor.innerHTML=snap;
-  _cfImgLoadAll(editor);
-  setTimeout(async()=>{await _cfCarLoadAll(editor);_cfEmbedLoadAll(editor);},50);
+  _cfRewireAllBlocks(editor);
   _undoPaused=false;
   onContentChange();
   toast('Đã làm lại','info');
@@ -2779,7 +2777,7 @@ function persistNow(){
   toSave.docs.forEach(doc=>{
     if(doc.images)doc.images=doc.images.map(m=>{const{src,...meta}=m;return src&&src.startsWith('data:')?{...meta,src}:meta;});
   });
-  try{localStorage.setItem('projectdocs_v3',JSON.stringify(toSave));}catch(e){console.warn('persistNow quota exceeded',e);}
+  try{localStorage.setItem(STORE_KEY,JSON.stringify(toSave));}catch(e){console.warn('persistNow quota exceeded',e);}
 }
 function persist(){
   // Strip blob Object URLs from media before saving (only store metadata)
@@ -3454,7 +3452,10 @@ function _renderDocNodes(container,sec,parentId,depth,filter){
         renderSidebar(document.getElementById('searchInput')?.value||'');updatePageActionBar();
       };
       titleEl.addEventListener('blur',finish,{once:true});
-      titleEl.addEventListener('keydown',e2=>{if(e2.key==='Enter'){e2.preventDefault();titleEl.blur();}if(e2.key==='Escape'){titleEl.textContent=doc.title;titleEl.blur();}},{once:true});
+      // {once:true} removed — listener phải tồn tại suốt phiên edit, không chỉ 1 phím đầu tiên
+      function _titleKeydown(e2){if(e2.key==='Enter'){e2.preventDefault();titleEl.blur();}else if(e2.key==='Escape'){titleEl.textContent=doc.title;titleEl.blur();}}
+      titleEl.addEventListener('keydown',_titleKeydown);
+      titleEl.addEventListener('blur',()=>titleEl.removeEventListener('keydown',_titleKeydown),{once:true});
     });
 
     // Actions row: [title] [+add-child] [⋯menu]
@@ -4110,13 +4111,14 @@ function _cacheUrl(id,url){
   if(existing>-1)_objUrlOrder.splice(existing,1);
   _objUrlOrder.push(id);
   _objUrls[id]=url;
-  // Evict oldest if over limit
+  // Evict oldest if over limit — bỏ qua id đang hiển thị trong editor
   while(_objUrlOrder.length>OBJ_URL_MAX){
-    const oldest=_objUrlOrder.shift();
-    if(_objUrls[oldest]){
-      URL.revokeObjectURL(_objUrls[oldest]);
-      delete _objUrls[oldest];
-    }
+    const oldest=_objUrlOrder[0];
+    const editor=document.getElementById('editor');
+    const inUse=editor&&(editor.querySelector(`[data-cfimgid="${oldest}"]`)||editor.querySelector(`[data-carid="${oldest}"]`)||editor.querySelector(`img[src="${_objUrls[oldest]}"]`)||editor.querySelector(`video[src="${_objUrls[oldest]}"]`));
+    if(inUse){_objUrlOrder.splice(0,1);_objUrlOrder.push(oldest);break;} // đưa xuống cuối, dừng evict
+    _objUrlOrder.shift();
+    if(_objUrls[oldest]){URL.revokeObjectURL(_objUrls[oldest]);delete _objUrls[oldest];}
   }
 }
 
@@ -7904,6 +7906,25 @@ function _cfStatusRewire(el){
 }
 
 // Universal rewire after any block duplication (cloneNode loses all JS event listeners)
+// Rewire toàn bộ block interactive sau undo/redo hoặc set innerHTML — giống openDoc().
+// Gọi thay cho _cfImgLoadAll+setTimeout carousel khi set editor.innerHTML từ history.
+function _cfRewireAllBlocks(editor){
+  if(!editor)return;
+  _cfInitLayout(editor);       // column layouts trước (xây lại DOM bên trong)
+  _cfImgLoadAll(editor);
+  _cfPanelLoadAll(editor);
+  _cfToggleLoadAll(editor);
+  editor.querySelectorAll('.cf-checklist').forEach(cl=>_cfWireChecklist(cl));
+  editor.querySelectorAll('.cf-tabs').forEach(b=>_cfTabsRewire(b));
+  editor.querySelectorAll('.cf-progress').forEach(b=>_cfProgressRewire(b));
+  editor.querySelectorAll('.cf-status').forEach(el=>_cfStatusRewire(el));
+  _cfFileLoadAll(editor);
+  _cfAddCodeCopyBtns(editor);
+  tblAttachAll();
+  setTimeout(async()=>{await _cfCarLoadAll(editor);_cfEmbedLoadAll(editor);},50);
+  setTimeout(()=>tbLoadAll(state.docs.find(d=>d.id===state.currentDocId)||{}),60);
+  setTimeout(()=>fmLoadAll(state.docs.find(d=>d.id===state.currentDocId)||{}),80);
+}
 function _cfRewireBlock(block){
   if(!block)return;
   const cl=block.classList;
@@ -11965,6 +11986,7 @@ async function _projFullSync(){
     if(dupes)msg+=` · bỏ ${dupes} ảnh trùng`;
     if(deletedFiles||deletedIdb)msg+=` · xóa ${deletedFiles} file thừa`;
     toast(msg,'success');
+    if(!webPublished)toast('⚠️ Không thể tạo website — kiểm tra lại quyền thư mục hoặc dung lượng đĩa.','warning');
   }catch(e){toast('Lỗi lưu: '+e.message,'error');console.error(e);}
   finally{_projLiveSaving=false;}
 }
