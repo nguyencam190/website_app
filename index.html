@@ -12624,9 +12624,10 @@ function openExportWebsiteModal(){
       const sync=()=>{document.getElementById('qualDisplay').textContent=qual.value+'%';const el2=document.getElementById('qualDisplay2');if(el2)el2.textContent=qual.value+'%';};
       qual.oninput=sync;sync();
     }
-    // Toggle compress options and warning
+    // Toggle compress options and warning — use onchange (not addEventListener) to prevent
+    // listener accumulation: these radio elements are static HTML, not recreated each open.
     document.querySelectorAll('input[name="imgQuality"]').forEach(r=>{
-      r.addEventListener('change',()=>{
+      r.onchange=()=>{
         const isCompress=r.value==='compress'&&r.checked;
         const opts=document.getElementById('compressOptions');
         if(opts)opts.style.display=isCompress?'':'none';
@@ -12638,7 +12639,7 @@ function openExportWebsiteModal(){
           el.style.borderColor=el.id==='qualOpt_'+r.value&&r.checked?'var(--accent)':'var(--border)';
           el.style.background=el.id==='qualOpt_'+r.value&&r.checked?'var(--accent-light)':'';
         });
-      });
+      };
     });
   },50);
 }
