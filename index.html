@@ -3312,7 +3312,7 @@ function renderSidebar(filter=''){
 
   // HOME PAGE item (if exists)
   const home=state.docs.find(d=>d.isHomePage);
-  if(home&&(!filter||home.title.toLowerCase().includes(filter))){
+  if(home&&(!filter||(home.title||'').toLowerCase().includes(filter))){
     const homeRow=document.createElement('div');
     homeRow.className='doc-item'+(state.currentDocId===home.id?' active':'');
     homeRow.style.cssText='margin:2px 6px 0 8px;font-weight:600';
@@ -5099,7 +5099,13 @@ async function _fmLoadSrc(fm){
     return;
   }
   // Set src; also overwrite stale blob: URLs from previous sessions
-  if(el&&(!el.src||(el.src.startsWith('blob:')&&el.src!==src))){
+  // Recreate img/video if it was previously removed due to missing blob
+  if(!el){
+    el=document.createElement(isVid?'video':'img');
+    el.style.cssText='width:100%;height:100%;border-radius:8px;display:block;'+(isVid?'background:#000;object-fit:contain':'object-fit:contain');
+    fm.appendChild(el);
+  }
+  if(!el.src||(el.src.startsWith('blob:')&&el.src!==src)){
     el.src=src;
     const ph=fm.querySelector('.fmedia-placeholder');if(ph)ph.remove();
   }
@@ -7862,6 +7868,7 @@ function _cfWireToggle(el){
   const btn=el.querySelector('.cf-toggle-btn');
   const head=el.querySelector('.cf-toggle-head');
   if(!head)return;
+  if(head._toggleWired)return;head._toggleWired=true;
   const _doToggle=e=>{
     e.stopPropagation();
     const opening=el.dataset.open!=='true';
@@ -8301,6 +8308,7 @@ function _cfInitLayout(layout){
   layout.querySelectorAll('.cf-progress').forEach(b=>_cfProgressRewire(b));
   layout.querySelectorAll('.cf-status').forEach(el=>_cfStatusRewire(el));
   _cfFileLoadAll(layout);
+  setTimeout(async()=>{await _cfCarLoadAll(layout);_cfEmbedLoadAll(layout);},50);
 }
 // Rebuild a panel's action buttons (type/delete). These are stripped on save
 // (UI chrome, not content) so they must be re-injected when content is loaded,
@@ -9107,6 +9115,7 @@ function _cfCarSlideInitResize(inner,handle,side){
 }
 
 function _cfCarWireSlide(slide){
+  if(slide._carSlideWired)return;slide._carSlideWired=true;
   const inner=slide.querySelector('.cf-car-slide-inner');
   const lh=slide.querySelector('.cf-car-slide-resize-h.left')||
     (()=>{const h=document.createElement('div');h.className='cf-car-slide-resize-h left';inner?.appendChild(h);return h;})();
@@ -9448,15 +9457,15 @@ function _cfImgLoadAll(editor){
     // Always rewire events — after undo/redo the DOM is rebuilt from HTML so
     // all event listeners are lost even though media.src may still be set.
     _cfImgRewireEvents(block);
-    if(block.closest('td,th')){
-      block.addEventListener('mouseenter',()=>{_hoveredTblImg=block;});
-      block.addEventListener('mouseleave',()=>{if(_hoveredTblImg===block)_hoveredTblImg=null;});
-    }
     // Guard: only wire block-level listeners once — _cfImgLoadAll is called on every
     // openDoc and after every undo/redo; without this guard, mousedown fires N times
     // (harmless but wasteful) and dblclick opens the lightbox N times in rapid sequence.
     if(!block._imgListened){
       block._imgListened=true;
+      if(block.closest('td,th')){
+        block.addEventListener('mouseenter',()=>{_hoveredTblImg=block;});
+        block.addEventListener('mouseleave',()=>{if(_hoveredTblImg===block)_hoveredTblImg=null;});
+      }
       block.addEventListener('mousedown',ev=>{
         if(ev.target.closest('.cf-img-caption'))return;
         ev.preventDefault();_cfImgSelect(block);
@@ -12162,8 +12171,8 @@ async function _projOpenFolder(saveOnly=false){
     const modTime=file.lastModified?new Date(file.lastModified).toLocaleString('vi-VN'):'';
     let imported;
     try{imported=JSON.parse(await file.text());}
-    catch(e){toast('data.json bị lỗi định dạng','error');await _projSaveJSON();return;}
-    if(!imported||!imported.docs){toast('data.json không hợp lệ','error');await _projSaveJSON();return;}
+    catch(e){toast('data.json bị lỗi định dạng — không thể mở','error');return;}
+    if(!imported||!imported.docs){toast('data.json không hợp lệ — không thể mở','error');return;}
     const msg=`Mở project "${imported.projectName||'Unknown'}" từ thư mục "${handle.name}"?\n`
       +(modTime?'Lần lưu cuối: '+modTime+'\n':'')
       +imported.docs.length+' tài liệu\n\nDữ liệu hiện tại sẽ bị ghi đè.';
