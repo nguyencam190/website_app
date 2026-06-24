@@ -4124,11 +4124,14 @@ function _cacheUrl(id,url){
   _objUrlOrder.push(id);
   _objUrls[id]=url;
   // Evict oldest if over limit — bỏ qua id đang hiển thị trong editor
+  const _evictSeen=new Set();
   while(_objUrlOrder.length>OBJ_URL_MAX){
     const oldest=_objUrlOrder[0];
+    if(_evictSeen.has(oldest))break; // full rotation without evicting — all in use, give up
     const editor=document.getElementById('editor');
     const inUse=editor&&(editor.querySelector(`[data-cfimgid="${oldest}"]`)||editor.querySelector(`[data-carid="${oldest}"]`)||editor.querySelector(`img[src="${_objUrls[oldest]}"]`)||editor.querySelector(`video[src="${_objUrls[oldest]}"]`));
-    if(inUse){_objUrlOrder.splice(0,1);_objUrlOrder.push(oldest);continue;} // đưa xuống cuối, thử tiếp
+    if(inUse){_evictSeen.add(oldest);_objUrlOrder.splice(0,1);_objUrlOrder.push(oldest);continue;} // đưa xuống cuối, thử tiếp
+    _evictSeen.clear();
     _objUrlOrder.shift();
     if(_objUrls[oldest]){URL.revokeObjectURL(_objUrls[oldest]);delete _objUrls[oldest];}
   }
@@ -13276,12 +13279,14 @@ async function doExportWebsite(){
 
   let _tot=0,_cnt=0;
   docs.forEach(d=>{
-    _tot+=(d.images||[]).length;
+    (d.images||[]).forEach(m=>{_tot+=m.type==='carousel'?(m.slides||[]).length:1;});
     const tmp=document.createElement('div');tmp.innerHTML=d.content||'';
     _tot+=tmp.querySelectorAll('img[data-tblimgid]').length;
     _tot+=tmp.querySelectorAll('.cf-img-block[data-cfimgid]').length;
     _tot+=tmp.querySelectorAll('.cf-carousel-block img[data-carid]').length;
+    tmp.querySelectorAll('.cf-carousel-block[data-cfcarids]').forEach(b=>{_tot+=(b.dataset.cfcarids||'').split(',').filter(Boolean).length;});
     tmp.querySelectorAll('.tbl-cell-car[data-slideids]').forEach(c=>{_tot+=(c.dataset.slideids||'').split(',').filter(Boolean).length;});
+    _tot+=tmp.querySelectorAll('.cf-file-block[data-cffileid]').length;
   });
   if(_tot>0)_showExportProgress(0,_tot,'Chuẩn bị xuất...');
 
@@ -14298,7 +14303,7 @@ async function doExportOptimized(opts){
   const _assetMap=new Map();
   let _cnt=0,_tot=0;
   docs.forEach(d=>{
-    _tot+=(d.images||[]).length;
+    (d.images||[]).forEach(m=>{_tot+=m.type==='carousel'?(m.slides||[]).length:1;});
     const tmp=document.createElement('div');tmp.innerHTML=d.content||'';
     _tot+=tmp.querySelectorAll('img[data-tblimgid]').length;
     _tot+=tmp.querySelectorAll('.cf-img-block[data-cfimgid]').length;
