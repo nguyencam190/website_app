@@ -8741,7 +8741,8 @@ function _cfBuildImgToolbar(block){
     {sep:true},
     {icon:'ti-trash',label:'Xóa',danger:true,fn:()=>{
       const id=block.dataset.cfimgid;
-      if(id){_revokeUrl(id);_idbDel(id).catch(()=>{});}
+      // Revoke ObjectURL only — do NOT _idbDel (undo restores the block; Push Phase 3 orphan-cleans IDB)
+      if(id)_revokeUrl(id);
       _stopVideosIn(block);
       block.remove();onContentChange();
     }},
@@ -8837,7 +8838,8 @@ document.addEventListener('click',e=>{
 document.addEventListener('keydown',e=>{
   if(e.key==='Delete'&&_cfImgSelected&&document.activeElement===document.body){
     const id=_cfImgSelected.dataset.cfimgid;
-    if(id){_revokeUrl(id);_idbDel(id).catch(()=>{});}
+    // Revoke ObjectURL only — do NOT _idbDel (undo restores block; Push Phase 3 cleans IDB)
+    if(id)_revokeUrl(id);
     _stopVideosIn(_cfImgSelected);
     _cfImgSelected.remove();_cfImgSelected=null;onContentChange();
   }
@@ -14828,20 +14830,20 @@ document.addEventListener('keydown',e=>{
       // cf-img-block inserted by _tblInsertImgBlock
       if(_hoveredTblImg.classList&&_hoveredTblImg.classList.contains('cf-img-block')){
         const id=_hoveredTblImg.dataset.cfimgid;
-        if(id){_revokeUrl(id);_idbDel(id).catch(()=>{});}
+        // Revoke ObjectURL only — do NOT _idbDel (undo restores; Push Phase 3 orphan-cleans IDB)
+        if(id)_revokeUrl(id);
         _hoveredTblImg.remove();_hoveredTblImg=null;
         if(parentCell){parentCell.classList.remove('tbl-has-img');}
         onContentChange();toast('Đã xóa hình','info');return;
       }
-      // Clean up IDB entries for plain <img>
+      // Revoke in-memory URLs for plain <img> and carousel slides; IDB cleanup deferred to Push Phase 3
       if(_hoveredTblImg.dataset&&_hoveredTblImg.dataset.tblimgid){
         _revokeUrl(_hoveredTblImg.dataset.tblimgid);
-        _idbDel(_hoveredTblImg.dataset.tblimgid).catch(()=>{});
       }
-      // Carousel: delete all slide blobs
+      // Carousel: revoke slide ObjectURLs only
       if(_hoveredTblImg.classList&&_hoveredTblImg.classList.contains('tbl-cell-car')){
         (_hoveredTblImg.dataset.slideids||'').split(',').filter(Boolean).forEach(sid=>{
-          _revokeUrl(sid);_idbDel(sid).catch(()=>{});
+          _revokeUrl(sid);
         });
       }
       _hoveredTblImg.remove();_hoveredTblImg=null;
