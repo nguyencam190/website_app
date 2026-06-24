@@ -8309,6 +8309,7 @@ function _cfInitLayout(layout){
   layout.querySelectorAll('.cf-progress').forEach(b=>_cfProgressRewire(b));
   layout.querySelectorAll('.cf-status').forEach(el=>_cfStatusRewire(el));
   _cfFileLoadAll(layout);
+  _cfBtnLoadAll(layout);
   setTimeout(async()=>{await _cfCarLoadAll(layout);_cfEmbedLoadAll(layout);},50);
 }
 // Rebuild a panel's action buttons (type/delete). These are stripped on save
