@@ -2693,7 +2693,7 @@ function init(){
   // Restore collapsed state
   if(localStorage.getItem('sb_collapsed')==='1')sbCollapse();
   const saved=localStorage.getItem(STORE_KEY);
-  if(saved){try{state=JSON.parse(saved);}catch(e){}}
+  if(saved){try{state=JSON.parse(saved);}catch(e){console.error('[init] localStorage corrupted, starting fresh:',e);if(typeof toast==='function')toast('Dữ liệu lưu trữ bị lỗi, bắt đầu dự án mới','error');}}
   if(!state.docs)state.docs=[];
   if(!state.sections||!state.sections.length)state.sections=['default'];
   // Migrate all docs to the single default section
@@ -3950,7 +3950,13 @@ function _openIDB(){
       const db=e.target.result;
       if(!db.objectStoreNames.contains('blobs'))db.createObjectStore('blobs');
     };
-    req.onsuccess=e=>{_idb=e.target.result;res(_idb);};
+    req.onsuccess=e=>{
+      _idb=e.target.result;
+      // If another tab upgrades the DB version, close our handle so subsequent
+      // calls re-open with the new version instead of throwing InvalidStateError
+      _idb.onversionchange=()=>{_idb.close();_idb=null;};
+      res(_idb);
+    };
     req.onerror=e=>rej(e);
   });
 }
@@ -12569,6 +12575,8 @@ function _loadJSZip(){
     s.onload=()=>resolve(window.JSZip);
     s.onerror=()=>reject(new Error('Không tải được JSZip'));
     document.head.appendChild(s);
+    // Timeout so a CDN hang doesn't freeze export/import indefinitely
+    setTimeout(()=>reject(new Error('Timeout tải JSZip')),15000);
   });
 }
 
