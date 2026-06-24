@@ -8826,7 +8826,9 @@ function _cfBuildImgToolbar(block){
     document.querySelectorAll('.cf-img-ctx.on').forEach(c=>c.classList.remove('on'));
     if(!showing)_posImgCtx();
   });
-  document.addEventListener('click',()=>ctx.classList.remove('on'));
+  if(block._imgCtxAC)block._imgCtxAC.abort();
+  block._imgCtxAC=new AbortController();
+  document.addEventListener('click',()=>ctx.classList.remove('on'),{signal:block._imgCtxAC.signal});
   moreWrap.appendChild(moreBtn);tb.appendChild(moreWrap);
   tb._ctx=ctx;
   return tb;
