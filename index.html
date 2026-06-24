@@ -2810,9 +2810,9 @@ function persist(){
 function markDirty(){
   dirty=true;
   const el=document.getElementById('saveStatusEl');
-  el.className='save-dirty';el.innerHTML='<i class="ti ti-loader" style="font-size:12px"></i> Saving...';
+  if(el){el.className='save-dirty';el.innerHTML='<i class="ti ti-loader" style="font-size:12px"></i> Saving...';}
   clearTimeout(saveTimer);
-  saveTimer=setTimeout(()=>{persist();dirty=false;el.className='save-ok';el.innerHTML='<i class="ti ti-circle-check" style="font-size:12px"></i> Saved';},1000);
+  saveTimer=setTimeout(()=>{persist();dirty=false;if(el){el.className='save-ok';el.innerHTML='<i class="ti ti-circle-check" style="font-size:12px"></i> Saved';}},1000);
 }
 
 // SIDEBAR
@@ -6377,7 +6377,7 @@ function tblAttachTable(table){
     const hasRowNum=table.rows[0]?.cells[0]?.classList.contains('tbl-row-num');
     Array.from(cg.children).forEach((col,i)=>{
       if(hasRowNum&&i===0){col.style.width=TBL_ROWNUM_W+'px';return;}
-      const w=wArr[i]||(i===0?TBL_ROWNUM_W+'px':TBL_DEFAULT_COL_W+'px');
+      const w=wArr[i]||TBL_DEFAULT_COL_W+'px';
       if(w)col.style.width=w;
     });
     table.style.tableLayout='fixed';
@@ -8295,8 +8295,13 @@ function _cfInitLayout(layout){
   const oldTb=layout.querySelector('.cf-col-toolbar');if(oldTb)oldTb.remove();
   layout.insertBefore(_cfBuildToolbar(layout,n,dist),layout.firstChild);
   _cfRebuildCols(layout,n,dist,existing);
-  // Re-wire any checklists that were inside the cloned column items
+  // Re-wire all interactive blocks inside rebuilt columns
   layout.querySelectorAll('.cf-checklist').forEach(cl=>_cfWireChecklist(cl));
+  _cfImgLoadAll(layout);_cfPanelLoadAll(layout);_cfToggleLoadAll(layout);
+  layout.querySelectorAll('.cf-tabs').forEach(b=>_cfTabsRewire(b));
+  layout.querySelectorAll('.cf-progress').forEach(b=>_cfProgressRewire(b));
+  layout.querySelectorAll('.cf-status').forEach(el=>_cfStatusRewire(el));
+  _cfFileLoadAll(layout);
 }
 // Rebuild a panel's action buttons (type/delete). These are stripped on save
 // (UI chrome, not content) so they must be re-injected when content is loaded,
@@ -11315,24 +11320,26 @@ async function _resetApp(){
 
   toast('✅ Đã xoá toàn bộ — sẵn sàng cho dự án mới','success');
 }
+let _sbImportDropCloseAC=null;
 function _sbImportToggleDd(btn){
   const dd=document.getElementById('_sbImportDd');
   if(!dd)return;
   const isOpen=dd.style.display==='block';
   hdrCloseAll();
   _sbImportCloseDd();
+  if(_sbImportDropCloseAC){_sbImportDropCloseAC.abort();_sbImportDropCloseAC=null;}
   if(!isOpen){
     const r=btn.getBoundingClientRect();
     dd.style.top=(r.bottom+4)+'px';
     dd.style.left=r.left+'px';
     dd.style.display='block';
+    _sbImportDropCloseAC=new AbortController();
     setTimeout(()=>{
-      const close=e=>{
+      document.addEventListener('mousedown',e=>{
         if(!dd.contains(e.target)&&e.target!==btn){
-          _sbImportCloseDd();document.removeEventListener('mousedown',close);
+          _sbImportCloseDd();if(_sbImportDropCloseAC){_sbImportDropCloseAC.abort();_sbImportDropCloseAC=null;}
         }
-      };
-      document.addEventListener('mousedown',close);
+      },{signal:_sbImportDropCloseAC.signal});
     },0);
   }
 }
@@ -11421,7 +11428,8 @@ async function _importMergeFromZip(zip,filename){
       const blob=_ensureBlobMime(rawBlob,origExt);
       const id=path.replace(/^(images|videos)\//,'').replace(/\.[^.]+$/,'');
       if(id&&blob.size>0){
-        if(!_objUrls[id]){await _idbPut(id,blob);const url=URL.createObjectURL(blob);_cacheUrl(id,url);}
+        await _idbPut(id,blob);
+        if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}
         mediaCount++;
       }
     }catch(er){}
@@ -13698,7 +13706,7 @@ async function doExportWebsite(){
     'function wsToggleTheme(){var h=document.documentElement;h.classList.add("ws-anim-off");var dk=h.getAttribute("data-theme")==="dark";var next=dk?"light":"dark";h.setAttribute("data-theme",next);h.style.colorScheme=next;localStorage.setItem("wst",next);var b=document.getElementById("wsThemeBtn");if(b)b.textContent=next==="dark"?"\\u263D":"\\u2600";wsSwapColors();wsApplyAccent(_wsAccentBase);void h.offsetWidth;h.classList.remove("ws-anim-off");}',
     '(function(){var appDef=document.documentElement.getAttribute("data-theme")||"light";var saved=localStorage.getItem("wst");var t;if(saved){t=saved;}else if(window.matchMedia&&window.matchMedia("(prefers-color-scheme:dark)").matches){t="dark";}else{t=appDef;}document.documentElement.setAttribute("data-theme",t);document.documentElement.style.colorScheme=t;var b=document.getElementById("wsThemeBtn");if(b)b.textContent=t==="dark"?"\\u263D":"\\u2600";setTimeout(wsSwapColors,0);})();',
     'function fitCanvas(d){var cv=d.querySelector(".ws-canvas"),wp=d.querySelector(".ws-canvas-wrap");if(!cv||!wp)return;cv.style.zoom="";cv.style.transform="";cv.style.transformOrigin="";cv.style.width="";cv.style.maxWidth="";wp.style.height="";wp.style.overflow="";wp.style.width="";}',
-    'function _animFit(d,dur){var t0=performance.now();(function loop(){fitCanvas(d);if(performance.now()-t0<(dur||260))requestAnimationFrame(loop);})();}',,
+    'function _animFit(d,dur){var t0=performance.now();(function loop(){fitCanvas(d);if(performance.now()-t0<(dur||260))requestAnimationFrame(loop);})();}',
     /* ── Sidebar state ── */
     'var _WS_DOCS='+docIndexJSON+';',
     'var _WS_SPACE='+JSON.stringify(state.projectName||'My Project')+';',
@@ -14528,7 +14536,7 @@ async function doExportOptimized(opts){
   // ── CSS + JS (shared helpers) ─────────────────────────────
   const shellCss=_buildViewerShellCss(accent);
   const editorCss=captureAppCss();
-  const fullCss=editorCss+'\n'+shellCss;
+  const fullCss=shellCss+'\n'+editorCss;
 
   // Re-use the same CSS/JS template from doExportWebsite by building the HTML inline
   // (We share the shellCss structure but build our own minimal version for zip mode)
