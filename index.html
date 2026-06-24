@@ -5170,7 +5170,7 @@ function _videoLbKey(e){if(e.key==='Escape')closeVideoLightbox();}
 // LIGHTBOX
 let lbIndex=0,lbImages=[];
 function lbOpen(startIdx){
-  const domImgs=Array.from(document.querySelectorAll('.fmedia img,.editor-content img')).filter(img=>!img.closest('.tcc-thumb')&&!img.closest('.tcc-thumbs'));
+  const domImgs=Array.from(document.querySelectorAll('.fmedia img,.editor-content img')).filter(img=>!img.closest('.tcc-thumb')&&!img.closest('.tcc-thumbs')&&img.src&&img.src.startsWith('blob:'));
   if(!domImgs.length)return;
   const doc=currentDoc();
   lbImages=domImgs.map(el=>{const id=el.dataset.imgid||(el.closest('.fmedia')?el.closest('.fmedia').dataset.mediaid:'');const stored=(doc&&doc.images||[]).find(i=>i.id===id);return{src:el.src,name:stored?stored.name:(el.alt||'image')};});
@@ -7731,10 +7731,10 @@ function _cfFileLoadAll(editor){
   editor.querySelectorAll('.cf-file-block[data-cffileid]').forEach(async block=>{
     const id=block.dataset.cffileid;if(!id)return;
     const dlBtn=block.querySelector('.cf-file-dl');if(!dlBtn)return;
-    if(dlBtn.href&&dlBtn.href.startsWith('blob:'))return; // already loaded
-    try{
+    if(_objUrls[id]){dlBtn.href=_objUrls[id];dlBtn.download=block.dataset.filename||'file';} // reuse cached URL
+    else try{
       const blob=await _idbGet(id);
-      if(blob){const url=URL.createObjectURL(blob);dlBtn.href=url;dlBtn.download=block.dataset.filename||'file';}
+      if(blob){const url=URL.createObjectURL(blob);_cacheUrl(id,url);dlBtn.href=url;dlBtn.download=block.dataset.filename||'file';}
     }catch(e){}
     const delBtn=block.querySelector('.cf-file-del');
     if(delBtn&&!delBtn._wired){
@@ -9223,15 +9223,19 @@ function _cfCarWireNav(block,track,prev,next,dots,counter){
   if(prev)prev.onclick=e=>{e.stopPropagation();goTo((block._carIdx||0)-1);};
   if(next)next.onclick=e=>{e.stopPropagation();goTo((block._carIdx||0)+1);};
 
-  // Keyboard navigation when carousel is focused
+  // Keyboard navigation when carousel is focused — guard against accumulation on repeated openDoc
   block.setAttribute('tabindex','0');
-  block.addEventListener('keydown',e=>{
-    if(e.target.closest('.cf-car-slide-caption'))return;
-    if(e.key==='ArrowLeft'){e.preventDefault();goTo((block._carIdx||0)-1);}
-    else if(e.key==='ArrowRight'){e.preventDefault();goTo((block._carIdx||0)+1);}
-  });
+  if(!block._carKbdWired){
+    block._carKbdWired=true;
+    block.addEventListener('keydown',e=>{
+      if(e.target.closest('.cf-car-slide-caption'))return;
+      if(e.key==='ArrowLeft'){e.preventDefault();if(block._carGoTo)block._carGoTo((block._carIdx||0)-1);}
+      else if(e.key==='ArrowRight'){e.preventDefault();if(block._carGoTo)block._carGoTo((block._carIdx||0)+1);}
+    });
+  }
 
-  // ── Touch swipe with live drag feedback ──────────────────
+  // ── Touch swipe with live drag feedback — guard against accumulation ─
+  if(!block._carTrackWired){block._carTrackWired=true;
   let sx=0,sy=0,sTrk=false;
   track.addEventListener('touchstart',e=>{
     if(e.target.closest('.cf-car-slide-caption')){sTrk=false;return;}
@@ -9275,6 +9279,7 @@ function _cfCarWireNav(block,track,prev,next,dots,counter){
     };
     document.addEventListener('mousemove',onMove);document.addEventListener('mouseup',onUp);
   });
+  } // end _carTrackWired
 
   block._carGoTo=goTo;
   goTo(block._carIdx||0);
@@ -11977,7 +11982,8 @@ async function _projFullSync(){
 
       // Cross-session dedup: same content already in folder under different id
       if(hash&&folderHashMap.has(hash)){
-        const canonId=folderHashMap.get(hash);
+        const rawCanon=folderHashMap.get(hash);
+        const canonId=idRedirects.get(rawCanon)||rawCanon; // resolve any existing redirect chain
         idRedirects.set(id,canonId);
         _projSavedIds.add(id);
         dupes++;continue;
