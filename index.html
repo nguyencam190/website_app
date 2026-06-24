@@ -9015,7 +9015,10 @@ function _cfBuildCarToolbar(block){
       const sl=getCur();if(!sl)return;
       const img2=sl.querySelector('img[data-carid]');
       if(img2){const id=img2.dataset.carid;
-        block.dataset.carids=(block.dataset.carids||'').split(',').filter(i=>i&&i!==id).join(',');
+        // Update both data-carids (new) and data-cfcarids (legacy) so removal persists on reload
+        const _filt=ids=>ids.split(',').filter(i=>i&&i!==id).join(',');
+        if(block.dataset.carids!==undefined)block.dataset.carids=_filt(block.dataset.carids||'');
+        if(block.dataset.cfcarids!==undefined)block.dataset.cfcarids=_filt(block.dataset.cfcarids||'');
       }
       const idx=block._carIdx||0;sl.remove();
       const dots=dotsWrap?.querySelectorAll('.cf-car-dot')||[];if(dots[idx])dots[idx].remove();
@@ -9027,7 +9030,7 @@ function _cfBuildCarToolbar(block){
     {sep:true},
     {icon:'ti-trash',label:'Xóa carousel',danger:true,fn:()=>{
       if(!confirm('Xóa carousel này?'))return;
-      (block.dataset.carids||'').split(',').filter(Boolean).forEach(id=>{try{_idbDel(id);}catch(e){}});
+      // Do NOT _idbDel here: undo can restore the block; IDB orphan cleanup runs at Push Phase 3.
       const fb=document.createElement('p');fb.innerHTML='<br>';block.parentNode?.insertBefore(fb,block);block.remove();onContentChange();
     }},
   ];
