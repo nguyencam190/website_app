@@ -3831,8 +3831,8 @@ function _commitContent(){
     if(media.src&&!media.src.startsWith('data:'))media.removeAttribute('src');
   });
   clone.querySelectorAll('.cf-car-toolbar,.cf-car-add-slide,.cf-car-slide-resize-h,.cf-car-block-resize-h').forEach(e=>e.remove());
-  // Strip blob URLs from inline image blocks (only save data-cfimgid on outer div)
-  clone.querySelectorAll('.cf-img-block[data-cfimgid] img,.cf-img-block[data-cfimgid] video').forEach(media=>{
+  // Strip blob URLs from inline image blocks — broaden to all cf-img-block, not just those with data-cfimgid
+  clone.querySelectorAll('.cf-img-block img,.cf-img-block video').forEach(media=>{
     if(media.src&&!media.src.startsWith('data:'))media.removeAttribute('src');
   });
   // Strip cf-img-block toolbar/handles from saved content
@@ -4154,6 +4154,7 @@ function isGif(f){return f.type==='image/gif'||/\.gif$/i.test(f.name);}
 
 async function loadMedia(file){
   if(!file.type.startsWith('image/')&&!file.type.startsWith('video/'))return;
+  const doc=currentDoc();if(!doc)return; // capture early — doc switch during await must not misdirect
   const id=uid();
   const type=isVideo(file)?'video':isGif(file)?'gif':'image';
   // 1. Create Object URL immediately — zero encoding delay
@@ -4161,9 +4162,9 @@ async function loadMedia(file){
   _cacheUrl(id,objUrl);
   // 2. Store raw Blob in IndexedDB asynchronously
   try{ await _idbPut(id,file); }
-  catch(e){ toast('Luu media that bai','error'); }
+  catch(e){ toast('Luu media that bai','error');_revokeUrl(id);return; }
+  if(currentDoc()!==doc)return; // doc switched while awaiting IDB — abort to avoid wrong-doc registration
   // 3. Register in doc — for images ≤500KB also store base64 so they survive IDB clearing
-  const doc=currentDoc();if(!doc)return;
   if(!doc.images)doc.images=[];
   let b64src='';
   if(!isVideo(file)&&file.size<=512*1024){
@@ -7983,6 +7984,7 @@ function _cfRewireBlock(block){
   else if(cl.contains('cf-toggle'))      {_cfWireToggle(block);}
   else if(cl.contains('cf-tabs'))        {_cfTabsRewire(block);}
   else if(cl.contains('cf-progress'))    {_cfProgressRewire(block);}
+  else if(cl.contains('cf-status'))      {_cfStatusRewire(block);}
   else if(cl.contains('tbl-outer'))      {const t=block.querySelector('table');if(t)tblAttachTable(t);}
   else if(cl.contains('cf-carousel-block')){setTimeout(async()=>await _cfCarLoadAll(editor),30);}
   else if(cl.contains('cf-embed-block')) {_cfEmbedLoadAll(editor);}
@@ -12127,6 +12129,7 @@ async function _projLoadFolderAssets(handle){
         // Mark as saved BEFORE _idbPut so its auto-call to _projSaveAsset skips re-writing
         _projSavedIds.add(id);
         await _idbPut(id,blob);
+        _pendingFolderSaves.delete(id); // file already in folder — no need to re-save via flush
         if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}
         count++;
       }catch(e){console.warn('[projLoadFolderAssets] skip',entry.name,e);}
@@ -12346,6 +12349,7 @@ function _collectDocAssetIds(docs){
     tmp.querySelectorAll('[data-tblimgid]').forEach(el=>el.dataset.tblimgid&&ids.add(el.dataset.tblimgid));
     tmp.querySelectorAll('[data-cffileid]').forEach(el=>el.dataset.cffileid&&ids.add(el.dataset.cffileid));
     tmp.querySelectorAll('[data-carids]').forEach(el=>(el.dataset.carids||'').split(',').filter(Boolean).forEach(id=>ids.add(id)));
+    tmp.querySelectorAll('[data-cfcarids]').forEach(el=>(el.dataset.cfcarids||'').split(',').filter(Boolean).forEach(id=>ids.add(id)));
     tmp.querySelectorAll('[data-slideids]').forEach(el=>(el.dataset.slideids||'').split(',').filter(Boolean).forEach(id=>ids.add(id)));
   });
   return ids;
@@ -12595,9 +12599,11 @@ async function _compressForExportBlob(blob){
 }
 
 // ── Load JSZip dynamically from CDN ──────────────────────
+let _jsZipPromise=null;
 function _loadJSZip(){
   if(window.JSZip)return Promise.resolve(window.JSZip);
-  return new Promise((resolve,reject)=>{
+  if(_jsZipPromise)return _jsZipPromise; // reuse in-flight request — prevents double script injection
+  _jsZipPromise=new Promise((resolve,reject)=>{
     const s=document.createElement('script');
     s.src='https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
     s.onload=()=>resolve(window.JSZip);
@@ -12605,7 +12611,8 @@ function _loadJSZip(){
     document.head.appendChild(s);
     // Timeout so a CDN hang doesn't freeze export/import indefinitely
     setTimeout(()=>reject(new Error('Timeout tải JSZip')),15000);
-  });
+  }).finally(()=>{_jsZipPromise=null;});
+  return _jsZipPromise;
 }
 
 // ── Capture app CSS for export ────────────────────────────
