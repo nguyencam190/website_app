@@ -10152,17 +10152,36 @@ function _showBlkCtx(x,y,block){
   item('ti-arrow-up','Di chuyển lên',()=>{if(prev){container.insertBefore(block,prev);onContentChange();}},false,!prev);
   item('ti-arrow-down','Di chuyển xuống',()=>{if(next){container.insertBefore(next,block);onContentChange();}},false,!next);
   sep();
-  item('ti-copy','Nhân bản',()=>{
+  item('ti-copy','Nhân bản',async()=>{
     const clone=block.cloneNode(true);
     if(clone.classList.contains('cf-checklist'))clone.dataset.open='true';
+    // Carousel clone: assign new slide IDs and copy blobs so original and clone are independent.
+    if(clone.classList.contains('cf-carousel-block')){
+      const origIds=(block.dataset.carids||block.dataset.cfcarids||'').split(',').filter(Boolean);
+      const newIds=origIds.map(()=>uid());
+      for(let i=0;i<origIds.length;i++){
+        try{
+          let b=await _idbGet(origIds[i]);
+          if(!b&&_objUrls[origIds[i]])b=await fetch(_objUrls[origIds[i]]).then(r=>r.ok?r.blob():null).catch(()=>null);
+          if(b){await _idbPut(newIds[i],b);const url=URL.createObjectURL(b);_cacheUrl(newIds[i],url);}
+        }catch(e){}
+      }
+      // Update data-carids on clone to new IDs; update data-carid on each slide img
+      if(block.dataset.carids)clone.dataset.carids=newIds.join(',');
+      else clone.dataset.cfcarids=newIds.join(',');
+      const imgs=Array.from(clone.querySelectorAll('img[data-carid]'));
+      imgs.forEach((img,i)=>{if(newIds[i])img.dataset.carid=newIds[i];});
+    }
     container.insertBefore(clone,block.nextSibling);
     _cfRewireBlock(clone);
     onContentChange();
   });
   sep();
   item('ti-trash','Xóa khối',()=>{
-    if(block.classList.contains('cf-img-block')){const id=block.dataset.cfimgid;if(id){_revokeUrl(id);_idbDel(id).catch(()=>{});}}
-    else if(block.classList.contains('cf-carousel-block')){(block.dataset.carids||'').split(',').filter(Boolean).forEach(id=>{try{_idbDel(id);}catch(e){}});}
+    // Image blocks: revoke ObjectURL (unique ID guaranteed by _cfImgRewireBlock on clone).
+    // Carousel blocks: do NOT revoke — cloned carousels share slide IDs; revoking would
+    // break the remaining copy. IDB orphan cleanup happens in Push Phase 3 (_projFullSync).
+    if(block.classList.contains('cf-img-block')){const id=block.dataset.cfimgid;if(id)_revokeUrl(id);}
     block.remove();_hideBlockBar();onContentChange();
   },true);
   ctx.classList.add('on');
