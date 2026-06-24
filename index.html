@@ -6520,7 +6520,7 @@ function tblAttachTable(table){
       if(!src){try{const b=await _idbGet(id);if(b){src=URL.createObjectURL(b);_cacheUrl(id,src);}}catch(e){}}
       if(src){
         img.src=src;
-        img.addEventListener('dblclick',()=>{const _all=Array.from(document.querySelectorAll('.fmedia img,.editor-content img'));lbOpen(Math.max(0,_all.indexOf(img)));});
+        if(!img._dblclkWired){img._dblclkWired=true;img.addEventListener('dblclick',()=>{const _all=Array.from(document.querySelectorAll('.fmedia img,.editor-content img'));lbOpen(Math.max(0,_all.indexOf(img)));});}
       } else {
         // IDB data missing — remove broken img and clean up cell
         img.remove();
@@ -6531,8 +6531,10 @@ function tblAttachTable(table){
     // Load carousel slide images from IDB
     const existingCar=cell.querySelector('.tbl-cell-car');
     if(existingCar){
-      existingCar.addEventListener('mouseenter',()=>{_hoveredTblImg=existingCar;});
-      existingCar.addEventListener('mouseleave',()=>{if(_hoveredTblImg===existingCar)_hoveredTblImg=null;});
+      if(!existingCar._carHoverWired){existingCar._carHoverWired=true;
+        existingCar.addEventListener('mouseenter',()=>{_hoveredTblImg=existingCar;});
+        existingCar.addEventListener('mouseleave',()=>{if(_hoveredTblImg===existingCar)_hoveredTblImg=null;});
+      }
       // Restore slide images from IDB
       const slideIds=(existingCar.dataset.slideids||'').split(',').filter(Boolean);
       const slideNames=(existingCar.dataset.slidenames||'').split('|');
@@ -6561,7 +6563,7 @@ function tblAttachTable(table){
       });
       const fsBtn=existingCar.querySelector('.tcc-fs');
       if(fsBtn){fsBtn.onmousedown=e=>e.preventDefault();fsBtn.onclick=e=>{e.stopPropagation();_tccFullscreen(existingCar,_getLbSrcs());};}
-      if(carStage){
+      if(carStage&&!carStage._stageWired){carStage._stageWired=true;
         let mx=0,mdrag=false,mmoved=false;
         carStage.addEventListener('mousedown',e=>{mx=e.clientX;mdrag=true;mmoved=false;e.preventDefault();});
         carStage.addEventListener('mousemove',e=>{if(mdrag&&Math.abs(e.clientX-mx)>5)mmoved=true;});
@@ -6570,8 +6572,10 @@ function tblAttachTable(table){
     }
     cell.querySelectorAll('img[data-tblimgid]').forEach(img=>{
       img.style.cssText='display:block;width:100%;height:auto;max-width:100%;margin:0 auto;border-radius:0;cursor:zoom-in;background:transparent';
-      img.addEventListener('mouseenter',()=>{_hoveredTblImg=img;img.style.outline='2px solid var(--accent)';img.style.outlineOffset='2px';});
-      img.addEventListener('mouseleave',()=>{if(_hoveredTblImg===img){_hoveredTblImg=null;}img.style.outline='';img.style.outlineOffset='';});
+      if(!img._hoverWired){img._hoverWired=true;
+        img.addEventListener('mouseenter',()=>{_hoveredTblImg=img;img.style.outline='2px solid var(--accent)';img.style.outlineOffset='2px';});
+        img.addEventListener('mouseleave',()=>{if(_hoveredTblImg===img){_hoveredTblImg=null;}img.style.outline='';img.style.outlineOffset='';});
+      }
     });
   });
 
@@ -6593,17 +6597,19 @@ function tblAttachTable(table){
     }
   }
   // 6. ── Drag-to-select cells ──────────────────────────────────
-  table.addEventListener('mouseover',e=>{
-    if(e.buttons!==1||!_tblDragStart||_tblDragStart.closest('table')!==table)return;
-    const td=e.target.closest('td:not(.tbl-row-num),th:not(.tbl-row-num)');
-    if(!td||td.closest('table')!==table||td===_tblDragStart)return;
-    if(_mergeTable!==table){_mergeTable=table;table.querySelectorAll('.tbl-cell-sel').forEach(c=>c.classList.remove('tbl-cell-sel'));}
-    _activeTd=_tblDragStart;
-    _tblDragStart.classList.add('tbl-cell-sel');
-    td.classList.add('tbl-cell-sel');
-    _selectRect(table);_updateMergeBar();
-  },{passive:true});
-  table.addEventListener('selectstart',e=>{if(_tblDragStart&&e.buttons===1)e.preventDefault();});
+  if(!table._tblMouseoverWired){table._tblMouseoverWired=true;
+    table.addEventListener('mouseover',e=>{
+      if(e.buttons!==1||!_tblDragStart||_tblDragStart.closest('table')!==table)return;
+      const td=e.target.closest('td:not(.tbl-row-num),th:not(.tbl-row-num)');
+      if(!td||td.closest('table')!==table||td===_tblDragStart)return;
+      if(_mergeTable!==table){_mergeTable=table;table.querySelectorAll('.tbl-cell-sel').forEach(c=>c.classList.remove('tbl-cell-sel'));}
+      _activeTd=_tblDragStart;
+      _tblDragStart.classList.add('tbl-cell-sel');
+      td.classList.add('tbl-cell-sel');
+      _selectRect(table);_updateMergeBar();
+    },{passive:true});
+    table.addEventListener('selectstart',e=>{if(_tblDragStart&&e.buttons===1)e.preventDefault();});
+  }
 
   // 7. ── Add left/right edge resize handles ──
   _tblAddEdgeHandles(table);
@@ -9497,28 +9503,8 @@ function _cfImgLoadAll(editor){
     }
     // Always rewire events — after undo/redo the DOM is rebuilt from HTML so
     // all event listeners are lost even though media.src may still be set.
+    // _cfImgRewireEvents handles ALL wiring including click/dblclick (with _imgListened guard).
     _cfImgRewireEvents(block);
-    // Guard: only wire block-level listeners once — _cfImgLoadAll is called on every
-    // openDoc and after every undo/redo; without this guard, mousedown fires N times
-    // (harmless but wasteful) and dblclick opens the lightbox N times in rapid sequence.
-    if(!block._imgListened){
-      block._imgListened=true;
-      if(block.closest('td,th')){
-        block.addEventListener('mouseenter',()=>{_hoveredTblImg=block;});
-        block.addEventListener('mouseleave',()=>{if(_hoveredTblImg===block)_hoveredTblImg=null;});
-      }
-      block.addEventListener('mousedown',ev=>{
-        if(ev.target.closest('.cf-img-caption'))return;
-        ev.preventDefault();_cfImgSelect(block);
-      });
-      const _rMedia=block.querySelector('img');
-      if(_rMedia)block.addEventListener('dblclick',ev=>{
-        if(ev.target.closest('.cf-img-caption'))return;
-        // Use same filter as lbOpen's domImgs to get a correct index
-        const _all=Array.from(document.querySelectorAll('.fmedia img,.editor-content img')).filter(img=>!img.closest('.tcc-thumb')&&!img.closest('.tcc-thumbs'));
-        lbOpen(Math.max(0,_all.indexOf(_rMedia)));
-      });
-    }
   });
 }
 
