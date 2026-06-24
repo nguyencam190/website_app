@@ -9133,10 +9133,8 @@ function _cfBuildCarSlide(s){
   const swrap=document.createElement('div');swrap.className='cf-car-slide-wrap';
   const inner=document.createElement('div');inner.className='cf-car-slide-inner';
   const img2=document.createElement('img');img2.src=s.src||'';img2.alt=s.name||'';img2.dataset.carid=s.id;
-  img2.addEventListener('dblclick',()=>{
-    const _all=Array.from(document.querySelectorAll('.fmedia img,.editor-content img'));
-    lbOpen(Math.max(0,_all.indexOf(img2)));
-  });
+  // dblclick for lightbox is wired in _cfCarWireSlide (called immediately after this function)
+  // so it survives openDoc DOM rebuild. Do NOT add it here to avoid a duplicate listener.
   const lh=document.createElement('div');lh.className='cf-car-slide-resize-h left';
   const rh=document.createElement('div');rh.className='cf-car-slide-resize-h right';
   inner.appendChild(img2);inner.appendChild(lh);inner.appendChild(rh);
@@ -9171,6 +9169,10 @@ function _cfCarSlideInitResize(inner,handle,side){
 function _cfCarWireSlide(slide){
   if(slide._carSlideWired)return;slide._carSlideWired=true;
   const inner=slide.querySelector('.cf-car-slide-inner');
+  // Wire dblclick on slide image for lightbox — must be here (not _cfBuildCarSlide) so it
+  // survives openDoc: on reload the DOM is rebuilt from innerHTML and all listeners are lost.
+  const _sImg=slide.querySelector('img[data-carid]');
+  if(_sImg){_sImg.addEventListener('dblclick',()=>{const _all=Array.from(document.querySelectorAll('.fmedia img,.editor-content img'));lbOpen(Math.max(0,_all.indexOf(_sImg)));});}
   const lh=slide.querySelector('.cf-car-slide-resize-h.left')||
     (()=>{const h=document.createElement('div');h.className='cf-car-slide-resize-h left';inner?.appendChild(h);return h;})();
   const rh=slide.querySelector('.cf-car-slide-resize-h.right')||
