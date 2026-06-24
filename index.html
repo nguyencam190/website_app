@@ -3824,7 +3824,7 @@ function _commitContent(){
     img.removeAttribute('src');
   });
   // Strip cf-embed-toolbar from saved content (UI elements only)
-  clone.querySelectorAll('.cf-embed-toolbar,.cf-img-toolbar,.cf-img-resize-h,.cf-col-toolbar,.cf-panel-actions,.cf-code-copy,.cf-checklist-cam-btn').forEach(e=>e.remove());
+  clone.querySelectorAll('.cf-embed-toolbar,.cf-img-toolbar,.cf-img-resize-h,.cf-col-toolbar,.cf-panel-actions,.cf-code-copy,.cf-checklist-cam-btn,.cf-cl-del-btn').forEach(e=>e.remove());
   // Strip carousel slide blob URLs
   clone.querySelectorAll('.cf-carousel-block img[data-carid]').forEach(media=>{
     if(media.src&&!media.src.startsWith('data:'))media.removeAttribute('src');
@@ -13307,7 +13307,7 @@ async function doExportWebsite(){
       '.tbl-col-sel','.tbl-row-sel','.tbl-img-btn','.tbl-shadow-btn',
       '.tbl-cell-drop','.tbl-edge-h','.cf-img-toolbar','.cf-img-resize-h',
       '.cf-col-toolbar','.cf-panel-actions','.cf-car-toolbar','.editor-block-bar','.slash-hint',
-      '.cf-checklist-cam-btn','.cf-code-copy'
+      '.cf-checklist-cam-btn','.cf-cl-del-btn','.cf-code-copy'
     ].join(',')).forEach(e=>e.remove());
     clone.querySelectorAll('.cf-img-block img,.cf-img-block video').forEach(el=>{if(el.src&&!el.src.startsWith('data:'))el.removeAttribute('src');});
     clone.querySelectorAll('colgroup').forEach(e=>e.remove());
@@ -14325,7 +14325,7 @@ async function doExportOptimized(opts){
       '.tbl-col-sel','.tbl-row-sel','.tbl-img-btn','.tbl-shadow-btn',
       '.tbl-cell-drop','.tbl-edge-h','.cf-img-toolbar','.cf-img-resize-h',
       '.cf-col-toolbar','.cf-panel-actions','.cf-car-toolbar','.editor-block-bar','.slash-hint',
-      '.cf-checklist-cam-btn','.cf-code-copy'
+      '.cf-checklist-cam-btn','.cf-cl-del-btn','.cf-code-copy'
     ].join(',')).forEach(e=>e.remove());
     clone.querySelectorAll('.cf-img-block img,.cf-img-block video').forEach(el=>{if(el.src&&!el.src.startsWith('data:'))el.removeAttribute('src');});
     clone.querySelectorAll('colgroup').forEach(e=>e.remove());
