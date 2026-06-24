@@ -3694,6 +3694,7 @@ function openDoc(id){
     document.getElementById('editor').querySelectorAll('.cf-progress').forEach(b=>_cfProgressRewire(b));
     document.getElementById('editor').querySelectorAll('.cf-status').forEach(el=>_cfStatusRewire(el));
     _cfFileLoadAll(document.getElementById('editor'));
+    _cfBtnLoadAll(document.getElementById('editor'));
     _cfAddCodeCopyBtns(document.getElementById('editor'));
     if(!_cachedUndo)_undoSnapshot(); // initial snapshot (skip if restoring from cache)
   },80);
@@ -3824,7 +3825,7 @@ function _commitContent(){
     img.removeAttribute('src');
   });
   // Strip cf-embed-toolbar from saved content (UI elements only)
-  clone.querySelectorAll('.cf-embed-toolbar,.cf-img-toolbar,.cf-img-resize-h,.cf-col-toolbar,.cf-panel-actions,.cf-code-copy,.cf-checklist-cam-btn,.cf-cl-del-btn').forEach(e=>e.remove());
+  clone.querySelectorAll('.cf-embed-toolbar,.cf-img-toolbar,.cf-img-resize-h,.cf-col-toolbar,.cf-panel-actions,.cf-code-copy,.cf-checklist-cam-btn,.cf-cl-del-btn,.cf-btn-toolbar').forEach(e=>e.remove());
   // Strip carousel slide blob URLs
   clone.querySelectorAll('.cf-carousel-block img[data-carid]').forEach(media=>{
     if(media.src&&!media.src.startsWith('data:'))media.removeAttribute('src');
@@ -3835,7 +3836,7 @@ function _commitContent(){
     if(media.src&&!media.src.startsWith('data:'))media.removeAttribute('src');
   });
   // Strip cf-img-block toolbar/handles from saved content
-  clone.querySelectorAll('.cf-img-toolbar,.cf-img-resize-h,.cf-img-ctx,.cf-col-toolbar,.cf-panel-actions,.editor-block-bar,.cf-code-copy').forEach(e=>e.remove());
+  clone.querySelectorAll('.cf-img-toolbar,.cf-img-resize-h,.cf-img-ctx,.cf-col-toolbar,.cf-panel-actions,.editor-block-bar,.cf-code-copy,.cf-btn-toolbar').forEach(e=>e.remove());
   // Drop the transient "being resized" highlight class from emojis before saving
   clone.querySelectorAll('.cf-emoji-active').forEach(e=>e.classList.remove('cf-emoji-active'));
   // Preserve cp-mapped spans (theme-aware colors) in saved content
@@ -7961,6 +7962,7 @@ function _cfRewireAllBlocks(editor){
   editor.querySelectorAll('.cf-progress').forEach(b=>_cfProgressRewire(b));
   editor.querySelectorAll('.cf-status').forEach(el=>_cfStatusRewire(el));
   _cfFileLoadAll(editor);
+  _cfBtnLoadAll(editor);
   _cfAddCodeCopyBtns(editor);
   tblAttachAll();
   setTimeout(async()=>{await _cfCarLoadAll(editor);_cfEmbedLoadAll(editor);},50);
@@ -7984,6 +7986,7 @@ function _cfRewireBlock(block){
   else if(cl.contains('cf-carousel-block')){setTimeout(async()=>await _cfCarLoadAll(editor),30);}
   else if(cl.contains('cf-embed-block')) {_cfEmbedLoadAll(editor);}
   else if(cl.contains('cf-file-block'))  {_cfFileLoadAll(editor);}
+  else if(cl.contains('cf-btn-block'))   {_cfBtnLoadAll(block.parentElement||block);}
   // ── Nested blocks inside containers ─────────────
   block.querySelectorAll('.cf-panel').forEach(el=>_cfWirePanel(el));
   block.querySelectorAll('.cf-checklist').forEach(el=>_cfWireChecklist(el));
@@ -7996,6 +7999,7 @@ function _cfRewireBlock(block){
   if(block.querySelector('.cf-carousel-block[data-carids],.cf-carousel-block[data-cfcarids]'))setTimeout(async()=>await _cfCarLoadAll(editor),30);
   if(block.querySelector('.cf-embed-block[data-embed-url]'))_cfEmbedLoadAll(editor);
   if(block.querySelector('.cf-file-block[data-cffileid]'))_cfFileLoadAll(editor);
+  block.querySelectorAll('.cf-btn-block').forEach(el=>_cfBtnLoadAll(el.parentElement||el));
 }
 
 function _cfToggleLoadAll(editor){
@@ -8322,6 +8326,47 @@ function _cfWirePanel(panel){
 }
 function _cfPanelLoadAll(root){
   (root||document.getElementById('editor')).querySelectorAll('.cf-panel').forEach(p=>_cfWirePanel(p));
+}
+// Rebuild button/CTA block toolbars — they are chrome (stripped on commit) and must be
+// re-injected with fresh event listeners on every openDoc / rewire.
+function _cfBtnLoadAll(root){
+  (root||document.getElementById('editor')).querySelectorAll('.cf-btn-block').forEach(wrap=>{
+    if(wrap._btnWired)return;wrap._btnWired=true;
+    wrap.querySelector('.cf-btn-toolbar')?.remove();
+    const curStyle=wrap.dataset.btnstyle||'primary';
+    const curAlign=wrap.dataset.align||'center';
+    const curLink=wrap.dataset.btnlink||'';
+    const tb=document.createElement('div');tb.className='cf-btn-toolbar';
+    // Link input — restore saved URL
+    const linkInp=document.createElement('input');linkInp.className='cf-btn-tb-inp';
+    linkInp.type='url';linkInp.placeholder='https://...';linkInp.title='URL liên kết';
+    linkInp.value=curLink;
+    linkInp.addEventListener('input',()=>{wrap.dataset.btnlink=linkInp.value;onContentChange();});
+    // Style buttons
+    const sep1=document.createElement('div');sep1.className='cf-btn-tb-sep';
+    ['primary','outline','ghost'].forEach(style=>{
+      const b=document.createElement('button');b.className='cf-btn-tb-btn'+(style===curStyle?' active':'');
+      b.type='button';b.textContent={primary:'Solid',outline:'Outline',ghost:'Ghost'}[style];
+      b.addEventListener('click',()=>{wrap.dataset.btnstyle=style;tb.querySelectorAll('.cf-btn-tb-btn').forEach(x=>x.classList.toggle('active',x===b));onContentChange();});
+      tb.appendChild(b);
+    });
+    // Align buttons
+    const sep2=document.createElement('div');sep2.className='cf-btn-tb-sep';
+    [['left','ti-align-left'],['center','ti-align-center'],['right','ti-align-right']].forEach(([align,icon])=>{
+      const b=document.createElement('button');b.className='cf-btn-tb-icon'+(align===curAlign?' active':'');
+      b.type='button';b.innerHTML=`<i class="ti ${icon}"></i>`;b.title=align;
+      b.addEventListener('click',()=>{wrap.dataset.align=align;tb.querySelectorAll('.cf-btn-tb-icon').forEach(x=>x.classList.toggle('active',x===b));onContentChange();});
+      tb.appendChild(b);
+    });
+    // Delete
+    const sep3=document.createElement('div');sep3.className='cf-btn-tb-sep';
+    const delBtn=document.createElement('button');delBtn.className='cf-btn-tb-icon';delBtn.type='button';
+    delBtn.innerHTML='<i class="ti ti-trash" style="color:#ef4444"></i>';delBtn.title='Xóa';
+    delBtn.addEventListener('click',()=>{wrap.remove();onContentChange();});
+    tb.insertBefore(linkInp,tb.firstChild);tb.insertBefore(sep1,tb.children[1]);
+    tb.appendChild(sep2);tb.appendChild(sep3);tb.appendChild(delBtn);
+    wrap.appendChild(tb);
+  });
 }
 // Get caret bounding rect
 function _slashGetCaretRect(){
