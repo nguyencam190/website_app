@@ -14501,7 +14501,7 @@ async function doExportOptimized(opts){
     }
     for(const car of Array.from(tmp.querySelectorAll('.tbl-cell-car'))){
       const ids=(car.dataset.slideids||'').split(',').filter(Boolean);const imgs=car.querySelectorAll('.tcc-slide img');const thumbImgs=car.querySelectorAll('.tcc-thumb img');
-      for(let i=0;i<ids.length;i++){const path=await idbToZipAsset(ids[i]);if(path){if(imgs[i]){imgs[i].setAttribute('src',path);imgs[i].setAttribute('loading','lazy');}if(thumbImgs[i])thumbImgs[i].setAttribute('src',path);}}_showExportProgress(++_cnt,_tot,'Xuất carousel bảng...');
+      for(let i=0;i<ids.length;i++){const path=await idbToZipAsset(ids[i]);if(path){if(imgs[i]){imgs[i].setAttribute('src',path);imgs[i].setAttribute('loading','lazy');}if(thumbImgs[i])thumbImgs[i].setAttribute('src',path);}_showExportProgress(++_cnt,_tot,'Xuất carousel bảng...');}
     }
     // Final sweep — remove alt from ALL images so browsers don't show filename text on broken images
     tmp.querySelectorAll('img').forEach(img=>{
@@ -14514,6 +14514,7 @@ async function doExportOptimized(opts){
     for(const block of Array.from(tmp.querySelectorAll('.cf-file-block[data-cffileid]'))){
       const id=block.dataset.cffileid;if(!id)continue;const dlBtn=block.querySelector('.cf-file-dl');if(!dlBtn)continue;
       try{const blob=await _idbGet(id);if(blob){const b64=await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result);r.readAsDataURL(blob);});dlBtn.href=b64;dlBtn.download=block.dataset.filename||'file';block.removeAttribute('data-cffileid');}else{block.remove();}}catch(e){block.remove();}
+      _showExportProgress(++_cnt,_tot,'Xuất file đính kèm...');
     }
     // Buttons, headings, TOC
     tmp.querySelectorAll('.cf-btn-block').forEach(btnBlock=>{const link=btnBlock.dataset.btnlink||'';const btnEl=btnBlock.querySelector('.cf-btn-el');const btnTxt=btnBlock.querySelector('.cf-btn-text');if(!btnEl||!btnTxt)return;const a=document.createElement('a');a.className='cf-btn-el';a.href=_sanitizeHref(link);if(link)a.target='_blank';a.rel='noopener';a.textContent=btnTxt.textContent||'Click here';btnEl.parentNode.replaceChild(a,btnEl);});
