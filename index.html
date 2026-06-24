@@ -7819,7 +7819,8 @@ function _cfWireChecklist(cl){
           if(lastChild&&lastChild.tagName==='P'&&!lastChild.textContent.trim()){body.insertBefore(block,lastChild);}
           else{body.appendChild(block);}
         }
-        _cfImgRewireBlock(block);
+        // _cfMakeImgBlock already built and wired the block — no need to _cfImgRewireBlock
+        // (that would assign a new id, discarding the blob mapping created by _cfMakeImgBlock)
         onContentChange();
         requestAnimationFrame(()=>_showBlockBar(block));
       });
@@ -8863,8 +8864,23 @@ function _cfImgRewireEvents(block){
   _cfImgWireHover(block,_rTb);
 }
 function _cfImgRewireBlock(block){
-  // Assign a NEW id (for cloning) then rewire events.
-  const id=uid();block.dataset.cfimgid=id;
+  // Copy blob from old id to new id so the clone is independent of the original.
+  const origId=block.dataset.cfimgid;
+  const newId=uid();
+  block.dataset.cfimgid=newId;
+  if(origId){
+    (async()=>{
+      let b=null;
+      try{b=await _idbGet(origId);}catch(e){}
+      if(!b&&_objUrls[origId])try{const r=await fetch(_objUrls[origId]);if(r.ok)b=await r.blob();}catch(e){}
+      if(b){
+        try{await _idbPut(newId,b);}catch(e){}
+        const url=URL.createObjectURL(b);_cacheUrl(newId,url);
+        const media=block.querySelector('img,video');
+        if(media&&media.src!==url)media.src=url;
+      }
+    })();
+  }
   _cfImgRewireEvents(block);
 }
 
