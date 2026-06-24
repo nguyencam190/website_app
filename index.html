@@ -3696,6 +3696,7 @@ function openDoc(id){
     _cfFileLoadAll(document.getElementById('editor'));
     _cfBtnLoadAll(document.getElementById('editor'));
     _cfAddCodeCopyBtns(document.getElementById('editor'));
+    _cfRefreshTocs(document.getElementById('editor'));
     if(!_cachedUndo)_undoSnapshot(); // initial snapshot (skip if restoring from cache)
   },80);
   setTimeout(async()=>{const ed=document.getElementById('editor');await _cfCarLoadAll(ed);_cfEmbedLoadAll(ed);},120);
@@ -7964,6 +7965,7 @@ function _cfRewireAllBlocks(editor){
   _cfFileLoadAll(editor);
   _cfBtnLoadAll(editor);
   _cfAddCodeCopyBtns(editor);
+  _cfRefreshTocs(editor);
   tblAttachAll();
   setTimeout(async()=>{await _cfCarLoadAll(editor);_cfEmbedLoadAll(editor);},50);
   setTimeout(()=>tbLoadAll(state.docs.find(d=>d.id===state.currentDocId)||{}),60);
