@@ -3866,7 +3866,7 @@ async function docCtxExportJson(){
   const doc=state.docs.find(d=>d.id===docId);
   if(!doc){toast('Không tìm thấy trang','error');return;}
   // Flush unsaved editor content for the currently-open page before exporting
-  if(docId===state.currentDocId)onContentChange();
+  if(docId===state.currentDocId)flushContent();
   toast('Đang chuẩn bị ZIP...','info');
   try{
     // Collect this doc + all descendants recursively
@@ -11965,6 +11965,7 @@ async function _projFullSync(){
             if(!_projSavedIds.has(id)){
               _projSavedIds.add(id);
               await _idbPut(id,blob);
+              _pendingFolderSaves.delete(id); // already in folder — skip re-save via flush
               if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}
             }
           }catch(e){}
@@ -12291,7 +12292,7 @@ async function _projSaveAsset(id,blob){
     _pendingFolderSaves.set(id,blob);
     return;
   }
-  if(_projSavedIds.has(id))return;
+  if(_projSavedIds.has(id)){_pendingFolderSaves.delete(id);return;}
   try{
     const mime=blob.type||'image/jpeg';
     const ext=_mimeToExt(mime)||'.bin';
