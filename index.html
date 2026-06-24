@@ -3690,7 +3690,7 @@ function openDoc(id){
     _cfPanelLoadAll(document.getElementById('editor'));
     _cfImgLoadAll(document.getElementById('editor'));
     _cfToggleLoadAll(document.getElementById('editor'));
-    document.querySelectorAll('.cf-checklist').forEach(cl=>_cfWireChecklist(cl));
+    document.getElementById('editor').querySelectorAll('.cf-checklist').forEach(cl=>_cfWireChecklist(cl));
     document.getElementById('editor').querySelectorAll('.cf-tabs').forEach(b=>_cfTabsRewire(b));
     document.getElementById('editor').querySelectorAll('.cf-progress').forEach(b=>_cfProgressRewire(b));
     document.getElementById('editor').querySelectorAll('.cf-status').forEach(el=>_cfStatusRewire(el));
@@ -7990,7 +7990,7 @@ function _cfRewireBlock(block){
   block.querySelectorAll('.cf-status').forEach(el=>_cfStatusRewire(el));
   block.querySelectorAll('.cf-img-block').forEach(b=>_cfImgRewireBlock(b));
   block.querySelectorAll('.tbl-outer').forEach(o=>{const t=o.querySelector('table');if(t)tblAttachTable(t);});
-  if(block.querySelector('.cf-carousel-block[data-carids]'))setTimeout(async()=>await _cfCarLoadAll(editor),30);
+  if(block.querySelector('.cf-carousel-block[data-carids],.cf-carousel-block[data-cfcarids]'))setTimeout(async()=>await _cfCarLoadAll(editor),30);
   if(block.querySelector('.cf-embed-block[data-embed-url]'))_cfEmbedLoadAll(editor);
   if(block.querySelector('.cf-file-block[data-cffileid]'))_cfFileLoadAll(editor);
 }
@@ -8138,11 +8138,13 @@ function _cfBuildToolbar(layout,n,dist){
   });
   moreWrap.appendChild(moreBtn);moreWrap.appendChild(moreDd);
   tb.appendChild(cntWrap);tb.appendChild(sep1);tb.appendChild(distWrap);tb.appendChild(sep2);tb.appendChild(moreWrap);
-  // Close dropdowns on outside click
+  // Close dropdowns on outside click — use AbortController so old listeners die when toolbar is rebuilt
+  if(layout._toolbarAC)layout._toolbarAC.abort();
+  layout._toolbarAC=new AbortController();
   document.addEventListener('click',e=>{
     if(!e.target.closest('.cf-col-more-wrap'))moreDd.style.display='';
     if(!e.target.closest('.cf-col-count-wrap'))cntDd.classList.remove('on');
-  });
+  },{signal:layout._toolbarAC.signal});
   return tb;
 }
 
@@ -9394,7 +9396,7 @@ async function _cfCarLoadAll(editor){
       }
       _cfCarWireSlide(sl);
     });
-    if(track&&counter){block._carIdx=0;block._carWired=false;_cfCarWireNav(block,track,prev,next,dots,counter);}
+    if(track&&counter){if(!block._carWired)block._carIdx=0;block._carWired=false;_cfCarWireNav(block,track,prev,next,dots,counter);}
     block.querySelector('.cf-car-toolbar')?.remove();
     block.appendChild(_cfBuildCarToolbar(block));
     // Re-wire block-level resize handles (stripped on save)
@@ -11643,12 +11645,9 @@ async function importMergePagesFromFolder(){
         const rawBlob=new Blob([await f.arrayBuffer()],{type:f.type});
         const blob=_ensureBlobMime(rawBlob,origExt);
         const id=entry.name.replace(/\.[^.]+$/,'');
-        // Skip if already in memory — prevents overwriting an existing project's asset
-        // that happens to share the same ID (same project re-imported, or rare ID clash)
-        if(!_objUrls[id]){
-          await _idbPut(id,blob);
-          const url=URL.createObjectURL(blob);_cacheUrl(id,url);
-        }
+        // Always write to IDB to keep it authoritative; only skip ObjectURL creation if one already exists
+        await _idbPut(id,blob);
+        if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}
         mediaCount++;
       }catch(e){console.warn('[mergeFolder] skip',entry.name,e);}
     }
@@ -11772,7 +11771,7 @@ async function doImportMerge(){
   const _idMap=new Map();
   for(const d of selected){
     const c=d.content||'';
-    const sig=c.length>0?c.length+':'+c.slice(0,300):null;
+    const sig=c.length>0?c.length+':'+c.slice(0,2000):null;
     if(sig&&_existingContent.has(sig)){const dup=_existingContent.get(sig);if(dup)_idMap.set(d.id,dup.id);continue;}// identical — skip nhưng vẫn map cho con
     const byImpFrom=_byImportedFrom.get(d.id);
     if(byImpFrom){toUpdate.push({existing:byImpFrom,incoming:d});_idMap.set(d.id,byImpFrom.id);continue;}
@@ -11861,9 +11860,12 @@ function _projUpdateBadge(){
 async function _projToggleLive(){
   if(_projLiveSaving)return;
   if(!_projDir){
-    _projLiveSaving=true;
-    await _projOpenFolder(true);
-    _projLiveSaving=false;
+    try{
+      _projLiveSaving=true;
+      await _projOpenFolder(true);
+    }finally{
+      _projLiveSaving=false;
+    }
     if(!_projDir)return;
   }
   const btn=document.getElementById('projLiveBtn');
@@ -12177,7 +12179,7 @@ async function _projOpenFolder(saveOnly=false){
     state=imported;
     if(!state.docs)state.docs=[];
     if(!state.sections||!state.sections.length)state.sections=['default'];
-    state.docs.forEach(d=>{d.section=state.sections[0]||'default';});
+    state.docs.forEach(d=>{if(!d.section||!state.sections.includes(d.section))d.section=state.sections[0]||'default';});
     if(!state.recent)state.recent=[];
     if(!state.starred)state.starred=[];
     persist();
@@ -14273,14 +14275,15 @@ async function doExportOptimized(opts){
   });
   if(_tot>0)_showExportProgress(0,_tot,'Chuẩn bị xuất...');
 
-  async function idbToZipAsset(id){
+  async function idbToZipAsset(id,_visited=new Set()){
     if(_assetMap.has(id))return _assetMap.get(id);
     // In reuseAssets mode: if this id was deduped, redirect to the canonical file
     if(_folderMode&&opts.reuseAssets&&opts.idRedirects){
       const canonId=opts.idRedirects.get(id);
-      if(canonId){
-        // Resolve the canonical path (recursively, in case of chained redirects)
-        const canonPath=await idbToZipAsset(canonId);
+      if(canonId&&!_visited.has(canonId)){
+        // Resolve the canonical path (recursively, guard against circular redirects)
+        _visited.add(id);
+        const canonPath=await idbToZipAsset(canonId,_visited);
         if(canonPath){_assetMap.set(id,canonPath);return canonPath;}
       }
     }
