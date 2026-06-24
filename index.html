@@ -7989,6 +7989,7 @@ function _cfRewireBlock(block){
   else if(cl.contains('cf-embed-block')) {_cfEmbedLoadAll(editor);}
   else if(cl.contains('cf-file-block'))  {_cfFileLoadAll(editor);}
   else if(cl.contains('cf-btn-block'))   {_cfBtnLoadAll(block.parentElement||block);}
+  else if(cl.contains('cf-toc'))         {_cfRefreshTocs(editor);}
   // ── Nested blocks inside containers ─────────────
   block.querySelectorAll('.cf-panel').forEach(el=>_cfWirePanel(el));
   block.querySelectorAll('.cf-checklist').forEach(el=>_cfWireChecklist(el));
