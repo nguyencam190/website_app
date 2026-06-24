@@ -9025,7 +9025,10 @@ function _cfImgPositionToolbar(block){
 }
 
 function _cfImgWireHover(block,tb){
-  block.addEventListener('mouseenter',()=>{if(!block.classList.contains('selected'))tb.style.display='none';});
+  if(!block._imgHoverWired){
+    block._imgHoverWired=true;
+    block.addEventListener('mouseenter',()=>{if(!block.classList.contains('selected')){const _t=block.querySelector('.cf-img-toolbar');if(_t)_t.style.display='none';}});
+  }
 }
 
 function _cfBuildCarToolbar(block){
