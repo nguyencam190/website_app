@@ -9367,9 +9367,9 @@ function _cfEmbedLoadAll(editor){
 
 // Restore carousel from IDB on doc load
 async function _cfCarLoadAll(editor){
-  const blocks=editor.querySelectorAll('.cf-carousel-block[data-carids]');
+  const blocks=editor.querySelectorAll('.cf-carousel-block[data-carids],.cf-carousel-block[data-cfcarids]');
   for(const block of blocks){
-    const ids=(block.dataset.carids||'').split(',').filter(Boolean);
+    const ids=(block.dataset.carids||block.dataset.cfcarids||'').split(',').filter(Boolean);
     const imgs=Array.from(block.querySelectorAll('img[data-carid]'));
     for(let i=0;i<ids.length;i++){
       const id=ids[i];const img2=imgs[i];
