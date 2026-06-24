@@ -3877,22 +3877,8 @@ async function docCtxExportJson(){
     }
     const allDocs=_collectTree(docId);
 
-    // Collect all media IDs from all docs in the tree
-    const mediaIds=new Set();
-    function _collectMediaFromDoc(d){
-      (d.images||[]).forEach(m=>{
-        if(!m)return;
-        if(m.id)mediaIds.add(m.id);
-        if(m.type==='carousel'&&m.slides)(m.slides).forEach(sl=>{if(sl&&sl.id)mediaIds.add(sl.id);});
-      });
-      const tmp=document.createElement('div');tmp.innerHTML=d.content||'';
-      tmp.querySelectorAll('[data-cfimgid]').forEach(el=>mediaIds.add(el.dataset.cfimgid));
-      tmp.querySelectorAll('[data-tblimgid]').forEach(el=>mediaIds.add(el.dataset.tblimgid));
-      tmp.querySelectorAll('[data-carid]').forEach(el=>mediaIds.add(el.dataset.carid));
-      tmp.querySelectorAll('[data-carids]').forEach(el=>(el.dataset.carids||'').split(',').filter(Boolean).forEach(id=>mediaIds.add(id)));
-      tmp.querySelectorAll('[data-slideids]').forEach(el=>(el.dataset.slideids||'').split(',').filter(Boolean).forEach(id=>mediaIds.add(id)));
-    }
-    allDocs.forEach(_collectMediaFromDoc);
+    // Collect all media IDs from all docs in the tree using the canonical collector
+    const mediaIds=_collectDocAssetIds(allDocs);
 
     // Deep-copy all docs, strip session-only blob URLs
     const docsCopy=JSON.parse(JSON.stringify(allDocs));
@@ -5087,7 +5073,7 @@ async function _fmLoadSrc(fm){
     }catch(e){}
   }
   const isVid=fm.dataset.mtype==='video';
-  const el=fm.querySelector(isVid?'video':'img');
+  let el=fm.querySelector(isVid?'video':'img');
   if(!src){
     // Blob not in IDB — show placeholder so user knows media is missing
     if(el)el.remove();
