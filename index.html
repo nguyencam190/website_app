@@ -11413,8 +11413,7 @@ async function _importMergeFromZip(zip,filename){
       const blob=_ensureBlobMime(rawBlob,origExt);
       const id=path.replace(/^(images|videos)\//,'').replace(/\.[^.]+$/,'');
       if(id&&blob.size>0){
-        await _idbPut(id,blob);
-        if(!_objUrls[id]){const url=URL.createObjectURL(blob);_cacheUrl(id,url);}
+        if(!_objUrls[id]){await _idbPut(id,blob);const url=URL.createObjectURL(blob);_cacheUrl(id,url);}
         mediaCount++;
       }
     }catch(er){}
