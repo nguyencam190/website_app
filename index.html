@@ -8341,21 +8341,22 @@ function _cfBtnLoadAll(root){
     const curAlign=wrap.dataset.align||'center';
     const curLink=wrap.dataset.btnlink||'';
     const tb=document.createElement('div');tb.className='cf-btn-toolbar';
-    // Link input — restore saved URL
+    // Build in display order: link | sep | [style btns] | sep | [align btns] | sep | delete
     const linkInp=document.createElement('input');linkInp.className='cf-btn-tb-inp';
     linkInp.type='url';linkInp.placeholder='https://...';linkInp.title='URL liên kết';
     linkInp.value=curLink;
     linkInp.addEventListener('input',()=>{wrap.dataset.btnlink=linkInp.value;onContentChange();});
+    tb.appendChild(linkInp);
+    const sep1=document.createElement('div');sep1.className='cf-btn-tb-sep';tb.appendChild(sep1);
     // Style buttons
-    const sep1=document.createElement('div');sep1.className='cf-btn-tb-sep';
     ['primary','outline','ghost'].forEach(style=>{
       const b=document.createElement('button');b.className='cf-btn-tb-btn'+(style===curStyle?' active':'');
       b.type='button';b.textContent={primary:'Solid',outline:'Outline',ghost:'Ghost'}[style];
       b.addEventListener('click',()=>{wrap.dataset.btnstyle=style;tb.querySelectorAll('.cf-btn-tb-btn').forEach(x=>x.classList.toggle('active',x===b));onContentChange();});
       tb.appendChild(b);
     });
+    const sep2=document.createElement('div');sep2.className='cf-btn-tb-sep';tb.appendChild(sep2);
     // Align buttons
-    const sep2=document.createElement('div');sep2.className='cf-btn-tb-sep';
     [['left','ti-align-left'],['center','ti-align-center'],['right','ti-align-right']].forEach(([align,icon])=>{
       const b=document.createElement('button');b.className='cf-btn-tb-icon'+(align===curAlign?' active':'');
       b.type='button';b.innerHTML=`<i class="ti ${icon}"></i>`;b.title=align;
@@ -8363,12 +8364,11 @@ function _cfBtnLoadAll(root){
       tb.appendChild(b);
     });
     // Delete
-    const sep3=document.createElement('div');sep3.className='cf-btn-tb-sep';
+    const sep3=document.createElement('div');sep3.className='cf-btn-tb-sep';tb.appendChild(sep3);
     const delBtn=document.createElement('button');delBtn.className='cf-btn-tb-icon';delBtn.type='button';
     delBtn.innerHTML='<i class="ti ti-trash" style="color:#ef4444"></i>';delBtn.title='Xóa';
     delBtn.addEventListener('click',()=>{wrap.remove();onContentChange();});
-    tb.insertBefore(linkInp,tb.firstChild);tb.insertBefore(sep1,tb.children[1]);
-    tb.appendChild(sep2);tb.appendChild(sep3);tb.appendChild(delBtn);
+    tb.appendChild(delBtn);
     wrap.appendChild(tb);
   });
 }
