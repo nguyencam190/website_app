@@ -5206,7 +5206,7 @@ const ov=document.getElementById('dropOverlay');
 ew.addEventListener('dragover',e=>{e.preventDefault();if(state.currentDocId)ov.classList.add('on');});
 ew.addEventListener('dragleave',e=>{if(!ew.contains(e.relatedTarget))ov.classList.remove('on');});
 ew.addEventListener('drop',e=>{e.preventDefault();ov.classList.remove('on');if(!state.currentDocId)return;Array.from(e.dataTransfer.files).forEach(f=>{if(f.type.startsWith('image/')||f.type.startsWith('video/'))loadMedia(f);});});
-document.addEventListener('paste',e=>{if(!state.currentDocId)return;const item=Array.from(e.clipboardData.items||[]).find(i=>i.type.startsWith('image/')||i.type.startsWith('video/'));if(item){e.preventDefault();loadMedia(item.getAsFile());}});
+document.addEventListener('paste',e=>{if(!state.currentDocId)return;const act=document.activeElement;if(act&&(act.tagName==='INPUT'||act.tagName==='TEXTAREA'||(act.isContentEditable&&!act.closest('#editor,#editorScroll'))))return;const item=Array.from(e.clipboardData.items||[]).find(i=>i.type.startsWith('image/')||i.type.startsWith('video/'));if(item){e.preventDefault();loadMedia(item.getAsFile());}});
 document.getElementById('editor')?.addEventListener('paste',()=>{_undoSnapshot();},true);
 document.getElementById('editor')?.addEventListener('paste',e=>{
   const html=e.clipboardData?.getData('text/html');
@@ -5347,7 +5347,7 @@ function editProjectName(){const name=prompt('Doi ten du an:',state.projectName)
 function openModal(id){document.getElementById(id).classList.add('on');}
 function _closeModalEl(bg){if(!bg||!bg.classList.contains('on'))return;bg.classList.add('closing');setTimeout(()=>bg.classList.remove('on','closing'),150);}
 function closeModal(id,e){if(e&&e.target!==document.getElementById(id))return;_closeModalEl(document.getElementById(id));}
-function showCtx(id,e){const m=document.getElementById(id);m.style.left=Math.min(e.clientX,window.innerWidth-200)+'px';m.style.top=Math.min(e.clientY,window.innerHeight-260)+'px';m.classList.add('on');}
+function showCtx(id,e){const m=document.getElementById(id);if(!m)return;m.style.left=Math.min(e.clientX,window.innerWidth-200)+'px';m.style.top=Math.min(e.clientY,window.innerHeight-260)+'px';m.classList.add('on');}
 
 // TABLE EDITING
 let _activeTd=null;
@@ -9323,8 +9323,8 @@ function _cfCarAddImages(block,track,dotsWrap,counter){
       const ids=(block.dataset.carids||'').split(',').filter(Boolean);ids.push(id);
       block.dataset.carids=ids.join(',');
     }
-    const total=track.querySelectorAll('.cf-car-slide').length;
-    if(counter)counter.textContent=`${(block._carIdx||0)+1} / ${total}`;
+    if(block._carGoTo)block._carGoTo(block._carIdx||0);
+    else{const total=track.querySelectorAll('.cf-car-slide').length;if(counter)counter.textContent=`${(block._carIdx||0)+1} / ${total}`;}
     onContentChange();
   });
   inp.click();
@@ -11781,9 +11781,9 @@ async function doImportMerge(){
   const targetSec=state.sections[0]||'default';
   // Build lookup maps for conflict detection
   const _byImportedFrom=new Map(state.docs.filter(d=>d.importedFrom).map(d=>[d.importedFrom,d]));
-  const _byTitle=new Map(state.docs.map(d=>[(d.title||'').trim().toLowerCase(),d]).filter(([k])=>k));
+  const _byTitle=new Map();state.docs.forEach(d=>{const k=(d.title||'').trim().toLowerCase();if(k&&!_byTitle.has(k))_byTitle.set(k,d);});
   const _existingContent=new Map();
-  state.docs.forEach(d=>{const c=d.content||'';if(c.length>0){const k=c.length+':'+c.slice(0,300);if(!_existingContent.has(k))_existingContent.set(k,d);}});
+  state.docs.forEach(d=>{const c=d.content||'';if(c.length>0){const k=c.length+':'+c.slice(0,2000);if(!_existingContent.has(k))_existingContent.set(k,d);}});
   // Separate into: UPDATE existing page vs CREATE new page.
   // _idMap ánh xạ id-import-cũ → id thật trong state cho MỌI trang được chọn:
   // trang mới tạo (uid mới), trang cập nhật (id trang đã có), và trang bị bỏ qua vì
