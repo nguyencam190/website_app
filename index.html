@@ -9114,7 +9114,14 @@ function _cfBuildCarToolbar(block){
   };
 
   // toolbar visible only when block is selected (mousedown); suppress on hover
-  block.addEventListener('mouseenter',()=>{if(!block.classList.contains('selected'))tb.style.display='none';});
+  // Guard against accumulation: _cfBuildCarToolbar is called on every openDoc via _cfCarLoadAll.
+  // Use querySelector so the listener always finds the CURRENT toolbar, not a stale closed-over ref.
+  if(!block._carMouseenterWired){
+    block._carMouseenterWired=true;
+    block.addEventListener('mouseenter',()=>{
+      if(!block.classList.contains('selected')){const _t=block.querySelector('.cf-car-toolbar');if(_t)_t.style.display='none';}
+    });
+  }
   return tb;
 }
 
