@@ -8720,8 +8720,19 @@ function _cfBuildImgToolbar(block){
     {icon:'ti-text-caption',label:'Thêm alt text',fn:()=>{const t=prompt('Nhập mô tả (alt text):',block.querySelector('img')?.alt||'');if(t!=null){const img=block.querySelector('img');if(img)img.alt=t;block.dataset.name=t;toast('Đã cập nhật alt text','success');}}},
     {icon:'ti-resize',label:'Thay đổi kích thước',fn:()=>{const v=prompt('Nhập chiều rộng (%, vd: 80):',parseInt(block.querySelector('.cf-img-inner')?.style.width||'100'));if(v){const inner=block.querySelector('.cf-img-inner');const wrap=block.querySelector('.cf-img-wrap');if(inner){const p=Math.min(100,Math.max(10,parseInt(v)||100));inner.style.width=p+'%';if(wrap){wrap.style.paddingTop='';wrap.style.paddingBottom='';}const _td=inner.closest('td,th');if(_td){_td.style.height='';const _tr2=_td.closest('tr');if(_tr2)_tr2.style.height='';}onContentChange();}}}},
     {sep:true},
-    {icon:'ti-copy',label:'Sao chép',fn:()=>{
-      const clone=block.cloneNode(true);_cfImgRewireBlock(clone);
+    {icon:'ti-copy',label:'Sao chép',fn:async ()=>{
+      const clone=block.cloneNode(true);
+      const origId=block.dataset.cfimgid;
+      const newId=uid();clone.dataset.cfimgid=newId;
+      // Copy blob to new ID so the clone survives page reload
+      if(origId){
+        try{
+          let b=await _idbGet(origId);
+          if(!b&&_objUrls[origId])b=await fetch(_objUrls[origId]).then(r=>r.ok?r.blob():null).catch(()=>null);
+          if(b){await _idbPut(newId,b);const url=URL.createObjectURL(b);_cacheUrl(newId,url);}
+        }catch(e){}
+      }
+      _cfImgRewireEvents(clone);
       block.parentElement.insertBefore(clone,block.nextSibling);onContentChange();
     }},
     {sep:true},
@@ -14292,6 +14303,7 @@ async function doExportOptimized(opts){
     _tot+=tmp.querySelectorAll('img[data-tblimgid]').length;
     _tot+=tmp.querySelectorAll('.cf-img-block[data-cfimgid]').length;
     tmp.querySelectorAll('.cf-carousel-block[data-carids]').forEach(b=>{_tot+=(b.dataset.carids||'').split(',').filter(Boolean).length;});
+    tmp.querySelectorAll('.cf-carousel-block[data-cfcarids]').forEach(b=>{_tot+=(b.dataset.cfcarids||'').split(',').filter(Boolean).length;});
     tmp.querySelectorAll('.tbl-cell-car[data-slideids]').forEach(c=>{_tot+=(c.dataset.slideids||'').split(',').filter(Boolean).length;});
     tmp.querySelectorAll('.cf-file-block[data-cffileid]').forEach(()=>_tot++);
   });
