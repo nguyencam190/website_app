@@ -8862,6 +8862,25 @@ function _cfImgRewireEvents(block){
   const _rTb=_cfBuildImgToolbar(block);
   block.appendChild(_rTb);
   _cfImgWireHover(block,_rTb);
+  // Wire block-level click/dblclick if not already done (guard matches _cfImgLoadAll)
+  if(!block._imgListened){
+    block._imgListened=true;
+    const cap=block.querySelector('.cf-img-caption');
+    if(block.closest('td,th')){
+      block.addEventListener('mouseenter',()=>{_hoveredTblImg=block;});
+      block.addEventListener('mouseleave',()=>{if(_hoveredTblImg===block)_hoveredTblImg=null;});
+    }
+    block.addEventListener('mousedown',ev=>{
+      if(cap&&(ev.target===cap||cap.contains(ev.target)))return;
+      ev.preventDefault();_cfImgSelect(block);
+    });
+    const _rMedia=block.querySelector('img');
+    if(_rMedia)block.addEventListener('dblclick',ev=>{
+      if(cap&&(ev.target===cap||cap.contains(ev.target)))return;
+      const _all=Array.from(document.querySelectorAll('.fmedia img,.editor-content img')).filter(img=>!img.closest('.tcc-thumb')&&!img.closest('.tcc-thumbs'));
+      lbOpen(Math.max(0,_all.indexOf(_rMedia)));
+    });
+  }
 }
 function _cfImgRewireBlock(block){
   // Copy blob from old id to new id so the clone is independent of the original.
