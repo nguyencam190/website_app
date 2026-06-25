@@ -1057,8 +1057,8 @@ td .cf-checklist[data-open="true"] .cf-checklist-body,.cf-column-item .cf-checkl
 /* Published view — freeze column layout appearance, no hover effects */
 .ws-canvas .cf-column-layout{border:1px dashed var(--border)!important;overflow:hidden!important}
 .ws-canvas .cf-column-layout:hover,.ws-canvas .cf-column-layout:focus-within,.ws-canvas .cf-column-layout.focused{border-color:var(--border)!important;border-style:dashed!important}
-.ws-canvas .cf-column-item{background:var(--surface)!important;cursor:default!important;outline:none!important}
-.ws-canvas .cf-column-item:hover,.ws-canvas .cf-column-item:focus{background:var(--surface)!important;outline:none!important}
+.ws-canvas .cf-column-item{background:transparent!important;cursor:default!important;outline:none!important}
+.ws-canvas .cf-column-item:hover,.ws-canvas .cf-column-item:focus{background:transparent!important;outline:none!important}
 .ws-canvas .cf-col-sep-line{width:1px!important;background:var(--border2)!important;cursor:default!important;margin:0!important}
 .ws-canvas .cf-col-sep-line::after{content:none!important}
 .ws-canvas .cf-col-toolbar{display:none!important}
@@ -13029,8 +13029,8 @@ function _buildViewerShellCss(accent){
     /* ── Column Layout ── */
     '.ws-canvas .cf-column-layout{display:flex;align-items:stretch;width:100%;margin:16px 0;position:relative;min-height:0;gap:0;border:1.5px dashed var(--border);padding:0;border-radius:4px;overflow:hidden}',
     '.ws-canvas .cf-column-layout:hover,.ws-canvas .cf-column-layout:focus-within{border-color:var(--border)!important;border-style:dashed!important}',
-    '.ws-canvas .cf-column-item{flex:1;padding:16px 20px;font-size:1rem;line-height:1.8;color:var(--text);word-break:break-word;background:var(--surface);min-height:0;cursor:default}',
-    '.ws-canvas .cf-column-item:hover{background:var(--surface)!important;outline:none!important}',
+    '.ws-canvas .cf-column-item{flex:1;padding:16px 20px;font-size:1rem;line-height:1.8;color:var(--text);word-break:break-word;background:transparent;min-height:0;cursor:default}',
+    '.ws-canvas .cf-column-item:hover{background:transparent!important;outline:none!important}',
     '.ws-canvas .cf-col-sep-line{width:10px;align-self:stretch;flex-shrink:0;position:relative;display:flex;align-items:center;justify-content:center;background:transparent;cursor:default}',
     '.ws-canvas .cf-col-sep-line::after{content:\'\';position:absolute;top:16px;bottom:16px;width:2px;background:var(--border2);border-radius:2px}',
     '.ws-canvas .cf-col-sep-line:hover::after{background:var(--border2)!important;width:2px!important}',
