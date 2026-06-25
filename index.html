@@ -9022,9 +9022,15 @@ function _cfImgPositionToolbar(block){
   const tbW=tb.offsetWidth||420;
   const tbH=tb.offsetHeight||40;
   let left=br.left+(br.width-tbW)/2;
-  let top=br.bottom+6;
   left=Math.max(8,Math.min(vw-tbW-8,left));
-  if(top+tbH>vh-8)top=Math.max(8,br.top-tbH-6);
+  // Prefer above the image so the toolbar never covers the caption
+  let top=br.top-tbH-6;
+  if(top<8){
+    // Not enough room above — fall back below, skipping the caption
+    const cap=block.querySelector('.cf-img-caption');
+    const capH=cap?cap.getBoundingClientRect().height:0;
+    top=br.bottom+capH+6;
+  }
   tb.style.left=left+'px';
   tb.style.top=top+'px';
 }
