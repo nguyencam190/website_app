@@ -8920,6 +8920,13 @@ function _cfImgRewireEvents(block){
     if(inner&&!h){h=document.createElement('div');h.className=`cf-img-resize-h ${side}`;inner.appendChild(h);}
     if(inner&&h){const nh=h.cloneNode(false);h.parentNode.replaceChild(nh,h);_cfImgInitResize(inner,nh,side);}
   });
+  // Ensure caption element exists (may be absent in older saved content or table images)
+  if(!block.querySelector('.cf-img-caption')){
+    const _cap=document.createElement('div');_cap.className='cf-img-caption';
+    _cap.contentEditable='true';_cap.setAttribute('data-placeholder','Thêm chú thích — nhấn đúp để chỉnh sửa');
+    const _existTb=block.querySelector('.cf-img-toolbar');
+    if(_existTb)block.insertBefore(_cap,_existTb);else block.appendChild(_cap);
+  }
   // Replace toolbar + rewire hover
   block.querySelector('.cf-img-toolbar')?.remove();
   const _rTb=_cfBuildImgToolbar(block);
