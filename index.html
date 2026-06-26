@@ -10980,7 +10980,7 @@ function bbApplyBlock(val){
             !node.parentElement?.classList.contains('cf-toggle-body'))
         node=node.parentElement;
     }
-    if(node&&node!==editor&&node.parentElement){
+    if(node&&node!==editor&&node.parentElement&&node.nodeType!==3){
       const newEl=document.createElement(val);
       newEl.innerHTML=node.innerHTML||'<br>';
       node.parentElement.replaceChild(newEl,node);
@@ -12960,10 +12960,12 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .editor-content{font-size:16px;line-height:1.6;color:var(--text);word-wrap:break-word;overflow-wrap:break-word;min-height:120px}',
     '.ws-canvas .editor-content *{max-width:100%;box-sizing:border-box}',
     '.ws-canvas .editor-content p{margin-bottom:12px}',
-    '.ws-canvas .editor-content h1{font-size:1.5rem;font-weight:600;margin:24px 0 10px}',
-    '.ws-canvas .editor-content h2{font-size:1.25rem;font-weight:600;margin:20px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border)}',
-    '.ws-canvas .editor-content h3{font-size:1.0625rem;font-weight:700;margin:18px 0 8px;padding-left:10px;border-left:3px solid var(--accent)}',
-    '.ws-canvas .editor-content h4,.ws-canvas .editor-content h5,.ws-canvas .editor-content h6{font-size:.875rem;font-weight:600;margin:14px 0 6px}',
+    '.ws-canvas .editor-content h1{font-size:1.5rem;font-weight:600;line-height:1.4;margin:24px 0 10px;letter-spacing:-.02em}',
+    '.ws-canvas .editor-content h2{font-size:1.25rem;font-weight:600;line-height:1.4;margin:20px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border);letter-spacing:-.015em}',
+    '.ws-canvas .editor-content h3{font-size:1.0625rem;font-weight:700;line-height:1.4;margin:18px 0 8px;padding-left:10px;border-left:3px solid var(--accent);letter-spacing:-.01em}',
+    '.ws-canvas .editor-content h4{font-size:0.9375rem;font-weight:600;line-height:1.4;margin:16px 0 6px;color:var(--text2)}',
+    '.ws-canvas .editor-content h5{font-size:0.75rem;font-weight:600;line-height:1.4;margin:12px 0 5px;letter-spacing:.01em}',
+    '.ws-canvas .editor-content h6{font-size:0.6875rem;font-weight:600;line-height:1.4;margin:10px 0 4px;text-transform:uppercase;letter-spacing:.04em;color:var(--text2)}',
     '.ws-canvas .editor-content ul,.ws-canvas .editor-content ol{padding-left:24px;margin-bottom:12px}',
     '.ws-canvas .editor-content li{margin-bottom:4px}',
     '.ws-canvas .editor-content .task-list{list-style:none;padding-left:4px;margin-bottom:12px}',
