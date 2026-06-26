@@ -1056,6 +1056,9 @@ td .cf-checklist[data-open="true"] .cf-checklist-body,.cf-column-item .cf-checkl
 .cf-column-layout:focus-within,.cf-column-layout.focused{border-color:var(--accent);border-style:solid}
 /* ═══ EMBED BLOCK (Social Media) ══════════════════════════ */
 /* Published view — freeze column layout appearance, no hover effects */
+/* Column layout inside table cell — compact sizing, full width */
+.editor-content td .cf-column-layout,.editor-content th .cf-column-layout{margin:4px 0;min-height:80px}
+.editor-content td .cf-column-item,.editor-content th .cf-column-item{min-height:80px;padding:10px 12px}
 .ws-canvas .cf-column-layout{border:1px dashed var(--border)!important;overflow:hidden!important}
 .ws-canvas .cf-column-layout:hover,.ws-canvas .cf-column-layout:focus-within,.ws-canvas .cf-column-layout.focused{border-color:var(--border)!important;border-style:dashed!important}
 .ws-canvas .cf-column-item{background:transparent!important;cursor:default!important;outline:none!important}
@@ -7330,11 +7333,6 @@ function _slashInsert(id,execRange){
   };
   const _activeCell=_inTableCell();
 
-  // ── Block structural commands not suitable inside a table cell ──
-  if(_activeCell&&(id==='col2'||id==='col3')){
-    toast('Không thể chèn layout cột bên trong ô bảng','info');return;
-  }
-
   // ── Table ────────────────────────────────────────────────
   if(id==='table'){_slashShowTableGrid();return;}
 
@@ -13040,6 +13038,8 @@ function _buildViewerShellCss(accent){
     /* ── Column Layout ── */
     '.ws-canvas .cf-column-layout{display:flex;align-items:stretch;width:100%;margin:16px 0;position:relative;min-height:0;gap:0;border:1.5px dashed var(--border);padding:0;border-radius:4px;overflow:hidden}',
     '.ws-canvas .cf-column-layout:hover,.ws-canvas .cf-column-layout:focus-within{border-color:var(--border)!important;border-style:dashed!important}',
+    '.ws-canvas .editor-content td .cf-column-layout,.ws-canvas .editor-content th .cf-column-layout{margin:4px 0}',
+    '.ws-canvas .editor-content td .cf-column-item,.ws-canvas .editor-content th .cf-column-item{padding:8px 10px}',
     '.ws-canvas .cf-column-item{flex:1;padding:16px 20px;font-size:1rem;line-height:1.8;color:var(--text);word-break:break-word;background:transparent;min-height:0;cursor:default}',
     '.ws-canvas .cf-column-item:hover{background:transparent!important;outline:none!important}',
     '.ws-canvas .cf-col-sep-line{width:10px;align-self:stretch;flex-shrink:0;position:relative;display:flex;align-items:center;justify-content:center;background:transparent;cursor:default}',
