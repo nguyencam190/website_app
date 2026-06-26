@@ -5203,6 +5203,25 @@ ew.addEventListener('dragleave',e=>{if(!ew.contains(e.relatedTarget))ov.classLis
 ew.addEventListener('drop',e=>{e.preventDefault();ov.classList.remove('on');if(!state.currentDocId)return;Array.from(e.dataTransfer.files).forEach(f=>{if(f.type.startsWith('image/')||f.type.startsWith('video/'))loadMedia(f);});});
 document.addEventListener('paste',e=>{if(!state.currentDocId)return;const act=document.activeElement;if(act&&(act.tagName==='INPUT'||act.tagName==='TEXTAREA'||(act.isContentEditable&&!act.closest('#editor,#editorScroll'))))return;const item=Array.from(e.clipboardData.items||[]).find(i=>i.type.startsWith('image/')||i.type.startsWith('video/'));if(item){e.preventDefault();loadMedia(item.getAsFile());}});
 document.getElementById('editor')?.addEventListener('paste',()=>{_undoSnapshot();},true);
+// Flatten block-level elements to inline HTML so pasting into a <li> doesn't break list structure.
+// Block elements are recursed and their text/inline content joined with a space separator.
+// Inline elements (strong, em, a, code, span…) are preserved with their tags intact.
+function _flattenHtmlToInline(node){
+  const BLOCK=new Set(['P','DIV','H1','H2','H3','H4','H5','H6','BLOCKQUOTE','PRE','UL','OL','LI','TABLE','THEAD','TBODY','TFOOT','TR','TD','TH','FIGURE','SECTION','ARTICLE','HEADER','FOOTER','ASIDE','MAIN','DETAILS','SUMMARY']);
+  let out='',lastBlock=false;
+  for(const ch of node.childNodes){
+    if(ch.nodeType===3){out+=ch.textContent;lastBlock=false;}
+    else if(ch.nodeType===1){
+      if(BLOCK.has(ch.tagName)){
+        if(lastBlock&&out&&out.slice(-1)!==' ')out+=' ';
+        out+=_flattenHtmlToInline(ch);lastBlock=true;
+      } else {
+        const cl=ch.cloneNode(false);cl.innerHTML=_flattenHtmlToInline(ch);out+=cl.outerHTML;lastBlock=false;
+      }
+    }
+  }
+  return out.trim();
+}
 document.getElementById('editor')?.addEventListener('paste',e=>{
   const html=e.clipboardData?.getData('text/html');
   if(!html)return;
@@ -5219,7 +5238,11 @@ document.getElementById('editor')?.addEventListener('paste',e=>{
     STRIP.forEach(p=>el.style.removeProperty(p));
     if(!(el.getAttribute('style')||'').trim())el.removeAttribute('style');
   });
-  document.execCommand('insertHTML',false,tmp.innerHTML);
+  // If cursor is inside a list item, flatten block elements to inline to keep list structure intact.
+  const _pSel=window.getSelection();
+  const _pAnchor=_pSel&&_pSel.rangeCount?_pSel.getRangeAt(0).startContainer:null;
+  const _inLi=_pAnchor&&(_pAnchor.nodeType===3?_pAnchor.parentElement:_pAnchor)?.closest('li');
+  document.execCommand('insertHTML',false,_inLi?_flattenHtmlToInline(tmp):tmp.innerHTML);
 },false);
 document.addEventListener('click',e=>{
   document.getElementById('ctxMenu').classList.remove('on');
