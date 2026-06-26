@@ -5201,13 +5201,18 @@ document.addEventListener('paste',e=>{if(!state.currentDocId)return;const act=do
 document.getElementById('editor')?.addEventListener('paste',()=>{_undoSnapshot();},true);
 document.getElementById('editor')?.addEventListener('paste',e=>{
   const html=e.clipboardData?.getData('text/html');
-  if(!html||!html.includes('background'))return;
+  if(!html)return;
   e.preventDefault();
   const tmp=document.createElement('div');
   tmp.innerHTML=html;
+  // Strip layout/size properties that cause inconsistent text when pasting from external sources.
+  // Keep font-weight/font-style/text-decoration so bold, italic, underline are preserved.
+  const STRIP=['font-size','font-family','line-height','letter-spacing','word-spacing',
+                'background','background-color','color','margin','margin-top','margin-bottom',
+                'margin-left','margin-right','padding','padding-top','padding-bottom',
+                'padding-left','padding-right','text-indent','white-space'];
   tmp.querySelectorAll('[style]').forEach(el=>{
-    el.style.backgroundColor='';
-    el.style.background='';
+    STRIP.forEach(p=>el.style.removeProperty(p));
     if(!(el.getAttribute('style')||'').trim())el.removeAttribute('style');
   });
   document.execCommand('insertHTML',false,tmp.innerHTML);
