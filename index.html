@@ -2747,7 +2747,7 @@ function _undoSnapshot(){
 }
 function _undoSnapshotDebounced(){
   clearTimeout(_undoTimer);
-  _undoTimer=setTimeout(_undoSnapshot,300);
+  _undoTimer=setTimeout(_undoSnapshot,800);
 }
 function editorUndo(){
   if(_undoStack.length<2)return;
@@ -10960,7 +10960,37 @@ function bbFmt(cmd){
   if(!inBox&&!inTbl)document.getElementById('editor')?.focus({preventScroll:true});
   onContentChange();bbUpdateState();setTimeout(bbShow,10);
 }
-function bbApplyBlock(val){document.execCommand('formatBlock',false,val);document.getElementById('editor')?.focus({preventScroll:true});onContentChange();setTimeout(bbShow,10);}function bbApplySize(size){const editor=document.getElementById('editor');restoreRange();editor.focus({preventScroll:true});document.execCommand('fontSize',false,'7');editor.querySelectorAll('font[size="7"]').forEach(f=>{const span=document.createElement('span');span.style.fontSize=size+'px';span.innerHTML=f.innerHTML;f.replaceWith(span);});document.getElementById('bbSizeNum').value=size;document.getElementById('bbSizeDD').classList.remove('on');onContentChange();setTimeout(bbShow,10);}
+function bbApplyBlock(val){
+  _undoSnapshot();
+  const editor=document.getElementById('editor');if(!editor)return;
+  const sel=window.getSelection();
+  if(sel&&sel.rangeCount){
+    let node=sel.getRangeAt(0).startContainer;
+    if(node.nodeType===Node.ELEMENT_NODE&&(node.tagName==='TD'||node.tagName==='TH')){
+      let p=node.querySelector(':scope>p');
+      if(!p){p=document.createElement('p');p.innerHTML='<br>';node.insertBefore(p,node.firstChild);}
+      node=p;
+    } else {
+      while(node&&node.parentElement!==editor&&
+            !['TD','TH'].includes(node.parentElement?.tagName)&&
+            !node.parentElement?.classList.contains('cf-column-item')&&
+            !node.parentElement?.classList.contains('cf-checklist-body')&&
+            !node.parentElement?.classList.contains('cf-panel-content')&&
+            !node.parentElement?.classList.contains('cf-tab-panel')&&
+            !node.parentElement?.classList.contains('cf-toggle-body'))
+        node=node.parentElement;
+    }
+    if(node&&node!==editor&&node.parentElement){
+      const newEl=document.createElement(val);
+      newEl.innerHTML=node.innerHTML||'<br>';
+      node.parentElement.replaceChild(newEl,node);
+      try{const r=document.createRange();r.selectNodeContents(newEl);r.collapse(false);sel.removeAllRanges();sel.addRange(r);}catch(e){}
+      editor.focus({preventScroll:true});onContentChange();setTimeout(bbShow,10);return;
+    }
+  }
+  document.execCommand('formatBlock',false,val);
+  editor.focus({preventScroll:true});onContentChange();setTimeout(bbShow,10);
+}function bbApplySize(size){const editor=document.getElementById('editor');restoreRange();editor.focus({preventScroll:true});document.execCommand('fontSize',false,'7');editor.querySelectorAll('font[size="7"]').forEach(f=>{const span=document.createElement('span');span.style.fontSize=size+'px';span.innerHTML=f.innerHTML;f.replaceWith(span);});document.getElementById('bbSizeNum').value=size;document.getElementById('bbSizeDD').classList.remove('on');onContentChange();setTimeout(bbShow,10);}
 function bbTextColor(color){
   document.getElementById('bbTextBar').style.background=color;
   document.getElementById('textColorBar').style.background=color;
