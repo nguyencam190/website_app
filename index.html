@@ -512,8 +512,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 }
 /* cf-img-block centered; rely on cell padding for spacing (no extra margin) */
 .editor-content td .cf-img-block,.editor-content th .cf-img-block{margin:0 auto!important}
-/* Resize handles have no room in a cell — toolbar 50/75/100% handles sizing */
-.editor-content td .cf-img-resize-h,.editor-content th .cf-img-resize-h{display:none!important}
+/* Resize handles inside image bounds when in a cell (avoid bleeding over cell border) */
+.editor-content td .cf-img-resize-h.left,.editor-content th .cf-img-resize-h.left{left:4px}
+.editor-content td .cf-img-resize-h.right,.editor-content th .cf-img-resize-h.right{right:4px}
 /* Selection ring sits flush on the image edge (cell padding gives it room, no bleed) */
 .editor-content td .cf-img-block.selected .cf-img-inner,.editor-content th .cf-img-block.selected .cf-img-inner{outline:none;box-shadow:0 0 0 2px var(--accent)}
 .editor-content td .cf-img-caption,.editor-content th .cf-img-caption{display:none!important}
