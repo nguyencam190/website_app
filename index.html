@@ -1366,6 +1366,77 @@ td .cf-checklist[data-open="true"] .cf-checklist-body,.cf-column-item .cf-checkl
 .cf-card:hover .cf-card-del{display:flex}
 .cf-cards-add-btn{margin-top:10px;display:flex;align-items:center;gap:6px;padding:7px 14px;border:1.5px dashed var(--border);border-radius:7px;background:none;color:var(--text2);font-size:.875rem;cursor:pointer;width:100%;justify-content:center;box-sizing:border-box;transition:border-color .15s,color .15s}
 .cf-cards-add-btn:hover{border-color:var(--accent);color:var(--accent)}
+/* ═══ BLOCK PROPS PANEL (right slide-in) ═══════════════════ */
+.bpp{position:fixed;top:52px;right:0;bottom:0;width:284px;background:var(--surface);border-left:1px solid var(--border);z-index:600;transform:translateX(100%);transition:transform .22s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden;box-shadow:-4px 0 18px rgba(0,0,0,.09)}
+.bpp.on{transform:translateX(0)}
+.bpp-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 11px;border-bottom:1px solid var(--border);flex-shrink:0;gap:8px}
+.bpp-hdr-title{font-size:1rem;font-weight:700;color:var(--text);flex:1}
+.bpp-close-btn{width:26px;height:26px;border:none;background:transparent;border-radius:5px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text3);font-size:15px;flex-shrink:0;transition:background .12s,color .12s}
+.bpp-close-btn:hover{background:var(--surface2);color:var(--text)}
+.bpp-desc{font-size:.8rem;color:var(--text2);padding:9px 16px;border-bottom:1px solid var(--border);line-height:1.5;flex-shrink:0}
+.bpp-desc a{color:var(--accent);text-decoration:none}
+.bpp-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.bpp-tab{flex:1;padding:9px;border:none;background:none;cursor:pointer;font-size:.8125rem;font-weight:600;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .12s,border-color .12s;font-family:var(--font)}
+.bpp-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.bpp-body{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:14px}
+.bpp-field{display:flex;flex-direction:column;gap:5px}
+.bpp-lbl{font-size:.75rem;font-weight:600;color:var(--text2);letter-spacing:.02em}
+.bpp-lbl span{font-weight:400;color:var(--text3)}
+.bpp-inp{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:.875rem;color:var(--text);background:var(--surface);font-family:var(--font);outline:none;transition:border-color .12s;box-sizing:border-box}
+.bpp-inp:focus{border-color:var(--accent)}
+.bpp-ta{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:.875rem;color:var(--text);background:var(--surface);font-family:var(--font);outline:none;resize:vertical;min-height:72px;transition:border-color .12s;box-sizing:border-box;line-height:1.5}
+.bpp-ta:focus{border-color:var(--accent)}
+.bpp-link{display:flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:6px;padding:7px 10px;background:var(--surface);transition:border-color .12s;box-sizing:border-box}
+.bpp-link:focus-within{border-color:var(--accent)}
+.bpp-link-icon{color:var(--text3);font-size:13px;flex-shrink:0}
+.bpp-link-inp{flex:1;border:none;outline:none;background:transparent;font-size:.875rem;color:var(--text);font-family:var(--font);min-width:0}
+.bpp-sep{height:1px;background:var(--border)}
+.bpp-section{display:flex;flex-direction:column}
+.bpp-section-hd{display:flex;align-items:center;justify-content:space-between;padding:6px 0;cursor:pointer;border-radius:5px}
+.bpp-section-hd .bpp-section-title{font-size:.875rem;font-weight:600;color:var(--text);transition:color .12s}
+.bpp-section-hd:hover .bpp-section-title{color:var(--accent)}
+.bpp-section-body{display:flex;flex-direction:column;gap:10px;padding-top:6px}
+.bpp-swatches{display:flex;flex-wrap:wrap;gap:8px;padding:2px 0}
+.bpp-sw{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .1s;position:relative;flex-shrink:0}
+.bpp-sw:hover{transform:scale(1.18)}
+.bpp-sw.active{outline:2px solid var(--accent);outline-offset:2px}
+.bpp-col-btns{display:flex;gap:6px}
+.bpp-col-btn{flex:1;padding:7px 4px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text2);font-size:.8125rem;cursor:pointer;text-align:center;transition:all .12s;font-family:var(--font)}
+.bpp-col-btn.active{background:var(--accent-light);border-color:var(--accent);color:var(--accent);font-weight:600}
+.bpp-img-row{display:flex;align-items:center;gap:6px}
+.bpp-img-btn{display:flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text2);font-size:.8125rem;cursor:pointer;transition:border-color .12s,color .12s;font-family:var(--font);flex:1}
+.bpp-img-btn:hover{border-color:var(--accent);color:var(--accent)}
+.bpp-img-rm{padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text3);cursor:pointer;font-size:.8125rem;transition:all .12s}
+.bpp-img-rm:hover{border-color:var(--danger);color:var(--danger)}
+.bpp-sel-el{width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:.875rem;font-family:var(--font);outline:none;box-sizing:border-box}
+.bpp-cl{display:flex;flex-direction:column;gap:4px}
+.bpp-ci{border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface)}
+.bpp-ci-hd{display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer;background:var(--surface2);user-select:none;transition:background .12s}
+.bpp-ci-hd:hover{background:var(--surface3)}
+.bpp-ci-drag{color:var(--text3);font-size:13px;cursor:grab}
+.bpp-ci-name{flex:1;font-size:.8125rem;font-weight:600;color:var(--text)}
+.bpp-ci-chev{color:var(--text3);font-size:12px;transition:transform .15s}
+.bpp-ci[data-open="1"] .bpp-ci-chev{transform:rotate(180deg)}
+.bpp-ci-body{display:none;padding:10px;border-top:1px solid var(--border);flex-direction:column;gap:10px}
+.bpp-ci[data-open="1"] .bpp-ci-body{display:flex}
+.bpp-add-card{display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;border:1.5px dashed var(--border);border-radius:7px;background:none;color:var(--accent);font-size:.875rem;font-weight:600;cursor:pointer;width:100%;transition:border-color .15s,background .12s;font-family:var(--font);box-sizing:border-box}
+.bpp-add-card:hover{border-color:var(--accent);background:var(--accent-light)}
+.bpp-btn-styles{display:flex;gap:10px;align-items:center}
+.bpp-bsopt{display:flex;align-items:center;gap:5px;cursor:pointer;font-size:.8125rem;color:var(--text2)}
+.bpp-bsopt input[type=radio]{accent-color:var(--accent)}
+.bpp-bp{padding:3px 10px;border-radius:5px;font-size:.75rem;font-weight:600;pointer-events:none}
+.bpp-bp.filled{background:var(--accent);color:#fff;border:none}
+.bpp-bp.outline{background:transparent;color:var(--accent);border:1.5px solid var(--accent)}
+.bpp-toggle-row{display:flex;align-items:center;justify-content:space-between;padding:2px 0}
+.bpp-switch{position:relative;display:inline-flex;width:34px;height:20px;cursor:pointer;flex-shrink:0}
+.bpp-switch input{opacity:0;width:0;height:0;position:absolute}
+.bpp-sw-sl{position:absolute;inset:0;background:var(--border2);border-radius:20px;transition:.2s}
+.bpp-sw-sl::before{content:'';position:absolute;height:14px;width:14px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.bpp-switch input:checked+.bpp-sw-sl{background:var(--accent)}
+.bpp-switch input:checked+.bpp-sw-sl::before{transform:translateX(14px)}
+/* Selected block highlight */
+.cf-spotlight.bpp-sel{outline:2px solid var(--accent);outline-offset:3px;border-radius:11px}
+.cf-cards.bpp-sel{outline:2px solid var(--accent);outline-offset:3px;border-radius:10px}
 /* ═══ DIVIDER ══════════════════════════════════════════════ */
 .editor-content hr.cf-divider{display:block;border:none;border-top:2px solid var(--border);margin:20px 0;outline:none;width:100%;height:0;background:transparent;clear:both}
 /* ═══ EMOJI PICKER ═════════════════════════════════════════ */
@@ -2807,6 +2878,8 @@ function init(){
   _projInit();
   // Wire drag-drop folder support on import buttons
   setTimeout(_sbImportWireDrop,500);
+  // Block props panel (Spotlight / Cards right sidebar)
+  _initBlockPropsPanel();
 }
 
 // ══ UNDO / REDO ══════════════════════════════════════════
@@ -3719,6 +3792,8 @@ function _stopVideosIn(root){
 }
 function openDoc(id){
   const doc=state.docs.find(d=>d.id===id);if(!doc)return;
+  // Close block props panel when switching documents
+  if(typeof bppClose==='function')bppClose();
   // Commit any pending edits of the departing page before its content is read/replaced
   flushContent();
   // Stop any video still playing in the editor before its content is replaced
@@ -7826,7 +7901,8 @@ function _slashInsert(id,execRange){
     const block=_cfBuildSpotlight();
     _cfInsertBlockAtRange(block,savedRange);
     onContentChange();
-    setTimeout(()=>{const t=block.querySelector('.cf-spotlight-title');if(t){t.focus();const r=document.createRange();r.setStart(t,0);r.collapse(true);window.getSelection().removeAllRanges();window.getSelection().addRange(r);}},30);
+    setTimeout(()=>{bppOpen(block,'spotlight');},60);
+    setTimeout(()=>{const t=block.querySelector('.cf-spotlight-title');if(t){t.focus();const r=document.createRange();r.setStart(t,0);r.collapse(true);window.getSelection().removeAllRanges();window.getSelection().addRange(r);}},80);
     return;
   }
   // ── Cards ─────────────────────────────────────────────────
@@ -7834,6 +7910,7 @@ function _slashInsert(id,execRange){
     const block=_cfBuildCardsBlock();
     _cfInsertBlockAtRange(block,savedRange);
     onContentChange();
+    setTimeout(()=>{bppOpen(block,'cards');},60);
     return;
   }
   // ── Panels ───────────────────────────────────────────────
@@ -8416,6 +8493,359 @@ function _cfCardsLoadAll(editor){
     if(addBtn&&grid){addBtn._wired=false;_cfCardsWireAddBtn(addBtn,grid);}
   });
 }
+
+// ═══ BLOCK PROPS PANEL ═══════════════════════════════════
+let _bppBlock=null,_bppType=null,_bppTab='content';
+const _BPP_SPOT_COLORS=[
+  {key:'lavender',bg:'#ede9fe',label:'Tím nhạt'},
+  {key:'sky',bg:'#e0f2fe',label:'Xanh lam'},
+  {key:'mint',bg:'#dcfce7',label:'Lá'},
+  {key:'peach',bg:'#fce7f3',label:'Hồng'},
+  {key:'sand',bg:'#fef3c7',label:'Vàng'},
+  {key:'gray',bg:'#f1f5f9',label:'Xám'},
+];
+function bppOpen(block,type){
+  document.querySelectorAll('.bpp-sel').forEach(el=>el.classList.remove('bpp-sel'));
+  _bppBlock=block;_bppType=type;
+  block.classList.add('bpp-sel');
+  const panel=document.getElementById('bpp');if(!panel)return;
+  document.getElementById('bppTitle').textContent=type==='spotlight'?'Spotlight':'Cards';
+  document.getElementById('bppDesc').innerHTML=type==='spotlight'
+    ?'Highlight important messages with a visual spotlight.'
+    :'Present links, images, and more.';
+  panel.classList.add('on');
+  bppRender();
+}
+function bppClose(){
+  document.querySelectorAll('.bpp-sel').forEach(el=>el.classList.remove('bpp-sel'));
+  _bppBlock=null;_bppType=null;
+  document.getElementById('bpp')?.classList.remove('on');
+}
+function bppSwitchTab(tab){
+  _bppTab=tab;
+  document.querySelectorAll('.bpp-tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
+  bppRender();
+}
+function bppRender(){
+  if(!_bppBlock||!_bppType)return;
+  if(_bppType==='spotlight')_bppRenderSpot();
+  else if(_bppType==='cards')_bppRenderCards();
+}
+/* ── Spotlight panel ─────────────────────────────────────── */
+function _bppRenderSpot(){
+  const body=document.getElementById('bppBody');if(!body||!_bppBlock)return;
+  body.innerHTML='';
+  if(_bppTab==='content')_bppSpotContent(body);
+  else _bppSpotStyles(body);
+}
+function _bppSpotContent(body){
+  const bl=_bppBlock;
+  const titleEl=bl.querySelector('.cf-spotlight-title');
+  const descEl=bl.querySelector('.cf-spotlight-desc');
+  const btnEl=bl.querySelector('.cf-spotlight-btn');
+  // Title
+  body.appendChild(_bppField('Title',_bppInp(titleEl?.textContent||'',v=>{if(titleEl){titleEl.textContent=v;onContentChange();}})));
+  // Description
+  body.appendChild(_bppField('Description',_bppTa(descEl?.textContent||'',v=>{if(descEl){descEl.textContent=v;onContentChange();}})));
+  // Image
+  const imgField=document.createElement('div');imgField.className='bpp-field';
+  const imgLbl=document.createElement('div');imgLbl.className='bpp-lbl';imgLbl.textContent='Image';
+  const imgRow=document.createElement('div');imgRow.className='bpp-img-row';
+  const ib=document.createElement('button');ib.className='bpp-img-btn';
+  const hasImg=!!bl.querySelector('[data-spotimgid]');
+  ib.innerHTML=hasImg?'<i class="ti ti-photo"></i> Change image':'<i class="ti ti-photo"></i> Add image';
+  ib.addEventListener('click',()=>{_cfSpotPickImg(bl);setTimeout(bppRender,200);});
+  imgRow.appendChild(ib);
+  if(hasImg){
+    const rm=document.createElement('button');rm.className='bpp-img-rm';rm.title='Remove image';
+    rm.innerHTML='<i class="ti ti-x"></i>';
+    rm.addEventListener('click',()=>{
+      const is=bl.querySelector('.cf-spotlight-img-side');
+      if(is){is.innerHTML='<div class="cf-spotlight-img-ph"><i class="ti ti-photo"></i><span>Chọn ảnh</span></div>';is._spotWired=false;_cfSpotWireImgSide(bl);}
+      _cfSpotBuildTb(bl);onContentChange();setTimeout(bppRender,50);
+    });
+    imgRow.appendChild(rm);
+  }
+  imgField.appendChild(imgLbl);imgField.appendChild(imgRow);
+  body.appendChild(imgField);
+  // Button toggle
+  const showBtn=bl.dataset.showBtn==='1';
+  const bsec=document.createElement('div');bsec.className='bpp-section';
+  bsec.style.cssText='border:1px solid var(--border);border-radius:8px;padding:10px;gap:10px;display:flex;flex-direction:column';
+  const bHead=document.createElement('div');bHead.className='bpp-toggle-row';
+  const bLbl=document.createElement('span');bLbl.style.cssText='font-size:.875rem;font-weight:600;color:var(--text)';bLbl.textContent='Button';
+  const sw=_bppSwitch(showBtn,checked=>{
+    if(checked){
+      bl.dataset.showBtn='1';
+      if(!bl.querySelector('.cf-spotlight-btnrow')){
+        const ts=bl.querySelector('.cf-spotlight-text');
+        const br=document.createElement('div');br.className='cf-spotlight-btnrow';
+        const b=document.createElement('div');b.className='cf-spotlight-btn';b.contentEditable='true';
+        b.dataset.ph='View';b.innerHTML='View';
+        br.appendChild(b);ts?.appendChild(br);
+      }
+    } else {
+      delete bl.dataset.showBtn;
+      bl.querySelector('.cf-spotlight-btnrow')?.remove();
+    }
+    onContentChange();setTimeout(bppRender,50);
+  });
+  bHead.appendChild(bLbl);bHead.appendChild(sw);
+  bsec.appendChild(bHead);
+  if(showBtn){
+    // Link
+    const btnHref=bl.dataset.btnhref||'';
+    bsec.appendChild(_bppField('Link',_bppLinkInp(btnHref,v=>{bl.dataset.btnhref=v;onContentChange();})));
+    // Label
+    const btnText=btnEl?.textContent||'View';
+    bsec.appendChild(_bppField('Label',_bppInp(btnText,v=>{const b2=bl.querySelector('.cf-spotlight-btn');if(b2){b2.textContent=v;onContentChange();}},'View')));
+    // Style radio
+    const isFilled=!bl.dataset.btnStyle||bl.dataset.btnStyle==='filled';
+    const styleWrap=document.createElement('div');styleWrap.className='bpp-btn-styles';
+    ['filled','outline'].forEach(s=>{
+      const lbl=document.createElement('label');lbl.className='bpp-bsopt';
+      const r=document.createElement('input');r.type='radio';r.name='bpp-bsr';r.value=s;
+      r.checked=(s==='filled'&&isFilled)||(s==='outline'&&!isFilled);
+      r.addEventListener('change',()=>{
+        bl.dataset.btnStyle=s;
+        const b2=bl.querySelector('.cf-spotlight-btn');
+        if(b2){b2.style.background=s==='filled'?'var(--accent)':'transparent';b2.style.color=s==='filled'?'#fff':'var(--accent)';b2.style.border=s==='outline'?'1.5px solid var(--accent)':'none';}
+        onContentChange();
+      });
+      const prev=document.createElement('span');prev.className='bpp-bp '+s;prev.textContent='Button';
+      lbl.appendChild(r);lbl.appendChild(prev);styleWrap.appendChild(lbl);
+    });
+    bsec.appendChild(styleWrap);
+  }
+  body.appendChild(bsec);
+}
+function _bppSpotStyles(body){
+  const bl=_bppBlock;
+  // Background color
+  const cf=document.createElement('div');cf.className='bpp-field';
+  const cl=document.createElement('div');cl.className='bpp-lbl';cl.textContent='Background color';
+  const sw=document.createElement('div');sw.className='bpp-swatches';
+  _BPP_SPOT_COLORS.forEach(c=>{
+    const s=document.createElement('div');s.className='bpp-sw'+(bl.dataset.bg===c.key?' active':'');
+    s.style.background=c.bg;s.title=c.label;
+    s.addEventListener('click',()=>{bl.dataset.bg=c.key;sw.querySelectorAll('.bpp-sw').forEach(x=>x.classList.remove('active'));s.classList.add('active');onContentChange();});
+    sw.appendChild(s);
+  });
+  cf.appendChild(cl);cf.appendChild(sw);body.appendChild(cf);
+  // Image position
+  const pf=document.createElement('div');pf.className='bpp-field';
+  const pl=document.createElement('div');pl.className='bpp-lbl';pl.textContent='Image position';
+  const pb=document.createElement('div');pb.className='bpp-col-btns';
+  const imgRight=bl.dataset.imgPos!=='left';
+  ['Right','Left'].forEach(pos=>{
+    const b=document.createElement('button');b.className='bpp-col-btn';
+    b.textContent=pos;
+    b.classList.toggle('active',(pos==='Right'&&imgRight)||(pos==='Left'&&!imgRight));
+    b.addEventListener('click',()=>{
+      bl.dataset.imgPos=pos.toLowerCase();
+      const ts=bl.querySelector('.cf-spotlight-text');const is=bl.querySelector('.cf-spotlight-img-side');
+      if(ts&&is){
+        if(pos==='Left'){bl.insertBefore(is,ts);}
+        else{bl.appendChild(is);}
+      }
+      pb.querySelectorAll('.bpp-col-btn').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');onContentChange();
+    });
+    pb.appendChild(b);
+  });
+  pf.appendChild(pl);pf.appendChild(pb);body.appendChild(pf);
+}
+/* ── Cards panel ─────────────────────────────────────────── */
+function _bppRenderCards(){
+  const body=document.getElementById('bppBody');if(!body||!_bppBlock)return;
+  body.innerHTML='';
+  if(_bppTab==='content')_bppCardsContent(body);
+  else _bppCardsStyles(body);
+}
+function _bppCardsContent(body){
+  const bl=_bppBlock;
+  // Card type
+  const typeField=document.createElement('div');typeField.className='bpp-field';
+  const typeLbl=document.createElement('div');typeLbl.className='bpp-lbl';typeLbl.textContent='Card type';
+  const typeSel=document.createElement('select');typeSel.className='bpp-sel-el';
+  const opt=document.createElement('option');opt.value='manual';opt.textContent='Manual';typeSel.appendChild(opt);
+  typeField.appendChild(typeLbl);typeField.appendChild(typeSel);
+  body.appendChild(typeField);
+  // Display options (collapsible)
+  const dispSec=_bppCollapsible('Display options',[]);
+  body.appendChild(dispSec);
+  // Card list
+  const cards=Array.from(bl.querySelectorAll('.cf-card'));
+  const cl=document.createElement('div');cl.className='bpp-cl';
+  cards.forEach((card,idx)=>{cl.appendChild(_bppCardItem(card,idx+1,idx===cards.length-1));});
+  body.appendChild(cl);
+  // Add card
+  const addBtn=document.createElement('button');addBtn.className='bpp-add-card';
+  addBtn.innerHTML='<i class="ti ti-plus"></i> Add card';
+  addBtn.addEventListener('click',()=>{
+    const grid=bl.querySelector('.cf-cards-grid');
+    if(grid){grid.appendChild(_cfBuildCard());onContentChange();bppRender();}
+  });
+  body.appendChild(addBtn);
+}
+function _bppCardItem(card,num,defaultOpen){
+  const item=document.createElement('div');item.className='bpp-ci';item.dataset.open=defaultOpen?'1':'0';
+  const hd=document.createElement('div');hd.className='bpp-ci-hd';
+  const drag=document.createElement('span');drag.className='bpp-ci-drag';drag.innerHTML='<i class="ti ti-grip-vertical"></i>';
+  const name=document.createElement('span');name.className='bpp-ci-name';
+  const lblTxt=(card.querySelector('.cf-card-lbl')?.textContent.trim())||'';
+  const titleTxt=(card.querySelector('.cf-card-title')?.textContent.trim())||'';
+  const cardName=lblTxt||titleTxt;
+  name.textContent=cardName?`Card ${num}: ${cardName.slice(0,22)}`:`Card ${num}`;
+  const chev=document.createElement('span');chev.className='bpp-ci-chev';chev.innerHTML='<i class="ti ti-chevron-down"></i>';
+  hd.appendChild(drag);hd.appendChild(name);hd.appendChild(chev);
+  hd.addEventListener('click',()=>{item.dataset.open=item.dataset.open==='1'?'0':'1';});
+  const bd=document.createElement('div');bd.className='bpp-ci-body';
+  // Link
+  bd.appendChild(_bppField('Link',_bppLinkInp(card.dataset.href||'',v=>{card.dataset.href=v;onContentChange();})));
+  // Label
+  const lblEl=card.querySelector('.cf-card-lbl');
+  bd.appendChild(_bppField('Label',_bppInp(lblEl?.textContent||'',v=>{
+    if(lblEl)lblEl.textContent=v;
+    name.textContent=v?`Card ${num}: ${v.slice(0,22)}`:(card.querySelector('.cf-card-title')?.textContent.trim()?`Card ${num}: ${card.querySelector('.cf-card-title').textContent.trim().slice(0,22)}`:`Card ${num}`);
+    onContentChange();
+  },'LABEL')));
+  // Title
+  const titleEl=card.querySelector('.cf-card-title');
+  const titleField=_bppField('Title',_bppInp(titleEl?.textContent||'',v=>{
+    if(titleEl)titleEl.textContent=v;
+    if(!lblEl?.textContent?.trim())name.textContent=v?`Card ${num}: ${v.slice(0,22)}`:`Card ${num}`;
+    onContentChange();
+  },'Give your card a title'));
+  titleField.querySelector('.bpp-lbl').innerHTML='Title <span>(Recommended)</span>';
+  bd.appendChild(titleField);
+  // Description
+  const descEl=card.querySelector('.cf-card-desc');
+  bd.appendChild(_bppField('Description',_bppInp(descEl?.textContent||'',v=>{if(descEl)descEl.textContent=v;onContentChange();})));
+  // Image
+  const imgF=document.createElement('div');imgF.className='bpp-field';
+  const iLbl=document.createElement('div');iLbl.className='bpp-lbl';iLbl.textContent='Image';
+  const iRow=document.createElement('div');iRow.className='bpp-img-row';
+  const ib=document.createElement('button');ib.className='bpp-img-btn';
+  const hasImg=!!card.querySelector('[data-cardimgid]');
+  ib.innerHTML=hasImg?'<i class="ti ti-photo"></i> Change image':'<i class="ti ti-photo"></i> Add image';
+  ib.addEventListener('click',()=>{_cfCardPickImg(card);setTimeout(bppRender,200);});
+  iRow.appendChild(ib);
+  if(hasImg){
+    const rm=document.createElement('button');rm.className='bpp-img-rm';rm.title='Remove image';
+    rm.innerHTML='<i class="ti ti-x"></i>';
+    rm.addEventListener('click',()=>{
+      const iw=card.querySelector('.cf-card-img-wrap');
+      if(iw){
+        const lHtml=iw.querySelector('.cf-card-lbl')?.innerHTML||'';
+        iw.innerHTML='<div class="cf-card-img-ph"><i class="ti ti-photo"></i><span>Chọn ảnh</span></div>';
+        iw._cardWired=false;
+        const nl=document.createElement('div');nl.className='cf-card-lbl';nl.contentEditable='true';nl.innerHTML=lHtml;iw.appendChild(nl);
+        _cfCardWireImg(card);
+      }
+      onContentChange();setTimeout(bppRender,50);
+    });
+    iRow.appendChild(rm);
+  }
+  imgF.appendChild(iLbl);imgF.appendChild(iRow);bd.appendChild(imgF);
+  // Delete card
+  const delRow=document.createElement('div');delRow.style.cssText='display:flex;justify-content:flex-end';
+  const delBtn=document.createElement('button');
+  delBtn.style.cssText='font-size:.75rem;color:var(--danger);background:none;border:none;cursor:pointer;padding:3px 7px;border-radius:4px;display:flex;align-items:center;gap:4px';
+  delBtn.innerHTML='<i class="ti ti-trash"></i> Remove';
+  delBtn.addEventListener('click',()=>{card.remove();onContentChange();bppRender();});
+  delRow.appendChild(delBtn);bd.appendChild(delRow);
+  item.appendChild(hd);item.appendChild(bd);
+  return item;
+}
+function _bppCardsStyles(body){
+  const bl=_bppBlock;
+  // Column count
+  const cf=document.createElement('div');cf.className='bpp-field';
+  const cl=document.createElement('div');cl.className='bpp-lbl';cl.textContent='Number of columns';
+  const cb=document.createElement('div');cb.className='bpp-col-btns';
+  const curCols=parseInt(bl.dataset.cols||'2');
+  [2,3,4].forEach(n=>{
+    const b=document.createElement('button');b.className='bpp-col-btn'+(curCols===n?' active':'');
+    b.textContent=n+'';
+    b.addEventListener('click',()=>{
+      bl.dataset.cols=n;
+      const grid=bl.querySelector('.cf-cards-grid');
+      if(grid)grid.style.gridTemplateColumns=`repeat(${n},1fr)`;
+      cb.querySelectorAll('.bpp-col-btn').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');onContentChange();
+    });
+    cb.appendChild(b);
+  });
+  cf.appendChild(cl);cf.appendChild(cb);body.appendChild(cf);
+}
+/* ── Panel helper builders ───────────────────────────────── */
+function _bppField(label,inputEl,recommended){
+  const w=document.createElement('div');w.className='bpp-field';
+  const l=document.createElement('div');l.className='bpp-lbl';
+  l.textContent=label;
+  w.appendChild(l);w.appendChild(inputEl);
+  return w;
+}
+function _bppInp(value,onChange,placeholder){
+  const i=document.createElement('input');i.type='text';i.className='bpp-inp';
+  i.value=value;if(placeholder)i.placeholder=placeholder;
+  i.addEventListener('input',()=>onChange(i.value));
+  return i;
+}
+function _bppTa(value,onChange){
+  const ta=document.createElement('textarea');ta.className='bpp-ta';ta.value=value;
+  ta.addEventListener('input',()=>onChange(ta.value));
+  return ta;
+}
+function _bppLinkInp(value,onChange){
+  const w=document.createElement('div');w.className='bpp-link';
+  const icon=document.createElement('i');icon.className='ti ti-link bpp-link-icon';
+  const i=document.createElement('input');i.type='text';i.className='bpp-link-inp';
+  i.value=value;i.placeholder='Add any link';
+  i.addEventListener('input',()=>onChange(i.value));
+  w.appendChild(icon);w.appendChild(i);return w;
+}
+function _bppSwitch(checked,onChange){
+  const lbl=document.createElement('label');lbl.className='bpp-switch';
+  const inp=document.createElement('input');inp.type='checkbox';inp.checked=checked;
+  const sl=document.createElement('span');sl.className='bpp-sw-sl';
+  inp.addEventListener('change',()=>onChange(inp.checked));
+  lbl.appendChild(inp);lbl.appendChild(sl);return lbl;
+}
+function _bppCollapsible(title,fields){
+  const sec=document.createElement('div');sec.className='bpp-section';
+  sec.style.cssText='border:1px solid var(--border);border-radius:7px;padding:8px 10px';
+  sec.dataset.open='0';
+  const hd=document.createElement('div');hd.className='bpp-section-hd';
+  const tEl=document.createElement('span');tEl.className='bpp-section-title';tEl.textContent=title;
+  const ic=document.createElement('i');ic.className='ti ti-chevron-down';ic.style.cssText='color:var(--text3);font-size:12px;transition:transform .15s';
+  hd.appendChild(tEl);hd.appendChild(ic);
+  hd.addEventListener('click',()=>{
+    sec.dataset.open=sec.dataset.open==='0'?'1':'0';
+    ic.style.transform=sec.dataset.open==='1'?'rotate(180deg)':'';
+    bd.style.display=sec.dataset.open==='1'?'flex':'none';
+  });
+  sec.appendChild(hd);
+  const bd=document.createElement('div');bd.className='bpp-section-body';bd.style.display='none';
+  fields.forEach(f=>bd.appendChild(f));
+  sec.appendChild(bd);
+  return sec;
+}
+/* ── Click detection & init ──────────────────────────────── */
+function _initBlockPropsPanel(){
+  const editor=document.getElementById('editor');
+  if(!editor)return;
+  editor.addEventListener('mousedown',e=>{
+    const spot=e.target.closest?.('.cf-spotlight');
+    const cards=e.target.closest?.('.cf-cards');
+    if(spot)setTimeout(()=>bppOpen(spot,'spotlight'),0);
+    else if(cards)setTimeout(()=>bppOpen(cards,'cards'),0);
+    else if(!e.target.closest?.('#bpp'))bppClose();
+  });
+  document.getElementById('bppClose')?.addEventListener('click',bppClose);
+}
+
 function _cfToggleLoadAll(editor){
   editor.querySelectorAll('.cf-toggle').forEach(el=>{
     const btn=el.querySelector('.cf-toggle-btn');
@@ -16248,6 +16678,19 @@ function toggleFocusMode(){
 
 init();
 </script>
+<!-- BLOCK PROPS PANEL — slides in from right when a Spotlight/Cards block is selected -->
+<div id="bpp" class="bpp">
+  <div class="bpp-hdr">
+    <span class="bpp-hdr-title" id="bppTitle">Spotlight</span>
+    <button class="bpp-close-btn" id="bppClose" title="Close"><i class="ti ti-x"></i></button>
+  </div>
+  <div class="bpp-desc" id="bppDesc"></div>
+  <div class="bpp-tabs" id="bppTabs">
+    <button class="bpp-tab" data-tab="styles" onclick="bppSwitchTab('styles')">Styles</button>
+    <button class="bpp-tab active" data-tab="content" onclick="bppSwitchTab('content')">Content</button>
+  </div>
+  <div class="bpp-body" id="bppBody"></div>
+</div>
 <!-- Sidebar import dropdown — must be direct child of body to escape sidebar overflow:hidden / will-change -->
 <div id="_sbImportDd" style="display:none;position:fixed;z-index:9999;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 24px rgba(0,0,0,.2);min-width:160px;overflow:hidden">
   <div class="hdr-dd-item" onclick="_sbImportCloseDd();importMergePagesFromFolder()"><i class="ti ti-folder"></i> Thư mục</div>
