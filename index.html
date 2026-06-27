@@ -8921,6 +8921,15 @@ function _cfBuildImgToolbar(block){
   repBtn.addEventListener('click',e=>{e.stopPropagation();_cfReplaceMedia(block);});
   tb.appendChild(repBtn);
 
+  // Convert single image → carousel (so you can add more images & switch between them)
+  if(!isVidBlock){
+    const carBtn=document.createElement('button');carBtn.className='cf-img-tb-btn';
+    carBtn.innerHTML='<i class="ti ti-carousel-horizontal" style="font-size:13px"></i>';
+    carBtn.title='Chuyển thành carousel (thêm nhiều ảnh)';
+    carBtn.addEventListener('click',e=>{e.stopPropagation();_cfImgToCarousel(block);});
+    tb.appendChild(carBtn);
+  }
+
   const sep2b=document.createElement('div');sep2b.className='cf-img-tb-sep';tb.appendChild(sep2b);
 
   // Swatch palette (used in ctx dropdown)
@@ -9104,6 +9113,43 @@ function _cfReplaceMedia(block){
     toast(isVid?'Đã đổi video':'Đã đổi hình ảnh','success');
   });
   inp.click();
+}
+
+// Convert a single-image block (.cf-img-block) into a carousel (.cf-carousel-block),
+// keeping the current image as the first slide (same IDB id → no blob duplication).
+// Layout (float/align), caption and width are carried over, then the add-images picker
+// opens so the user can add the next image and switch between them.
+function _cfImgToCarousel(block){
+  if(!block)return;
+  if(block.dataset.cfimgtype==='video'){toast('Chỉ chuyển ảnh thành carousel được','info');return;}
+  const id=block.dataset.cfimgid;
+  const media=block.querySelector('img,video');
+  const src=media?(media.src||media.getAttribute('data-src')||''):'';
+  const name=block.dataset.name||(media&&media.alt)||'image';
+  if(!id||!src){toast('Không lấy được ảnh nguồn','error');return;}
+  const carousel=_cfBuildCarousel([{id,src,name}]);
+  carousel.dataset.carids=id;
+  // Carry over layout: float wins; else a non-default alignment; else block width preset.
+  if(block.dataset.float)carousel.dataset.float=block.dataset.float;
+  else if(block.dataset.align&&block.dataset.align!=='center')carousel.dataset.align=block.dataset.align;
+  // Carry over caption into the first slide's caption
+  const capHtml=block.querySelector('.cf-img-caption')?.innerHTML||'';
+  if(capHtml.trim()){const sc=carousel.querySelector('.cf-car-slide-caption');if(sc)sc.innerHTML=capHtml;}
+  // Hide the old image toolbar before swapping
+  block.querySelector('.cf-img-toolbar')?.style.setProperty('display','none');
+  block.parentElement.replaceChild(carousel,block);
+  if(_cfImgSelected===block)_cfImgSelected=null;
+  onContentChange();
+  // Select the carousel and immediately open the add-images picker
+  setTimeout(()=>{
+    carousel.classList.add('selected');
+    if(typeof _cfCarPositionToolbar==='function')_cfCarPositionToolbar(carousel);
+    const track=carousel.querySelector('.cf-car-track');
+    const dotsWrap=carousel.querySelector('.cf-car-dots');
+    const counter=carousel.querySelector('.cf-car-counter');
+    _cfCarAddImages(carousel,track,dotsWrap,counter);
+    toast('Đã chuyển thành carousel — chọn thêm ảnh','success');
+  },60);
 }
 
 function _cfImgInitResize(inner,handle,side){
