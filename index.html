@@ -2255,11 +2255,16 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
       <span class="bb-color-bar" id="bbTextBar" style="background:#ef4444"></span>
     </button>
   </div>
-  <!-- Table cell background — only visible when in table -->
-  <div id="bbTableCellWrap" style="display:none;align-items:center">
+  <!-- Table cell controls — only visible when in table -->
+  <div id="bbTableCellWrap" style="display:none;align-items:center;gap:3px">
     <div class="bb-sep"></div>
-    <div class="bb-color-wrap" title="Table cell background">
-      <button class="bb-color-btn" onmousedown="event.preventDefault();saveRange();toggleColorPalette('tableCellCP',this)" title="Table cell background">
+    <!-- Vertical alignment -->
+    <button class="bb" id="bbVAlignT" onmousedown="event.preventDefault();bbVAlign('top')" title="Căn dọc trên"><i class="ti ti-layout-align-top" style="font-size:14px"></i></button>
+    <button class="bb" id="bbVAlignM" onmousedown="event.preventDefault();bbVAlign('middle')" title="Căn dọc giữa"><i class="ti ti-layout-align-middle" style="font-size:14px"></i></button>
+    <button class="bb" id="bbVAlignB" onmousedown="event.preventDefault();bbVAlign('bottom')" title="Căn dọc dưới"><i class="ti ti-layout-align-bottom" style="font-size:14px"></i></button>
+    <div class="bb-sep"></div>
+    <div class="bb-color-wrap" title="Màu nền ô">
+      <button class="bb-color-btn" onmousedown="event.preventDefault();saveRange();toggleColorPalette('tableCellCP',this)" title="Màu nền ô">
         <i class="ti ti-layout-grid" style="font-size:12px;line-height:1;color:#e2e8f0"></i>
         <span class="bb-color-bar" id="bbCellBar" style="background:#f1f5f9"></span>
       </button>
@@ -11541,8 +11546,6 @@ function bbAlign(cmd){
   // Works on collapsed cursor too — applies to whole paragraph
   document.execCommand(cmd,false,null);
   const editor=document.getElementById('editor');if(editor)editor.focus({preventScroll:true});
-  // In table cells: center → vertical middle, others → vertical top
-  bbVAlign(cmd==='justifyCenter'?'middle':'top');
   onContentChange();
   _updateAlignBtns();
   setTimeout(bbShow,10);
