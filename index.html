@@ -10530,7 +10530,16 @@ function _showBlockBar(targetEl){
     container.classList.contains('cf-checklist-body'));
   bar.style.position='fixed';
   if(isNested){
-    bar.style.top=rect.top+'px';
+    bar.classList.add('on-nested');
+    // Sit the bar ABOVE the block so it never covers the cell text (the previous
+    // top-aligned position overlapped the first line — most visible on the top header
+    // row, where it hid the header text). Cells are vertically centered, so a tall row
+    // has empty space above its text; for the top header row this lands just above the
+    // table. Fall back to inside-top only if there's no room near the viewport top.
+    const _barH=bar.offsetHeight||26;
+    let _top=rect.top-_barH-2;
+    if(_top<58)_top=rect.top+2;
+    bar.style.top=_top+'px';
     let barLeft=rect.left;
     // When row-num column is hidden, .tbl-row-sel lives in the first data cell at left:0 (14px wide).
     // Shift the bar right past it to avoid overlap.
@@ -10538,7 +10547,6 @@ function _showBlockBar(targetEl){
       barLeft=Math.max(barLeft,container.getBoundingClientRect().left+16);
     }
     bar.style.left=barLeft+'px';
-    bar.classList.add('on-nested');
   } else {
     // All non-nested blocks (text, fmedia, image, carousel, table…): left gutter
     bar.classList.remove('on-nested');
