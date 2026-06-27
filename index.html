@@ -10613,6 +10613,9 @@ function _initSlashCommands(){
       return;
     }
     // Plain Enter — break out into a new paragraph after the heading.
+    // When cursor is on a soft-wrapped second line (after a Shift+Enter <br>),
+    // the text from the cursor onward goes into the new <p> and the heading
+    // keeps everything before the cursor — accent bar stays on the heading.
     e.preventDefault();
     const range=sel.getRangeAt(0);
     if(!range.collapsed)range.deleteContents();
@@ -10620,8 +10623,12 @@ function _initSlashCommands(){
     tailRange.setStart(range.startContainer,range.startOffset);
     tailRange.setEnd(heading,heading.childNodes.length);
     const frag=tailRange.extractContents();
+    // Remove any trailing <br> left in heading after the split so it doesn't
+    // render an empty blank line after the heading text.
+    while(heading.lastChild&&heading.lastChild.nodeName==='BR')heading.removeChild(heading.lastChild);
+    if(!heading.textContent.trim()&&!heading.querySelector('br,img'))heading.innerHTML='<br>';
     const newP=document.createElement('p');
-    if(frag.childNodes.length&&frag.textContent.trim())newP.appendChild(frag);
+    if(frag.childNodes.length&&(frag.textContent.trim()||frag.querySelector('img')))newP.appendChild(frag);
     else newP.innerHTML='<br>';
     heading.after(newP);
     const fc=newP.firstChild;
