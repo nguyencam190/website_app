@@ -10492,6 +10492,11 @@ function _onEditorMouseMove(e){
   if(_el&&(_el.closest('.tbl-row-sel')||_el.closest('.tbl-row-num'))){_hideBlockBar();}
   _blockBarTimer=setTimeout(()=>{
     const editor=document.getElementById('editor');if(!editor)return;
+    // Don't compete with the text-selection bubble toolbar. While a non-collapsed
+    // selection is active the user is formatting text, so suppress the gutter block
+    // bar to avoid both toolbars showing at once (clutter).
+    const _bbSel=window.getSelection();
+    if(_bbSel&&!_bbSel.isCollapsed&&_bbSel.rangeCount&&editor.contains(_bbSel.anchorNode)){_hideBlockBar();return;}
     let el=e.target;
     if(!el||el===editor){_hideBlockBar();return;}
     // Text boxes and dropdowns have their own drag UI
