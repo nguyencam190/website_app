@@ -1282,6 +1282,10 @@ td .cf-checklist[data-open="true"] .cf-checklist-body,.cf-column-item .cf-checkl
 .cf-carousel-block[data-align="center"]{margin-left:auto;margin-right:auto}
 .cf-carousel-block[data-align="right"]{margin-left:auto;margin-right:0}
 .cf-carousel-block[data-align="left"]{margin-left:0;margin-right:auto}
+/* Floating carousel — text wraps around it. Each slide keeps object-fit:contain so
+   switching between images of different sizes never distorts the original aspect ratio. */
+.cf-carousel-block[data-float="left"]{float:left!important;width:45%;max-width:60%;min-width:200px;margin:4px 22px 12px 0!important;clear:left}
+.cf-carousel-block[data-float="right"]{float:right!important;width:45%;max-width:60%;min-width:200px;margin:4px 0 12px 22px!important;clear:right}
 
 /* ═══ NOTE PANEL ═══════════════════════════════════════════ */
 .cf-panel{display:flex;gap:8px;padding:8px 12px 8px 10px;border-radius:8px;margin:10px 0;border-left:4px solid;position:relative;box-sizing:border-box}
@@ -9348,9 +9352,51 @@ function _cfBuildCarToolbar(block){
 
   // Alignment (block-level)
   [{key:'left',icon:'ti-align-left',title:'Căn trái'},{key:'center',icon:'ti-align-center',title:'Căn giữa'},{key:'right',icon:'ti-align-right',title:'Căn phải'}].forEach(a=>{
-    const btn=document.createElement('button');btn.className='cf-img-tb-btn'+(block.dataset.align===a.key?' active':'');
+    const btn=document.createElement('button');btn.className='cf-img-tb-btn'+(!block.dataset.float&&block.dataset.align===a.key?' active':'');
     btn.innerHTML='<i class="ti '+a.icon+'" style="font-size:13px"></i>';btn.title=a.title;btn.dataset.calign=a.key;
-    btn.addEventListener('click',()=>{block.dataset.align=a.key;tb.querySelectorAll('[data-calign]').forEach(b=>b.classList.toggle('active',b.dataset.calign===a.key));onContentChange();});
+    btn.addEventListener('click',()=>{
+      // Picking a plain alignment cancels float.
+      if(block.dataset.float){delete block.dataset.float;block.style.width='';}
+      block.dataset.align=a.key;
+      tb.querySelectorAll('[data-calign]').forEach(b=>b.classList.toggle('active',b.dataset.calign===a.key));
+      tb.querySelectorAll('[data-cfloat]').forEach(b=>b.classList.remove('active'));
+      onContentChange();
+    });
+    tb.appendChild(btn);
+  });
+  tb.appendChild(sep());
+
+  // Float (text-wrap) — carousel floats, text wraps around it
+  [{key:'left',icon:'ti-float-left',title:'Thả nổi trái (chữ chạy bên phải)'},{key:'right',icon:'ti-float-right',title:'Thả nổi phải (chữ chạy bên trái)'}].forEach(f=>{
+    const btn=document.createElement('button');btn.className='cf-img-tb-btn'+(block.dataset.float===f.key?' active':'');
+    btn.innerHTML='<i class="ti '+f.icon+'" style="font-size:13px"></i>';btn.title=f.title;btn.dataset.cfloat=f.key;
+    btn.addEventListener('click',()=>{
+      if(block.dataset.float===f.key){
+        delete block.dataset.float;block.style.width='';block.dataset.align='center';
+      }else{
+        block.dataset.float=f.key;
+        // Float CSS controls width (45%); clear conflicting block width/align.
+        block.style.width='';delete block.dataset.align;delete block.dataset.carwidth;
+        // Make wrap usable immediately: ensure an editable line after the carousel + focus it.
+        const _isTextBlock=el=>el&&/^(P|DIV|H[1-6]|UL|OL|BLOCKQUOTE)$/.test(el.tagName)&&!el.classList.contains('cf-img-block')&&!el.classList.contains('cf-carousel-block')&&!el.classList.contains('tbl-frame');
+        let _after=block.nextElementSibling;
+        if(!_isTextBlock(_after)){
+          const np=document.createElement('p');np.innerHTML='<br>';
+          block.parentElement.insertBefore(np,block.nextSibling);
+          _after=np;
+        }
+        setTimeout(()=>{
+          try{
+            const r=document.createRange();r.setStart(_after,0);r.collapse(true);
+            const s=window.getSelection();s.removeAllRanges();s.addRange(r);
+            (_after.closest('[contenteditable="true"]')||document.getElementById('editor'))?.focus({preventScroll:true});
+          }catch(e){}
+        },20);
+      }
+      tb.querySelectorAll('[data-cfloat]').forEach(b=>b.classList.toggle('active',!!block.dataset.float&&b.dataset.cfloat===block.dataset.float));
+      tb.querySelectorAll('[data-calign]').forEach(b=>b.classList.toggle('active',!block.dataset.float&&b.dataset.calign===block.dataset.align));
+      onContentChange();
+    });
     tb.appendChild(btn);
   });
   tb.appendChild(sep());
@@ -9358,9 +9404,17 @@ function _cfBuildCarToolbar(block){
   // Width presets (block-level)
   function _updateCarwActive(){const cur=block.dataset.carwidth||'100';tb.querySelectorAll('[data-carw]').forEach(b=>b.classList.toggle('active',b.dataset.carw===cur));}
   [{w:'50',label:'50%'},{w:'75',label:'75%'},{w:'100',label:'100%'}].forEach(wt=>{
-    const btn=document.createElement('button');btn.className='cf-img-tb-btn'+((block.dataset.carwidth||'100')===wt.w?' active':'');
+    const btn=document.createElement('button');btn.className='cf-img-tb-btn'+(!block.dataset.float&&(block.dataset.carwidth||'100')===wt.w?' active':'');
     btn.innerHTML='<span style="font-size:10px;font-weight:600">'+wt.label+'</span>';btn.title='Carousel rộng '+wt.label;btn.dataset.carw=wt.w;
-    btn.addEventListener('click',()=>{block.style.width='';if(wt.w==='100'){delete block.dataset.carwidth;}else{block.dataset.carwidth=wt.w;}_updateCarwActive();onContentChange();});
+    btn.addEventListener('click',()=>{
+      // While floated, the width preset controls the float box width; 100% un-floats.
+      if(block.dataset.float){
+        if(wt.w==='100'){delete block.dataset.float;block.style.width='';block.dataset.align='center';tb.querySelectorAll('[data-cfloat]').forEach(b=>b.classList.remove('active'));}
+        else{block.style.width=wt.w+'%';}
+        onContentChange();return;
+      }
+      block.style.width='';if(wt.w==='100'){delete block.dataset.carwidth;}else{block.dataset.carwidth=wt.w;}_updateCarwActive();onContentChange();
+    });
     tb.appendChild(btn);
   });
   tb.appendChild(sep());
@@ -13621,6 +13675,8 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .cf-carousel-block[data-align="center"]{margin-left:auto;margin-right:auto}',
     '.ws-canvas .cf-carousel-block[data-align="right"]{margin-left:auto;margin-right:0}',
     '.ws-canvas .cf-carousel-block[data-align="left"]{margin-left:0;margin-right:auto}',
+    '.ws-canvas .cf-carousel-block[data-float="left"]{float:left!important;width:45%;max-width:60%;min-width:200px;margin:4px 22px 12px 0!important;clear:left}',
+    '.ws-canvas .cf-carousel-block[data-float="right"]{float:right!important;width:45%;max-width:60%;min-width:200px;margin:4px 0 12px 22px!important;clear:right}',
     '.ws-canvas .cf-carousel-stage{position:relative;width:100%;overflow:hidden}',
     '.ws-canvas .cf-carousel-slides{display:flex;transition:transform .35s ease;will-change:transform}',
     '.ws-canvas .cf-carousel-slide{min-width:100%;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#000;min-height:200px}',
