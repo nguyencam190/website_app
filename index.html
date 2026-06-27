@@ -1437,6 +1437,27 @@ td .cf-checklist[data-open="true"] .cf-checklist-body,.cf-column-item .cf-checkl
 /* Selected block highlight */
 .cf-spotlight.bpp-sel{outline:2px solid var(--accent);outline-offset:3px;border-radius:11px}
 .cf-cards.bpp-sel{outline:2px solid var(--accent);outline-offset:3px;border-radius:10px}
+/* Block width modes */
+.cf-spotlight[data-width="wide"],.cf-cards[data-width="wide"]{margin-left:-40px;width:calc(100% + 80px);border-radius:8px}
+.cf-spotlight[data-width="full"],.cf-cards[data-width="full"]{margin-left:-52px;width:calc(100% + 104px);border-radius:0}
+/* BPP section heading */
+.bpp-sec-hd{font-size:.6875rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:12px 0 4px;flex-shrink:0}
+/* Block bottom action bar */
+#cfBlockBar{position:fixed;display:none;align-items:center;gap:2px;z-index:601;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.14);padding:3px 5px}
+#cfBlockBar.on{display:flex}
+.cbb-chip{font-size:11px;font-weight:600;color:var(--text2);background:var(--surface2);border-radius:5px;padding:3px 8px;margin-right:2px;white-space:nowrap}
+.cbb-btn{width:28px;height:28px;border:none;background:transparent;border-radius:5px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:14px;transition:.1s;flex-shrink:0}
+.cbb-btn:hover{background:var(--surface2);color:var(--text)}
+.cbb-sep{width:1px;height:16px;background:var(--border);margin:0 2px;flex-shrink:0}
+.cbb-wd{position:relative;display:flex;align-items:center}
+.cbb-wd-btn{display:flex;align-items:center;gap:4px;padding:3px 8px;height:28px;border:none;background:transparent;border-radius:5px;cursor:pointer;color:var(--text2);font-size:12px;font-family:var(--font);font-weight:500;transition:.1s;white-space:nowrap}
+.cbb-wd-btn:hover{background:var(--surface2);color:var(--text)}
+.cbb-wd-btn i{font-size:14px}
+.cbb-wd-dd{position:absolute;bottom:calc(100% + 6px);left:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.15);min-width:168px;padding:4px;display:none;z-index:700}
+.cbb-wd-dd.on{display:block;animation:cpFade .12s ease}
+.cbb-wd-item{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:5px;cursor:pointer;font-size:13px;color:var(--text);transition:.1s;border:none;background:transparent;width:100%;font-family:var(--font);text-align:left}
+.cbb-wd-item:hover{background:var(--surface2)}
+.cbb-wd-item.active{color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent)}
 /* ═══ DIVIDER ══════════════════════════════════════════════ */
 .editor-content hr.cf-divider{display:block;border:none;border-top:2px solid var(--border);margin:20px 0;outline:none;width:100%;height:0;background:transparent;clear:both}
 /* ═══ EMOJI PICKER ═════════════════════════════════════════ */
@@ -8515,11 +8536,13 @@ function bppOpen(block,type){
     :'Present links, images, and more.';
   panel.classList.add('on');
   bppRender();
+  _cfBlockBarShow(block);
 }
 function bppClose(){
   document.querySelectorAll('.bpp-sel').forEach(el=>el.classList.remove('bpp-sel'));
   _bppBlock=null;_bppType=null;
   document.getElementById('bpp')?.classList.remove('on');
+  _cfBlockBarHide();
 }
 function bppSwitchTab(tab){
   _bppTab=tab;
@@ -8621,9 +8644,11 @@ function _bppSpotContent(body){
 }
 function _bppSpotStyles(body){
   const bl=_bppBlock;
-  // Background color
+  // ── General ──
+  const genHd=document.createElement('div');genHd.className='bpp-sec-hd';genHd.textContent='General';body.appendChild(genHd);
+  // Background colour
   const cf=document.createElement('div');cf.className='bpp-field';
-  const cl=document.createElement('div');cl.className='bpp-lbl';cl.textContent='Background color';
+  const cl=document.createElement('div');cl.className='bpp-lbl';cl.textContent='Background colour';
   const sw=document.createElement('div');sw.className='bpp-swatches';
   _BPP_SPOT_COLORS.forEach(c=>{
     const s=document.createElement('div');s.className='bpp-sw'+(bl.dataset.bg===c.key?' active':'');
@@ -8632,6 +8657,24 @@ function _bppSpotStyles(body){
     sw.appendChild(s);
   });
   cf.appendChild(cl);cf.appendChild(sw);body.appendChild(cf);
+  // Text colour
+  const BPP_TXT_COLS=[{key:'',label:'Default',bg:'var(--text)'},{key:'dark',label:'Dark',bg:'#1e293b'},{key:'white',label:'White',bg:'#fff',border:true}];
+  const tf=document.createElement('div');tf.className='bpp-field';
+  const tl=document.createElement('div');tl.className='bpp-lbl';tl.textContent='Text colour';
+  const tsw=document.createElement('div');tsw.className='bpp-swatches';
+  const curTc=bl.dataset.textColor||'';
+  BPP_TXT_COLS.forEach(c=>{
+    const s=document.createElement('div');s.className='bpp-sw'+(curTc===c.key?' active':'');
+    s.style.cssText='background:'+c.bg+(c.border?';border:2px solid var(--border)':'');s.title=c.label;
+    s.addEventListener('click',()=>{
+      bl.dataset.textColor=c.key;
+      const txtEl=bl.querySelector('.cf-spotlight-text');
+      if(txtEl)txtEl.style.color=c.key==='dark'?'#1e293b':c.key==='white'?'#fff':'';
+      tsw.querySelectorAll('.bpp-sw').forEach(x=>x.classList.remove('active'));s.classList.add('active');onContentChange();
+    });
+    tsw.appendChild(s);
+  });
+  tf.appendChild(tl);tf.appendChild(tsw);body.appendChild(tf);
   // Image position
   const pf=document.createElement('div');pf.className='bpp-field';
   const pl=document.createElement('div');pl.className='bpp-lbl';pl.textContent='Image position';
@@ -8644,16 +8687,26 @@ function _bppSpotStyles(body){
     b.addEventListener('click',()=>{
       bl.dataset.imgPos=pos.toLowerCase();
       const ts=bl.querySelector('.cf-spotlight-text');const is=bl.querySelector('.cf-spotlight-img-side');
-      if(ts&&is){
-        if(pos==='Left'){bl.insertBefore(is,ts);}
-        else{bl.appendChild(is);}
-      }
+      if(ts&&is){if(pos==='Left'){bl.insertBefore(is,ts);}else{bl.appendChild(is);}}
       pb.querySelectorAll('.bpp-col-btn').forEach(x=>x.classList.remove('active'));
       b.classList.add('active');onContentChange();
     });
     pb.appendChild(b);
   });
   pf.appendChild(pl);pf.appendChild(pb);body.appendChild(pf);
+  // ── Layouts ──
+  const layHd=document.createElement('div');layHd.className='bpp-sec-hd';layHd.textContent='Layouts';body.appendChild(layHd);
+  const wf=document.createElement('div');wf.className='bpp-field';
+  const wl=document.createElement('div');wl.className='bpp-lbl';wl.textContent='Width';
+  const wb=document.createElement('div');wb.className='bpp-col-btns';
+  const curW=bl.dataset.width||'centered';
+  [{key:'centered',label:'Centered'},{key:'wide',label:'Wide'},{key:'full',label:'Full width'}].forEach(w=>{
+    const b=document.createElement('button');b.className='bpp-col-btn'+(curW===w.key?' active':'');
+    b.textContent=w.label;
+    b.addEventListener('click',()=>{_cbbSetWidth(w.key);wb.querySelectorAll('.bpp-col-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');});
+    wb.appendChild(b);
+  });
+  wf.appendChild(wl);wf.appendChild(wb);body.appendChild(wf);
 }
 /* ── Cards panel ─────────────────────────────────────────── */
 function _bppRenderCards(){
@@ -8760,6 +8813,8 @@ function _bppCardItem(card,num,defaultOpen){
 }
 function _bppCardsStyles(body){
   const bl=_bppBlock;
+  // ── General ──
+  const genHd=document.createElement('div');genHd.className='bpp-sec-hd';genHd.textContent='General';body.appendChild(genHd);
   // Column count
   const cf=document.createElement('div');cf.className='bpp-field';
   const cl=document.createElement('div');cl.className='bpp-lbl';cl.textContent='Number of columns';
@@ -8778,6 +8833,19 @@ function _bppCardsStyles(body){
     cb.appendChild(b);
   });
   cf.appendChild(cl);cf.appendChild(cb);body.appendChild(cf);
+  // ── Layouts ──
+  const layHd=document.createElement('div');layHd.className='bpp-sec-hd';layHd.textContent='Layouts';body.appendChild(layHd);
+  const wf=document.createElement('div');wf.className='bpp-field';
+  const wl=document.createElement('div');wl.className='bpp-lbl';wl.textContent='Width';
+  const wb=document.createElement('div');wb.className='bpp-col-btns';
+  const curW=bl.dataset.width||'centered';
+  [{key:'centered',label:'Centered'},{key:'wide',label:'Wide'},{key:'full',label:'Full width'}].forEach(w=>{
+    const b=document.createElement('button');b.className='bpp-col-btn'+(curW===w.key?' active':'');
+    b.textContent=w.label;
+    b.addEventListener('click',()=>{_cbbSetWidth(w.key);wb.querySelectorAll('.bpp-col-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');});
+    wb.appendChild(b);
+  });
+  wf.appendChild(wl);wf.appendChild(wb);body.appendChild(wf);
 }
 /* ── Panel helper builders ───────────────────────────────── */
 function _bppField(label,inputEl,recommended){
@@ -8841,9 +8909,73 @@ function _initBlockPropsPanel(){
     const cards=e.target.closest?.('.cf-cards');
     if(spot)setTimeout(()=>bppOpen(spot,'spotlight'),0);
     else if(cards)setTimeout(()=>bppOpen(cards,'cards'),0);
-    else if(!e.target.closest?.('#bpp'))bppClose();
+    else if(!e.target.closest?.('#bpp')&&!e.target.closest?.('#cfBlockBar'))bppClose();
   });
   document.getElementById('bppClose')?.addEventListener('click',bppClose);
+  document.getElementById('editorScroll')?.addEventListener('scroll',()=>{
+    if(_cbbBlock)_cfBlockBarPosition();
+  },{passive:true});
+  document.addEventListener('mousedown',e=>{
+    if(!e.target.closest?.('#cbbWd'))document.getElementById('cbbWdDd')?.classList.remove('on');
+  });
+}
+/* ── Block bottom action bar ─────────────────────────────── */
+let _cbbBlock=null;
+function _cfBlockBarShow(block){
+  _cbbBlock=block;
+  const bar=document.getElementById('cfBlockBar');if(!bar)return;
+  const chip=document.getElementById('cbbChip');
+  if(chip)chip.textContent=(_bppType==='spotlight'?'Spotlight':'Cards')+' ⚙';
+  _cfBlockBarPosition();
+  bar.classList.add('on');
+  document.getElementById('cbbWdDd')?.classList.remove('on');
+  _cbbSyncWdLabel();
+}
+function _cfBlockBarHide(){
+  _cbbBlock=null;
+  document.getElementById('cfBlockBar')?.classList.remove('on');
+  document.getElementById('cbbWdDd')?.classList.remove('on');
+}
+function _cfBlockBarPosition(){
+  if(!_cbbBlock)return;
+  const bar=document.getElementById('cfBlockBar');if(!bar)return;
+  const rect=_cbbBlock.getBoundingClientRect();
+  bar.style.top=(rect.bottom+6)+'px';
+  bar.style.left=rect.left+'px';
+}
+function _cbbSyncWdLabel(){
+  if(!_cbbBlock)return;
+  const w=_cbbBlock.dataset.width||'centered';
+  const labels={centered:'Centered',wide:'Wide',full:'Full width'};
+  const el=document.getElementById('cbbWdLabel');
+  if(el)el.textContent=labels[w]||'Centered';
+  document.querySelectorAll('.cbb-wd-item').forEach(it=>it.classList.toggle('active',it.dataset.width===w));
+}
+function _cbbWdToggle(){
+  document.getElementById('cbbWdDd')?.classList.toggle('on');
+}
+function _cbbSetWidth(w){
+  if(!_cbbBlock)return;
+  _cbbBlock.dataset.width=w;
+  _cbbSyncWdLabel();
+  document.getElementById('cbbWdDd')?.classList.remove('on');
+  onContentChange();
+  if(_bppTab==='styles')bppRender();
+}
+function _cbbCopy(){
+  if(!_cbbBlock)return;
+  const clone=_cbbBlock.cloneNode(true);
+  clone.querySelectorAll('.cf-spotlight-tb,.cf-card-del,.cf-cards-add-btn').forEach(e=>e.remove());
+  _cbbBlock.parentNode.insertBefore(clone,_cbbBlock.nextSibling);
+  _cfRewireBlock(clone);
+  onContentChange();
+}
+function _cbbDelete(){
+  if(!_cbbBlock)return;
+  const bl=_cbbBlock;
+  bppClose();
+  bl.remove();
+  onContentChange();
 }
 
 function _cfToggleLoadAll(editor){
@@ -16690,6 +16822,26 @@ init();
     <button class="bpp-tab active" data-tab="content" onclick="bppSwitchTab('content')">Content</button>
   </div>
   <div class="bpp-body" id="bppBody"></div>
+</div>
+<!-- Block bottom action bar — shows below selected Spotlight/Cards block -->
+<div id="cfBlockBar">
+  <span class="cbb-chip" id="cbbChip">Spotlight ⚙</span>
+  <div class="cbb-sep"></div>
+  <div class="cbb-wd" id="cbbWd">
+    <button class="cbb-wd-btn" id="cbbWdBtn" onclick="_cbbWdToggle()">
+      <i class="ti ti-layout-distribute-horizontal"></i>
+      <span id="cbbWdLabel">Centered</span>
+      <i class="ti ti-chevron-up"></i>
+    </button>
+    <div class="cbb-wd-dd" id="cbbWdDd">
+      <button class="cbb-wd-item" data-width="centered" onclick="_cbbSetWidth('centered')"><i class="ti ti-layout-distribute-horizontal"></i> Back to center</button>
+      <button class="cbb-wd-item" data-width="wide" onclick="_cbbSetWidth('wide')"><i class="ti ti-arrows-horizontal"></i> Go wide</button>
+      <button class="cbb-wd-item" data-width="full" onclick="_cbbSetWidth('full')"><i class="ti ti-arrows-maximize"></i> Go full width</button>
+    </div>
+  </div>
+  <div class="cbb-sep"></div>
+  <button class="cbb-btn" title="Copy block" onclick="_cbbCopy()"><i class="ti ti-copy"></i></button>
+  <button class="cbb-btn" title="Delete block" onclick="_cbbDelete()" style="color:#ef4444"><i class="ti ti-trash"></i></button>
 </div>
 <!-- Sidebar import dropdown — must be direct child of body to escape sidebar overflow:hidden / will-change -->
 <div id="_sbImportDd" style="display:none;position:fixed;z-index:9999;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 24px rgba(0,0,0,.2);min-width:160px;overflow:hidden">
