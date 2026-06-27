@@ -1310,6 +1310,62 @@ td .cf-checklist[data-open="true"] .cf-checklist-body,.cf-column-item .cf-checkl
 .cf-panel-type-btn,.cf-panel-del{background:transparent;border:none;cursor:pointer;color:var(--text2);font-size:12px;padding:2px 5px;border-radius:4px;font-family:var(--font)}
 .cf-panel-type-btn:hover{background:var(--surface2)}
 .cf-panel-del:hover{background:rgba(239,68,68,.1);color:#ef4444}
+/* ═══ SPOTLIGHT ═════════════════════════════════════════════ */
+.cf-spotlight{display:flex;align-items:stretch;border-radius:10px;overflow:hidden;margin:14px 0;min-height:160px;position:relative;background:#ede9fe}
+.cf-spotlight[data-bg="sky"]{background:#e0f2fe}
+.cf-spotlight[data-bg="mint"]{background:#dcfce7}
+.cf-spotlight[data-bg="peach"]{background:#fce7f3}
+.cf-spotlight[data-bg="sand"]{background:#fef3c7}
+.cf-spotlight[data-bg="gray"]{background:var(--surface2)}
+[data-theme="dark"] .cf-spotlight{background:rgba(168,85,247,.14)}
+[data-theme="dark"] .cf-spotlight[data-bg="sky"]{background:rgba(56,189,248,.13)}
+[data-theme="dark"] .cf-spotlight[data-bg="mint"]{background:rgba(34,197,94,.12)}
+[data-theme="dark"] .cf-spotlight[data-bg="peach"]{background:rgba(236,72,153,.13)}
+[data-theme="dark"] .cf-spotlight[data-bg="sand"]{background:rgba(245,158,11,.12)}
+[data-theme="dark"] .cf-spotlight[data-bg="gray"]{background:var(--surface2)}
+.cf-spotlight-text{flex:1;padding:28px 24px;display:flex;flex-direction:column;justify-content:center;gap:10px;min-width:0}
+.cf-spotlight-title{font-size:1.375rem;font-weight:700;line-height:1.3;color:var(--text);outline:none}
+.cf-spotlight-title:empty::before{content:attr(data-ph);color:var(--text3);pointer-events:none}
+.cf-spotlight-desc{font-size:.9375rem;color:var(--text2);line-height:1.6;outline:none}
+.cf-spotlight-desc:empty::before{content:attr(data-ph);color:var(--text3);pointer-events:none}
+.cf-spotlight-btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.cf-spotlight-btn{display:inline-flex;align-items:center;padding:7px 18px;border-radius:6px;background:var(--accent);color:#fff;font-size:.875rem;font-weight:600;text-decoration:none;outline:none;cursor:text;min-width:30px}
+.cf-spotlight-img-side{width:42%;flex-shrink:0;position:relative;cursor:pointer;display:flex;align-items:stretch;background:rgba(0,0,0,.05)}
+.cf-spotlight-img-side img{width:100%;height:100%;object-fit:cover;display:block}
+.cf-spotlight-img-ph{width:100%;min-height:160px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;color:var(--text3);font-size:.8125rem}
+.cf-spotlight-img-ph i{font-size:28px}
+.cf-spotlight-tb{position:absolute;top:8px;right:8px;display:none;flex-direction:row;gap:4px;z-index:6}
+.cf-spotlight:hover .cf-spotlight-tb{display:flex}
+.cf-spotlight-tbtn{display:flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 7px;border:none;border-radius:5px;background:rgba(0,0,0,.42);color:#fff;cursor:pointer;font-size:12px;gap:4px;white-space:nowrap}
+.cf-spotlight-tbtn:hover{background:rgba(0,0,0,.62)}
+.cf-spot-color-dd{position:absolute;top:36px;right:0;display:none;gap:5px;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:7px;box-shadow:0 4px 14px rgba(0,0,0,.15);z-index:20}
+.cf-spot-color-dd.on{display:flex}
+.cf-spot-sw{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;flex-shrink:0;transition:transform .1s}
+.cf-spot-sw:hover{transform:scale(1.18)}
+.cf-spot-sw.active{border-color:rgba(0,0,0,.38)}
+/* ═══ CARDS ════════════════════════════════════════════════ */
+.cf-cards{margin:14px 0;position:relative}
+.cf-cards-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.cf-cards[data-cols="1"] .cf-cards-grid{grid-template-columns:1fr}
+.cf-cards[data-cols="3"] .cf-cards-grid{grid-template-columns:repeat(3,1fr)}
+.cf-cards[data-cols="4"] .cf-cards-grid{grid-template-columns:repeat(4,1fr)}
+.cf-card{border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface);position:relative;transition:box-shadow .15s}
+.cf-card:hover{box-shadow:0 3px 14px rgba(0,0,0,.09)}
+.cf-card-img-wrap{position:relative;aspect-ratio:16/9;background:var(--surface2);overflow:hidden;cursor:pointer}
+.cf-card-img-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+.cf-card-img-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;color:var(--text3);font-size:22px}
+.cf-card-img-ph span{font-size:.75rem}
+.cf-card-lbl{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.58);color:#fff;font-size:.625rem;font-weight:700;letter-spacing:.07em;padding:2px 6px;border-radius:3px;text-transform:uppercase;outline:none;min-width:4px;cursor:text}
+.cf-card-lbl:empty::before{content:'LABEL';opacity:.45}
+.cf-card-body{padding:10px 12px 12px}
+.cf-card-title{font-size:.9375rem;font-weight:700;color:var(--text);outline:none;line-height:1.4}
+.cf-card-title:empty::before{content:attr(data-ph);color:var(--text3)}
+.cf-card-desc{font-size:.8125rem;color:var(--text2);line-height:1.5;outline:none;margin-top:4px}
+.cf-card-desc:empty::before{content:attr(data-ph);color:var(--text3)}
+.cf-card-del{position:absolute;top:6px;right:6px;width:22px;height:22px;border:none;border-radius:4px;background:rgba(0,0,0,.45);color:#fff;cursor:pointer;font-size:11px;display:none;align-items:center;justify-content:center;z-index:4}
+.cf-card:hover .cf-card-del{display:flex}
+.cf-cards-add-btn{margin-top:10px;display:flex;align-items:center;gap:6px;padding:7px 14px;border:1.5px dashed var(--border);border-radius:7px;background:none;color:var(--text2);font-size:.875rem;cursor:pointer;width:100%;justify-content:center;box-sizing:border-box;transition:border-color .15s,color .15s}
+.cf-cards-add-btn:hover{border-color:var(--accent);color:var(--accent)}
 /* ═══ DIVIDER ══════════════════════════════════════════════ */
 .editor-content hr.cf-divider{display:block;border:none;border-top:2px solid var(--border);margin:20px 0;outline:none;width:100%;height:0;background:transparent;clear:both}
 /* ═══ EMOJI PICKER ═════════════════════════════════════════ */
@@ -3722,6 +3778,8 @@ function openDoc(id){
     document.getElementById('editor').querySelectorAll('.cf-status').forEach(el=>_cfStatusRewire(el));
     _cfFileLoadAll(document.getElementById('editor'));
     _cfBtnLoadAll(document.getElementById('editor'));
+    _cfSpotLoadAll(document.getElementById('editor'));
+    _cfCardsLoadAll(document.getElementById('editor'));
     _cfAddCodeCopyBtns(document.getElementById('editor'));
     _cfRefreshTocs(document.getElementById('editor'));
     if(!_cachedUndo)_undoSnapshot(); // initial snapshot (skip if restoring from cache)
@@ -3853,7 +3911,7 @@ function _commitContent(){
     img.removeAttribute('src');
   });
   // Strip cf-embed-toolbar from saved content (UI elements only)
-  clone.querySelectorAll('.cf-embed-toolbar,.cf-img-toolbar,.cf-img-resize-h,.cf-col-toolbar,.cf-panel-actions,.cf-code-copy,.cf-checklist-cam-btn,.cf-cl-del-btn,.cf-btn-toolbar').forEach(e=>e.remove());
+  clone.querySelectorAll('.cf-embed-toolbar,.cf-img-toolbar,.cf-img-resize-h,.cf-col-toolbar,.cf-panel-actions,.cf-code-copy,.cf-checklist-cam-btn,.cf-cl-del-btn,.cf-btn-toolbar,.cf-spotlight-tb,.cf-card-del,.cf-cards-add-btn').forEach(e=>e.remove());
   // Strip carousel slide blob URLs
   clone.querySelectorAll('.cf-carousel-block img[data-carid]').forEach(media=>{
     if(media.src&&!media.src.startsWith('data:'))media.removeAttribute('src');
@@ -3864,7 +3922,7 @@ function _commitContent(){
     if(media.src&&!media.src.startsWith('data:'))media.removeAttribute('src');
   });
   // Strip cf-img-block toolbar/handles from saved content
-  clone.querySelectorAll('.cf-img-toolbar,.cf-img-resize-h,.cf-img-ctx,.cf-col-toolbar,.cf-panel-actions,.editor-block-bar,.cf-code-copy,.cf-btn-toolbar').forEach(e=>e.remove());
+  clone.querySelectorAll('.cf-img-toolbar,.cf-img-resize-h,.cf-img-ctx,.cf-col-toolbar,.cf-panel-actions,.editor-block-bar,.cf-code-copy,.cf-btn-toolbar,.cf-spotlight-tb,.cf-card-del,.cf-cards-add-btn').forEach(e=>e.remove());
   // Drop the transient "being resized" highlight class from emojis before saving
   clone.querySelectorAll('.cf-emoji-active').forEach(e=>e.classList.remove('cf-emoji-active'));
   // Preserve cp-mapped spans (theme-aware colors) in saved content
@@ -7105,6 +7163,9 @@ const SLASH_ITEMS=[
   {id:'warning',  icon:'<i class="ti ti-alert-triangle"></i>',  name:'Warning Panel', desc:'Hộp cảnh báo nền vàng',           cat:'Panel', alias:'warning caution yellow'},
   {id:'error',    icon:'<i class="ti ti-alert-circle"></i>',    name:'Error Panel',  desc:'Hộp lỗi nền đỏ',                   cat:'Panel', alias:'error danger red'},
   {id:'note',     icon:'<i class="ti ti-pin"></i>',             name:'Note Panel',   desc:'Hộp ghi chú nền tím',               cat:'Panel', alias:'note purple pin'},
+  // ── Nội dung nổi bật ──────────────────────────────────────
+  {id:'spotlight',icon:'<i class="ti ti-focus-2"></i>',         name:'Spotlight',    desc:'Khối nổi bật với ảnh + tiêu đề + mô tả', cat:'Media', alias:'spotlight hero banner highlight featured'},
+  {id:'cards',    icon:'<i class="ti ti-layout-grid"></i>',     name:'Cards',        desc:'Lưới card ảnh có tiêu đề và mô tả',  cat:'Media', alias:'cards grid gallery layout link'},
 ];
 
 // Recently used command IDs (max 5, persisted in localStorage)
@@ -7760,6 +7821,21 @@ function _slashInsert(id,execRange){
     return;
   }
 
+  // ── Spotlight ────────────────────────────────────────────
+  if(id==='spotlight'){
+    const block=_cfBuildSpotlight();
+    _cfInsertBlockAtRange(block,savedRange);
+    onContentChange();
+    setTimeout(()=>{const t=block.querySelector('.cf-spotlight-title');if(t){t.focus();const r=document.createRange();r.setStart(t,0);r.collapse(true);window.getSelection().removeAllRanges();window.getSelection().addRange(r);}},30);
+    return;
+  }
+  // ── Cards ─────────────────────────────────────────────────
+  if(id==='cards'){
+    const block=_cfBuildCardsBlock();
+    _cfInsertBlockAtRange(block,savedRange);
+    onContentChange();
+    return;
+  }
   // ── Panels ───────────────────────────────────────────────
   if(['info','success','warning','error','note','callout'].includes(id)){
     const icons={info:'ℹ️',success:'✅',warning:'⚠️',error:'🚨',note:'📌',callout:'💡'};
@@ -8121,6 +8197,8 @@ function _cfRewireBlock(block){
   else if(cl.contains('cf-file-block'))  {_cfFileLoadAll(editor);}
   else if(cl.contains('cf-btn-block'))   {_cfBtnLoadAll(block.parentElement||block);}
   else if(cl.contains('cf-toc'))         {_cfRefreshTocs(editor);}
+  else if(cl.contains('cf-spotlight'))   {_cfSpotLoadAll(editor);}
+  else if(cl.contains('cf-cards'))       {_cfCardsLoadAll(editor);}
   // ── Nested blocks inside containers ─────────────
   block.querySelectorAll('.cf-panel').forEach(el=>_cfWirePanel(el));
   block.querySelectorAll('.cf-checklist').forEach(el=>_cfWireChecklist(el));
@@ -8136,6 +8214,208 @@ function _cfRewireBlock(block){
   block.querySelectorAll('.cf-btn-block').forEach(el=>_cfBtnLoadAll(el.parentElement||el));
 }
 
+// ═══ SPOTLIGHT BLOCK ════════════════════════════════════════
+const _SPOT_COLORS=[
+  {key:'lavender',bg:'#ede9fe',label:'Tím'},
+  {key:'sky',     bg:'#e0f2fe',label:'Xanh'},
+  {key:'mint',    bg:'#dcfce7',label:'Lá'},
+  {key:'peach',   bg:'#fce7f3',label:'Hồng'},
+  {key:'sand',    bg:'#fef3c7',label:'Vàng'},
+  {key:'gray',    bg:'#f1f5f9',label:'Xám'},
+];
+function _cfBuildSpotlight(opts={}){
+  const block=document.createElement('div');
+  block.className='cf-spotlight';block.contentEditable='false';
+  block.dataset.bg=opts.bg||'lavender';
+  const textSide=document.createElement('div');textSide.className='cf-spotlight-text';
+  const title=document.createElement('div');title.className='cf-spotlight-title';title.contentEditable='true';
+  title.dataset.ph='Tiêu đề spotlight';title.innerHTML=opts.title||'';
+  const desc=document.createElement('div');desc.className='cf-spotlight-desc';desc.contentEditable='true';
+  desc.dataset.ph='Thêm mô tả...';desc.innerHTML=opts.desc||'';
+  textSide.appendChild(title);textSide.appendChild(desc);
+  if(opts.showBtn!==false){
+    block.dataset.showBtn='1';
+    const btnRow=document.createElement('div');btnRow.className='cf-spotlight-btnrow';
+    const btn=document.createElement('div');btn.className='cf-spotlight-btn';btn.contentEditable='true';
+    btn.dataset.ph='View';btn.innerHTML=opts.btnLabel||'View';
+    btnRow.appendChild(btn);textSide.appendChild(btnRow);
+  }
+  const imgSide=document.createElement('div');imgSide.className='cf-spotlight-img-side';
+  if(opts.imgId){
+    const img=document.createElement('img');img.dataset.spotimgid=opts.imgId;
+    if(opts.imgSrc)img.src=opts.imgSrc;
+    imgSide.appendChild(img);
+  } else {
+    imgSide.innerHTML='<div class="cf-spotlight-img-ph"><i class="ti ti-photo"></i><span>Chọn ảnh</span></div>';
+  }
+  block.appendChild(textSide);block.appendChild(imgSide);
+  _cfSpotBuildTb(block);_cfSpotWireImgSide(block);
+  return block;
+}
+function _cfSpotBuildTb(block){
+  block.querySelectorAll('.cf-spotlight-tb').forEach(e=>e.remove());
+  const tb=document.createElement('div');tb.className='cf-spotlight-tb';
+  // Color picker
+  const colorBtn=document.createElement('button');colorBtn.className='cf-spotlight-tbtn';
+  colorBtn.title='Màu nền';colorBtn.innerHTML='<i class="ti ti-palette"></i>';
+  const dd=document.createElement('div');dd.className='cf-spot-color-dd';
+  _SPOT_COLORS.forEach(c=>{
+    const sw=document.createElement('div');sw.className='cf-spot-sw';
+    sw.style.background=c.bg;sw.title=c.label;
+    if(block.dataset.bg===c.key)sw.classList.add('active');
+    sw.addEventListener('mousedown',e=>{
+      e.preventDefault();e.stopPropagation();
+      block.dataset.bg=c.key;
+      dd.querySelectorAll('.cf-spot-sw').forEach(s=>s.classList.remove('active'));
+      sw.classList.add('active');dd.classList.remove('on');onContentChange();
+    });
+    dd.appendChild(sw);
+  });
+  colorBtn.addEventListener('mousedown',e=>{e.preventDefault();e.stopPropagation();dd.classList.toggle('on');});
+  document.addEventListener('mousedown',()=>dd.classList.remove('on'));
+  tb.appendChild(colorBtn);tb.appendChild(dd);
+  // Image pick button
+  const imgBtn=document.createElement('button');imgBtn.className='cf-spotlight-tbtn';
+  imgBtn.title='Chọn ảnh';imgBtn.innerHTML='<i class="ti ti-photo"></i>';
+  imgBtn.addEventListener('mousedown',e=>{e.preventDefault();e.stopPropagation();_cfSpotPickImg(block);});
+  tb.appendChild(imgBtn);
+  // Remove image button (only if image exists)
+  if(block.querySelector('[data-spotimgid]')){
+    const rmBtn=document.createElement('button');rmBtn.className='cf-spotlight-tbtn';
+    rmBtn.title='Xóa ảnh';rmBtn.innerHTML='<i class="ti ti-photo-off"></i>';
+    rmBtn.addEventListener('mousedown',e=>{
+      e.preventDefault();e.stopPropagation();
+      const imgSide=block.querySelector('.cf-spotlight-img-side');
+      if(imgSide){imgSide.innerHTML='<div class="cf-spotlight-img-ph"><i class="ti ti-photo"></i><span>Chọn ảnh</span></div>';imgSide._spotWired=false;_cfSpotWireImgSide(block);}
+      _cfSpotBuildTb(block);onContentChange();
+    });
+    tb.appendChild(rmBtn);
+  }
+  block.appendChild(tb);
+}
+function _cfSpotWireImgSide(block){
+  const imgSide=block.querySelector('.cf-spotlight-img-side');
+  if(!imgSide||imgSide._spotWired)return;
+  imgSide._spotWired=true;
+  imgSide.addEventListener('click',()=>_cfSpotPickImg(block));
+}
+function _cfSpotPickImg(block){
+  const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+  inp.style.cssText='position:fixed;top:-9999px;opacity:0';
+  document.body.appendChild(inp);
+  inp.addEventListener('change',async()=>{
+    const file=inp.files[0];document.body.removeChild(inp);if(!file)return;
+    const id='spot-'+uid();
+    const objUrl=URL.createObjectURL(file);_cacheUrl(id,objUrl);
+    try{await _idbPut(id,file);}catch(e){}
+    const imgSide=block.querySelector('.cf-spotlight-img-side');
+    imgSide.innerHTML='';imgSide._spotWired=false;
+    const img=document.createElement('img');img.src=objUrl;img.dataset.spotimgid=id;
+    imgSide.appendChild(img);
+    _cfSpotWireImgSide(block);_cfSpotBuildTb(block);onContentChange();
+  });
+  inp.click();
+}
+function _cfSpotLoadAll(editor){
+  editor.querySelectorAll('.cf-spotlight').forEach(block=>{
+    const img=block.querySelector('[data-spotimgid]');
+    if(img&&img.dataset.spotimgid){
+      const id=img.dataset.spotimgid;
+      if(_objUrls[id]){img.src=_objUrls[id];}
+      else{_idbGet(id).then(b=>{if(b){const url=URL.createObjectURL(b);_cacheUrl(id,url);img.src=url;}});}
+    }
+    const imgSide=block.querySelector('.cf-spotlight-img-side');
+    if(imgSide)imgSide._spotWired=false;
+    _cfSpotBuildTb(block);_cfSpotWireImgSide(block);
+  });
+}
+// ═══ CARDS BLOCK ════════════════════════════════════════════
+function _cfBuildCard(opts={}){
+  const card=document.createElement('div');card.className='cf-card';
+  if(opts.href)card.dataset.href=opts.href;
+  const imgWrap=document.createElement('div');imgWrap.className='cf-card-img-wrap';
+  if(opts.imgId){
+    const img=document.createElement('img');img.dataset.cardimgid=opts.imgId;
+    if(opts.imgSrc)img.src=opts.imgSrc;
+    imgWrap.appendChild(img);
+  } else {
+    imgWrap.innerHTML='<div class="cf-card-img-ph"><i class="ti ti-photo"></i><span>Chọn ảnh</span></div>';
+  }
+  const lbl=document.createElement('div');lbl.className='cf-card-lbl';lbl.contentEditable='true';
+  lbl.innerHTML=opts.label||'';imgWrap.appendChild(lbl);
+  const body=document.createElement('div');body.className='cf-card-body';
+  const titleEl=document.createElement('div');titleEl.className='cf-card-title';titleEl.contentEditable='true';
+  titleEl.dataset.ph='Give your card a title';titleEl.innerHTML=opts.title||'';
+  const descEl=document.createElement('div');descEl.className='cf-card-desc';descEl.contentEditable='true';
+  descEl.dataset.ph='Thêm mô tả...';descEl.innerHTML=opts.desc||'';
+  body.appendChild(titleEl);body.appendChild(descEl);
+  const del=document.createElement('button');del.className='cf-card-del';
+  del.innerHTML='<i class="ti ti-x"></i>';del.title='Xóa card';
+  del.addEventListener('click',e=>{e.stopPropagation();card.remove();onContentChange();});
+  card.appendChild(imgWrap);card.appendChild(body);card.appendChild(del);
+  _cfCardWireImg(card);return card;
+}
+function _cfCardWireImg(card){
+  const imgWrap=card.querySelector('.cf-card-img-wrap');
+  if(!imgWrap||imgWrap._cardWired)return;imgWrap._cardWired=true;
+  imgWrap.addEventListener('click',e=>{
+    if(e.target.classList.contains('cf-card-lbl')||e.target.closest?.('.cf-card-lbl'))return;
+    _cfCardPickImg(card);
+  });
+}
+function _cfCardPickImg(card){
+  const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+  inp.style.cssText='position:fixed;top:-9999px;opacity:0';
+  document.body.appendChild(inp);
+  inp.addEventListener('change',async()=>{
+    const file=inp.files[0];document.body.removeChild(inp);if(!file)return;
+    const id='card-'+uid();
+    const objUrl=URL.createObjectURL(file);_cacheUrl(id,objUrl);
+    try{await _idbPut(id,file);}catch(e){}
+    const imgWrap=card.querySelector('.cf-card-img-wrap');
+    const lblHtml=imgWrap.querySelector('.cf-card-lbl')?.innerHTML||'';
+    imgWrap.innerHTML='';imgWrap._cardWired=false;
+    const img=document.createElement('img');img.src=objUrl;img.dataset.cardimgid=id;imgWrap.appendChild(img);
+    const lbl=document.createElement('div');lbl.className='cf-card-lbl';lbl.contentEditable='true';
+    lbl.innerHTML=lblHtml;imgWrap.appendChild(lbl);
+    _cfCardWireImg(card);onContentChange();
+  });
+  inp.click();
+}
+function _cfBuildCardsBlock(opts={}){
+  const block=document.createElement('div');
+  block.className='cf-cards';block.contentEditable='false';
+  block.dataset.cols=opts.cols||'2';
+  const grid=document.createElement('div');grid.className='cf-cards-grid';
+  for(let i=0;i<(opts.count||2);i++)grid.appendChild(_cfBuildCard());
+  const addBtn=document.createElement('button');addBtn.className='cf-cards-add-btn';
+  addBtn.innerHTML='<i class="ti ti-plus"></i> Thêm card';
+  _cfCardsWireAddBtn(addBtn,grid);
+  block.appendChild(grid);block.appendChild(addBtn);return block;
+}
+function _cfCardsWireAddBtn(addBtn,grid){
+  if(addBtn._wired)return;addBtn._wired=true;
+  addBtn.addEventListener('click',()=>{grid.appendChild(_cfBuildCard());onContentChange();});
+}
+function _cfCardsLoadAll(editor){
+  editor.querySelectorAll('.cf-cards').forEach(block=>{
+    block.querySelectorAll('[data-cardimgid]').forEach(img=>{
+      const id=img.dataset.cardimgid;if(!id)return;
+      if(_objUrls[id]){img.src=_objUrls[id];}
+      else{_idbGet(id).then(b=>{if(b){const url=URL.createObjectURL(b);_cacheUrl(id,url);img.src=url;}});}
+    });
+    block.querySelectorAll('.cf-card').forEach(card=>{
+      const imgWrap=card.querySelector('.cf-card-img-wrap');
+      if(imgWrap)imgWrap._cardWired=false;
+      _cfCardWireImg(card);
+      const del=card.querySelector('.cf-card-del');
+      if(del&&!del._wired){del._wired=true;del.addEventListener('click',e=>{e.stopPropagation();card.remove();onContentChange();});}
+    });
+    const addBtn=block.querySelector('.cf-cards-add-btn');
+    const grid=block.querySelector('.cf-cards-grid');
+    if(addBtn&&grid){addBtn._wired=false;_cfCardsWireAddBtn(addBtn,grid);}
+  });
+}
 function _cfToggleLoadAll(editor){
   editor.querySelectorAll('.cf-toggle').forEach(el=>{
     const btn=el.querySelector('.cf-toggle-btn');
@@ -13063,6 +13343,8 @@ function _collectDocAssetIds(docs){
     tmp.querySelectorAll('[data-carids]').forEach(el=>(el.dataset.carids||'').split(',').filter(Boolean).forEach(id=>ids.add(id)));
     tmp.querySelectorAll('[data-cfcarids]').forEach(el=>(el.dataset.cfcarids||'').split(',').filter(Boolean).forEach(id=>ids.add(id)));
     tmp.querySelectorAll('[data-slideids]').forEach(el=>(el.dataset.slideids||'').split(',').filter(Boolean).forEach(id=>ids.add(id)));
+    tmp.querySelectorAll('[data-spotimgid]').forEach(el=>el.dataset.spotimgid&&ids.add(el.dataset.spotimgid));
+    tmp.querySelectorAll('[data-cardimgid]').forEach(el=>el.dataset.cardimgid&&ids.add(el.dataset.cardimgid));
   });
   return ids;
 }
@@ -13528,6 +13810,40 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .editor-content h2{font-size:1.25rem;font-weight:600;line-height:1.4;margin:20px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border);letter-spacing:-.015em}',
     '.ws-canvas .editor-content h3{font-size:1.0625rem;font-weight:700;line-height:1.4;margin:18px 0 8px;padding-left:10px;border-left:3px solid var(--accent);letter-spacing:-.01em}',
     '.ws-canvas .editor-content h3:has(+p),.ws-canvas .editor-content h3:has(+ul),.ws-canvas .editor-content h3:has(+ol){margin-bottom:0}',
+    // Spotlight
+    '.ws-canvas .cf-spotlight{display:flex;align-items:stretch;border-radius:10px;overflow:hidden;margin:14px 0;min-height:160px;background:#ede9fe}',
+    '.ws-canvas .cf-spotlight[data-bg="sky"]{background:#e0f2fe}',
+    '.ws-canvas .cf-spotlight[data-bg="mint"]{background:#dcfce7}',
+    '.ws-canvas .cf-spotlight[data-bg="peach"]{background:#fce7f3}',
+    '.ws-canvas .cf-spotlight[data-bg="sand"]{background:#fef3c7}',
+    '.ws-canvas .cf-spotlight[data-bg="gray"]{background:var(--surface2)}',
+    '[data-theme="dark"] .ws-canvas .cf-spotlight{background:rgba(168,85,247,.14)}',
+    '[data-theme="dark"] .ws-canvas .cf-spotlight[data-bg="sky"]{background:rgba(56,189,248,.13)}',
+    '[data-theme="dark"] .ws-canvas .cf-spotlight[data-bg="mint"]{background:rgba(34,197,94,.12)}',
+    '[data-theme="dark"] .ws-canvas .cf-spotlight[data-bg="peach"]{background:rgba(236,72,153,.13)}',
+    '[data-theme="dark"] .ws-canvas .cf-spotlight[data-bg="sand"]{background:rgba(245,158,11,.12)}',
+    '[data-theme="dark"] .ws-canvas .cf-spotlight[data-bg="gray"]{background:var(--surface2)}',
+    '.ws-canvas .cf-spotlight-text{flex:1;padding:28px 24px;display:flex;flex-direction:column;justify-content:center;gap:10px;min-width:0}',
+    '.ws-canvas .cf-spotlight-title{font-size:1.375rem;font-weight:700;line-height:1.3;color:var(--text)}',
+    '.ws-canvas .cf-spotlight-desc{font-size:.9375rem;color:var(--text2);line-height:1.6}',
+    '.ws-canvas .cf-spotlight-btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}',
+    '.ws-canvas .cf-spotlight-btn{display:inline-flex;align-items:center;padding:7px 18px;border-radius:6px;background:var(--accent);color:#fff;font-size:.875rem;font-weight:600;text-decoration:none}',
+    '.ws-canvas .cf-spotlight-img-side{width:42%;flex-shrink:0;display:flex;align-items:stretch}',
+    '.ws-canvas .cf-spotlight-img-side img{width:100%;height:100%;object-fit:cover;display:block}',
+    // Cards
+    '.ws-canvas .cf-cards{margin:14px 0}',
+    '.ws-canvas .cf-cards-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}',
+    '.ws-canvas .cf-cards[data-cols="1"] .cf-cards-grid{grid-template-columns:1fr}',
+    '.ws-canvas .cf-cards[data-cols="3"] .cf-cards-grid{grid-template-columns:repeat(3,1fr)}',
+    '.ws-canvas .cf-cards[data-cols="4"] .cf-cards-grid{grid-template-columns:repeat(4,1fr)}',
+    '.ws-canvas .cf-card{border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface)}',
+    '.ws-canvas .cf-card:hover{box-shadow:0 3px 14px rgba(0,0,0,.09)}',
+    '.ws-canvas .cf-card-img-wrap{position:relative;aspect-ratio:16/9;background:var(--surface2);overflow:hidden}',
+    '.ws-canvas .cf-card-img-wrap img{width:100%;height:100%;object-fit:cover;display:block}',
+    '.ws-canvas .cf-card-lbl{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.58);color:#fff;font-size:.625rem;font-weight:700;letter-spacing:.07em;padding:2px 6px;border-radius:3px;text-transform:uppercase}',
+    '.ws-canvas .cf-card-body{padding:10px 12px 12px}',
+    '.ws-canvas .cf-card-title{font-size:.9375rem;font-weight:700;color:var(--text);line-height:1.4}',
+    '.ws-canvas .cf-card-desc{font-size:.8125rem;color:var(--text2);line-height:1.5;margin-top:4px}',
     '.ws-canvas .editor-content h3+p{padding-left:10px;border-left:3px solid var(--accent);margin-top:0}',
     '.ws-canvas .editor-content h3+ul,.ws-canvas .editor-content h3+ol{border-left:3px solid var(--accent);margin-top:0}',
     '.ws-canvas .editor-content h4{font-size:0.9375rem;font-weight:600;line-height:1.4;margin:16px 0 6px;color:var(--text2)}',
@@ -15206,7 +15522,7 @@ async function doExportOptimized(opts){
       w.querySelectorAll('.tbl-edge-h,.tbl-options-btn').forEach(e=>e.remove());
       w.style.cssText='display:block;margin:14px 0;width:100%;overflow-x:auto;overflow-y:visible';
     });
-    tmp.querySelectorAll(['.tbl-row-num','.tbl-col-resize-handle','.tbl-row-resize-handle','.tbl-col-sel','.tbl-row-sel','.tbl-img-btn','.tbl-shadow-btn','.tbl-cell-drop','.tbl-merge-bar','colgroup','.fmedia','.txtbox','script','style','.cf-col-toolbar','.cf-col-count-dd','.cf-col-more-dd','.cf-img-toolbar','.cf-img-resize-h','.cf-img-ctx','.cf-panel-actions','.cf-car-toolbar','.cf-embed-toolbar','.cf-car-add-slide','.editor-block-bar','.slash-hint','.pab-logo-menu','.cf-toc-del','.cf-btn-toolbar','.cf-file-del','.cf-tab-add','.cf-tab-del','.cf-progress-del','.cf-checklist-cam-btn','.cf-code-copy','.cf-cl-del-btn'].join(',')).forEach(e=>e.remove());
+    tmp.querySelectorAll(['.tbl-row-num','.tbl-col-resize-handle','.tbl-row-resize-handle','.tbl-col-sel','.tbl-row-sel','.tbl-img-btn','.tbl-shadow-btn','.tbl-cell-drop','.tbl-merge-bar','colgroup','.fmedia','.txtbox','script','style','.cf-col-toolbar','.cf-col-count-dd','.cf-col-more-dd','.cf-img-toolbar','.cf-img-resize-h','.cf-img-ctx','.cf-panel-actions','.cf-car-toolbar','.cf-embed-toolbar','.cf-car-add-slide','.editor-block-bar','.slash-hint','.pab-logo-menu','.cf-toc-del','.cf-btn-toolbar','.cf-file-del','.cf-tab-add','.cf-tab-del','.cf-progress-del','.cf-checklist-cam-btn','.cf-code-copy','.cf-cl-del-btn','.cf-spotlight-tb','.cf-card-del','.cf-cards-add-btn'].join(',')).forEach(e=>e.remove());
     tmp.querySelectorAll('[contenteditable]').forEach(el=>el.removeAttribute('contenteditable'));
     tmp.querySelectorAll('[spellcheck]').forEach(el=>el.removeAttribute('spellcheck'));
     tmp.querySelectorAll('[oninput],[onfocus],[onblur],[onkeydown]').forEach(el=>{['oninput','onfocus','onblur','onkeydown'].forEach(a=>el.removeAttribute(a));});
