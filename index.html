@@ -2246,7 +2246,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
   <button class="bb" id="bbAlignL" onmousedown="event.preventDefault();bbAlign('justifyLeft')" title="Căn trái (L)"><i class="ti ti-align-left" style="font-size:14px"></i></button>
   <button class="bb" id="bbAlignC" onmousedown="event.preventDefault();bbAlign('justifyCenter')" title="Căn ngang giữa (H)"><i class="ti ti-align-center" style="font-size:14px"></i></button>
   <button class="bb" id="bbAlignR" onmousedown="event.preventDefault();bbAlign('justifyRight')" title="Căn phải (R)"><i class="ti ti-align-right" style="font-size:14px"></i></button>
-  <button class="bb" id="bbVAlignM" onmousedown="event.preventDefault();bbVAlign('middle')" title="Căn dọc giữa (V)"><i class="ti ti-layout-align-middle" style="font-size:14px"></i></button>
+  <button class="bb" id="bbVAlignM" onmousedown="event.preventDefault();bbVAlign('middle')" title="Căn dọc giữa (V)"><i class="ti ti-align-center" style="font-size:14px;display:inline-block;transform:rotate(90deg)"></i></button>
   <button class="bb" id="bbAlignJ" onmousedown="event.preventDefault();bbAlign('justifyFull')" title="Căn đều 2 lề (J)"><i class="ti ti-align-justified" style="font-size:14px"></i></button>
   <div class="bb-sep"></div>
   <!-- Text color — works in editor, text box, table cell -->
@@ -11548,21 +11548,25 @@ function bbAlign(cmd){
 }
 function bbVAlign(val){
   const editor=document.getElementById('editor');
+  // Find cursor cell to detect current state (for toggle)
+  let cursorCell=null;
+  const sel=window.getSelection();
+  if(sel&&sel.rangeCount){
+    let node=sel.getRangeAt(0).startContainer;
+    while(node&&node!==editor){
+      if(node.nodeType===1&&(node.tagName==='TD'||node.tagName==='TH')){cursorCell=node;break;}
+      node=node.parentElement;
+    }
+  }
+  // Toggle: if already set to val, reset to top
+  const current=cursorCell?cursorCell.style.verticalAlign:'';
+  const apply=(current===val)?'top':val;
   // Apply to all drag-selected cells, or just the cursor's cell
   const selCells=_mergeTable?Array.from(_mergeTable.querySelectorAll('.tbl-cell-sel')).filter(c=>!c.classList.contains('tbl-row-num')):[];
   if(selCells.length>0){
-    selCells.forEach(c=>{c.style.verticalAlign=val;});
-  } else {
-    const sel=window.getSelection();
-    if(sel&&sel.rangeCount){
-      let node=sel.getRangeAt(0).startContainer;
-      while(node&&node!==editor){
-        if(node.nodeType===1&&(node.tagName==='TD'||node.tagName==='TH')){
-          node.style.verticalAlign=val;break;
-        }
-        node=node.parentElement;
-      }
-    }
+    selCells.forEach(c=>{c.style.verticalAlign=apply;});
+  } else if(cursorCell){
+    cursorCell.style.verticalAlign=apply;
   }
   onContentChange();
   _updateVAlignBtns();
