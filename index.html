@@ -10202,6 +10202,10 @@ function _initSlashCommands(){
   editor.addEventListener('keydown',e=>{
     if(e.key==='Enter'||e.key==='Backspace'||e.key==='Delete'||e.key==='Tab'){_undoSnapshot();}
     if((e.ctrlKey||e.metaKey)&&!e.altKey&&['b','i','u'].includes(e.key.toLowerCase())){_undoSnapshot();}
+    // Clear multi-cell drag selection (blue highlight) the moment user starts typing.
+    // Without this, drag-select then type immediately leaves tbl-cell-sel on cells
+    // because click never fires between the drag release and the first keystroke.
+    if(_mergeTable&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&e.key.length===1){tblClearCellSel();}
   });
   // ── Table cell keyboard navigation ───────────────────────────────────────
   // Tab/Shift+Tab: move caret to next/prev data cell; Tab on last cell appends a row.
