@@ -1330,9 +1330,9 @@ td .cf-checklist[data-open="true"] .cf-checklist-body,.cf-column-item .cf-checkl
 .cf-spotlight-desc:empty::before{content:attr(data-ph);color:var(--text3);pointer-events:none}
 .cf-spotlight-btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
 .cf-spotlight-btn{display:inline-flex;align-items:center;padding:7px 18px;border-radius:6px;background:var(--accent);color:#fff;font-size:.875rem;font-weight:600;text-decoration:none;outline:none;cursor:text;min-width:30px}
-.cf-spotlight-img-side{width:42%;flex-shrink:0;position:relative;cursor:pointer;display:flex;align-items:stretch;background:rgba(0,0,0,.05)}
-.cf-spotlight-img-side img{width:100%;height:100%;object-fit:cover;display:block}
-.cf-spotlight-img-ph{width:100%;min-height:160px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;color:var(--text3);font-size:.8125rem}
+.cf-spotlight-img-side{width:42%;flex-shrink:0;position:relative;cursor:pointer;overflow:hidden;background:rgba(0,0,0,.05)}
+.cf-spotlight-img-side img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.cf-spotlight-img-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;color:var(--text3);font-size:.8125rem}
 .cf-spotlight-img-ph i{font-size:28px}
 .cf-spotlight-tb{position:absolute;top:8px;right:8px;display:none;flex-direction:row;gap:4px;z-index:6}
 .cf-spotlight:hover .cf-spotlight-tb{display:flex}
@@ -14390,8 +14390,8 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .cf-spotlight-desc{font-size:.9375rem;color:var(--text2);line-height:1.6}',
     '.ws-canvas .cf-spotlight-btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}',
     '.ws-canvas .cf-spotlight-btn{display:inline-flex;align-items:center;padding:7px 18px;border-radius:6px;background:var(--accent);color:#fff;font-size:.875rem;font-weight:600;text-decoration:none}',
-    '.ws-canvas .cf-spotlight-img-side{width:42%;flex-shrink:0;display:flex;align-items:stretch}',
-    '.ws-canvas .cf-spotlight-img-side img{width:100%;height:100%;object-fit:cover;display:block}',
+    '.ws-canvas .cf-spotlight-img-side{width:42%;flex-shrink:0;position:relative;overflow:hidden}',
+    '.ws-canvas .cf-spotlight-img-side img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}',
     // Cards
     '.ws-canvas .cf-cards{margin:14px 0}',
     '.ws-canvas .cf-cards-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}',
