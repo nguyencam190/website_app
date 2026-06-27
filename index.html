@@ -10623,9 +10623,9 @@ function _initSlashCommands(){
     tailRange.setStart(range.startContainer,range.startOffset);
     tailRange.setEnd(heading,heading.childNodes.length);
     const frag=tailRange.extractContents();
-    // Remove any trailing <br> left in heading after the split so it doesn't
-    // render an empty blank line after the heading text.
-    while(heading.lastChild&&heading.lastChild.nodeName==='BR')heading.removeChild(heading.lastChild);
+    // Remove trailing empty text nodes and <br> left in heading after the split
+    // (extractContents leaves an empty text node at the cut point, then the <br>).
+    {let lc=heading.lastChild;while(lc&&(lc.nodeName==='BR'||(lc.nodeType===Node.TEXT_NODE&&!lc.textContent.trim()))){heading.removeChild(lc);lc=heading.lastChild;}}
     if(!heading.textContent.trim()&&!heading.querySelector('br,img'))heading.innerHTML='<br>';
     const newP=document.createElement('p');
     if(frag.childNodes.length&&(frag.textContent.trim()||frag.querySelector('img')))newP.appendChild(frag);
