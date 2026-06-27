@@ -11541,6 +11541,8 @@ function bbAlign(cmd){
   // Works on collapsed cursor too — applies to whole paragraph
   document.execCommand(cmd,false,null);
   const editor=document.getElementById('editor');if(editor)editor.focus({preventScroll:true});
+  // In table cells: center → vertical middle, others → vertical top
+  bbVAlign(cmd==='justifyCenter'?'middle':'top');
   onContentChange();
   _updateAlignBtns();
   setTimeout(bbShow,10);
