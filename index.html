@@ -15976,6 +15976,8 @@ async function doExportOptimized(opts){
     tmp.querySelectorAll('.cf-carousel-block[data-cfcarids]').forEach(b=>{_tot+=(b.dataset.cfcarids||'').split(',').filter(Boolean).length;});
     tmp.querySelectorAll('.tbl-cell-car[data-slideids]').forEach(c=>{_tot+=(c.dataset.slideids||'').split(',').filter(Boolean).length;});
     tmp.querySelectorAll('.cf-file-block[data-cffileid]').forEach(()=>_tot++);
+    _tot+=tmp.querySelectorAll('img[data-spotimgid]').length;
+    _tot+=tmp.querySelectorAll('img[data-cardimgid]').length;
   });
   if(_tot>0)_showExportProgress(0,_tot,'Chuẩn bị xuất...');
 
@@ -16179,6 +16181,22 @@ async function doExportOptimized(opts){
     for(const car of Array.from(tmp.querySelectorAll('.tbl-cell-car'))){
       const ids=(car.dataset.slideids||'').split(',').filter(Boolean);const imgs=car.querySelectorAll('.tcc-slide img');const thumbImgs=car.querySelectorAll('.tcc-thumb img');
       for(let i=0;i<ids.length;i++){const path=await idbToZipAsset(ids[i]);if(path){if(imgs[i]){imgs[i].setAttribute('src',path);imgs[i].setAttribute('loading','lazy');}if(thumbImgs[i])thumbImgs[i].setAttribute('src',path);}_showExportProgress(++_cnt,_tot,'Xuất carousel bảng...');}
+    }
+    // Spotlight images → zip
+    for(const img of Array.from(tmp.querySelectorAll('img[data-spotimgid]'))){
+      const id=img.dataset.spotimgid;if(!id)continue;
+      const path=await idbToZipAsset(id);
+      if(path){img.setAttribute('src',path);img.setAttribute('loading','lazy');img.removeAttribute('data-spotimgid');}
+      else{img.closest('.cf-spotlight-img-side')?.remove();}
+      _showExportProgress(++_cnt,_tot,'Xuất ảnh spotlight...');if(_cnt%3===0)await new Promise(r=>setTimeout(r,0));
+    }
+    // Cards images → zip
+    for(const img of Array.from(tmp.querySelectorAll('img[data-cardimgid]'))){
+      const id=img.dataset.cardimgid;if(!id)continue;
+      const path=await idbToZipAsset(id);
+      if(path){img.setAttribute('src',path);img.setAttribute('loading','lazy');img.removeAttribute('data-cardimgid');}
+      else{img.closest('.cf-card-img-wrap')?.remove();}
+      _showExportProgress(++_cnt,_tot,'Xuất ảnh card...');if(_cnt%3===0)await new Promise(r=>setTimeout(r,0));
     }
     // Final sweep — remove alt from ALL images so browsers don't show filename text on broken images
     tmp.querySelectorAll('img').forEach(img=>{
