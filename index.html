@@ -2242,11 +2242,12 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
   <button class="bb" id="bbUnder" onmousedown="event.preventDefault();bbFmt('underline')" title="Underline" style="text-decoration:underline">U</button>
   <button class="bb" id="bbStrike" onmousedown="event.preventDefault();bbFmt('strikeThrough')" title="Strikethrough"><s>S</s></button>
   <div class="bb-sep"></div>
-  <!-- Horizontal alignment -->
-  <button class="bb" id="bbAlignL" onmousedown="event.preventDefault();bbAlign('justifyLeft')" title="Căn ngang trái"><i class="ti ti-align-left" style="font-size:14px"></i></button>
-  <button class="bb" id="bbAlignC" onmousedown="event.preventDefault();bbAlign('justifyCenter')" title="Căn ngang giữa"><i class="ti ti-align-center" style="font-size:14px"></i></button>
-  <button class="bb" id="bbAlignR" onmousedown="event.preventDefault();bbAlign('justifyRight')" title="Căn ngang phải"><i class="ti ti-align-right" style="font-size:14px"></i></button>
-  <button class="bb" id="bbAlignJ" onmousedown="event.preventDefault();bbAlign('justifyFull')" title="Căn đều 2 lề"><i class="ti ti-align-justified" style="font-size:14px"></i></button>
+  <!-- Alignment: L H R V J -->
+  <button class="bb" id="bbAlignL" onmousedown="event.preventDefault();bbAlign('justifyLeft')" title="Căn trái (L)"><i class="ti ti-align-left" style="font-size:14px"></i></button>
+  <button class="bb" id="bbAlignC" onmousedown="event.preventDefault();bbAlign('justifyCenter')" title="Căn ngang giữa (H)"><i class="ti ti-align-center" style="font-size:14px"></i></button>
+  <button class="bb" id="bbAlignR" onmousedown="event.preventDefault();bbAlign('justifyRight')" title="Căn phải (R)"><i class="ti ti-align-right" style="font-size:14px"></i></button>
+  <button class="bb" id="bbVAlignM" onmousedown="event.preventDefault();bbVAlign('middle')" title="Căn dọc giữa (V)"><i class="ti ti-layout-align-middle" style="font-size:14px"></i></button>
+  <button class="bb" id="bbAlignJ" onmousedown="event.preventDefault();bbAlign('justifyFull')" title="Căn đều 2 lề (J)"><i class="ti ti-align-justified" style="font-size:14px"></i></button>
   <div class="bb-sep"></div>
   <!-- Text color — works in editor, text box, table cell -->
   <div class="bb-color-wrap" title="Text color" id="textColorWrap">
@@ -2255,13 +2256,8 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
       <span class="bb-color-bar" id="bbTextBar" style="background:#ef4444"></span>
     </button>
   </div>
-  <!-- Table cell controls — only visible when in table -->
-  <div id="bbTableCellWrap" style="display:none;align-items:center;gap:3px">
-    <div class="bb-sep"></div>
-    <!-- Vertical alignment -->
-    <button class="bb" id="bbVAlignT" onmousedown="event.preventDefault();bbVAlign('top')" title="Căn dọc trên"><i class="ti ti-layout-align-top" style="font-size:14px"></i></button>
-    <button class="bb" id="bbVAlignM" onmousedown="event.preventDefault();bbVAlign('middle')" title="Căn dọc giữa"><i class="ti ti-layout-align-middle" style="font-size:14px"></i></button>
-    <button class="bb" id="bbVAlignB" onmousedown="event.preventDefault();bbVAlign('bottom')" title="Căn dọc dưới"><i class="ti ti-layout-align-bottom" style="font-size:14px"></i></button>
+  <!-- Table cell background — only visible when in table -->
+  <div id="bbTableCellWrap" style="display:none;align-items:center">
     <div class="bb-sep"></div>
     <div class="bb-color-wrap" title="Màu nền ô">
       <button class="bb-color-btn" onmousedown="event.preventDefault();saveRange();toggleColorPalette('tableCellCP',this)" title="Màu nền ô">
@@ -11582,10 +11578,8 @@ function _updateVAlignBtns(){
     if(node.nodeType===1&&(node.tagName==='TD'||node.tagName==='TH')){cell=node;break;}
     node=node.parentElement;
   }
-  const va=cell?(cell.style.verticalAlign||'top'):'top';
-  document.getElementById('bbVAlignT')?.classList.toggle('active',va==='top'||va==='');
+  const va=cell?(cell.style.verticalAlign||''):'';
   document.getElementById('bbVAlignM')?.classList.toggle('active',va==='middle');
-  document.getElementById('bbVAlignB')?.classList.toggle('active',va==='bottom');
 }
 
 function _updateAlignBtns(){
