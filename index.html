@@ -12466,6 +12466,11 @@ async function _projFullSync(){
   if(_projLiveSaving)return;
   _projLiveSaving=true;
   try{
+    // Flush pending editor edits FIRST. onContentChange() serializes the editor on a
+    // ~250ms debounce, so a just-made change (e.g. column resize → data-colwidths) may
+    // not be in state.docs[].content yet. Without this, Push saves & publishes STALE
+    // content and the website shows old table column widths.
+    flushContent();
     toast('⏳ Đang lưu toàn bộ dữ liệu...','info');
 
     // Wait for background folder-asset loading (from startup reconnect) to finish
@@ -13811,6 +13816,14 @@ async function doExportWebsite(){
       '.cf-checklist-cam-btn','.cf-cl-del-btn','.cf-code-copy'
     ].join(',')).forEach(e=>e.remove());
     clone.querySelectorAll('.cf-img-block img,.cf-img-block video').forEach(el=>{if(el.src&&!el.src.startsWith('data:'))el.removeAttribute('src');});
+    // Preserve custom column widths into data-colwidths BEFORE stripping colgroup —
+    // otherwise resized table columns are lost in the exported/published page.
+    clone.querySelectorAll('table').forEach(tbl=>{
+      const cg=tbl.querySelector('colgroup');
+      if(!cg||cg.dataset.auto==='1'){tbl.removeAttribute('data-colwidths');return;}
+      const widths=Array.from(cg.querySelectorAll('col')).map(col=>col.style.width||'').join(',');
+      if(widths.replace(/,/g,'').trim())tbl.dataset.colwidths=widths;else tbl.removeAttribute('data-colwidths');
+    });
     clone.querySelectorAll('colgroup').forEach(e=>e.remove());
     clone.querySelectorAll('img[data-tblimgid]').forEach(img=>img.removeAttribute('src'));
     curDoc.content=clone.innerHTML;
@@ -14836,6 +14849,14 @@ async function doExportOptimized(opts){
       '.cf-checklist-cam-btn','.cf-cl-del-btn','.cf-code-copy'
     ].join(',')).forEach(e=>e.remove());
     clone.querySelectorAll('.cf-img-block img,.cf-img-block video').forEach(el=>{if(el.src&&!el.src.startsWith('data:'))el.removeAttribute('src');});
+    // Preserve custom column widths into data-colwidths BEFORE stripping colgroup —
+    // otherwise resized table columns are lost in the exported/published page.
+    clone.querySelectorAll('table').forEach(tbl=>{
+      const cg=tbl.querySelector('colgroup');
+      if(!cg||cg.dataset.auto==='1'){tbl.removeAttribute('data-colwidths');return;}
+      const widths=Array.from(cg.querySelectorAll('col')).map(col=>col.style.width||'').join(',');
+      if(widths.replace(/,/g,'').trim())tbl.dataset.colwidths=widths;else tbl.removeAttribute('data-colwidths');
+    });
     clone.querySelectorAll('colgroup').forEach(e=>e.remove());
     clone.querySelectorAll('img[data-tblimgid]').forEach(img=>img.removeAttribute('src'));
     curDoc.content=clone.innerHTML;
