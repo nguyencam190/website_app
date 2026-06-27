@@ -8802,6 +8802,23 @@ function _cfBuildImgToolbar(block){
         block.dataset.float=f.key;
         // Reset inner width so the image fills the float box cleanly; block width via CSS (45%)
         const inner=block.querySelector('.cf-img-inner');if(inner)inner.style.width='';
+        // Floating only SHOWS its effect when there is text after the image to wrap.
+        // If the next block isn't an editable text line, create one and drop the cursor
+        // into it — so the user can immediately type text that fills the empty side.
+        const _isTextBlock=el=>el&&/^(P|DIV|H[1-6]|UL|OL|BLOCKQUOTE)$/.test(el.tagName)&&!el.classList.contains('cf-img-block');
+        let _after=block.nextElementSibling;
+        if(!_isTextBlock(_after)){
+          const np=document.createElement('p');np.innerHTML='<br>';
+          block.parentElement.insertBefore(np,block.nextSibling);
+          _after=np;
+        }
+        setTimeout(()=>{
+          try{
+            const r=document.createRange();r.setStart(_after,0);r.collapse(true);
+            const s=window.getSelection();s.removeAllRanges();s.addRange(r);
+            (_after.closest('[contenteditable="true"]')||document.getElementById('editor'))?.focus({preventScroll:true});
+          }catch(e){}
+        },20);
       }
       _cfImgSyncToolbarActive(tb,block);
       onContentChange();
