@@ -10265,6 +10265,37 @@ function _initSlashCommands(){
       onContentChange();
     }
   });
+  // ── Shift+Enter in heading: break out to new <p> ─────────────────────────
+  // Without this, browser inserts <br> inside the heading, leaving the cursor
+  // still inside <h1>/<h2>/etc. _mdAutoFormat then collects the full heading
+  // text as fullBefore so "-" / "/" triggers never match. Breaking out first
+  // lets the user type "- " or "/" on a fresh <p> as expected.
+  editor.addEventListener('keydown',e=>{
+    if(e.key!=='Enter'||!e.shiftKey||e.ctrlKey||e.metaKey)return;
+    if(_slashVisible)return;
+    const sel=window.getSelection();if(!sel||!sel.rangeCount)return;
+    const anchor=sel.getRangeAt(0).startContainer;
+    const anchorEl=anchor.nodeType===Node.TEXT_NODE?anchor.parentElement:anchor;
+    const heading=anchorEl?.closest('h1,h2,h3,h4,h5,h6');
+    if(!heading||!editor.contains(heading)||heading.parentElement!==editor)return;
+    e.preventDefault();
+    // Extract everything after the cursor into a new <p>
+    const range=sel.getRangeAt(0);
+    if(!range.collapsed)range.deleteContents();
+    const tailRange=document.createRange();
+    tailRange.setStart(range.startContainer,range.startOffset);
+    tailRange.setEnd(heading,heading.childNodes.length);
+    const frag=tailRange.extractContents();
+    const newP=document.createElement('p');
+    if(frag.childNodes.length&&frag.textContent.trim())newP.appendChild(frag);
+    else newP.innerHTML='<br>';
+    heading.after(newP);
+    const fc=newP.firstChild;
+    const r=document.createRange();
+    r.setStart(fc&&fc.nodeType===Node.TEXT_NODE?fc:newP,0);
+    r.collapse(true);sel.removeAllRanges();sel.addRange(r);
+    onContentChange();
+  });
   editor.addEventListener('input',_editorSlashInput);
   editor.addEventListener('keyup',_updateBlockBar);
   editor.addEventListener('mouseup',_updateBlockBar);
