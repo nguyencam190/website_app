@@ -441,6 +441,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .tbl-frame[data-align="left"]{margin-left:0!important;margin-right:auto!important}
 .tbl-frame[data-align="center"]{margin-left:auto!important;margin-right:auto!important}
 .tbl-frame[data-align="right"]{margin-left:auto!important;margin-right:0!important}
+/* Floating table — text wraps around it (best for small/narrow tables).
+   !important beats the data-align margin-auto rules above when both are present. */
+.tbl-frame[data-float="left"]{float:left!important;width:45%;max-width:60%;min-width:220px;margin:4px 22px 12px 0!important;clear:left}
+.tbl-frame[data-float="right"]{float:right!important;width:45%;max-width:60%;min-width:220px;margin:4px 0 12px 22px!important;clear:right}
 /* tbl-outer: scroll container inside frame */
 .tbl-outer{position:relative;width:100%;overflow-x:auto;overflow-y:visible}
 /* Active state for align/width buttons in dropdown */
@@ -6321,14 +6325,20 @@ function tblShowDropdown(td,triggerEl){
   const _frame=_tbl&&_tbl.closest('.tbl-outer')?.parentElement;
   const _curW=(_frame?.classList.contains('tbl-frame')&&_frame.dataset.tblwidth)||'100';
   const _curA=(_frame?.classList.contains('tbl-frame')&&_frame.dataset.align)||'';
+  const _curF=(_frame?.classList.contains('tbl-frame')&&_frame.dataset.float)||'';
   const _btnS='flex:1;width:auto;justify-content:center;padding:6px 4px;font-size:12px';
   const _wBtn=w=>`<button class="tbl-item${_curW===String(w)?' tbl-active':''}" style="${_btnS}" onclick="tblSetWidth(${w})">${w}%</button>`;
-  const _aBtn=(a,icon,label)=>`<button class="tbl-item${_curA===a?' tbl-active':''}" style="${_btnS}" onclick="tblSetAlign('${a}')" title="${label}"><i class="ti ti-align-${icon}" style="width:auto;font-size:14px"></i></button>`;
+  const _aBtn=(a,icon,label)=>`<button class="tbl-item${!_curF&&_curA===a?' tbl-active':''}" style="${_btnS}" onclick="tblSetAlign('${a}')" title="${label}"><i class="ti ti-align-${icon}" style="width:auto;font-size:14px"></i></button>`;
+  const _fBtn=(f,icon,label)=>`<button class="tbl-item${_curF===f?' tbl-active':''}" style="${_btnS}" onclick="tblSetFloat('${f}')" title="${label}"><i class="ti ti-float-${icon}" style="width:auto;font-size:14px"></i></button>`;
   dd.innerHTML='<div class="tbl-label">Kích thước</div>'
     +'<div style="display:flex;gap:4px;padding:2px 8px 6px">'+_wBtn(25)+_wBtn(50)+_wBtn(75)+_wBtn(100)+'</div>'
     +'<div class="tbl-label">Căn lề</div>'
     +'<div style="display:flex;gap:4px;padding:2px 8px 8px">'
       +_aBtn('left','left','Trái')+_aBtn('center','center','Giữa')+_aBtn('right','right','Phải')
+    +'</div>'
+    +'<div class="tbl-label">Thả nổi (chữ chạy quanh bảng)</div>'
+    +'<div style="display:flex;gap:4px;padding:2px 8px 8px">'
+      +_fBtn('left','left','Thả nổi trái')+_fBtn('right','right','Thả nổi phải')
     +'</div>';
 
   const r=triggerEl.getBoundingClientRect();dd.style.visibility='hidden';dd.classList.add('on');
@@ -6357,7 +6367,40 @@ function tblSetAlign(align){
   const td=_activeTd;if(!td)return;
   const frame=td.closest('table')?.closest('.tbl-outer')?.parentElement;
   if(!frame?.classList.contains('tbl-frame'))return;
+  // Picking a plain alignment cancels float mode.
+  if(frame.dataset.float){delete frame.dataset.float;frame.style.width='';}
   if(frame.dataset.align===align)delete frame.dataset.align;else frame.dataset.align=align;
+  tblHideDropdown();onContentChange();
+}
+
+function tblSetFloat(side){
+  const td=_activeTd;if(!td)return;
+  const frame=td.closest('table')?.closest('.tbl-outer')?.parentElement;
+  if(!frame?.classList.contains('tbl-frame'))return;
+  if(frame.dataset.float===side){
+    // Toggle off — back to a normal block table
+    delete frame.dataset.float;frame.style.width='';
+  }else{
+    frame.dataset.float=side;
+    // Float CSS controls width (45%); clear conflicting block width/align so it applies.
+    frame.style.width='';delete frame.dataset.align;delete frame.dataset.tblwidth;
+    // Floating only shows its effect when there is text AFTER the table to wrap.
+    // Ensure an editable line exists right after and drop the cursor into it.
+    const _isTextBlock=el=>el&&/^(P|DIV|H[1-6]|UL|OL|BLOCKQUOTE)$/.test(el.tagName)&&!el.classList.contains('cf-img-block')&&!el.classList.contains('tbl-frame');
+    let _after=frame.nextElementSibling;
+    if(!_isTextBlock(_after)){
+      const np=document.createElement('p');np.innerHTML='<br>';
+      frame.parentElement.insertBefore(np,frame.nextSibling);
+      _after=np;
+    }
+    setTimeout(()=>{
+      try{
+        const r=document.createRange();r.setStart(_after,0);r.collapse(true);
+        const s=window.getSelection();s.removeAllRanges();s.addRange(r);
+        (_after.closest('[contenteditable="true"]')||document.getElementById('editor'))?.focus({preventScroll:true});
+      }catch(e){}
+    },20);
+  }
   tblHideDropdown();onContentChange();
 }
 
@@ -13924,15 +13967,22 @@ async function doExportWebsite(){
     // New structure: .tbl-frame > .tbl-outer > table
     tmp.querySelectorAll('.tbl-frame').forEach(fr=>{
       fr.querySelectorAll('.tbl-edge-h,.tbl-options-btn').forEach(e=>e.remove());
-      const tw=fr.dataset.tblwidth,al=fr.dataset.align;
+      const tw=fr.dataset.tblwidth,al=fr.dataset.align,fl=fr.dataset.float;
       const savedFrW=fr.style.width; // read before cssText clears inline styles
-      fr.style.cssText='display:block;margin:14px 0;overflow:visible';
-      if(tw&&tw!=='100'){fr.style.width=tw+'%';}
-      else if(savedFrW&&savedFrW!=='100%'){fr.style.width=savedFrW;} // pixel width from drag handles
-      else{fr.style.width='100%';}
-      if(al==='left'){fr.style.marginLeft='0';fr.style.marginRight='auto';}
-      else if(al==='center'){fr.style.marginLeft='auto';fr.style.marginRight='auto';}
-      else if(al==='right'){fr.style.marginLeft='auto';fr.style.marginRight='0';}
+      if(fl==='left'||fl==='right'){
+        // Floating table — published text wraps around it (matches the app)
+        const fw=(savedFrW&&savedFrW!=='100%')?savedFrW:'45%';
+        fr.style.cssText='display:block;overflow:visible;float:'+fl+';width:'+fw+';max-width:60%;min-width:220px;'
+          +(fl==='left'?'margin:4px 22px 12px 0;clear:left':'margin:4px 0 12px 22px;clear:right');
+      }else{
+        fr.style.cssText='display:block;margin:14px 0;overflow:visible';
+        if(tw&&tw!=='100'){fr.style.width=tw+'%';}
+        else if(savedFrW&&savedFrW!=='100%'){fr.style.width=savedFrW;} // pixel width from drag handles
+        else{fr.style.width='100%';}
+        if(al==='left'){fr.style.marginLeft='0';fr.style.marginRight='auto';}
+        else if(al==='center'){fr.style.marginLeft='auto';fr.style.marginRight='auto';}
+        else if(al==='right'){fr.style.marginLeft='auto';fr.style.marginRight='0';}
+      }
       const inner=fr.querySelector('.tbl-outer');
       if(inner)inner.style.cssText='width:100%;overflow-x:auto;overflow-y:visible';
     });
@@ -14935,15 +14985,22 @@ async function doExportOptimized(opts){
     // Strip editor-only UI
     tmp.querySelectorAll('.tbl-frame').forEach(fr=>{
       fr.querySelectorAll('.tbl-edge-h,.tbl-options-btn').forEach(e=>e.remove());
-      const tw=fr.dataset.tblwidth,al=fr.dataset.align;
+      const tw=fr.dataset.tblwidth,al=fr.dataset.align,fl=fr.dataset.float;
       const savedFrW=fr.style.width; // read before cssText clears inline styles
-      fr.style.cssText='display:block;margin:14px 0;overflow:visible';
-      if(tw&&tw!=='100'){fr.style.width=tw+'%';}
-      else if(savedFrW&&savedFrW!=='100%'){fr.style.width=savedFrW;} // pixel width from drag handles
-      else{fr.style.width='100%';}
-      if(al==='left'){fr.style.marginLeft='0';fr.style.marginRight='auto';}
-      else if(al==='center'){fr.style.marginLeft='auto';fr.style.marginRight='auto';}
-      else if(al==='right'){fr.style.marginLeft='auto';fr.style.marginRight='0';}
+      if(fl==='left'||fl==='right'){
+        // Floating table — published text wraps around it (matches the app)
+        const fw=(savedFrW&&savedFrW!=='100%')?savedFrW:'45%';
+        fr.style.cssText='display:block;overflow:visible;float:'+fl+';width:'+fw+';max-width:60%;min-width:220px;'
+          +(fl==='left'?'margin:4px 22px 12px 0;clear:left':'margin:4px 0 12px 22px;clear:right');
+      }else{
+        fr.style.cssText='display:block;margin:14px 0;overflow:visible';
+        if(tw&&tw!=='100'){fr.style.width=tw+'%';}
+        else if(savedFrW&&savedFrW!=='100%'){fr.style.width=savedFrW;} // pixel width from drag handles
+        else{fr.style.width='100%';}
+        if(al==='left'){fr.style.marginLeft='0';fr.style.marginRight='auto';}
+        else if(al==='center'){fr.style.marginLeft='auto';fr.style.marginRight='auto';}
+        else if(al==='right'){fr.style.marginLeft='auto';fr.style.marginRight='0';}
+      }
       const inner=fr.querySelector('.tbl-outer');
       if(inner)inner.style.cssText='width:100%;overflow-x:auto;overflow-y:visible';
     });
