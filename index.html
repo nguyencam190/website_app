@@ -1097,6 +1097,14 @@ td .cf-checklist[data-open="true"] .cf-checklist-body,.cf-column-item .cf-checkl
 .cf-img-block[data-align="left"] .cf-img-wrap{justify-content:flex-start}
 .cf-img-block[data-align="center"] .cf-img-wrap{justify-content:center}
 .cf-img-block[data-align="right"] .cf-img-wrap{justify-content:flex-end}
+/* ── Floating image — text wraps around it (Word-style) ──────────────────
+   Width is % of the editor, so when the sidebar opens and the editor narrows,
+   the image shrinks proportionally and text re-wraps in the remaining space —
+   it can never overlap (float is part of normal flow, unlike absolute textboxes). */
+.cf-img-block[data-float="left"]{float:left;width:45%;max-width:60%;min-width:150px;margin:4px 20px 10px 0;clear:left}
+.cf-img-block[data-float="right"]{float:right;width:45%;max-width:60%;min-width:150px;margin:4px 0 10px 20px;clear:right}
+.cf-img-block[data-float] .cf-img-wrap{width:100%;justify-content:center}
+.cf-img-block[data-float] .cf-img-inner{width:100%}
 .cf-img-block:not(.selected):hover .cf-img-inner{outline:2px solid var(--border2);outline-offset:-2px}
 .cf-img-block.selected .cf-img-inner{outline:2px solid var(--accent);outline-offset:-2px}
 .cf-img-inner{position:relative;display:inline-block;max-width:100%;border-radius:4px;overflow:visible;line-height:0;transition:box-shadow .35s ease,outline-color .15s ease;cursor:zoom-in}
@@ -1275,8 +1283,6 @@ td .cf-checklist[data-open="true"] .cf-checklist-body,.cf-column-item .cf-checkl
 .cf-panel.warning{background:rgba(245,158,11,.12);border-color:#f59e0b}
 .cf-panel.error{background:rgba(239,68,68,.1);border-color:#ef4444}
 .cf-panel.note{background:rgba(168,85,247,.1);border-color:#a855f7}
-.cf-panel.card{border:1.5px solid var(--accent);border-left:1.5px solid var(--accent);background:transparent;border-radius:6px}
-.cf-panel.card .cf-panel-icon{display:none}
 [data-theme="dark"] .cf-panel.info{background:rgba(77,138,255,.14)}
 [data-theme="dark"] .cf-panel.success{background:rgba(34,197,94,.12)}
 [data-theme="dark"] .cf-panel.warning{background:rgba(245,158,11,.13)}
@@ -7046,7 +7052,6 @@ const SLASH_ITEMS=[
   {id:'warning',  icon:'<i class="ti ti-alert-triangle"></i>',  name:'Warning Panel', desc:'Hộp cảnh báo nền vàng',           cat:'Panel', alias:'warning caution yellow'},
   {id:'error',    icon:'<i class="ti ti-alert-circle"></i>',    name:'Error Panel',  desc:'Hộp lỗi nền đỏ',                   cat:'Panel', alias:'error danger red'},
   {id:'note',     icon:'<i class="ti ti-pin"></i>',             name:'Note Panel',   desc:'Hộp ghi chú nền tím',               cat:'Panel', alias:'note purple pin'},
-  {id:'card',     icon:'<i class="ti ti-square"></i>',          name:'Thẻ văn bản',  desc:'Khung viền accent không có icon, dùng trong layout cột', cat:'Panel', alias:'card box frame border text card'},
 ];
 
 // Recently used command IDs (max 5, persisted in localStorage)
@@ -7702,21 +7707,17 @@ function _slashInsert(id,execRange){
     return;
   }
 
-  // ── Panels (info/success/warning/error/note/callout/card) ───
-  if(['info','success','warning','error','note','callout','card'].includes(id)){
-    const icons={info:'ℹ️',success:'✅',warning:'⚠️',error:'🚨',note:'📌',callout:'💡',card:''};
+  // ── Panels ───────────────────────────────────────────────
+  if(['info','success','warning','error','note','callout'].includes(id)){
+    const icons={info:'ℹ️',success:'✅',warning:'⚠️',error:'🚨',note:'📌',callout:'💡'};
     const type=id==='callout'?'info':id;
     const panel=document.createElement('div');
     panel.className='cf-panel '+type;panel.contentEditable='false';
-    // card type has no icon (full-border, clean text box)
-    if(icons[id]){
-      const iconEl=document.createElement('span');iconEl.className='cf-panel-icon';iconEl.textContent=icons[id];
-      panel.appendChild(iconEl);
-    }
+    const iconEl=document.createElement('span');iconEl.className='cf-panel-icon';iconEl.textContent=icons[id];
     const content=document.createElement('div');content.className='cf-panel-content';content.contentEditable='true';content.innerHTML='<br>';
     const actions=document.createElement('div');actions.className='cf-panel-actions';
     actions.innerHTML='<button class="cf-panel-type-btn" onclick="cfPanelChangeType(this)" title="Đổi loại">⚙️</button><button class="cf-panel-del" onclick="this.closest(\'.cf-panel\').remove();onContentChange()" title="Xóa">✕</button>';
-    panel.appendChild(content);panel.appendChild(actions);
+    panel.appendChild(iconEl);panel.appendChild(content);panel.appendChild(actions);
     _cfInsertBlockAtRange(panel,savedRange);
     onContentChange();
     setTimeout(()=>{content.focus();const r=document.createRange();r.setStart(content,0);r.collapse(true);window.getSelection().removeAllRanges();window.getSelection().addRange(r);},30);
@@ -7794,26 +7795,16 @@ function _slashShowTableGrid(){
 }
 
 // Panel type change
-const PANEL_TYPES=['info','success','warning','error','note','card'];
-const PANEL_ICONS={info:'ℹ️',success:'✅',warning:'⚠️',error:'🚨',note:'📌',card:''};
+const PANEL_TYPES=['info','success','warning','error','note'];
+const PANEL_ICONS={info:'ℹ️',success:'✅',warning:'⚠️',error:'🚨',note:'📌'};
 function cfPanelChangeType(btn){
   const panel=btn.closest('.cf-panel');if(!panel)return;
   const cur=PANEL_TYPES.find(t=>panel.classList.contains(t))||'info';
   const next=PANEL_TYPES[(PANEL_TYPES.indexOf(cur)+1)%PANEL_TYPES.length];
   PANEL_TYPES.forEach(t=>panel.classList.remove(t));
   panel.classList.add(next);
-  let icon=panel.querySelector('.cf-panel-icon');
-  const nextIcon=PANEL_ICONS[next];
-  if(nextIcon){
-    if(!icon){
-      // Panel was a 'card' (no icon element) — create one now
-      icon=document.createElement('span');icon.className='cf-panel-icon';
-      panel.insertBefore(icon,panel.firstChild);
-    }
-    icon.textContent=nextIcon;
-  } else if(icon){
-    icon.textContent=''; // card type: CSS hides the element
-  }
+  const icon=panel.querySelector('.cf-panel-icon');
+  if(icon)icon.textContent=PANEL_ICONS[next];
   onContentChange();
 }
 
@@ -8763,6 +8754,14 @@ function _cfBuildImgBlock(id,src,isVid,name){
   return block;
 }
 
+// Refresh active state of alignment + float buttons to match the block's current mode.
+// Float and plain-alignment are mutually exclusive: when floated, no align btn is active.
+function _cfImgSyncToolbarActive(tb,block){
+  const floated=!!block.dataset.float;
+  tb.querySelectorAll('[data-align]').forEach(b=>b.classList.toggle('active',!floated&&b.dataset.align===block.dataset.align));
+  tb.querySelectorAll('[data-float]').forEach(b=>b.classList.toggle('active',floated&&b.dataset.float===block.dataset.float));
+}
+
 function _cfBuildImgToolbar(block){
   const tb=document.createElement('div');tb.className='cf-img-toolbar';
 
@@ -8773,11 +8772,38 @@ function _cfBuildImgToolbar(block){
     {key:'right',icon:'ti-align-right',title:'Căn phải'},
   ];
   aligns.forEach(a=>{
-    const btn=document.createElement('button');btn.className='cf-img-tb-btn'+(block.dataset.align===a.key?' active':'');
+    const btn=document.createElement('button');btn.className='cf-img-tb-btn'+(!block.dataset.float&&block.dataset.align===a.key?' active':'');
     btn.innerHTML=`<i class="ti ${a.icon}" style="font-size:13px"></i>`;btn.title=a.title;btn.dataset.align=a.key;
     btn.addEventListener('click',()=>{
+      // Picking a plain alignment cancels float mode and restores block flow.
+      if(block.dataset.float){delete block.dataset.float;block.style.width='';}
       block.dataset.align=a.key;
-      tb.querySelectorAll('[data-align]').forEach(b=>b.classList.toggle('active',b.dataset.align===a.key));
+      _cfImgSyncToolbarActive(tb,block);
+      onContentChange();
+    });
+    tb.appendChild(btn);
+  });
+
+  const sepF=document.createElement('div');sepF.className='cf-img-tb-sep';tb.appendChild(sepF);
+
+  // Float (text-wrap) group — image floats, text wraps around it
+  const floats=[
+    {key:'left',icon:'ti-float-left',title:'Thả nổi trái (chữ chạy bên phải)'},
+    {key:'right',icon:'ti-float-right',title:'Thả nổi phải (chữ chạy bên trái)'},
+  ];
+  floats.forEach(f=>{
+    const btn=document.createElement('button');btn.className='cf-img-tb-btn'+(block.dataset.float===f.key?' active':'');
+    btn.innerHTML=`<i class="ti ${f.icon}" style="font-size:13px"></i>`;btn.title=f.title;btn.dataset.float=f.key;
+    btn.addEventListener('click',()=>{
+      if(block.dataset.float===f.key){
+        // Toggle off — back to normal centered block
+        delete block.dataset.float;block.style.width='';block.dataset.align='center';
+      }else{
+        block.dataset.float=f.key;
+        // Reset inner width so the image fills the float box cleanly; block width via CSS (45%)
+        const inner=block.querySelector('.cf-img-inner');if(inner)inner.style.width='';
+      }
+      _cfImgSyncToolbarActive(tb,block);
       onContentChange();
     });
     tb.appendChild(btn);
@@ -8795,6 +8821,13 @@ function _cfBuildImgToolbar(block){
     const btn=document.createElement('button');btn.className='cf-img-tb-btn';
     btn.innerHTML=wt.icon;btn.title=wt.title;
     btn.addEventListener('click',()=>{
+      // When floated, the width preset controls how much of the row the IMAGE takes
+      // (the rest is the wrapping text column). 100% un-floats back to a full block.
+      if(block.dataset.float){
+        if(wt.w==='100%'){delete block.dataset.float;block.style.width='';block.dataset.align='center';_cfImgSyncToolbarActive(tb,block);}
+        else{block.style.width=wt.w;}
+        onContentChange();return;
+      }
       const inner=block.querySelector('.cf-img-inner');
       const wrap=block.querySelector('.cf-img-wrap');
       if(inner){
@@ -9010,6 +9043,33 @@ function _cfImgInitResize(inner,handle,side){
   handle.addEventListener('mousedown',e=>{
     e.preventDefault();e.stopPropagation();
     const startX=e.clientX;
+    const block=inner.closest('.cf-img-block');
+    const floated=block&&block.dataset.float;
+    // ── Floating mode: the handle resizes the FLOAT BOX (block width), measured as a
+    //    % of the editor so the wrap text column grows/shrinks correctly and reflows
+    //    proportionally when the sidebar opens. ──
+    if(floated){
+      const editorW=(document.getElementById('editor')?.offsetWidth)||block.offsetWidth||800;
+      const startBW=block.offsetWidth;
+      handle.style.opacity='1';
+      document.body.style.cursor='ew-resize';document.body.style.userSelect='none';
+      function mmF(e2){
+        const dx=e2.clientX-startX;
+        // left float grows when right handle dragged right; right float grows when left handle dragged left
+        const grow=(block.dataset.float==='left')===(side==='right')?dx:-dx;
+        const newW=Math.max(120,startBW+grow);
+        block.style.width=Math.min(editorW*0.75,newW)+'px';
+      }
+      function muF(){
+        document.body.style.cursor='';document.body.style.userSelect='';
+        document.removeEventListener('mousemove',mmF);document.removeEventListener('mouseup',muF);
+        const pct=Math.min(75,Math.max(20,Math.round(block.offsetWidth/editorW*100)));
+        block.style.width=pct+'%';
+        onContentChange();
+      }
+      document.addEventListener('mousemove',mmF);document.addEventListener('mouseup',muF);
+      return;
+    }
     const startW=inner.offsetWidth;
     const container=inner.closest('.cf-img-wrap');
     const maxW=container?.offsetWidth||800;
@@ -13445,8 +13505,6 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .cf-panel.warning{background:rgba(245,158,11,.08);border-color:#f59e0b}',
     '.ws-canvas .cf-panel.error{background:rgba(239,68,68,.07);border-color:#ef4444}',
     '.ws-canvas .cf-panel.note{background:rgba(168,85,247,.07);border-color:#a855f7}',
-    '.ws-canvas .cf-panel.card{border:1.5px solid var(--accent);border-left:1.5px solid var(--accent);background:transparent;border-radius:6px}',
-    '.ws-canvas .cf-panel.card .cf-panel-icon{display:none}',
     '[data-theme="dark"] .ws-canvas .cf-panel.info{background:rgba(77,138,255,.09)}',
     '[data-theme="dark"] .ws-canvas .cf-panel.success{background:rgba(34,197,94,.07)}',
     '[data-theme="dark"] .ws-canvas .cf-panel.warning{background:rgba(245,158,11,.08)}',
@@ -13460,6 +13518,11 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .cf-img-block[data-align="left"] .cf-img-wrap{justify-content:flex-start}',
     '.ws-canvas .cf-img-block[data-align="center"] .cf-img-wrap{justify-content:center}',
     '.ws-canvas .cf-img-block[data-align="right"] .cf-img-wrap{justify-content:flex-end}',
+    /* Floating image — published text wraps around it exactly like in the app */
+    '.ws-canvas .cf-img-block[data-float="left"]{float:left;width:45%;max-width:60%;min-width:150px;margin:4px 20px 10px 0;clear:left}',
+    '.ws-canvas .cf-img-block[data-float="right"]{float:right;width:45%;max-width:60%;min-width:150px;margin:4px 0 10px 20px;clear:right}',
+    '.ws-canvas .cf-img-block[data-float] .cf-img-wrap{width:100%;justify-content:center}',
+    '.ws-canvas .cf-img-block[data-float] .cf-img-inner{width:100%}',
     '.ws-canvas .cf-img-inner{position:relative;display:inline-block;max-width:100%;border-radius:4px;overflow:hidden;line-height:0;transition:box-shadow .35s ease,outline-color .15s ease}',
     '.ws-canvas .cf-img-inner:hover{outline:2px solid var(--accent);outline-offset:-2px}',
     '.ws-canvas .cf-img-inner img{display:block;max-width:100%;height:auto;border-radius:4px;cursor:zoom-in;margin:0}',
