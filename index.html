@@ -6663,13 +6663,22 @@ function _tblConvertColsToPct(table){
   // Read rendered widths from header/first-row cells (most accurate with table-layout:fixed)
   const headerCells=table.rows[0]?Array.from(table.rows[0].cells):[];
   const dataCells=headerCells.slice(hasRowNum?1:0);
-  const dataTotal=dataCells.reduce((s,c)=>s+c.offsetWidth,0);
+  // Snapshot ALL widths BEFORE mutating any <col>. Setting a col's width reflows the
+  // table, so measuring inside the mutation loop corrupts later reads — the percentages
+  // would sum to >100% and the browser would renormalize them back to equal, silently
+  // discarding the resize (most visible on 2-column tables, which revert completely).
+  const widths=dataCells.map(c=>c.offsetWidth);
+  const dataTotal=widths.reduce((s,w)=>s+w,0);
   if(dataTotal===0)return;
   cols.forEach((c,i)=>{
     if(hasRowNum&&i===0){c.style.width=rowNumW+'px';return;}
     const ci=hasRowNum?i-1:i;
-    const w=dataCells[ci]?dataCells[ci].offsetWidth:dataTotal/dataCells.length;
-    c.style.width=`calc((100% - ${rowNumW}px) * ${(w/dataTotal*100).toFixed(3)} / 100)`;
+    const w=widths[ci]!=null?widths[ci]:dataTotal/widths.length;
+    // Use plain % (NOT calc): Chromium ignores calc() for <col> width under
+    // table-layout:fixed, so calc-based widths silently fall back to equal columns.
+    // With the # column fixed at its px width, the browser distributes the remaining
+    // space among the data columns proportionally to these percentages (they sum to 100%).
+    c.style.width=`${(w/dataTotal*100).toFixed(3)}%`;
   });
   table.style.width='100%';
 }
