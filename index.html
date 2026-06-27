@@ -6455,10 +6455,24 @@ function tblAttachTable(table){
     if(!hostCell)return;
     hostCell.style.position='relative';
 
-    // ── Row resize handle — on LAST cell of every row (always visible) ──
+    // ── Row resize handle ────────────────────────────────────
+    // The handle is an absolutely-positioned div. If it lives inside an EDITABLE data
+    // cell that is otherwise empty, it becomes the cell's sole child and the browser
+    // anchors the typing caret AFTER it — making the start point jump to the right
+    // corner of the cell. To avoid this we host the handle on the NON-editable row-num
+    // (#) cell whenever row numbers are shown. Only fall back to the last data cell when
+    // there is no row-num cell (row numbers hidden).
     const lastCell=row.cells[row.cells.length-1];
-    if(lastCell){
-      // Remove existing
+    if(numCell&&numCell!==lastCell){
+      // Row numbers ON — handle goes on the non-editable # cell (no caret interference).
+      const rh2=document.createElement('div');
+      rh2.className='tbl-row-resize-handle';
+      rh2.contentEditable='false';
+      rh2.style.cssText='position:absolute;bottom:-3px;left:0;right:0;height:6px;cursor:row-resize;z-index:20;background:transparent';
+      rh2.addEventListener('mousedown',e=>{e.preventDefault();e.stopPropagation();tblRowResizeStart(e,row);});
+      numCell.appendChild(rh2);
+    } else if(lastCell){
+      // Row numbers OFF — no non-editable host available; use the last cell.
       lastCell.querySelectorAll('.tbl-row-resize-handle').forEach(e=>e.remove());
       lastCell.style.position='relative';
       const rh=document.createElement('div');
@@ -6466,15 +6480,6 @@ function tblAttachTable(table){
       rh.contentEditable='false';
       rh.addEventListener('mousedown',e=>{e.preventDefault();e.stopPropagation();tblRowResizeStart(e,row);});
       lastCell.appendChild(rh);
-    }
-    // Also keep on numCell if shown (kept for backward compat)
-    if(numCell&&numCell!==lastCell){
-      const rh2=document.createElement('div');
-      rh2.className='tbl-row-resize-handle';
-      rh2.contentEditable='false';
-      rh2.style.cssText='position:absolute;bottom:-3px;left:0;right:0;height:6px;cursor:row-resize;z-index:20;background:transparent';
-      rh2.addEventListener('mousedown',e=>{e.preventDefault();e.stopPropagation();tblRowResizeStart(e,row);});
-      numCell.appendChild(rh2);
     }
 
     // ── Row selector handle (⁞) — moves to hostCell ──────
