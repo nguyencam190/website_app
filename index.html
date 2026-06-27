@@ -389,6 +389,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .meta-chip{display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text3)}
 .meta-tag{background:var(--accent-light);color:var(--accent);padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
 .editor-content{outline:none;min-height:320px;font-size:16px;line-height:1.6;color:var(--text);position:relative}
+/* Clearfix — contain floated image blocks so a tall float never spills past the
+   editor's bottom edge and crosses the separator line below the content. */
+.editor-content::after{content:'';display:block;clear:both}
 /* Placeholder shown when editor has only an empty <p><br></p> */
 .editor-content>p:only-child:has(>br:only-child)::before{content:'Type / to insert a block, or just start writing...';color:var(--text3);pointer-events:none;display:block;font-size:15px;font-style:italic}
 /* Empty paragraph hint — shows when cursor is on empty line */
@@ -1297,7 +1300,7 @@ td .cf-checklist[data-open="true"] .cf-checklist-body,.cf-column-item .cf-checkl
 .cf-panel-type-btn:hover{background:var(--surface2)}
 .cf-panel-del:hover{background:rgba(239,68,68,.1);color:#ef4444}
 /* ═══ DIVIDER ══════════════════════════════════════════════ */
-.editor-content hr.cf-divider{display:block;border:none;border-top:2px solid var(--border);margin:20px 0;outline:none;width:100%;height:0;background:transparent}
+.editor-content hr.cf-divider{display:block;border:none;border-top:2px solid var(--border);margin:20px 0;outline:none;width:100%;height:0;background:transparent;clear:both}
 /* ═══ EMOJI PICKER ═════════════════════════════════════════ */
 .emoji-picker{position:fixed;z-index:850;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.18);width:340px;display:none;flex-direction:column;overflow:hidden;animation:cpFade .12s ease}
 .emoji-picker.on{display:flex}
@@ -13299,6 +13302,7 @@ function _buildViewerShellCss(accent){
     '.ws-canvas-wrap{border-radius:4px;min-height:40px;margin:0 auto;max-width:100%;overflow-x:auto}',
     '.ws-canvas{position:relative;padding:20px 52px;font-family:var(--font);background:var(--bg);transform-origin:top left;transition:background var(--tr);-webkit-text-size-adjust:100%;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased}',
     '.ws-canvas .editor-content{font-size:16px;line-height:1.6;color:var(--text);word-wrap:break-word;overflow-wrap:break-word;min-height:120px}',
+    '.ws-canvas .editor-content::after{content:"";display:block;clear:both}',
     '.ws-canvas .editor-content *{max-width:100%;box-sizing:border-box}',
     '.ws-canvas .editor-content p{margin-bottom:12px}',
     '.ws-canvas .editor-content h1{font-size:1.5rem;font-weight:600;line-height:1.4;margin:24px 0 10px;letter-spacing:-.02em}',
@@ -13608,7 +13612,7 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .cf-car-counter{position:absolute;top:10px;right:12px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;z-index:10}',
     '.ws-canvas .cf-car-caption{padding:6px 12px 8px;font-size:15px;color:var(--text3);text-align:center}',
     /* ── Divider ── */
-    '.ws-canvas .editor-content hr.cf-divider{border:none;border-top:2px solid var(--border);margin:16px 0;display:block}',
+    '.ws-canvas .editor-content hr.cf-divider{border:none;border-top:2px solid var(--border);margin:16px 0;display:block;clear:both}',
     /* ── Embed Block ── */
     '.ws-canvas .cf-embed-block{display:block;margin:16px 0;position:relative}',
     '.ws-canvas .cf-embed-wrap{position:relative;width:100%;background:#000;border-radius:10px;overflow:hidden}',
