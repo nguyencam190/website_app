@@ -2248,11 +2248,6 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
   <button class="bb" id="bbAlignR" onmousedown="event.preventDefault();bbAlign('justifyRight')" title="Align right"><i class="ti ti-align-right" style="font-size:14px"></i></button>
   <button class="bb" id="bbAlignJ" onmousedown="event.preventDefault();bbAlign('justifyFull')" title="Justify"><i class="ti ti-align-justified" style="font-size:14px"></i></button>
   <div class="bb-sep"></div>
-  <!-- Vertical alignment (table cells only) -->
-  <button class="bb" id="bbVAlignT" onmousedown="event.preventDefault();bbVAlign('top')" title="Căn trên"><i class="ti ti-layout-align-top" style="font-size:14px"></i></button>
-  <button class="bb" id="bbVAlignM" onmousedown="event.preventDefault();bbVAlign('middle')" title="Căn giữa dọc"><i class="ti ti-layout-align-middle" style="font-size:14px"></i></button>
-  <button class="bb" id="bbVAlignB" onmousedown="event.preventDefault();bbVAlign('bottom')" title="Căn dưới"><i class="ti ti-layout-align-bottom" style="font-size:14px"></i></button>
-  <div class="bb-sep"></div>
   <!-- Text color — works in editor, text box, table cell -->
   <div class="bb-color-wrap" title="Text color" id="textColorWrap">
     <button class="bb-color-btn" onmousedown="event.preventDefault();saveRange();toggleColorPalette('textCP',this)" title="Text color">
@@ -2260,8 +2255,8 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
       <span class="bb-color-bar" id="bbTextBar" style="background:#ef4444"></span>
     </button>
   </div>
-  <!-- Table cell background — only visible when in table -->
-  <div id="bbTableCellWrap" style="display:none;align-items:center">
+  <!-- Table cell controls — only visible when in table -->
+  <div id="bbTableCellWrap" style="display:none;align-items:center;gap:3px">
     <div class="bb-sep"></div>
     <div class="bb-color-wrap" title="Table cell background">
       <button class="bb-color-btn" onmousedown="event.preventDefault();saveRange();toggleColorPalette('tableCellCP',this)" title="Table cell background">
@@ -2269,6 +2264,11 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
         <span class="bb-color-bar" id="bbCellBar" style="background:#f1f5f9"></span>
       </button>
     </div>
+    <div class="bb-sep"></div>
+    <!-- Vertical alignment — table cells only -->
+    <button class="bb" id="bbVAlignT" onmousedown="event.preventDefault();bbVAlign('top')" title="Căn trên"><i class="ti ti-layout-align-top" style="font-size:14px"></i></button>
+    <button class="bb" id="bbVAlignM" onmousedown="event.preventDefault();bbVAlign('middle')" title="Căn giữa dọc"><i class="ti ti-layout-align-middle" style="font-size:14px"></i></button>
+    <button class="bb" id="bbVAlignB" onmousedown="event.preventDefault();bbVAlign('bottom')" title="Căn dưới"><i class="ti ti-layout-align-bottom" style="font-size:14px"></i></button>
   </div>
   <div class="bb-sep"></div>
   <button class="bb" id="bbLinkBtn" onmousedown="event.preventDefault();bbOpenLinkRow()" title="Insert link"><i class="ti ti-link"></i></button>
