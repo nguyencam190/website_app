@@ -8898,6 +8898,17 @@ function _cfReplaceMedia(block){
     const file=inp.files&&inp.files[0];
     inp.remove();
     if(!file)return;
+    // Preserve the current display size: lock the present rendered width as a % of the
+    // container BEFORE swapping, so the new image keeps the same box instead of snapping
+    // to its own natural dimensions. Only when no explicit width is set yet — an existing
+    // %/px is already the user's chosen size and must be kept as-is. Captured up-front
+    // while the OLD media is still laid out (the async compress below doesn't reflow it).
+    const _lockInner=block.querySelector('.cf-img-inner');
+    if(_lockInner&&!_lockInner.style.width){
+      const _w=_lockInner.closest('.cf-img-wrap')||_lockInner.parentElement;
+      const _cW=_w?_w.offsetWidth:0,_iW=_lockInner.offsetWidth;
+      if(_cW>0&&_iW>0)_lockInner.style.width=Math.min(100,Math.max(10,Math.round(_iW/_cW*100)))+'%';
+    }
     const isVid=file.type.startsWith('video/');
     const newId=uid();
     let blob=file;
