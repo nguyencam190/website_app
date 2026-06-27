@@ -10538,7 +10538,12 @@ function _showBlockBar(targetEl){
     // table. Fall back to inside-top only if there's no room near the viewport top.
     const _barH=bar.offsetHeight||26;
     let _top=rect.top-_barH-2;
-    if(_top<58)_top=rect.top+2;
+    if(_top<58){
+      // No space above the block — inside a th (header row) any fallback overlaps text,
+      // so suppress entirely. For td, fall back to inside-top.
+      if(container&&container.tagName==='TH'){_hideBlockBar();return;}
+      _top=rect.top+2;
+    }
     bar.style.top=_top+'px';
     let barLeft=rect.left;
     // When row-num column is hidden, .tbl-row-sel lives in the first data cell at left:0 (14px wide).
@@ -10612,6 +10617,9 @@ function _onEditorMouseMove(e){
     // Empty cells (no element children) fall through to normal logic.
     const dataCell=el.closest('td:not(.tbl-row-num),th:not(.tbl-row-num)');
     if(dataCell){
+      // Header row (th) is single-line column labels — never enough room to show bar
+      // without overlapping text. Hide entirely and let the table-level gutter bar show.
+      if(dataCell.tagName==='TH'){_hideBlockBar();return;}
       const UI_SKIP='.tbl-cell-drop,.tbl-row-resize-handle,.tbl-row-sel,.tbl-shadow-btn,.tbl-img-btn';
       const blocks=Array.from(dataCell.children).filter(c=>!c.matches(UI_SKIP));
       if(blocks.length>0){
