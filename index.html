@@ -1275,6 +1275,8 @@ td .cf-checklist[data-open="true"] .cf-checklist-body,.cf-column-item .cf-checkl
 .cf-panel.warning{background:rgba(245,158,11,.12);border-color:#f59e0b}
 .cf-panel.error{background:rgba(239,68,68,.1);border-color:#ef4444}
 .cf-panel.note{background:rgba(168,85,247,.1);border-color:#a855f7}
+.cf-panel.card{border:1.5px solid var(--accent);border-left:1.5px solid var(--accent);background:transparent;border-radius:6px}
+.cf-panel.card .cf-panel-icon{display:none}
 [data-theme="dark"] .cf-panel.info{background:rgba(77,138,255,.14)}
 [data-theme="dark"] .cf-panel.success{background:rgba(34,197,94,.12)}
 [data-theme="dark"] .cf-panel.warning{background:rgba(245,158,11,.13)}
@@ -6697,30 +6699,46 @@ function _tblConvertColsToPct(table){
 function tblColResizeStart(e,table,th,colIndex){
   const handle=e.currentTarget;handle.classList.add('dragging');
   const startX=e.clientX;
-  const tableW=table.offsetWidth-18; // subtract row-num column width
-  const startPct=th.offsetWidth/tableW*100;
-  const minPct=Math.max(5,60/tableW*100); // min 60px or 5%
   const overlay=document.createElement('div');
   overlay.style.cssText='position:fixed;inset:0;cursor:col-resize;z-index:9999';
   document.body.appendChild(overlay);
 
-  // Find the next data column to adjust (maintain total width)
-  // Use colgroup cols for resize — reliable with table-layout:fixed
   const cg=table.querySelector('colgroup');
   const cgCols=cg?Array.from(cg.querySelectorAll('col')):[];
-  // colIndex is the index in ALL cells (including row-num col at 0)
   const thisCol=cgCols[colIndex]||null;
-  const startPx=th.offsetWidth;
-  const minPx=40; // minimum column width in pixels
+  const minPx=40;
+  const hasRowNum=table.rows[0]?.cells[0]?.classList.contains('tbl-row-num');
+
+  // Snapshot ALL rendered column widths to px BEFORE starting the drag.
+  // Mixing px + % units in the same colgroup under table-layout:fixed causes
+  // erratic reflow — the table width changes mid-drag as the browser resolves
+  // the mixed units, making columns jump around.
+  const headerCells=table.rows[0]?Array.from(table.rows[0].cells):[];
+  const startWidths=headerCells.map(c=>c.offsetWidth);
+  cgCols.forEach((col,i)=>{
+    if(hasRowNum&&i===0){col.style.width=TBL_ROWNUM_W+'px';return;}
+    col.style.width=(startWidths[i]||0)+'px';
+  });
+  // Fix the table to its current rendered width so adjacent-column compensation
+  // keeps the total constant (compensated resize like spreadsheets).
+  const fixedTableW=table.offsetWidth;
+  table.style.width=fixedTableW+'px';
+
+  const startPx=startWidths[colIndex]||0;
+  // Next column absorbs the delta: dragging col wider shrinks the next col.
+  const nextColIdx=colIndex+1;
+  const nextCol=cgCols[nextColIdx]||null;
+  const nextStartPx=(nextCol&&startWidths[nextColIdx])||0;
 
   function move(e2){
     const dx=e2.clientX-startX;
     const newPx=Math.max(minPx,startPx+dx);
-    // Fixed layout: only resize the dragged column.
-    // Adjacent columns keep their widths — total table width grows/shrinks naturally.
-    // width:max-content on the table makes .tbl-outer scroll if needed.
+    const actualDx=newPx-startPx;
     if(thisCol)thisCol.style.width=newPx+'px';
-    // Mark colgroup as user-customized → prevent tblAttachTable from resetting widths
+    // Compensate next column to keep the total table width constant
+    if(nextCol&&nextStartPx>0){
+      nextCol.style.width=Math.max(minPx,nextStartPx-actualDx)+'px';
+    }
     if(cg)delete cg.dataset.auto;
   }
   function up(){
@@ -7028,6 +7046,7 @@ const SLASH_ITEMS=[
   {id:'warning',  icon:'<i class="ti ti-alert-triangle"></i>',  name:'Warning Panel', desc:'Hộp cảnh báo nền vàng',           cat:'Panel', alias:'warning caution yellow'},
   {id:'error',    icon:'<i class="ti ti-alert-circle"></i>',    name:'Error Panel',  desc:'Hộp lỗi nền đỏ',                   cat:'Panel', alias:'error danger red'},
   {id:'note',     icon:'<i class="ti ti-pin"></i>',             name:'Note Panel',   desc:'Hộp ghi chú nền tím',               cat:'Panel', alias:'note purple pin'},
+  {id:'card',     icon:'<i class="ti ti-square"></i>',          name:'Thẻ văn bản',  desc:'Khung viền accent không có icon, dùng trong layout cột', cat:'Panel', alias:'card box frame border text card'},
 ];
 
 // Recently used command IDs (max 5, persisted in localStorage)
@@ -7683,17 +7702,21 @@ function _slashInsert(id,execRange){
     return;
   }
 
-  // ── Panels ───────────────────────────────────────────────
-  if(['info','success','warning','error','note','callout'].includes(id)){
-    const icons={info:'ℹ️',success:'✅',warning:'⚠️',error:'🚨',note:'📌',callout:'💡'};
+  // ── Panels (info/success/warning/error/note/callout/card) ───
+  if(['info','success','warning','error','note','callout','card'].includes(id)){
+    const icons={info:'ℹ️',success:'✅',warning:'⚠️',error:'🚨',note:'📌',callout:'💡',card:''};
     const type=id==='callout'?'info':id;
     const panel=document.createElement('div');
     panel.className='cf-panel '+type;panel.contentEditable='false';
-    const iconEl=document.createElement('span');iconEl.className='cf-panel-icon';iconEl.textContent=icons[id];
+    // card type has no icon (full-border, clean text box)
+    if(icons[id]){
+      const iconEl=document.createElement('span');iconEl.className='cf-panel-icon';iconEl.textContent=icons[id];
+      panel.appendChild(iconEl);
+    }
     const content=document.createElement('div');content.className='cf-panel-content';content.contentEditable='true';content.innerHTML='<br>';
     const actions=document.createElement('div');actions.className='cf-panel-actions';
     actions.innerHTML='<button class="cf-panel-type-btn" onclick="cfPanelChangeType(this)" title="Đổi loại">⚙️</button><button class="cf-panel-del" onclick="this.closest(\'.cf-panel\').remove();onContentChange()" title="Xóa">✕</button>';
-    panel.appendChild(iconEl);panel.appendChild(content);panel.appendChild(actions);
+    panel.appendChild(content);panel.appendChild(actions);
     _cfInsertBlockAtRange(panel,savedRange);
     onContentChange();
     setTimeout(()=>{content.focus();const r=document.createRange();r.setStart(content,0);r.collapse(true);window.getSelection().removeAllRanges();window.getSelection().addRange(r);},30);
@@ -7771,16 +7794,26 @@ function _slashShowTableGrid(){
 }
 
 // Panel type change
-const PANEL_TYPES=['info','success','warning','error','note'];
-const PANEL_ICONS={info:'ℹ️',success:'✅',warning:'⚠️',error:'🚨',note:'📌'};
+const PANEL_TYPES=['info','success','warning','error','note','card'];
+const PANEL_ICONS={info:'ℹ️',success:'✅',warning:'⚠️',error:'🚨',note:'📌',card:''};
 function cfPanelChangeType(btn){
   const panel=btn.closest('.cf-panel');if(!panel)return;
   const cur=PANEL_TYPES.find(t=>panel.classList.contains(t))||'info';
   const next=PANEL_TYPES[(PANEL_TYPES.indexOf(cur)+1)%PANEL_TYPES.length];
   PANEL_TYPES.forEach(t=>panel.classList.remove(t));
   panel.classList.add(next);
-  const icon=panel.querySelector('.cf-panel-icon');
-  if(icon)icon.textContent=PANEL_ICONS[next];
+  let icon=panel.querySelector('.cf-panel-icon');
+  const nextIcon=PANEL_ICONS[next];
+  if(nextIcon){
+    if(!icon){
+      // Panel was a 'card' (no icon element) — create one now
+      icon=document.createElement('span');icon.className='cf-panel-icon';
+      panel.insertBefore(icon,panel.firstChild);
+    }
+    icon.textContent=nextIcon;
+  } else if(icon){
+    icon.textContent=''; // card type: CSS hides the element
+  }
   onContentChange();
 }
 
@@ -13412,6 +13445,8 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .cf-panel.warning{background:rgba(245,158,11,.08);border-color:#f59e0b}',
     '.ws-canvas .cf-panel.error{background:rgba(239,68,68,.07);border-color:#ef4444}',
     '.ws-canvas .cf-panel.note{background:rgba(168,85,247,.07);border-color:#a855f7}',
+    '.ws-canvas .cf-panel.card{border:1.5px solid var(--accent);border-left:1.5px solid var(--accent);background:transparent;border-radius:6px}',
+    '.ws-canvas .cf-panel.card .cf-panel-icon{display:none}',
     '[data-theme="dark"] .ws-canvas .cf-panel.info{background:rgba(77,138,255,.09)}',
     '[data-theme="dark"] .ws-canvas .cf-panel.success{background:rgba(34,197,94,.07)}',
     '[data-theme="dark"] .ws-canvas .cf-panel.warning{background:rgba(245,158,11,.08)}',
