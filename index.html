@@ -2255,8 +2255,8 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
       <span class="bb-color-bar" id="bbTextBar" style="background:#ef4444"></span>
     </button>
   </div>
-  <!-- Table cell controls — only visible when in table -->
-  <div id="bbTableCellWrap" style="display:none;align-items:center;gap:3px">
+  <!-- Table cell background — only visible when in table -->
+  <div id="bbTableCellWrap" style="display:none;align-items:center">
     <div class="bb-sep"></div>
     <div class="bb-color-wrap" title="Table cell background">
       <button class="bb-color-btn" onmousedown="event.preventDefault();saveRange();toggleColorPalette('tableCellCP',this)" title="Table cell background">
@@ -2264,10 +2264,6 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
         <span class="bb-color-bar" id="bbCellBar" style="background:#f1f5f9"></span>
       </button>
     </div>
-    <div class="bb-sep"></div>
-    <button class="bb" id="bbVAlignT" onmousedown="event.preventDefault();bbVAlign('top')" title="Căn trên"><i class="ti ti-align-box-top-center" style="font-size:14px"></i></button>
-    <button class="bb" id="bbVAlignM" onmousedown="event.preventDefault();bbVAlign('middle')" title="Căn giữa dọc"><i class="ti ti-align-box-center-middle" style="font-size:14px"></i></button>
-    <button class="bb" id="bbVAlignB" onmousedown="event.preventDefault();bbVAlign('bottom')" title="Căn dưới"><i class="ti ti-align-box-bottom-center" style="font-size:14px"></i></button>
   </div>
   <div class="bb-sep"></div>
   <button class="bb" id="bbLinkBtn" onmousedown="event.preventDefault();bbOpenLinkRow()" title="Insert link"><i class="ti ti-link"></i></button>
@@ -11133,7 +11129,6 @@ function bbUpdateState(){
   }
   [['bbBold','bold'],['bbItalic','italic'],['bbUnder','underline'],['bbStrike','strikeThrough']].forEach(([id,cmd])=>{const btn=document.getElementById(id);if(btn)btn.classList.toggle('active',document.queryCommandState(cmd));});
   _updateAlignBtns();
-  _updateVAlignBtns();
 }
 function bbFmt(cmd){
   const activeEl=document.activeElement;
@@ -11545,13 +11540,16 @@ function bbAlign(cmd){
   // Works on collapsed cursor too — applies to whole paragraph
   document.execCommand(cmd,false,null);
   const editor=document.getElementById('editor');if(editor)editor.focus({preventScroll:true});
+  // Center alignment → also vertically center all selected/cursor cells.
+  // Other alignments → reset vertical-align to top.
+  const vAlign=(cmd==='justifyCenter')?'middle':'top';
+  _bbSetCellVAlign(vAlign);
   onContentChange();
   _updateAlignBtns();
   setTimeout(bbShow,10);
 }
-function bbVAlign(val){
+function _bbSetCellVAlign(val){
   const editor=document.getElementById('editor');
-  // Apply to all drag-selected cells, or just the cursor's cell
   const selCells=_mergeTable?Array.from(_mergeTable.querySelectorAll('.tbl-cell-sel')).filter(c=>!c.classList.contains('tbl-row-num')):[];
   if(selCells.length>0){
     selCells.forEach(c=>{c.style.verticalAlign=val;});
@@ -11567,24 +11565,6 @@ function bbVAlign(val){
       }
     }
   }
-  onContentChange();
-  _updateVAlignBtns();
-  setTimeout(bbShow,10);
-}
-function _updateVAlignBtns(){
-  const sel=window.getSelection();
-  if(!sel||!sel.rangeCount)return;
-  let node=sel.getRangeAt(0).startContainer;
-  const editor=document.getElementById('editor');
-  let cell=null;
-  while(node&&node!==editor){
-    if(node.nodeType===1&&(node.tagName==='TD'||node.tagName==='TH')){cell=node;break;}
-    node=node.parentElement;
-  }
-  const va=cell?(cell.style.verticalAlign||'top'):'top';
-  document.getElementById('bbVAlignT')?.classList.toggle('active',va==='top'||va==='');
-  document.getElementById('bbVAlignM')?.classList.toggle('active',va==='middle');
-  document.getElementById('bbVAlignB')?.classList.toggle('active',va==='bottom');
 }
 
 function _updateAlignBtns(){
