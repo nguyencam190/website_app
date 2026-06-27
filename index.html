@@ -11497,6 +11497,18 @@ function bbAlign(cmd){
   // Works on collapsed cursor too — applies to whole paragraph
   document.execCommand(cmd,false,null);
   const editor=document.getElementById('editor');if(editor)editor.focus({preventScroll:true});
+  // Sync vertical-align on table cell: center → middle, others → top
+  const sel=window.getSelection();
+  if(sel&&sel.rangeCount){
+    let node=sel.getRangeAt(0).startContainer;
+    while(node&&node!==editor){
+      if(node.nodeType===1&&(node.tagName==='TD'||node.tagName==='TH')){
+        node.style.verticalAlign=(cmd==='justifyCenter')?'middle':'top';
+        break;
+      }
+      node=node.parentElement;
+    }
+  }
   onContentChange();
   _updateAlignBtns();
   setTimeout(bbShow,10);
