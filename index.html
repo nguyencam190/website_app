@@ -10586,21 +10586,34 @@ function _initSlashCommands(){
       onContentChange();
     }
   });
-  // ── Shift+Enter in heading: break out to new <p> ─────────────────────────
-  // Without this, browser inserts <br> inside the heading, leaving the cursor
-  // still inside <h1>/<h2>/etc. _mdAutoFormat then collects the full heading
-  // text as fullBefore so "-" / "/" triggers never match. Breaking out first
-  // lets the user type "- " or "/" on a fresh <p> as expected.
+  // ── Enter / Shift+Enter inside a heading ─────────────────────────────────
+  // PLAIN ENTER → break OUT into a fresh <p> after the heading, so the user can
+  //   type normal text or "- "/"/" for bullets/slash (_mdAutoFormat sees an empty
+  //   <p>, not the whole heading text).
+  // SHIFT+ENTER → soft line break that STAYS inside the heading, so the H1/H2/H3
+  //   styling — including the H3 left accent bar — spans every wrapped line.
   editor.addEventListener('keydown',e=>{
-    if(e.key!=='Enter'||!e.shiftKey||e.ctrlKey||e.metaKey)return;
+    if(e.key!=='Enter'||e.ctrlKey||e.metaKey)return;
     if(_slashVisible)return;
     const sel=window.getSelection();if(!sel||!sel.rangeCount)return;
     const anchor=sel.getRangeAt(0).startContainer;
     const anchorEl=anchor.nodeType===Node.TEXT_NODE?anchor.parentElement:anchor;
     const heading=anchorEl?.closest('h1,h2,h3,h4,h5,h6');
     if(!heading||!editor.contains(heading)||heading.parentElement!==editor)return;
+    if(e.shiftKey){
+      // Soft line break — keep it inside the heading (preserves the accent bar).
+      // Insert <br> manually with guaranteed caret placement INSIDE the heading so
+      // the next typed characters land in the h3 (execCommand can drop the caret out).
+      e.preventDefault();
+      // Native soft line break — inserts a <br> at the caret and keeps it INSIDE the
+      // heading (so the H1/H2/H3 styling, including the H3 left accent bar, spans every
+      // line). Native handling places the caret correctly across browsers.
+      document.execCommand('insertLineBreak');
+      onContentChange();
+      return;
+    }
+    // Plain Enter — break out into a new paragraph after the heading.
     e.preventDefault();
-    // Extract everything after the cursor into a new <p>
     const range=sel.getRangeAt(0);
     if(!range.collapsed)range.deleteContents();
     const tailRange=document.createRange();
