@@ -9515,18 +9515,26 @@ function _cfBuildCarToolbar(block){
   const moreBtn=document.createElement('button');moreBtn.className='cf-img-tb-btn';
   moreBtn.innerHTML='<i class="ti ti-dots" style="font-size:14px"></i>';moreBtn.title='Thêm';
   const ctx=document.createElement('div');ctx.className='cf-img-ctx';
-  // Shadow + Border swatch rows in ctx (per-slide)
+  // Shadow + Border swatch rows in ctx — applied to ALL slides (one consistent look
+  // for the whole carousel). Captions stay per-slide. The active state mirrors slide 0.
   function _makeCarCtxSw(labelText,datasetAttr){
     const row=document.createElement('div');row.className='cf-img-ctx-swrow';
     const lbl=document.createElement('span');lbl.className='cf-img-ctx-swlbl';lbl.textContent=labelText;row.appendChild(lbl);
+    const _allSlides=()=>block.querySelectorAll('.cf-car-slide');
     _pal.forEach(c=>{
       const sw=document.createElement('span');sw.className='cf-img-tb-swatch';
       sw.style.cssText='background:'+c.bg+';border:'+c.border;sw.dataset.swval=c.val;sw.title=labelText+': '+c.name;
+      // Initial active state from the first slide
+      const _first=block.querySelector('.cf-car-slide');
+      if(_first&&(_first.dataset[datasetAttr]||'')===c.val)sw.classList.add('active');
       sw.addEventListener('click',e=>{
         e.stopPropagation();
-        const sl=getCur();if(!sl)return;
-        if((sl.dataset[datasetAttr]||'')=== c.val){delete sl.dataset[datasetAttr];row.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.remove('active'));}
-        else{sl.dataset[datasetAttr]=c.val;row.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.remove('active'));sw.classList.add('active');}
+        const slides=_allSlides();if(!slides.length)return;
+        // Toggle based on the current look (slide 0); apply the result to EVERY slide.
+        const isActive=(slides[0].dataset[datasetAttr]||'')===c.val;
+        slides.forEach(sl=>{ if(isActive)delete sl.dataset[datasetAttr]; else sl.dataset[datasetAttr]=c.val; });
+        row.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.remove('active'));
+        if(!isActive)sw.classList.add('active');
         onContentChange();
       });
       row.appendChild(sw);
@@ -9852,11 +9860,18 @@ function _cfCarAddImages(block,track,dotsWrap,counter){
   inp.style.cssText='position:fixed;top:-9999px;opacity:0';document.body.appendChild(inp);
   inp.addEventListener('change',async function(){
     const files=Array.from(this.files);document.body.removeChild(inp);if(!files.length)return;
+    // Inherit the carousel's current border/shadow from an existing slide so the
+    // whole carousel keeps ONE consistent look (captions stay per-slide).
+    const _refSlide=block.querySelector('.cf-car-slide');
+    const _inheritShadow=_refSlide?.dataset.carslideImgshadow;
+    const _inheritBorder=_refSlide?.dataset.carslideImgborder;
     for(const file of files){
       const id=uid();
       try{await _idbPut(id,file);}catch(e){}
       const src=URL.createObjectURL(file);_cacheUrl(id,src);
       const slide=_cfBuildCarSlide({id,src,name:file.name||'image'});
+      if(_inheritShadow)slide.dataset.carslideImgshadow=_inheritShadow;
+      if(_inheritBorder)slide.dataset.carslideImgborder=_inheritBorder;
       _cfCarWireSlide(slide);
       track.appendChild(slide);
       const dot=document.createElement('div');dot.className='cf-car-dot';
