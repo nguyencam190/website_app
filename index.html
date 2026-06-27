@@ -6439,6 +6439,15 @@ function tblAttachTable(table){
       tblSelectCol(table,_thCi,colSel);
     });
     th.appendChild(colSel);
+    // Ensure empty th always has a <br> cursor anchor as first child.
+    // Without it the resize handle (contentEditable=false, not display:none) is the
+    // only child and the browser snaps the caret to the right edge of the cell.
+    const _uiCls=['tbl-col-resize-handle','tbl-col-sel','tbl-cell-drop','tbl-row-resize-handle','tbl-row-sel'];
+    const _hasReal=Array.from(th.childNodes).some(n=>
+      n.nodeType===Node.TEXT_NODE||
+      (n.nodeType===Node.ELEMENT_NODE&&!_uiCls.some(c=>n.classList.contains(c)))
+    );
+    if(!_hasReal){const _br=document.createElement('br');th.insertBefore(_br,th.firstChild);}
   });
 
   // 3. ── Row resize handles + row selector ──────────────────
@@ -6812,7 +6821,10 @@ function tgInsert(rows,cols){
     const tr=document.createElement('tr');
     for(let cc=0;cc<cols;cc++){
       const cell=document.createElement(r===0?'th':'td');
-      cell.textContent='';
+      // th cells need a <br> anchor so the caret starts top-left, not top-right.
+      // Without it the only child is tbl-col-resize-handle (contentEditable=false),
+      // and the browser places the caret after the atomic element = right edge.
+      cell.innerHTML=r===0?'<br>':'';
       tr.appendChild(cell);
     }
     table.appendChild(tr);
