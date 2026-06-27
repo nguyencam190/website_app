@@ -2242,11 +2242,16 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
   <button class="bb" id="bbUnder" onmousedown="event.preventDefault();bbFmt('underline')" title="Underline" style="text-decoration:underline">U</button>
   <button class="bb" id="bbStrike" onmousedown="event.preventDefault();bbFmt('strikeThrough')" title="Strikethrough"><s>S</s></button>
   <div class="bb-sep"></div>
-  <!-- Alignment -->
+  <!-- Horizontal alignment -->
   <button class="bb" id="bbAlignL" onmousedown="event.preventDefault();bbAlign('justifyLeft')" title="Align left"><i class="ti ti-align-left" style="font-size:14px"></i></button>
   <button class="bb" id="bbAlignC" onmousedown="event.preventDefault();bbAlign('justifyCenter')" title="Align center"><i class="ti ti-align-center" style="font-size:14px"></i></button>
   <button class="bb" id="bbAlignR" onmousedown="event.preventDefault();bbAlign('justifyRight')" title="Align right"><i class="ti ti-align-right" style="font-size:14px"></i></button>
   <button class="bb" id="bbAlignJ" onmousedown="event.preventDefault();bbAlign('justifyFull')" title="Justify"><i class="ti ti-align-justified" style="font-size:14px"></i></button>
+  <div class="bb-sep"></div>
+  <!-- Vertical alignment (table cells only) -->
+  <button class="bb" id="bbVAlignT" onmousedown="event.preventDefault();bbVAlign('top')" title="Căn trên"><i class="ti ti-layout-align-top" style="font-size:14px"></i></button>
+  <button class="bb" id="bbVAlignM" onmousedown="event.preventDefault();bbVAlign('middle')" title="Căn giữa dọc"><i class="ti ti-layout-align-middle" style="font-size:14px"></i></button>
+  <button class="bb" id="bbVAlignB" onmousedown="event.preventDefault();bbVAlign('bottom')" title="Căn dưới"><i class="ti ti-layout-align-bottom" style="font-size:14px"></i></button>
   <div class="bb-sep"></div>
   <!-- Text color — works in editor, text box, table cell -->
   <div class="bb-color-wrap" title="Text color" id="textColorWrap">
@@ -11129,6 +11134,7 @@ function bbUpdateState(){
   }
   [['bbBold','bold'],['bbItalic','italic'],['bbUnder','underline'],['bbStrike','strikeThrough']].forEach(([id,cmd])=>{const btn=document.getElementById(id);if(btn)btn.classList.toggle('active',document.queryCommandState(cmd));});
   _updateAlignBtns();
+  _updateVAlignBtns();
 }
 function bbFmt(cmd){
   const activeEl=document.activeElement;
@@ -11540,16 +11546,13 @@ function bbAlign(cmd){
   // Works on collapsed cursor too — applies to whole paragraph
   document.execCommand(cmd,false,null);
   const editor=document.getElementById('editor');if(editor)editor.focus({preventScroll:true});
-  // Center alignment → also vertically center all selected/cursor cells.
-  // Other alignments → reset vertical-align to top.
-  const vAlign=(cmd==='justifyCenter')?'middle':'top';
-  _bbSetCellVAlign(vAlign);
   onContentChange();
   _updateAlignBtns();
   setTimeout(bbShow,10);
 }
-function _bbSetCellVAlign(val){
+function bbVAlign(val){
   const editor=document.getElementById('editor');
+  // Apply to all drag-selected cells, or just the cursor's cell
   const selCells=_mergeTable?Array.from(_mergeTable.querySelectorAll('.tbl-cell-sel')).filter(c=>!c.classList.contains('tbl-row-num')):[];
   if(selCells.length>0){
     selCells.forEach(c=>{c.style.verticalAlign=val;});
@@ -11565,6 +11568,24 @@ function _bbSetCellVAlign(val){
       }
     }
   }
+  onContentChange();
+  _updateVAlignBtns();
+  setTimeout(bbShow,10);
+}
+function _updateVAlignBtns(){
+  const sel=window.getSelection();
+  if(!sel||!sel.rangeCount)return;
+  let node=sel.getRangeAt(0).startContainer;
+  const editor=document.getElementById('editor');
+  let cell=null;
+  while(node&&node!==editor){
+    if(node.nodeType===1&&(node.tagName==='TD'||node.tagName==='TH')){cell=node;break;}
+    node=node.parentElement;
+  }
+  const va=cell?(cell.style.verticalAlign||'top'):'top';
+  document.getElementById('bbVAlignT')?.classList.toggle('active',va==='top'||va==='');
+  document.getElementById('bbVAlignM')?.classList.toggle('active',va==='middle');
+  document.getElementById('bbVAlignB')?.classList.toggle('active',va==='bottom');
 }
 
 function _updateAlignBtns(){
