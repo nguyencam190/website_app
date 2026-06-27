@@ -8767,6 +8767,16 @@ function _cfBuildImgToolbar(block){
 
   const sep2=document.createElement('div');sep2.className='cf-img-tb-sep';tb.appendChild(sep2);
 
+  // Replace media — swap the image/video without deleting and re-inserting the block
+  const isVidBlock=block.dataset.cfimgtype==='video';
+  const repBtn=document.createElement('button');repBtn.className='cf-img-tb-btn';
+  repBtn.innerHTML='<i class="ti ti-replace" style="font-size:13px"></i>';
+  repBtn.title=isVidBlock?'Đổi video':'Đổi hình ảnh';
+  repBtn.addEventListener('click',e=>{e.stopPropagation();_cfReplaceMedia(block);});
+  tb.appendChild(repBtn);
+
+  const sep2b=document.createElement('div');sep2b.className='cf-img-tb-sep';tb.appendChild(sep2b);
+
   // Swatch palette (used in ctx dropdown)
   const _swPalette=[
     {bg:'#ffffff',border:'1px solid #ccc',val:'1',name:'Trắng'},
@@ -8873,6 +8883,70 @@ function _cfBuildImgToolbar(block){
   moreWrap.appendChild(moreBtn);tb.appendChild(moreWrap);
   tb._ctx=ctx;
   return tb;
+}
+
+// Replace the media (image OR video) inside an existing image block without deleting it.
+// Opens a file picker, compresses images (same as cfInsertImageBlock), stores the new blob
+// in IDB under a fresh id, swaps the media element, and points the block at the new id.
+// The old id's ObjectURL is revoked; its IDB blob is orphan-cleaned on the next Push.
+function _cfReplaceMedia(block){
+  if(!block)return;
+  const inp=document.createElement('input');
+  inp.type='file';inp.accept='image/*,video/*';inp.style.display='none';
+  document.body.appendChild(inp);
+  inp.addEventListener('change',async()=>{
+    const file=inp.files&&inp.files[0];
+    inp.remove();
+    if(!file)return;
+    const isVid=file.type.startsWith('video/');
+    const newId=uid();
+    let blob=file;
+    if(!isVid){
+      // Compress image — mirror cfInsertImageBlock (MAX 1800px, q 0.88)
+      blob=await new Promise(res=>{
+        const img=new Image(),url=URL.createObjectURL(file);
+        img.onload=()=>{
+          URL.revokeObjectURL(url);
+          const MAX=1800;let{width:w,height:h}=img;
+          if(w>MAX||h>MAX){const r=Math.min(MAX/w,MAX/h);w=Math.round(w*r);h=Math.round(h*r);}
+          const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+          const cx=cv.getContext('2d');cx.drawImage(img,0,0,w,h);
+          const mime=file.type==='image/png'?'image/png':'image/jpeg';
+          cv.toBlob(b=>res(b||file),mime,0.88);
+        };
+        img.onerror=()=>res(file);img.src=url;
+      });
+    }
+    try{await _idbPut(newId,blob);}catch(e){}
+    const objUrl=URL.createObjectURL(blob);
+    _cacheUrl(newId,objUrl);
+    // Revoke the OLD media's ObjectURL (IDB blob is orphan-cleaned on next Push)
+    const oldId=block.dataset.cfimgid;
+    if(oldId&&oldId!==newId)_revokeUrl(oldId);
+    const inner=block.querySelector('.cf-img-inner');
+    let media=inner?inner.querySelector('img,video'):block.querySelector('img,video');
+    const wasVid=media&&media.tagName==='VIDEO';
+    if(media&&wasVid!==isVid){
+      // Media kind changed (image↔video) — rebuild the element in place, keep resize handles
+      _stopVideosIn(block);
+      const nm=isVid?document.createElement('video'):document.createElement('img');
+      if(isVid){nm.src=objUrl;nm.controls=true;nm.muted=true;nm.loop=true;nm.autoplay=true;nm.setAttribute('playsinline','');}
+      else{nm.src=objUrl;nm.alt=file.name||'image';}
+      media.replaceWith(nm);media=nm;
+      if(inner&&isVid&&!inner.style.width)inner.style.width='100%';
+    }else if(media){
+      if(isVid){_stopVideosIn(block);media.src=objUrl;media.muted=true;media.loop=true;media.autoplay=true;try{media.load();}catch(e){}}
+      else{media.src=objUrl;media.alt=file.name||'image';}
+    }
+    block.dataset.cfimgid=newId;
+    block.dataset.cfimgtype=isVid?'video':'image';
+    block.dataset.name=file.name||block.dataset.name||'image';
+    onContentChange();
+    // Reposition the toolbar — new media may have different dimensions
+    if(typeof _cfImgPositionToolbar==='function'&&block.classList.contains('selected'))_cfImgPositionToolbar(block);
+    toast(isVid?'Đã đổi video':'Đã đổi hình ảnh','success');
+  });
+  inp.click();
 }
 
 function _cfImgInitResize(inner,handle,side){
