@@ -2937,6 +2937,7 @@ function editorUndo(){
   const editor=document.getElementById('editor');if(!editor)return;
   _redoStack.push(_undoStack.pop());
   _undoPaused=true;
+  if(typeof bppClose==='function')bppClose();
   editor.innerHTML=_undoStack[_undoStack.length-1]||'<p><br></p>';
   _cfRewireAllBlocks(editor);
   _undoPaused=false;
@@ -2949,6 +2950,7 @@ function editorRedo(){
   const snap=_redoStack.pop();
   _undoStack.push(snap);
   _undoPaused=true;
+  if(typeof bppClose==='function')bppClose();
   editor.innerHTML=snap;
   _cfRewireAllBlocks(editor);
   _undoPaused=false;
@@ -8282,6 +8284,8 @@ function _cfRewireAllBlocks(editor){
   _cfAddCodeCopyBtns(editor);
   _cfRefreshTocs(editor);
   tblAttachAll();
+  _cfSpotLoadAll(editor);
+  _cfCardsLoadAll(editor);
   setTimeout(async()=>{await _cfCarLoadAll(editor);_cfEmbedLoadAll(editor);},50);
   setTimeout(()=>tbLoadAll(state.docs.find(d=>d.id===state.currentDocId)||{}),60);
   setTimeout(()=>fmLoadAll(state.docs.find(d=>d.id===state.currentDocId)||{}),80);
