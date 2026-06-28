@@ -1323,14 +1323,14 @@ td .cf-checklist[data-open="true"] .cf-checklist-body,.cf-column-item .cf-checkl
 [data-theme="dark"] .cf-spotlight[data-bg="peach"]{background:rgba(236,72,153,.13)}
 [data-theme="dark"] .cf-spotlight[data-bg="sand"]{background:rgba(245,158,11,.12)}
 [data-theme="dark"] .cf-spotlight[data-bg="gray"]{background:var(--surface2)}
-.cf-spotlight-text{flex:1;padding:28px 24px;display:flex;flex-direction:column;justify-content:center;gap:10px;min-width:0}
+.cf-spotlight-text{flex:1;padding:28px 24px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:10px;min-width:0}
 .cf-spotlight-title{font-size:1.375rem;font-weight:700;line-height:1.3;color:var(--text);outline:none}
 .cf-spotlight-title:empty::before{content:attr(data-ph);color:var(--text3);pointer-events:none}
 .cf-spotlight-desc{font-size:.9375rem;color:var(--text2);line-height:1.6;outline:none}
 .cf-spotlight-desc:empty::before{content:attr(data-ph);color:var(--text3);pointer-events:none}
 .cf-spotlight-btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
 .cf-spotlight-btn{display:inline-flex;align-items:center;padding:7px 18px;border-radius:6px;background:var(--accent);color:#fff;font-size:.875rem;font-weight:600;text-decoration:none;outline:none;cursor:text;min-width:30px}
-.cf-spotlight-img-side{width:42%;flex-shrink:0;position:relative;cursor:pointer;overflow:hidden;background:rgba(0,0,0,.05);min-height:160px;display:flex;flex-direction:column}
+.cf-spotlight-img-side{width:42%;flex-shrink:0;position:relative;overflow:hidden;background:rgba(0,0,0,.05);min-height:160px;display:flex;flex-direction:column}
 .cf-spotlight-img-side img{width:100%;flex:1;min-height:0;object-fit:cover;display:block}
 .cf-spotlight-img-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;color:var(--text3);font-size:.8125rem}
 .cf-spotlight-img-ph i{font-size:28px}
@@ -1351,9 +1351,9 @@ td .cf-checklist[data-open="true"] .cf-checklist-body,.cf-column-item .cf-checkl
 .cf-cards[data-cols="4"] .cf-cards-grid{grid-template-columns:repeat(4,1fr)}
 .cf-card{border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface);position:relative;transition:box-shadow .15s}
 .cf-card:hover{box-shadow:0 3px 14px rgba(0,0,0,.09)}
-.cf-card-img-wrap{position:relative;aspect-ratio:16/9;background:var(--surface2);overflow:hidden;cursor:pointer}
-.cf-card-img-wrap img{width:100%;height:100%;object-fit:cover;display:block}
-.cf-card-img-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;color:var(--text3);font-size:22px}
+.cf-card-img-wrap{position:relative;background:var(--surface2);overflow:hidden;cursor:pointer;min-height:120px}
+.cf-card-img-wrap img{width:100%;height:auto;display:block}
+.cf-card-img-ph{width:100%;height:100%;min-height:120px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;color:var(--text3);font-size:22px}
 .cf-card-img-ph span{font-size:.75rem}
 .cf-card-body{padding:10px 12px 12px}
 .cf-card-title{font-size:.9375rem;font-weight:700;color:var(--text);outline:none;line-height:1.4}
@@ -8401,10 +8401,7 @@ function _cfSpotBuildTb(block){
   block.appendChild(tb);
 }
 function _cfSpotWireImgSide(block){
-  const imgSide=block.querySelector('.cf-spotlight-img-side');
-  if(!imgSide||imgSide._spotWired)return;
-  imgSide._spotWired=true;
-  imgSide.addEventListener('click',()=>_cfSpotPickImg(block));
+  // Image changed via BPP sidebar only — direct click disabled
 }
 function _cfSpotPickImg(block){
   const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
@@ -8547,6 +8544,17 @@ function bppClose(){
   _bppBlock=null;_bppType=null;
   document.getElementById('bpp')?.classList.remove('on');
   _cfBlockBarHide();
+}
+function bppToggle(){
+  const bpp=document.getElementById('bpp');if(!bpp)return;
+  if(bpp.classList.contains('on')&&_bppBlock===_cbbBlock){
+    document.querySelectorAll('.bpp-sel').forEach(el=>el.classList.remove('bpp-sel'));
+    _bppBlock=null;_bppType=null;
+    bpp.classList.remove('on');
+  } else if(_cbbBlock){
+    const type=_cbbBlock.classList.contains('cf-spotlight')?'spotlight':'cards';
+    bppOpen(_cbbBlock,type);
+  }
 }
 function bppSwitchTab(tab){
   _bppTab=tab;
@@ -14408,7 +14416,7 @@ function _buildViewerShellCss(accent){
     '[data-theme="dark"] .ws-canvas .cf-spotlight[data-bg="peach"]{background:rgba(236,72,153,.13)}',
     '[data-theme="dark"] .ws-canvas .cf-spotlight[data-bg="sand"]{background:rgba(245,158,11,.12)}',
     '[data-theme="dark"] .ws-canvas .cf-spotlight[data-bg="gray"]{background:var(--surface2)}',
-    '.ws-canvas .cf-spotlight-text{flex:1;padding:28px 24px;display:flex;flex-direction:column;justify-content:center;gap:10px;min-width:0}',
+    '.ws-canvas .cf-spotlight-text{flex:1;padding:28px 24px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:10px;min-width:0}',
     '.ws-canvas .cf-spotlight-title{font-size:1.375rem;font-weight:700;line-height:1.3;color:var(--text)}',
     '.ws-canvas .cf-spotlight-desc{font-size:.9375rem;color:var(--text2);line-height:1.6}',
     '.ws-canvas .cf-spotlight-btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}',
@@ -14425,8 +14433,9 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .cf-cards[data-cols="4"] .cf-cards-grid{grid-template-columns:repeat(4,1fr)}',
     '.ws-canvas .cf-card{border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface)}',
     '.ws-canvas .cf-card:hover{box-shadow:0 3px 14px rgba(0,0,0,.09)}',
-    '.ws-canvas .cf-card-img-wrap{position:relative;aspect-ratio:16/9;background:var(--surface2);overflow:hidden}',
-    '.ws-canvas .cf-card-img-wrap img{width:100%;height:100%;object-fit:cover;display:block}',
+    '.ws-canvas .cf-card-img-wrap{position:relative;background:var(--surface2);overflow:hidden;min-height:120px}',
+    '.ws-canvas .cf-card-img-wrap img{width:100%;height:auto;display:block}',
+    '.ws-canvas .cf-card-img-ph{width:100%;height:100%;min-height:120px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;font-size:22px}',
     '.ws-canvas .cf-card-body{padding:10px 12px 12px}',
     '.ws-canvas .cf-card-title{font-size:.9375rem;font-weight:700;color:var(--text);line-height:1.4}',
     '.ws-canvas .cf-card-desc{font-size:.8125rem;color:var(--text2);line-height:1.5;margin-top:4px}',
@@ -16869,7 +16878,7 @@ init();
 <div id="cfBlockChip"><i class="ti ti-settings-2"></i><span id="cbbChipText">Spotlight</span></div>
 <!-- Block bottom action bar — shows centered below selected Spotlight/Cards block -->
 <div id="cfBlockBar">
-  <button class="cbb-btn" title="Edit" onclick="document.getElementById('bpp')?.classList.add('on');bppRender()"><i class="ti ti-pencil"></i></button>
+  <button class="cbb-btn" title="Edit" onclick="bppToggle()"><i class="ti ti-pencil"></i></button>
   <div class="cbb-sep"></div>
   <div class="cbb-wd" id="cbbWd">
     <button class="cbb-wd-btn" id="cbbWdBtn" onclick="_cbbWdToggle()">
