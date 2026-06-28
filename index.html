@@ -16279,12 +16279,21 @@ async function doExportOptimized(opts){
       else{img.closest('.cf-card-img-wrap')?.remove();}
       _showExportProgress(++_cnt,_tot,'Xuất ảnh card...');if(_cnt%3===0)await new Promise(r=>setTimeout(r,0));
     }
-    // Remove empty card body sections (title + desc both empty) — no blank space on published site
+    // Remove all empty optional-text regions — no blank space on published site
+    const _capEmpty=el=>!(el.textContent||'').trim()&&!/\S/.test(el.innerHTML||'');
+    // Cards: body only if both title+desc empty
     tmp.querySelectorAll('.cf-card-body').forEach(body=>{
       const t=(body.querySelector('.cf-card-title')?.textContent||'').trim();
       const d=(body.querySelector('.cf-card-desc')?.textContent||'').trim();
       if(!t&&!d)body.remove();
     });
+    // Image/video block captions
+    tmp.querySelectorAll('.cf-img-caption').forEach(cap=>{if(_capEmpty(cap))cap.remove();});
+    // Carousel slide captions
+    tmp.querySelectorAll('.cf-car-slide-caption').forEach(cap=>{if(_capEmpty(cap))cap.remove();});
+    // Spotlight: remove empty title or desc individually
+    tmp.querySelectorAll('.cf-spotlight-title').forEach(el=>{if(_capEmpty(el))el.remove();});
+    tmp.querySelectorAll('.cf-spotlight-desc').forEach(el=>{if(_capEmpty(el))el.remove();});
     // Final sweep — remove alt from ALL images so browsers don't show filename text on broken images
     tmp.querySelectorAll('img').forEach(img=>{
       img.removeAttribute('alt');

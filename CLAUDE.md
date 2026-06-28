@@ -158,15 +158,24 @@ Sau **mỗi lần thay đổi code** trong dự án này, bắt buộc phải:
 - Không được xóa file khỏi folder trong luồng edit realtime (chỉ xóa khi Push) — tránh mất ảnh nếu user undo
 - Sau khi import trang có ảnh trùng → Push sẽ tự dedup và xóa file thừa, KHÔNG cần xóa thủ công
 
-## Quy tắc Block Cards/Spotlight — Không publish khoảng trống rỗng
+## Quy tắc Block — Không publish khoảng trống rỗng
 
-**Nguyên tắc bất biến:** Nếu các trường chú thích (title, description) của một card **không có nội dung**, KHÔNG được xuất khoảng trống đó ra website. Khoảng trắng rỗng trông mất thẩm mỹ trên published site.
+**Nguyên tắc bất biến:** Bất kỳ vùng text tùy chọn nào (caption, description, title, subtitle…) **không có nội dung** thì KHÔNG được xuất ra website. Khoảng trắng rỗng mất thẩm mỹ.
 
-### Áp dụng cụ thể (thẻ Cards):
-- Trong luồng export (`doExportOptimized`), sau khi xử lý ảnh card, kiểm tra từng `.cf-card-body`:
-  - Nếu `.cf-card-title` và `.cf-card-desc` đều **rỗng** (textContent.trim() === '') → `body.remove()`
-- **KHÔNG** để lại thẻ `<div class="cf-card-body"></div>` hay thẻ rỗng tương đương trong HTML xuất ra
+### Áp dụng cho TẤT CẢ block có text tùy chọn (trong `doExportOptimized`, bước post-process HTML):
 
-### Nguyên tắc mở rộng:
-- Bất kỳ block nào có vùng text tùy chọn (caption, description, subtitle…) → nếu rỗng thì KHÔNG render vùng đó ra website
-- Luôn kiểm tra trong bước post-process HTML trước khi zip/export
+| Block | Element cần kiểm tra | Hành động nếu rỗng |
+|---|---|---|
+| **Hình / Video** (`.cf-img-block`) | `.cf-img-caption` | `caption.remove()` |
+| **Carousel** (`.cf-carousel`) | `.cf-car-slide-caption` | `caption.remove()` |
+| **Spotlight** (`.cf-spotlight`) | `.cf-spotlight-title` | `el.remove()` |
+| **Spotlight** | `.cf-spotlight-desc` | `el.remove()` |
+| **Cards** (`.cf-cards`) | `.cf-card-body` | `body.remove()` nếu cả title lẫn desc rỗng |
+
+### Quy tắc kiểm tra "rỗng":
+- `textContent.trim() === ''` VÀ không có ký tự không-khoảng-trắng trong `innerHTML`
+- Dùng helper: `const _capEmpty = el => !(el.textContent||'').trim() && !/\S/.test(el.innerHTML||'')`
+
+### Khi thêm block mới có text tùy chọn:
+- Thêm vào bước post-process trong `doExportOptimized` ngay sau card body cleanup
+- KHÔNG để thẻ rỗng trong HTML xuất ra
