@@ -1355,8 +1355,6 @@ td .cf-checklist[data-open="true"] .cf-checklist-body,.cf-column-item .cf-checkl
 .cf-card-img-wrap img{width:100%;height:100%;object-fit:cover;display:block}
 .cf-card-img-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;color:var(--text3);font-size:22px}
 .cf-card-img-ph span{font-size:.75rem}
-.cf-card-lbl{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.58);color:#fff;font-size:.625rem;font-weight:700;letter-spacing:.07em;padding:2px 6px;border-radius:3px;text-transform:uppercase;outline:none;min-width:4px;cursor:text}
-.cf-card-lbl:empty::before{content:'LABEL';opacity:.45}
 .cf-card-body{padding:10px 12px 12px}
 .cf-card-title{font-size:.9375rem;font-weight:700;color:var(--text);outline:none;line-height:1.4}
 .cf-card-title:empty::before{content:attr(data-ph);color:var(--text3)}
@@ -8450,8 +8448,6 @@ function _cfBuildCard(opts={}){
   } else {
     imgWrap.innerHTML='<div class="cf-card-img-ph"><i class="ti ti-photo"></i><span>Chọn ảnh</span></div>';
   }
-  const lbl=document.createElement('div');lbl.className='cf-card-lbl';lbl.contentEditable='true';
-  lbl.innerHTML=opts.label||'';imgWrap.appendChild(lbl);
   const body=document.createElement('div');body.className='cf-card-body';
   const titleEl=document.createElement('div');titleEl.className='cf-card-title';titleEl.contentEditable='true';
   titleEl.dataset.ph='Give your card a title';titleEl.innerHTML=opts.title||'';
@@ -8467,10 +8463,7 @@ function _cfBuildCard(opts={}){
 function _cfCardWireImg(card){
   const imgWrap=card.querySelector('.cf-card-img-wrap');
   if(!imgWrap||imgWrap._cardWired)return;imgWrap._cardWired=true;
-  imgWrap.addEventListener('click',e=>{
-    if(e.target.classList.contains('cf-card-lbl')||e.target.closest?.('.cf-card-lbl'))return;
-    _cfCardPickImg(card);
-  });
+  imgWrap.addEventListener('click',()=>{_cfCardPickImg(card);});
 }
 function _cfCardPickImg(card){
   const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
@@ -8482,11 +8475,8 @@ function _cfCardPickImg(card){
     const objUrl=URL.createObjectURL(file);_cacheUrl(id,objUrl);
     try{await _idbPut(id,file);}catch(e){}
     const imgWrap=card.querySelector('.cf-card-img-wrap');
-    const lblHtml=imgWrap.querySelector('.cf-card-lbl')?.innerHTML||'';
     imgWrap.innerHTML='';imgWrap._cardWired=false;
     const img=document.createElement('img');img.src=objUrl;img.dataset.cardimgid=id;imgWrap.appendChild(img);
-    const lbl=document.createElement('div');lbl.className='cf-card-lbl';lbl.contentEditable='true';
-    lbl.innerHTML=lblHtml;imgWrap.appendChild(lbl);
     _cfCardWireImg(card);onContentChange();
   });
   inp.click();
@@ -8756,28 +8746,19 @@ function _bppCardItem(card,num,defaultOpen){
   const hd=document.createElement('div');hd.className='bpp-ci-hd';
   const drag=document.createElement('span');drag.className='bpp-ci-drag';drag.innerHTML='<i class="ti ti-grip-vertical"></i>';
   const name=document.createElement('span');name.className='bpp-ci-name';
-  const lblTxt=(card.querySelector('.cf-card-lbl')?.textContent.trim())||'';
   const titleTxt=(card.querySelector('.cf-card-title')?.textContent.trim())||'';
-  const cardName=lblTxt||titleTxt;
-  name.textContent=cardName?`Card ${num}: ${cardName.slice(0,22)}`:`Card ${num}`;
+  name.textContent=titleTxt?`Card ${num}: ${titleTxt.slice(0,22)}`:`Card ${num}`;
   const chev=document.createElement('span');chev.className='bpp-ci-chev';chev.innerHTML='<i class="ti ti-chevron-down"></i>';
   hd.appendChild(drag);hd.appendChild(name);hd.appendChild(chev);
   hd.addEventListener('click',()=>{item.dataset.open=item.dataset.open==='1'?'0':'1';});
   const bd=document.createElement('div');bd.className='bpp-ci-body';
   // Link
   bd.appendChild(_bppField('Link',_bppLinkInp(card.dataset.href||'',v=>{card.dataset.href=v;onContentChange();})));
-  // Label
-  const lblEl=card.querySelector('.cf-card-lbl');
-  bd.appendChild(_bppField('Label',_bppInp(lblEl?.textContent||'',v=>{
-    if(lblEl)lblEl.textContent=v;
-    name.textContent=v?`Card ${num}: ${v.slice(0,22)}`:(card.querySelector('.cf-card-title')?.textContent.trim()?`Card ${num}: ${card.querySelector('.cf-card-title').textContent.trim().slice(0,22)}`:`Card ${num}`);
-    onContentChange();
-  },'LABEL')));
   // Title
   const titleEl=card.querySelector('.cf-card-title');
   const titleField=_bppField('Title',_bppInp(titleEl?.textContent||'',v=>{
     if(titleEl)titleEl.textContent=v;
-    if(!lblEl?.textContent?.trim())name.textContent=v?`Card ${num}: ${v.slice(0,22)}`:`Card ${num}`;
+    name.textContent=v?`Card ${num}: ${v.slice(0,22)}`:`Card ${num}`;
     onContentChange();
   },'Give your card a title'));
   titleField.querySelector('.bpp-lbl').innerHTML='Title <span>(Recommended)</span>';
@@ -8800,11 +8781,8 @@ function _bppCardItem(card,num,defaultOpen){
     rm.addEventListener('click',()=>{
       const iw=card.querySelector('.cf-card-img-wrap');
       if(iw){
-        const lHtml=iw.querySelector('.cf-card-lbl')?.innerHTML||'';
         iw.innerHTML='<div class="cf-card-img-ph"><i class="ti ti-photo"></i><span>Chọn ảnh</span></div>';
-        iw._cardWired=false;
-        const nl=document.createElement('div');nl.className='cf-card-lbl';nl.contentEditable='true';nl.innerHTML=lHtml;iw.appendChild(nl);
-        _cfCardWireImg(card);
+        iw._cardWired=false;_cfCardWireImg(card);
       }
       onContentChange();setTimeout(bppRender,50);
     });
@@ -14449,7 +14427,6 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .cf-card:hover{box-shadow:0 3px 14px rgba(0,0,0,.09)}',
     '.ws-canvas .cf-card-img-wrap{position:relative;aspect-ratio:16/9;background:var(--surface2);overflow:hidden}',
     '.ws-canvas .cf-card-img-wrap img{width:100%;height:100%;object-fit:cover;display:block}',
-    '.ws-canvas .cf-card-lbl{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.58);color:#fff;font-size:.625rem;font-weight:700;letter-spacing:.07em;padding:2px 6px;border-radius:3px;text-transform:uppercase}',
     '.ws-canvas .cf-card-body{padding:10px 12px 12px}',
     '.ws-canvas .cf-card-title{font-size:.9375rem;font-weight:700;color:var(--text);line-height:1.4}',
     '.ws-canvas .cf-card-desc{font-size:.8125rem;color:var(--text2);line-height:1.5;margin-top:4px}',
