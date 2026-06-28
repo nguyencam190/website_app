@@ -8670,11 +8670,20 @@ function _bppSpotStyles(body){
   }));
   // ── Layouts (collapsible, open) ──
   body.appendChild(_bppCsec('Layouts',true,sec=>{
-    const curFloat=bl.dataset.float||'';const curAlign=bl.dataset.align||'center';
+    const curW=bl.dataset.width||'centered';const curFloat=bl.dataset.float||'';const curAlign=bl.dataset.align||'center';
+    // Width presets
+    const wb=document.createElement('div');wb.className='bpp-col-btns';
+    [{key:'centered',label:'Centered'},{key:'wide',label:'Wide'},{key:'full',label:'Full width'}].forEach(w=>{
+      const active=!curFloat&&!bl.dataset.align&&curW===w.key;
+      const b=document.createElement('button');b.className='bpp-col-btn'+(active?' active':'');b.textContent=w.label;
+      b.addEventListener('click',()=>{_cbbSetWidth(w.key);wb.querySelectorAll('.bpp-col-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');});
+      wb.appendChild(b);
+    });
+    sec.appendChild(_bppField('Width',wb));
     // Align
     const ab=document.createElement('div');ab.className='bpp-col-btns';
     [{key:'left',label:'Left'},{key:'center',label:'Center'},{key:'right',label:'Right'}].forEach(a=>{
-      const b=document.createElement('button');b.className='bpp-col-btn'+(!curFloat&&curAlign===a.key?' active':'');
+      const b=document.createElement('button');b.className='bpp-col-btn'+(!curFloat&&curAlign===a.key&&bl.dataset.align?' active':'');
       b.textContent=a.label;
       b.addEventListener('click',()=>{_cbbSetAlign(a.key);ab.querySelectorAll('.bpp-col-btn').forEach(x=>x.classList.remove('active'));if(!_cbbBlock?.dataset.float)b.classList.add('active');});
       ab.appendChild(b);
@@ -8686,7 +8695,7 @@ function _bppSpotStyles(body){
       const active=(!f.key&&!curFloat)||(f.key&&curFloat===f.key);
       const b=document.createElement('button');b.className='bpp-col-btn'+(active?' active':'');b.textContent=f.label;
       b.addEventListener('click',()=>{
-        if(!f.key){if(bl.dataset.float){delete bl.dataset.float;bl.style.width='';bl.dataset.align='center';delete bl.dataset.width;_cbbSyncAlignFloat();onContentChange();requestAnimationFrame(_cfBlockBarPosition);bppRender();}}
+        if(!f.key){if(bl.dataset.float){delete bl.dataset.float;bl.style.width='';bl.dataset.align='center';delete bl.dataset.width;bl.style.maxWidth='';_cbbSyncAlignFloat();onContentChange();requestAnimationFrame(_cfBlockBarPosition);bppRender();}}
         else _cbbSetFloat(f.key);
       });
       fb.appendChild(b);
@@ -8812,11 +8821,20 @@ function _bppCardsStyles(body){
   }));
   // ── Layouts (collapsible, open) ──
   body.appendChild(_bppCsec('Layouts',true,sec=>{
-    const curFloat=bl.dataset.float||'';const curAlign=bl.dataset.align||'center';
+    const curW=bl.dataset.width||'centered';const curFloat=bl.dataset.float||'';const curAlign=bl.dataset.align||'center';
+    // Width presets
+    const wb=document.createElement('div');wb.className='bpp-col-btns';
+    [{key:'centered',label:'Centered'},{key:'wide',label:'Wide'},{key:'full',label:'Full width'}].forEach(w=>{
+      const active=!curFloat&&!bl.dataset.align&&curW===w.key;
+      const b=document.createElement('button');b.className='bpp-col-btn'+(active?' active':'');b.textContent=w.label;
+      b.addEventListener('click',()=>{_cbbSetWidth(w.key);wb.querySelectorAll('.bpp-col-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');});
+      wb.appendChild(b);
+    });
+    sec.appendChild(_bppField('Width',wb));
     // Align
     const ab=document.createElement('div');ab.className='bpp-col-btns';
     [{key:'left',label:'Left'},{key:'center',label:'Center'},{key:'right',label:'Right'}].forEach(a=>{
-      const b=document.createElement('button');b.className='bpp-col-btn'+(!curFloat&&curAlign===a.key?' active':'');
+      const b=document.createElement('button');b.className='bpp-col-btn'+(!curFloat&&curAlign===a.key&&bl.dataset.align?' active':'');
       b.textContent=a.label;
       b.addEventListener('click',()=>{_cbbSetAlign(a.key);ab.querySelectorAll('.bpp-col-btn').forEach(x=>x.classList.remove('active'));if(!_cbbBlock?.dataset.float)b.classList.add('active');});
       ab.appendChild(b);
@@ -8828,7 +8846,7 @@ function _bppCardsStyles(body){
       const active=(!f.key&&!curFloat)||(f.key&&curFloat===f.key);
       const b=document.createElement('button');b.className='bpp-col-btn'+(active?' active':'');b.textContent=f.label;
       b.addEventListener('click',()=>{
-        if(!f.key){if(bl.dataset.float){delete bl.dataset.float;bl.style.width='';bl.dataset.align='center';delete bl.dataset.width;_cbbSyncAlignFloat();onContentChange();requestAnimationFrame(_cfBlockBarPosition);bppRender();}}
+        if(!f.key){if(bl.dataset.float){delete bl.dataset.float;bl.style.width='';bl.dataset.align='center';delete bl.dataset.width;bl.style.maxWidth='';_cbbSyncAlignFloat();onContentChange();requestAnimationFrame(_cfBlockBarPosition);bppRender();}}
         else _cbbSetFloat(f.key);
       });
       fb.appendChild(b);
@@ -8986,10 +9004,18 @@ function _cbbSyncAlignFloat(){
   document.getElementById('cfBlockResizeL')?.classList.add('on');
   document.getElementById('cfBlockResizeR')?.classList.add('on');
 }
+function _cbbSetWidth(w){
+  if(!_cbbBlock)return;
+  _cbbBlock.dataset.width=w;
+  delete _cbbBlock.dataset.align;delete _cbbBlock.dataset.float;_cbbBlock.style.width='';
+  _cbbBlock.style.maxWidth='';
+  _cbbSyncAlignFloat();onContentChange();if(_bppTab==='styles')bppRender();
+  requestAnimationFrame(_cfBlockBarPosition);
+}
 function _cbbSetAlign(a){
   if(!_cbbBlock)return;
   if(_cbbBlock.dataset.float){delete _cbbBlock.dataset.float;_cbbBlock.style.width='';}
-  delete _cbbBlock.dataset.width;
+  delete _cbbBlock.dataset.width;_cbbBlock.style.maxWidth='';
   _cbbBlock.dataset.align=a;
   _cbbSyncAlignFloat();
   onContentChange();
