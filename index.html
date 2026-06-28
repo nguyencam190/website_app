@@ -8529,7 +8529,7 @@ function _bppSelect(block,type){
   document.getElementById('bppDesc').innerHTML=type==='spotlight'
     ?'Highlight important messages with a visual spotlight.'
     :'Present links, images, and more.';
-  _cfBlockBarShow(block);
+  _cfBlockBarShow(block, type==='spotlight');
 }
 function bppOpen(block,type){
   _bppSelect(block,type);
@@ -8921,6 +8921,7 @@ function _initBlockPropsPanel(){
     else if(cards)setTimeout(()=>_bppSelect(cards,'cards'),0);
   });
   document.getElementById('bppClose')?.addEventListener('click',bppClose);
+  document.getElementById('cfBlockChip')?.addEventListener('click',()=>{if(_bppBlock||_cbbBlock)bppToggle();});
   document.getElementById('editorScroll')?.addEventListener('scroll',()=>{
     if(_cbbBlock)requestAnimationFrame(_cfBlockBarPosition);
   },{passive:true});
@@ -8939,13 +8940,13 @@ function _initBlockPropsPanel(){
 }
 /* ── Block bottom action bar ─────────────────────────────── */
 let _cbbBlock=null;
-function _cfBlockBarShow(block){
+function _cfBlockBarShow(block, showBar=true){
   _cbbBlock=block;
-  const bar=document.getElementById('cfBlockBar');if(!bar)return;
+  const bar=document.getElementById('cfBlockBar');
   const chip=document.getElementById('cfBlockChip');
   const chipText=document.getElementById('cbbChipText');
   if(chipText)chipText.textContent=_bppType==='spotlight'?'Spotlight':'Cards';
-  bar.classList.add('on');
+  if(showBar&&bar)bar.classList.add('on');
   if(chip)chip.classList.add('on');
   document.getElementById('cbbWdDd')?.classList.remove('on');
   _cbbSyncWdLabel();
