@@ -157,3 +157,16 @@ Sau **mỗi lần thay đổi code** trong dự án này, bắt buộc phải:
 - Khi thêm tính năng mới có media, phải đảm bảo `_collectDocAssetIds` thu thập đủ id → Phase 2/3 mới dọn được đúng
 - Không được xóa file khỏi folder trong luồng edit realtime (chỉ xóa khi Push) — tránh mất ảnh nếu user undo
 - Sau khi import trang có ảnh trùng → Push sẽ tự dedup và xóa file thừa, KHÔNG cần xóa thủ công
+
+## Quy tắc Block Cards/Spotlight — Không publish khoảng trống rỗng
+
+**Nguyên tắc bất biến:** Nếu các trường chú thích (title, description) của một card **không có nội dung**, KHÔNG được xuất khoảng trống đó ra website. Khoảng trắng rỗng trông mất thẩm mỹ trên published site.
+
+### Áp dụng cụ thể (thẻ Cards):
+- Trong luồng export (`doExportOptimized`), sau khi xử lý ảnh card, kiểm tra từng `.cf-card-body`:
+  - Nếu `.cf-card-title` và `.cf-card-desc` đều **rỗng** (textContent.trim() === '') → `body.remove()`
+- **KHÔNG** để lại thẻ `<div class="cf-card-body"></div>` hay thẻ rỗng tương đương trong HTML xuất ra
+
+### Nguyên tắc mở rộng:
+- Bất kỳ block nào có vùng text tùy chọn (caption, description, subtitle…) → nếu rỗng thì KHÔNG render vùng đó ra website
+- Luôn kiểm tra trong bước post-process HTML trước khi zip/export
