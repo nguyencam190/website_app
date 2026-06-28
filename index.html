@@ -8529,7 +8529,7 @@ function _bppSelect(block,type){
   document.getElementById('bppDesc').innerHTML=type==='spotlight'
     ?'Highlight important messages with a visual spotlight.'
     :'Present links, images, and more.';
-  _cfBlockBarShow(block, type==='spotlight');
+  _cfBlockBarShow(block, true);
 }
 function bppOpen(block,type){
   _bppSelect(block,type);
