@@ -1441,6 +1441,19 @@ td .cf-checklist[data-open="true"] .cf-checklist-body,.cf-column-item .cf-checkl
 /* Block width modes */
 .cf-spotlight[data-width="wide"],.cf-cards[data-width="wide"]{margin:14px auto;width:75%;max-width:none;border-radius:8px}
 .cf-spotlight[data-width="full"],.cf-cards[data-width="full"]{margin:14px 0;width:100%;max-width:none;border-radius:0}
+/* Align (non-float) for spotlight & cards */
+.cf-spotlight[data-align="left"],.cf-cards[data-align="left"]{margin-left:0!important;margin-right:auto!important}
+.cf-spotlight[data-align="center"],.cf-cards[data-align="center"]{margin-left:auto!important;margin-right:auto!important}
+.cf-spotlight[data-align="right"],.cf-cards[data-align="right"]{margin-left:auto!important;margin-right:0!important}
+/* Float for spotlight & cards */
+.cf-spotlight[data-float="left"],.cf-cards[data-float="left"]{float:left!important;max-width:60%!important;min-width:200px;margin:4px 20px 14px 0!important;clear:left}
+.cf-spotlight[data-float="right"],.cf-cards[data-float="right"]{float:right!important;max-width:60%!important;min-width:200px;margin:4px 0 14px 20px!important;clear:right}
+/* Active state for cfBlockBar buttons */
+.cbb-btn.active{background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent)}
+/* Block resize handles (fixed position, repositioned via JS) */
+.cf-blk-rh{position:fixed;width:8px;height:48px;background:var(--accent);border-radius:4px;cursor:ew-resize;z-index:610;display:none;transform:translateY(-50%);opacity:.7}
+.cf-blk-rh:hover,.cf-blk-rh.dragging{opacity:1}
+.cf-blk-rh.on{display:block}
 /* BPP collapsible style sections */
 .bpp-csec{flex-shrink:0}
 .bpp-csec-hd{display:flex;align-items:center;justify-content:space-between;padding:11px 16px 9px;cursor:pointer;user-select:none;border-bottom:1px solid var(--border)}
@@ -8657,15 +8670,28 @@ function _bppSpotStyles(body){
   }));
   // ── Layouts (collapsible, open) ──
   body.appendChild(_bppCsec('Layouts',true,sec=>{
-    const curW=bl.dataset.width||'centered';
-    const wb=document.createElement('div');wb.className='bpp-col-btns';
-    [{key:'centered',label:'Centered'},{key:'wide',label:'Wide'},{key:'full',label:'Full width'}].forEach(w=>{
-      const b=document.createElement('button');b.className='bpp-col-btn'+(curW===w.key?' active':'');
-      b.textContent=w.label;
-      b.addEventListener('click',()=>{_cbbSetWidth(w.key);wb.querySelectorAll('.bpp-col-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');});
-      wb.appendChild(b);
+    const curFloat=bl.dataset.float||'';const curAlign=bl.dataset.align||'center';
+    // Align
+    const ab=document.createElement('div');ab.className='bpp-col-btns';
+    [{key:'left',label:'Left'},{key:'center',label:'Center'},{key:'right',label:'Right'}].forEach(a=>{
+      const b=document.createElement('button');b.className='bpp-col-btn'+(!curFloat&&curAlign===a.key?' active':'');
+      b.textContent=a.label;
+      b.addEventListener('click',()=>{_cbbSetAlign(a.key);ab.querySelectorAll('.bpp-col-btn').forEach(x=>x.classList.remove('active'));if(!_cbbBlock?.dataset.float)b.classList.add('active');});
+      ab.appendChild(b);
     });
-    sec.appendChild(_bppField('Width',wb));
+    sec.appendChild(_bppField('Align',ab));
+    // Float
+    const fb=document.createElement('div');fb.className='bpp-col-btns';
+    [{key:'',label:'None'},{key:'left',label:'Float left'},{key:'right',label:'Float right'}].forEach(f=>{
+      const active=(!f.key&&!curFloat)||(f.key&&curFloat===f.key);
+      const b=document.createElement('button');b.className='bpp-col-btn'+(active?' active':'');b.textContent=f.label;
+      b.addEventListener('click',()=>{
+        if(!f.key){if(bl.dataset.float){delete bl.dataset.float;bl.style.width='';bl.dataset.align='center';delete bl.dataset.width;_cbbSyncAlignFloat();onContentChange();requestAnimationFrame(_cfBlockBarPosition);bppRender();}}
+        else _cbbSetFloat(f.key);
+      });
+      fb.appendChild(b);
+    });
+    sec.appendChild(_bppField('Float',fb));
   }));
 }
 /* ── Cards panel ─────────────────────────────────────────── */
@@ -8786,15 +8812,28 @@ function _bppCardsStyles(body){
   }));
   // ── Layouts (collapsible, open) ──
   body.appendChild(_bppCsec('Layouts',true,sec=>{
-    const curW=bl.dataset.width||'centered';
-    const wb=document.createElement('div');wb.className='bpp-col-btns';
-    [{key:'centered',label:'Centered'},{key:'wide',label:'Wide'},{key:'full',label:'Full width'}].forEach(w=>{
-      const b=document.createElement('button');b.className='bpp-col-btn'+(curW===w.key?' active':'');
-      b.textContent=w.label;
-      b.addEventListener('click',()=>{_cbbSetWidth(w.key);wb.querySelectorAll('.bpp-col-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');});
-      wb.appendChild(b);
+    const curFloat=bl.dataset.float||'';const curAlign=bl.dataset.align||'center';
+    // Align
+    const ab=document.createElement('div');ab.className='bpp-col-btns';
+    [{key:'left',label:'Left'},{key:'center',label:'Center'},{key:'right',label:'Right'}].forEach(a=>{
+      const b=document.createElement('button');b.className='bpp-col-btn'+(!curFloat&&curAlign===a.key?' active':'');
+      b.textContent=a.label;
+      b.addEventListener('click',()=>{_cbbSetAlign(a.key);ab.querySelectorAll('.bpp-col-btn').forEach(x=>x.classList.remove('active'));if(!_cbbBlock?.dataset.float)b.classList.add('active');});
+      ab.appendChild(b);
     });
-    sec.appendChild(_bppField('Width',wb));
+    sec.appendChild(_bppField('Align',ab));
+    // Float
+    const fb=document.createElement('div');fb.className='bpp-col-btns';
+    [{key:'',label:'None'},{key:'left',label:'Float left'},{key:'right',label:'Float right'}].forEach(f=>{
+      const active=(!f.key&&!curFloat)||(f.key&&curFloat===f.key);
+      const b=document.createElement('button');b.className='bpp-col-btn'+(active?' active':'');b.textContent=f.label;
+      b.addEventListener('click',()=>{
+        if(!f.key){if(bl.dataset.float){delete bl.dataset.float;bl.style.width='';bl.dataset.align='center';delete bl.dataset.width;_cbbSyncAlignFloat();onContentChange();requestAnimationFrame(_cfBlockBarPosition);bppRender();}}
+        else _cbbSetFloat(f.key);
+      });
+      fb.appendChild(b);
+    });
+    sec.appendChild(_bppField('Float',fb));
   }));
 }
 /* ── Panel helper builders ───────────────────────────────── */
@@ -8883,7 +8922,6 @@ function _initBlockPropsPanel(){
     if(_cbbBlock)requestAnimationFrame(_cfBlockBarPosition);
   },{passive:true});
   document.addEventListener('mousedown',e=>{
-    if(!e.target.closest?.('#cbbWd'))document.getElementById('cbbWdDd')?.classList.remove('on');
     // Close bpp panel when clicking outside the block, panel, action bar, or chip
     if(_bppBlock
       &&!e.target.closest?.('#bpp')
@@ -8905,51 +8943,103 @@ function _cfBlockBarShow(block, showBar=true){
   if(chipText)chipText.textContent=_bppType==='spotlight'?'Spotlight':'Cards';
   if(showBar&&bar)bar.classList.add('on');
   if(chip)chip.classList.add('on');
-  document.getElementById('cbbWdDd')?.classList.remove('on');
-  _cbbSyncWdLabel();
+  _cbbSyncAlignFloat();
   requestAnimationFrame(_cfBlockBarPosition);
 }
 function _cfBlockBarHide(){
   _cbbBlock=null;
   document.getElementById('cfBlockBar')?.classList.remove('on');
   document.getElementById('cfBlockChip')?.classList.remove('on');
-  document.getElementById('cbbWdDd')?.classList.remove('on');
+  document.getElementById('cfBlockResizeL')?.classList.remove('on');
+  document.getElementById('cfBlockResizeR')?.classList.remove('on');
 }
 function _cfBlockBarPosition(){
   if(!_cbbBlock)return;
   const bar=document.getElementById('cfBlockBar');
   const chip=document.getElementById('cfBlockChip');
+  const rl=document.getElementById('cfBlockResizeL');
+  const rr=document.getElementById('cfBlockResizeR');
   const rect=_cbbBlock.getBoundingClientRect();
-  if(bar){
-    const bw=bar.offsetWidth||200;
-    const cx=rect.left+rect.width/2;
-    bar.style.top=(rect.bottom+6)+'px';
-    bar.style.left=Math.max(4,cx-bw/2)+'px';
+  if(bar&&bar.classList.contains('on')){
+    const bw=bar.offsetWidth||200;const cx=rect.left+rect.width/2;
+    bar.style.top=(rect.bottom+6)+'px';bar.style.left=Math.max(4,cx-bw/2)+'px';
   }
   if(chip&&chip.classList.contains('on')){
-    chip.style.top=(rect.top-28)+'px';
-    chip.style.left=rect.left+'px';
+    chip.style.top=(rect.top-28)+'px';chip.style.left=rect.left+'px';
+  }
+  if(rl&&rl.classList.contains('on')){
+    rl.style.top=(rect.top+rect.height/2)+'px';rl.style.left=(rect.left-10)+'px';
+  }
+  if(rr&&rr.classList.contains('on')){
+    rr.style.top=(rect.top+rect.height/2)+'px';rr.style.left=(rect.right+2)+'px';
   }
 }
-function _cbbSyncWdLabel(){
+function _cbbSyncAlignFloat(){
   if(!_cbbBlock)return;
-  const w=_cbbBlock.dataset.width||'centered';
-  const labels={centered:'Centered',wide:'Wide',full:'Full width'};
-  const el=document.getElementById('cbbWdLabel');
-  if(el)el.textContent=labels[w]||'Centered';
-  document.querySelectorAll('.cbb-wd-item').forEach(it=>it.classList.toggle('active',it.dataset.width===w));
+  const floated=!!_cbbBlock.dataset.float;
+  const align=_cbbBlock.dataset.align||'center';
+  document.getElementById('cbbAlignL')?.classList.toggle('active',!floated&&align==='left');
+  document.getElementById('cbbAlignC')?.classList.toggle('active',!floated&&(align==='center'||(!_cbbBlock.dataset.align&&!floated)));
+  document.getElementById('cbbAlignR')?.classList.toggle('active',!floated&&align==='right');
+  document.getElementById('cbbFloatL')?.classList.toggle('active',_cbbBlock.dataset.float==='left');
+  document.getElementById('cbbFloatR')?.classList.toggle('active',_cbbBlock.dataset.float==='right');
+  document.getElementById('cfBlockResizeL')?.classList.add('on');
+  document.getElementById('cfBlockResizeR')?.classList.add('on');
 }
-function _cbbWdToggle(){
-  document.getElementById('cbbWdDd')?.classList.toggle('on');
-}
-function _cbbSetWidth(w){
+function _cbbSetAlign(a){
   if(!_cbbBlock)return;
-  _cbbBlock.dataset.width=w;
-  _cbbSyncWdLabel();
-  document.getElementById('cbbWdDd')?.classList.remove('on');
+  if(_cbbBlock.dataset.float){delete _cbbBlock.dataset.float;_cbbBlock.style.width='';}
+  delete _cbbBlock.dataset.width;
+  _cbbBlock.dataset.align=a;
+  _cbbSyncAlignFloat();
   onContentChange();
   if(_bppTab==='styles')bppRender();
   requestAnimationFrame(_cfBlockBarPosition);
+}
+function _cbbSetFloat(side){
+  if(!_cbbBlock)return;
+  if(_cbbBlock.dataset.float===side){
+    delete _cbbBlock.dataset.float;_cbbBlock.style.width='';_cbbBlock.dataset.align='center';
+  } else {
+    _cbbBlock.dataset.float=side;_cbbBlock.style.width='';
+    delete _cbbBlock.dataset.align;delete _cbbBlock.dataset.width;
+    const _isText=el=>el&&/^(P|DIV|H[1-6]|UL|OL|BLOCKQUOTE)$/.test(el.tagName)
+      &&!el.classList.contains('cf-spotlight')&&!el.classList.contains('cf-cards')&&!el.classList.contains('cf-img-block');
+    let _after=_cbbBlock.nextElementSibling;
+    if(!_isText(_after)){
+      const np=document.createElement('p');np.innerHTML='<br>';
+      _cbbBlock.parentElement.insertBefore(np,_cbbBlock.nextSibling);_after=np;
+    }
+    setTimeout(()=>{try{const r=document.createRange();r.setStart(_after,0);r.collapse(true);const s=window.getSelection();s.removeAllRanges();s.addRange(r);(_after.closest('[contenteditable="true"]')||document.getElementById('editor'))?.focus({preventScroll:true});}catch(ex){}},20);
+  }
+  _cbbSyncAlignFloat();onContentChange();if(_bppTab==='styles')bppRender();
+  requestAnimationFrame(_cfBlockBarPosition);
+}
+function _cbbResizeDrag(e,side){
+  if(!_cbbBlock)return;
+  e.preventDefault();e.stopPropagation();
+  const block=_cbbBlock;
+  const editor=document.getElementById('editor');
+  const floated=!!block.dataset.float;
+  const startX=e.clientX;const startW=block.offsetWidth;const editorW=editor?.offsetWidth||800;
+  const rh=document.getElementById(side==='left'?'cfBlockResizeL':'cfBlockResizeR');
+  if(rh)rh.classList.add('dragging');
+  function onMove(ev){
+    const dx=ev.clientX-startX;
+    const newW=side==='right'?startW+dx:startW-dx;
+    if(floated){
+      const pct=Math.min(75,Math.max(20,Math.round(newW/editorW*100)));
+      block.style.width=pct+'%';
+    } else {
+      block.style.maxWidth=Math.min(editorW,Math.max(200,newW))+'px';block.style.width='';
+    }
+    requestAnimationFrame(_cfBlockBarPosition);
+  }
+  function onUp(){
+    document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp);
+    if(rh)rh.classList.remove('dragging');onContentChange();
+  }
+  document.addEventListener('mousemove',onMove);document.addEventListener('mouseup',onUp);
 }
 function _cbbCopy(){
   if(!_cbbBlock)return;
@@ -14383,6 +14473,11 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .cf-spotlight-img-side img{flex:1;min-height:160px;width:100%;object-fit:cover;display:block}',
     '.ws-canvas .cf-spotlight[data-width="wide"],.ws-canvas .cf-cards[data-width="wide"]{margin:14px auto;width:75%;max-width:none;border-radius:8px}',
     '.ws-canvas .cf-spotlight[data-width="full"],.ws-canvas .cf-cards[data-width="full"]{margin:14px 0;width:100%;max-width:none;border-radius:0}',
+    '.ws-canvas .cf-spotlight[data-align="left"],.ws-canvas .cf-cards[data-align="left"]{margin-left:0!important;margin-right:auto!important}',
+    '.ws-canvas .cf-spotlight[data-align="center"],.ws-canvas .cf-cards[data-align="center"]{margin-left:auto!important;margin-right:auto!important}',
+    '.ws-canvas .cf-spotlight[data-align="right"],.ws-canvas .cf-cards[data-align="right"]{margin-left:auto!important;margin-right:0!important}',
+    '.ws-canvas .cf-spotlight[data-float="left"],.ws-canvas .cf-cards[data-float="left"]{float:left!important;max-width:60%!important;min-width:200px;margin:4px 20px 14px 0!important;clear:left}',
+    '.ws-canvas .cf-spotlight[data-float="right"],.ws-canvas .cf-cards[data-float="right"]{float:right!important;max-width:60%!important;min-width:200px;margin:4px 0 14px 20px!important;clear:right}',
     // Cards
     '.ws-canvas .cf-cards{margin:14px auto;max-width:500px}',
     '.ws-canvas .cf-cards-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}',
@@ -16838,22 +16933,19 @@ init();
 <div id="cfBlockBar">
   <button class="cbb-btn" title="Edit" onclick="bppToggle()"><i class="ti ti-pencil"></i></button>
   <div class="cbb-sep"></div>
-  <div class="cbb-wd" id="cbbWd">
-    <button class="cbb-wd-btn" id="cbbWdBtn" onclick="_cbbWdToggle()">
-      <i class="ti ti-layout-distribute-horizontal"></i>
-      <span id="cbbWdLabel">Centered</span>
-      <i class="ti ti-chevron-up"></i>
-    </button>
-    <div class="cbb-wd-dd" id="cbbWdDd">
-      <button class="cbb-wd-item" data-width="centered" onclick="_cbbSetWidth('centered')"><i class="ti ti-layout-distribute-horizontal"></i> Back to center</button>
-      <button class="cbb-wd-item" data-width="wide" onclick="_cbbSetWidth('wide')"><i class="ti ti-arrows-horizontal"></i> Go wide</button>
-      <button class="cbb-wd-item" data-width="full" onclick="_cbbSetWidth('full')"><i class="ti ti-arrows-maximize"></i> Go full width</button>
-    </div>
-  </div>
+  <button class="cbb-btn" id="cbbAlignL" title="Căn trái" onclick="_cbbSetAlign('left')"><i class="ti ti-align-left"></i></button>
+  <button class="cbb-btn" id="cbbAlignC" title="Căn giữa" onclick="_cbbSetAlign('center')"><i class="ti ti-align-center"></i></button>
+  <button class="cbb-btn" id="cbbAlignR" title="Căn phải" onclick="_cbbSetAlign('right')"><i class="ti ti-align-right"></i></button>
   <div class="cbb-sep"></div>
-  <button class="cbb-btn" title="Copy block" onclick="_cbbCopy()"><i class="ti ti-copy"></i></button>
-  <button class="cbb-btn" title="Delete block" onclick="_cbbDelete()" style="color:#ef4444"><i class="ti ti-trash"></i></button>
+  <button class="cbb-btn" id="cbbFloatL" title="Thả nổi trái" onclick="_cbbSetFloat('left')"><i class="ti ti-float-left"></i></button>
+  <button class="cbb-btn" id="cbbFloatR" title="Thả nổi phải" onclick="_cbbSetFloat('right')"><i class="ti ti-float-right"></i></button>
+  <div class="cbb-sep"></div>
+  <button class="cbb-btn" title="Sao chép block" onclick="_cbbCopy()"><i class="ti ti-copy"></i></button>
+  <button class="cbb-btn" title="Xóa block" onclick="_cbbDelete()" style="color:#ef4444"><i class="ti ti-trash"></i></button>
 </div>
+<!-- Block resize handles (fixed position, repositioned via JS) -->
+<div class="cf-blk-rh" id="cfBlockResizeL" onmousedown="_cbbResizeDrag(event,'left')"></div>
+<div class="cf-blk-rh" id="cfBlockResizeR" onmousedown="_cbbResizeDrag(event,'right')"></div>
 <!-- Sidebar import dropdown — must be direct child of body to escape sidebar overflow:hidden / will-change -->
 <div id="_sbImportDd" style="display:none;position:fixed;z-index:9999;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 24px rgba(0,0,0,.2);min-width:160px;overflow:hidden">
   <div class="hdr-dd-item" onclick="_sbImportCloseDd();importMergePagesFromFolder()"><i class="ti ti-folder"></i> Thư mục</div>
