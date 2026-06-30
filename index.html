@@ -425,7 +425,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .editor-content h2{font-size:1.25rem;font-weight:600;line-height:24px;margin:22px 0 9px;padding-bottom:6px;border-bottom:1px solid var(--border);letter-spacing:-.015em}
 .editor-content h3{font-size:1.0625rem;font-weight:700;line-height:22px;margin:20px 0 8px;letter-spacing:-.01em;padding-left:10px;border-left:3px solid var(--accent)}
 .editor-content h3:has(+p),.editor-content h3:has(+ul),.editor-content h3:has(+ol){margin-bottom:0}
-.editor-content h3+p:not(:has(> br:only-child)){padding-left:10px;border-left:3px solid var(--accent);margin-top:0}
+.editor-content h3+p{padding-left:10px;border-left:3px solid var(--accent);margin-top:0}
+.editor-content h3+p:has(>br:only-child):has(+p){height:0;overflow:hidden;padding:0!important;margin:0!important;border-left:none!important}
 .editor-content h3+ul,.editor-content h3+ol{border-left:3px solid var(--accent);margin-top:0}
 .editor-content h4{font-size:0.9375rem;font-weight:600;line-height:20px;margin:16px 0 6px;color:var(--text2)}
 .editor-content h5{font-size:0.75rem;font-weight:600;line-height:16px;margin:12px 0 5px;letter-spacing:.01em}
@@ -14616,7 +14617,8 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .cf-card-body{padding:10px 12px 12px}',
     '.ws-canvas .cf-card-title{font-size:.9375rem;font-weight:700;color:var(--text);line-height:1.4}',
     '.ws-canvas .cf-card-desc{font-size:.8125rem;color:var(--text2);line-height:1.5;margin-top:4px}',
-    '.ws-canvas .editor-content h3+p:not(:has(> br:only-child)){padding-left:10px;border-left:3px solid var(--accent);margin-top:0}',
+    '.ws-canvas .editor-content h3+p{padding-left:10px;border-left:3px solid var(--accent);margin-top:0}',
+    '.ws-canvas .editor-content h3+p:has(>br:only-child):has(+p){height:0;overflow:hidden;padding:0!important;margin:0!important;border-left:none!important}',
     '.ws-canvas .editor-content h3+ul,.ws-canvas .editor-content h3+ol{border-left:3px solid var(--accent);margin-top:0}',
     '.ws-canvas .editor-content h4{font-size:0.9375rem;font-weight:600;line-height:1.4;margin:16px 0 6px;color:var(--text2)}',
     '.ws-canvas .editor-content h5{font-size:0.75rem;font-weight:600;line-height:1.4;margin:12px 0 5px;letter-spacing:.01em}',
