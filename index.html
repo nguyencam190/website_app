@@ -5701,12 +5701,12 @@ function _openSelPanel(title,type,idx,table,triggerEl){
       const dataCols=()=>Array.from(table.rows[0].cells).filter(c=>!c.classList.contains('tbl-row-num')).length;
       actWrap.appendChild(mkBtn('row-insert-top','Thêm hàng phía trên',false,()=>{
         const nr=table.insertRow(idx);
-        for(let i=0;i<dataCols();i++){nr.insertCell(i).innerHTML='Dữ liệu';}
+        for(let i=0;i<dataCols();i++){nr.insertCell(i).innerHTML='<br>';}
         onContentChange();tblAttachAll();toast('Đã thêm hàng','success');
       }));
       actWrap.appendChild(mkBtn('row-insert-bottom','Thêm hàng phía dưới',false,()=>{
         const nr=table.insertRow(idx+1);
-        for(let i=0;i<dataCols();i++){nr.insertCell(i).innerHTML='Dữ liệu';}
+        for(let i=0;i<dataCols();i++){nr.insertCell(i).innerHTML='<br>';}
         onContentChange();tblAttachAll();toast('Đã thêm hàng','success');
       }));
       actWrap.appendChild(mkBtn('trash','Xóa hàng này',true,()=>{
