@@ -1883,16 +1883,12 @@ body{padding-bottom:28px}
   flex-direction:column!important;align-items:center!important;
   gap:2px!important;margin-left:0!important;width:100%;
 }
-/* Push button → icon-only in rail */
-#projLiveBtn{
-  width:36px!important;height:36px!important;
-  border-radius:8px!important;padding:0!important;
-  font-size:0!important;min-width:0!important;gap:0!important;
-  background:transparent!important;color:rgba(255,255,255,.55)!important;
-  border:none!important;box-shadow:none!important;
-}
-#projLiveBtn:hover{background:rgba(255,255,255,.08)!important;color:rgba(255,255,255,.8)!important}
-#projLiveBtn i{font-size:17px!important;color:inherit!important}
+/* ── RAIL: action buttons that moved to tabbar → hide from rail ── */
+/* Push, Focus, Accent, Theme are now in the tabbar; keep HTML for JS compat */
+#mainHeader #projLiveBtn,
+#mainHeader #focusModeBtn,
+#mainHeader #accentBtnWrap,
+#mainHeader #themeToggleBtn{display:none!important}
 /* User avatar → smaller */
 #hdrUserAv{width:32px!important;height:32px!important;font-size:13px!important;flex-shrink:0}
 /* Rail separator */
@@ -1913,8 +1909,6 @@ body{padding-bottom:28px}
   cursor:pointer;font-size:17px;flex-shrink:0;transition:all .18s;
 }
 .rail-btn-new:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.8)}
-/* Focus mode btn active look */
-#focusModeBtn.focus-on{background:rgba(99,102,241,.15)!important;color:var(--accent)!important}
 
 /* ── LAYOUT: push right of fixed rail ── */
 .layout{margin-left:48px;height:calc(100vh - 28px);overflow:hidden}
@@ -1975,6 +1969,8 @@ body[data-focus="1"] #sidebar::before{display:none}
   box-shadow:0 0 10px var(--accent-glow);transition:all .18s;
 }
 #tabPushBtn:hover{opacity:.88}
+#tabPushBtn.active{animation:tabPushPulse .8s ease-in-out infinite alternate}
+@keyframes tabPushPulse{from{opacity:1}to{opacity:.6}}
 
 /* ── STATUSBAR ── */
 .statusbar{
@@ -13842,9 +13838,14 @@ async function _projToggleLive(){
   }
   if(!_projDir)return;
   const btn=document.getElementById('projLiveBtn');
+  const tabBtn=document.getElementById('tabPushBtn');
   if(btn)btn.classList.add('active');
+  if(tabBtn)tabBtn.classList.add('active');
   _projFullSync().finally(()=>{
-    setTimeout(()=>{if(btn)btn.classList.remove('active');},1500);
+    setTimeout(()=>{
+      if(btn)btn.classList.remove('active');
+      if(tabBtn)tabBtn.classList.remove('active');
+    },1500);
   });
 }
 
@@ -16995,6 +16996,9 @@ function toggleFocusMode(){
   document.body.dataset.focus=on?'0':'1';
   const btn=document.getElementById('focusModeBtn');
   if(btn)btn.innerHTML=on?'<i class="ti ti-focus-2"></i>':'<i class="ti ti-focus-off"></i>';
+  // Sync tabbar focus button active state
+  const tabFocus=document.querySelector('#newTabRight .tb-new[onclick*="toggleFocusMode"]');
+  if(tabFocus)tabFocus.classList.toggle('active',!on);
 }
 
 // ── Inline link bubble ────────────────────────────────────────

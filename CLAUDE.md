@@ -179,3 +179,43 @@ Sau **mỗi lần thay đổi code** trong dự án này, bắt buộc phải:
 ### Khi thêm block mới có text tùy chọn:
 - Thêm vào bước post-process trong `doExportOptimized` ngay sau card body cleanup
 - KHÔNG để thẻ rỗng trong HTML xuất ra
+
+## Quy tắc New UI — Icon Rail & Tabbar
+
+### Nguyên tắc bất biến: icon CŨ giữ nguyên, icon MỚI mới thêm
+
+**KHÔNG được style lại hoặc di chuyển icon cũ của app sang vị trí mới trong new UI.**
+- Icon/button cũ (đã tồn tại trong old UI) → **giữ nguyên HTML, ẩn bằng CSS nếu đã có bản thay thế ở nơi mới**
+- Icon/button mới (thêm riêng cho new UI) → có thể style mới hoàn toàn
+
+### Phân loại icon trong new UI:
+
+**Navigation Rail (`#mainHeader`, 48px fixed left) — chỉ chứa:**
+- `#railPagesBtn` — [MỚI] toggle context panel/sidebar
+- `.rail-btn-new` Import — [MỚI] import folder/ZIP
+- `.rail-btn-new` New page — [MỚI] tạo trang mới
+- `#headerLogoWrap` — [CŨ] logo project (giữ nguyên, resize nhỏ lại)
+- `.rail-div` separator
+- Bell (`hdrNotifDd`) — [CŨ] thông báo (giữ trong rail)
+- Help (`hdrHelpDd`) — [CŨ] trợ giúp (giữ trong rail)
+- Export/Save (`hdrExportDd`) — [CŨ] dropdown lưu/mở project (giữ trong rail)
+- `#hdrUserAv` avatar — [CŨ] menu người dùng (giữ trong rail)
+
+**Tabbar (`#pabWrapper`, 42px) — chứa các action button MỚI:**
+- `#tabLockBtn` — [MỚI] khóa trang
+- Focus toggle — [MỚI, thay thế `#focusModeBtn` trong rail]
+- Theme toggle — [MỚI, thay thế `#themeToggleBtn` trong rail]
+- Accent dot — [MỚI, thay thế `#accentBtnWrap` trong rail]
+- `#tabPushBtn` — [MỚI, thay thế `#projLiveBtn` trong rail]
+
+**Các button cũ bị ẩn khỏi rail (HTML giữ nguyên cho JS):**
+- `#projLiveBtn` — ẩn bằng `display:none!important` vì `#tabPushBtn` đảm nhiệm
+- `#focusModeBtn` — ẩn vì tabbar có nút focus mới
+- `#accentBtnWrap` — ẩn vì tabbar có accent dot mới
+- `#themeToggleBtn` — ẩn vì tabbar có theme toggle mới
+
+### Khi thêm tính năng mới có button/icon:
+1. Nếu là **navigation/context** → thêm vào rail
+2. Nếu là **action trên document** → thêm vào tabbar
+3. **KHÔNG** đưa cùng 1 chức năng vào cả hai nơi (tránh duplicate)
+4. Button JS cũ (có `id` được JS tham chiếu) → **giữ HTML, ẩn bằng CSS**, tạo bản mới có styling mới
