@@ -1850,7 +1850,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 ════════════════════════════════════════════ */
 
 /* Variable aliases */
-:root{--rail-bg:#09090f;--rail-w:48px;--left-panels:288px;--tr:.18s ease}
+:root{--rail-bg:#09090f;--rail-w:48px;--left-panels:308px;--tr:.18s ease}
 
 /* Body stays flex-column; rail+statusbar are fixed so don't affect flow */
 body{padding-bottom:28px}
@@ -1888,8 +1888,11 @@ body{padding-bottom:28px}
   width:36px!important;height:36px!important;
   border-radius:8px!important;padding:0!important;
   font-size:0!important;min-width:0!important;gap:0!important;
+  background:transparent!important;color:rgba(255,255,255,.55)!important;
+  border:none!important;box-shadow:none!important;
 }
-#projLiveBtn i{font-size:17px!important}
+#projLiveBtn:hover{background:rgba(255,255,255,.08)!important;color:rgba(255,255,255,.8)!important}
+#projLiveBtn i{font-size:17px!important;color:inherit!important}
 /* User avatar → smaller */
 #hdrUserAv{width:32px!important;height:32px!important;font-size:13px!important;flex-shrink:0}
 /* Rail separator */
@@ -1917,7 +1920,6 @@ body{padding-bottom:28px}
 .layout{margin-left:48px;height:calc(100vh - 28px);overflow:hidden}
 
 /* ── SIDEBAR → CTX PANEL: accent bar + adjusted width ── */
-#sidebar{width:240px!important;min-width:140px!important;max-width:440px!important}
 #sidebar::before{
   content:'';position:fixed;left:48px;top:0;bottom:0;width:1.5px;
   background:linear-gradient(180deg,var(--accent) 0%,rgba(99,102,241,.15) 100%);
@@ -1927,8 +1929,12 @@ body[data-focus="1"] #sidebar::before{display:none}
 
 /* Sidebar header: show project name */
 .sb-space-header{height:42px;padding:0 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--sb-border);flex-shrink:0}
-.sb-space-name{font-size:16px!important;font-weight:700!important;flex:1}
-.sb-space-icon{flex-shrink:0}
+.sb-space-name{font-size:14px!important;font-weight:600!important;flex:1}
+.sb-space-icon{flex-shrink:0;width:24px!important;height:24px!important;font-size:11px!important;border-radius:6px!important}
+/* Hide sidebar star btn (favorites handled in rail) */
+.sb-space-header .sb-star-btn{display:none!important}
+/* Hide sidebar footer (collapse + space tools) */
+.sb-footer{display:none!important}
 
 /* ── PAGE ACTION BAR → TABBAR ── */
 .page-action-bar{display:none!important}
@@ -1953,11 +1959,11 @@ body[data-focus="1"] #sidebar::before{display:none}
 #newTabRight{display:flex;align-items:center;gap:4px;padding:0 10px;flex-shrink:0}
 .tb-new{
   width:30px;height:30px;border:none;border-radius:6px;
-  background:transparent;color:var(--text3);cursor:pointer;
+  background:transparent;color:var(--text2);cursor:pointer;
   display:flex;align-items:center;justify-content:center;font-size:16px;
   transition:all .15s;
 }
-.tb-new:hover{background:var(--surface2);color:var(--text2)}
+.tb-new:hover{background:var(--surface2);color:var(--text)}
 .tb-new.active{background:rgba(99,102,241,.12);color:var(--accent)}
 .tb-sep-new{width:1px;height:18px;background:var(--border);margin:0 2px;flex-shrink:0}
 /* Push button in tabbar */
@@ -2012,7 +2018,7 @@ html.no-transition *{transition:none!important;animation:none!important}
 <!-- ── TOP NAV (CamNguyen style) ── -->
 <div class="header" id="mainHeader">
   <!-- ══ NEW RAIL BUTTONS (thêm vào đầu header đã biến thành rail) ══ -->
-  <button id="railPagesBtn" class="active" onclick="typeof sbExpand!=='undefined'?(document.getElementById('sidebar').style.width===''||parseInt(getComputedStyle(document.getElementById('sidebar')).width)>10?sbCollapse():sbExpand()):null" title="Pages">
+  <button id="railPagesBtn" class="active" onclick="typeof sbCollapse!=='undefined'?(document.getElementById('sidebar').classList.contains('collapsed')?sbExpand():sbCollapse()):null" title="Pages">
     <i class="ti ti-files"></i>
   </button>
   <button class="rail-btn-new" onclick="typeof _sbImportClickSmart!=='undefined'?_sbImportClickSmart(this):null" title="Import">
