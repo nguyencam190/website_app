@@ -1844,6 +1844,162 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 .proj-reconnect-banner button.reconnect-btn{background:rgba(0,0,0,.18);border:none;border-radius:4px;padding:3px 12px;cursor:pointer;font-size:13px;font-weight:600;color:#1c1917}
 .proj-reconnect-banner button.reconnect-close{margin-left:auto;background:none;border:none;cursor:pointer;font-size:18px;opacity:.7;line-height:1;padding:0}
 </style>
+<style id="new-ui-layout">
+/* ════════════════════════════════════════════
+   NEW UI — RAIL + CTX + TABBAR + STATUSBAR
+════════════════════════════════════════════ */
+
+/* Variable aliases */
+:root{--rail-bg:#09090f;--rail-w:48px;--left-panels:288px;--tr:.18s ease}
+
+/* Body stays flex-column; rail+statusbar are fixed so don't affect flow */
+body{padding-bottom:28px}
+
+/* ── ICON RAIL (#mainHeader → position:fixed left rail) ── */
+#mainHeader{
+  position:fixed!important;left:0;top:0;bottom:0;
+  width:48px!important;height:100vh!important;
+  flex-direction:column;align-items:center;
+  padding:10px 0;gap:2px;
+  background:#09090f!important;
+  border-bottom:none!important;border-right:1px solid rgba(255,255,255,.05);
+  z-index:10000;overflow:visible;
+}
+/* Hide header elements that don't fit in vertical rail */
+.header-center,#hdrSearchWrap,.logo-label{display:none!important}
+/* Logo box → rail logo */
+#headerLogoWrap{width:32px;height:32px;flex-shrink:0;margin-bottom:4px}
+.logo-box{width:32px;height:32px;border-radius:9px}
+/* Existing header icon buttons → rail style */
+.header-icon-btn{
+  width:36px!important;height:36px!important;
+  border-radius:8px!important;
+  color:rgba(255,255,255,.55)!important;background:transparent!important;
+  flex-shrink:0;
+}
+.header-icon-btn:hover{background:rgba(255,255,255,.08)!important;color:rgba(255,255,255,.8)!important}
+/* Right actions group → vertical column */
+#mainHeader>.hdr-right-group{
+  flex-direction:column!important;align-items:center!important;
+  gap:2px!important;margin-left:0!important;width:100%;
+}
+/* Push button → icon-only in rail */
+#projLiveBtn{
+  width:36px!important;height:36px!important;
+  border-radius:8px!important;padding:0!important;
+  font-size:0!important;min-width:0!important;gap:0!important;
+}
+#projLiveBtn i{font-size:17px!important}
+/* User avatar → smaller */
+#hdrUserAv{width:32px!important;height:32px!important;font-size:13px!important;flex-shrink:0}
+/* Rail separator */
+.rail-div{width:24px;height:1px;background:rgba(255,255,255,.07);margin:4px 0;flex-shrink:0}
+.rail-space{flex:1}
+/* New rail Pages button */
+#railPagesBtn{
+  width:36px;height:36px;background:transparent;border:none;border-radius:8px;
+  color:rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:18px;flex-shrink:0;transition:all .18s;
+}
+#railPagesBtn.active{background:rgba(99,102,241,.15);color:var(--accent);box-shadow:inset 2px 0 0 var(--accent)}
+#railPagesBtn:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.8)}
+/* New rail generic button */
+.rail-btn-new{
+  width:36px;height:36px;background:transparent;border:none;border-radius:8px;
+  color:rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:17px;flex-shrink:0;transition:all .18s;
+}
+.rail-btn-new:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.8)}
+/* Focus mode btn active look */
+#focusModeBtn.focus-on{background:rgba(99,102,241,.15)!important;color:var(--accent)!important}
+
+/* ── LAYOUT: push right of fixed rail ── */
+.layout{margin-left:48px;height:calc(100vh - 28px);overflow:hidden}
+
+/* ── SIDEBAR → CTX PANEL: accent bar + adjusted width ── */
+#sidebar{width:240px!important;min-width:140px!important;max-width:440px!important}
+#sidebar::before{
+  content:'';position:fixed;left:48px;top:0;bottom:0;width:1.5px;
+  background:linear-gradient(180deg,var(--accent) 0%,rgba(99,102,241,.15) 100%);
+  z-index:9999;pointer-events:none;
+}
+body[data-focus="1"] #sidebar::before{display:none}
+
+/* Sidebar header: show project name */
+.sb-space-header{height:42px;padding:0 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--sb-border);flex-shrink:0}
+.sb-space-name{font-size:16px!important;font-weight:700!important;flex:1}
+.sb-space-icon{flex-shrink:0}
+
+/* ── PAGE ACTION BAR → TABBAR ── */
+.page-action-bar{display:none!important}
+.pab-wrapper{
+  height:42px!important;display:flex!important;align-items:stretch!important;
+  background:var(--surface)!important;border-bottom:1px solid var(--border)!important;
+  overflow:hidden!important;flex-shrink:0;position:relative;z-index:100;
+}
+/* New tabbar tabs */
+.new-tab{
+  display:flex;align-items:center;gap:6px;padding:0 14px;
+  font-size:12.5px;color:var(--text3);cursor:pointer;
+  border-right:1px solid var(--border);border-bottom:2px solid transparent;
+  white-space:nowrap;flex-shrink:0;transition:all .18s;
+}
+.new-tab.active{color:var(--text);border-bottom-color:var(--accent);background:rgba(255,255,255,.02)}
+.new-tab i{font-size:13px}
+.new-tab-x{background:none;border:none;cursor:pointer;color:var(--text3);padding:0;margin-left:4px;line-height:1;font-size:12px;opacity:.6}
+.new-tab-x:hover{opacity:1}
+#newTabList{display:flex;align-items:stretch;flex:1;overflow:hidden;min-width:0}
+#newTabDivider{width:1px;align-self:stretch;background:var(--border);flex-shrink:0}
+#newTabRight{display:flex;align-items:center;gap:4px;padding:0 10px;flex-shrink:0}
+.tb-new{
+  width:30px;height:30px;border:none;border-radius:6px;
+  background:transparent;color:var(--text3);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:16px;
+  transition:all .15s;
+}
+.tb-new:hover{background:var(--surface2);color:var(--text2)}
+.tb-new.active{background:rgba(99,102,241,.12);color:var(--accent)}
+.tb-sep-new{width:1px;height:18px;background:var(--border);margin:0 2px;flex-shrink:0}
+/* Push button in tabbar */
+#tabPushBtn{
+  display:flex;align-items:center;gap:6px;padding:0 13px;height:28px;
+  border-radius:6px;border:none;
+  background:linear-gradient(135deg,var(--accent),#8b5cf6);
+  color:#fff;font-size:12px;font-weight:600;cursor:pointer;
+  box-shadow:0 0 10px var(--accent-glow);transition:all .18s;
+}
+#tabPushBtn:hover{opacity:.88}
+
+/* ── STATUSBAR ── */
+.statusbar{
+  position:fixed!important;bottom:0!important;
+  left:48px!important;right:0!important;
+  height:28px!important;z-index:80;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;
+}
+/* Word count centered in canvas */
+#wordCountEl{
+  position:absolute;left:var(--left-panels);right:0;
+  text-align:center;pointer-events:none;
+}
+/* Scroll to top button */
+.scroll-top-btn{bottom:42px!important}
+
+/* ── FOCUS MODE ── */
+body[data-focus="1"] #mainHeader{width:0!important;overflow:hidden!important}
+body[data-focus="1"] .layout{margin-left:0!important}
+body[data-focus="1"] .statusbar{left:0!important}
+body[data-focus="1"] #wordCountEl{left:0!important}
+
+/* ── TRANSITION FIX ── */
+html.no-tr *{transition:none!important;animation:none!important}
+html.no-transition *{transition:none!important;animation:none!important}
+
+/* ── EDITOR SCROLL: account for removed fixed header top offset ── */
+.editor-scroll{margin-top:0!important}
+.pab-wrapper.pab-sticky{top:0!important}
+</style>
 </head>
 <body>
 <!-- Project folder reconnect banner -->
@@ -1855,6 +2011,17 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 </div>
 <!-- ── TOP NAV (CamNguyen style) ── -->
 <div class="header" id="mainHeader">
+  <!-- ══ NEW RAIL BUTTONS (thêm vào đầu header đã biến thành rail) ══ -->
+  <button id="railPagesBtn" class="active" onclick="typeof sbExpand!=='undefined'?(document.getElementById('sidebar').style.width===''||parseInt(getComputedStyle(document.getElementById('sidebar')).width)>10?sbCollapse():sbExpand()):null" title="Pages">
+    <i class="ti ti-files"></i>
+  </button>
+  <button class="rail-btn-new" onclick="typeof _sbImportClickSmart!=='undefined'?_sbImportClickSmart(this):null" title="Import">
+    <i class="ti ti-file-import"></i>
+  </button>
+  <button class="rail-btn-new" onclick="typeof _quickNewRootDoc!=='undefined'?_quickNewRootDoc():null" title="New page">
+    <i class="ti ti-plus"></i>
+  </button>
+  <div class="rail-div"></div>
   <!-- Logo -->
   <div class="header-logo" id="headerLogoWrap" onclick="hdrLogoClick()" title="Click to change logo" style="cursor:pointer">
     <div class="logo-box" id="hdrLogoBox"><span id="hdrLogoText">P</span></div>
@@ -1908,7 +2075,8 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
   </div>
 
   <!-- Right actions -->
-  <div style="margin-left:auto;display:flex;align-items:center;gap:4px">
+  <div class="rail-space"></div>
+  <div class="hdr-right-group" style="margin-left:auto;display:flex;align-items:center;gap:4px">
     <!-- Notifications -->
     <div style="position:relative">
       <button class="header-icon-btn" onclick="hdrToggleDd('hdrNotifDd')" aria-label="Notifications" style="position:relative">
@@ -2186,6 +2354,35 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
     <div class="editor-panel" id="editorPanel" style="display:none">
       <!-- PAGE ACTION BAR wrapper — Smart Sticky (hides on scroll down, shows on scroll up) -->
       <div id="pabWrapper" class="pab-wrapper">
+      <!-- ══ NEW TABBAR ══ -->
+      <div id="newTabList">
+        <div class="new-tab active" id="newActiveTab">
+          <i class="ti ti-map"></i>
+          <span id="newActiveTabTitle">—</span>
+          <button class="new-tab-x" onclick="void 0" title="Close"><i class="ti ti-x"></i></button>
+        </div>
+      </div>
+      <div id="newTabDivider"></div>
+      <div id="newTabRight">
+        <button class="tb-new" id="tabLockBtn" onclick="toggleDocLock()" title="Khóa trang">
+          <i class="ti ti-lock-open"></i>
+        </button>
+        <div class="tb-sep-new"></div>
+        <button class="tb-new" onclick="toggleFocusMode()" title="Focus mode">
+          <i class="ti ti-focus-2"></i>
+        </button>
+        <button class="tb-new" onclick="toggleTheme()" title="Light / Dark">
+          <i class="ti ti-sun-moon"></i>
+        </button>
+        <button class="tb-new" onclick="toggleAccentPop()" title="Accent color" style="position:relative">
+          <span id="tabAccentDot" style="width:11px;height:11px;border-radius:50%;background:var(--accent);display:block;box-shadow:0 0 6px var(--accent-glow)"></span>
+        </button>
+        <div class="tb-sep-new"></div>
+        <button id="tabPushBtn" onclick="_projToggleLive()" title="Push / Publish">
+          <i class="ti ti-world-upload" style="font-size:13px"></i> Push
+        </button>
+      </div>
+      <!-- ══ OLD PAB (hidden by CSS, kept for JS) ══ -->
       <div class="page-action-bar" id="pageActionBar">
         <div class="pab-left">
           <!-- Project logo (CamNguyen-style space icon) -->
@@ -2746,13 +2943,14 @@ function sbCollapse(){
   const expBtn=document.getElementById('sbExpandBtn');
   const scroll=document.getElementById('editorScroll');
   const savedScroll=scroll?scroll.scrollTop:0;
-  // predict new canvas width: scroll gains the sidebar's current width
   const targetW=scroll&&sb?scroll.offsetWidth+sb.offsetWidth:_canvasW;
   _sbAnimFmedia(targetW,250);
   sb.classList.add('collapsed');
   if(expBtn)expBtn.style.display='flex';
   localStorage.setItem('sb_collapsed','1');
   if(scroll)requestAnimationFrame(()=>{scroll.scrollTop=savedScroll;});
+  document.documentElement.style.setProperty('--left-panels','48px');
+  const rp=document.getElementById('railPagesBtn');if(rp)rp.classList.remove('active');
 }
 function sbExpand(){
   const sb=document.getElementById('sidebar');
@@ -2760,12 +2958,13 @@ function sbExpand(){
   const scroll=document.getElementById('editorScroll');
   const savedScroll=scroll?scroll.scrollTop:0;
   const savedW=parseInt(localStorage.getItem('sb_width'))||260;
-  // predict new canvas width: scroll loses the saved sidebar width
   const targetW=scroll?Math.max(100,scroll.offsetWidth-savedW):_canvasW;
   _sbAnimFmedia(targetW,250);
   sb.classList.remove('collapsed');
   if(expBtn)expBtn.style.display='none';
   sb.style.width=savedW+'px';
+  const rp=document.getElementById('railPagesBtn');if(rp)rp.classList.add('active');
+  document.documentElement.style.setProperty('--left-panels',(48+savedW)+'px');
   localStorage.removeItem('sb_collapsed');
   if(scroll)requestAnimationFrame(()=>{scroll.scrollTop=savedScroll;});
 }
@@ -3504,6 +3703,9 @@ function _updatePabStar(){
 function updatePageActionBar(){
   try{_pabLogoInit();}catch(e){}
   try{_hdrLogoInit();}catch(e){}
+  // Sync new tabbar title
+  const _tabTitle=document.getElementById('newActiveTabTitle');
+  if(_tabTitle){const _d=currentDoc();_tabTitle.textContent=_d?(_d.title||'Untitled'):'—';}
   const doc=currentDoc();
   const dateEl=document.getElementById('pabDate');
   const statusEl=document.getElementById('pabStatus');
