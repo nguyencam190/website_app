@@ -13606,15 +13606,14 @@ function _projUpdateBadge(){
 
 async function _projToggleLive(){
   if(_projLiveSaving)return;
-  if(!_projDir){
-    try{
-      _projLiveSaving=true;
-      await _projOpenFolder(true);
-    }finally{
-      _projLiveSaving=false;
-    }
-    if(!_projDir)return;
+  // Always show folder picker so user can confirm or change the save location
+  try{
+    _projLiveSaving=true;
+    await _projOpenFolder(true);
+  }finally{
+    _projLiveSaving=false;
   }
+  if(!_projDir)return;
   const btn=document.getElementById('projLiveBtn');
   if(btn)btn.classList.add('active');
   _projFullSync().finally(()=>{
@@ -13871,7 +13870,7 @@ async function _projLoadFolderAssets(handle){
 async function _projOpenFolder(saveOnly=false){
   if(!window.showDirectoryPicker){toast('Trình duyệt không hỗ trợ (cần Chrome/Edge 86+)','error');return;}
   let handle;
-  try{handle=await window.showDirectoryPicker({mode:'readwrite',startIn:'documents'});}
+  try{handle=await window.showDirectoryPicker({mode:'readwrite',startIn:_projDir||'documents'});}
   catch(e){if(e.name!=='AbortError')toast('Lỗi chọn thư mục: '+e.message,'error');return;}
 
   // Persist handle first so reconnect works on reload
