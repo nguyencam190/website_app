@@ -194,8 +194,8 @@ Sau **mỗi lần thay đổi code** trong dự án này, bắt buộc phải:
 - `#railPagesBtn` — [MỚI] toggle context panel/sidebar
 - `.rail-btn-new` Import — [MỚI] import folder/ZIP
 - `.rail-btn-new` New page — [MỚI] tạo trang mới
-- `#headerLogoWrap` — [CŨ] logo project (giữ nguyên, resize nhỏ lại)
 - `.rail-div` separator
+- `#headerLogoWrap` — [CŨ] **ẨN** (`display:none!important`) vì logo đã hiện ở sidebar header (`#sbSpaceIcon`)
 - Bell (`hdrNotifDd`) — [CŨ] thông báo (giữ trong rail)
 - Help (`hdrHelpDd`) — [CŨ] trợ giúp (giữ trong rail)
 - Export/Save (`hdrExportDd`) — [CŨ] dropdown lưu/mở project (giữ trong rail)
@@ -208,11 +208,12 @@ Sau **mỗi lần thay đổi code** trong dự án này, bắt buộc phải:
 - Accent dot — [MỚI, thay thế `#accentBtnWrap` trong rail]
 - `#tabPushBtn` — [MỚI, thay thế `#projLiveBtn` trong rail]
 
-**Các button cũ bị ẩn khỏi rail (HTML giữ nguyên cho JS):**
+**Các button/element cũ bị ẩn khỏi rail (HTML giữ nguyên cho JS):**
 - `#projLiveBtn` — ẩn bằng `display:none!important` vì `#tabPushBtn` đảm nhiệm
 - `#focusModeBtn` — ẩn vì tabbar có nút focus mới
 - `#accentBtnWrap` — ẩn vì tabbar có accent dot mới
 - `#themeToggleBtn` — ẩn vì tabbar có theme toggle mới
+- `#headerLogoWrap` + `#hdrLogoMenu` — ẩn vì logo đã hiện ở sidebar header (`#sbSpaceIcon`)
 
 ### Khi thêm tính năng mới có button/icon:
 1. Nếu là **navigation/context** → thêm vào rail

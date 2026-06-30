@@ -1867,9 +1867,8 @@ body{padding-bottom:28px}
 }
 /* Hide header elements that don't fit in vertical rail */
 .header-center,#hdrSearchWrap,.logo-label{display:none!important}
-/* Logo box → rail logo */
-#headerLogoWrap{width:32px;height:32px;flex-shrink:0;margin-bottom:4px}
-.logo-box{width:32px;height:32px;border-radius:9px}
+/* Project logo: sidebar header already shows it → hide from rail */
+#headerLogoWrap,#hdrLogoMenu{display:none!important}
 /* Existing header icon buttons → rail style */
 .header-icon-btn{
   width:36px!important;height:36px!important;
@@ -1885,10 +1884,10 @@ body{padding-bottom:28px}
 }
 /* ── RAIL: action buttons that moved to tabbar → hide from rail ── */
 /* Push, Focus, Accent, Theme are now in the tabbar; keep HTML for JS compat */
-#mainHeader #projLiveBtn,
-#mainHeader #focusModeBtn,
-#mainHeader #accentBtnWrap,
-#mainHeader #themeToggleBtn{display:none!important}
+#projLiveBtn,
+#focusModeBtn,
+#accentBtnWrap,
+#themeToggleBtn{display:none!important}
 /* User avatar → smaller */
 #hdrUserAv{width:32px!important;height:32px!important;font-size:13px!important;flex-shrink:0}
 /* Rail separator */
