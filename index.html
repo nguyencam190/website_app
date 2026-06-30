@@ -1453,11 +1453,22 @@ td .cf-checklist[data-open="true"] .cf-checklist-body,.cf-column-item .cf-checkl
 /* Float for spotlight & cards */
 .cf-spotlight[data-float="left"],.cf-cards[data-float="left"]{float:left!important;max-width:60%!important;min-width:200px;margin:4px 20px 14px 0!important;clear:left}
 .cf-spotlight[data-float="right"],.cf-cards[data-float="right"]{float:right!important;max-width:60%!important;min-width:200px;margin:4px 0 14px 20px!important;clear:right}
-/* Border / shadow decoration for spotlight & cards */
-.cf-spotlight[data-border="on"],.cf-cards[data-border="on"]{outline:1.5px solid var(--border)}
-.cf-spotlight[data-shadow="sm"],.cf-cards[data-shadow="sm"]{box-shadow:0 2px 8px rgba(0,0,0,.12)}
-.cf-spotlight[data-shadow="md"],.cf-cards[data-shadow="md"]{box-shadow:0 4px 16px rgba(0,0,0,.18)}
-.cf-spotlight[data-shadow="lg"],.cf-cards[data-shadow="lg"]{box-shadow:0 8px 32px rgba(0,0,0,.26)}
+/* Border / shadow — Spotlight (whole block) */
+.cf-spotlight[data-border="on"]{outline:1.5px solid var(--border)}
+.cf-spotlight[data-shadow="sm"]{box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.cf-spotlight[data-shadow="md"]{box-shadow:0 4px 16px rgba(0,0,0,.18)}
+.cf-spotlight[data-shadow="lg"]{box-shadow:0 8px 32px rgba(0,0,0,.26)}
+[data-theme="dark"] .cf-spotlight[data-shadow="sm"]{box-shadow:0 2px 10px rgba(0,0,0,.5)}
+[data-theme="dark"] .cf-spotlight[data-shadow="md"]{box-shadow:0 4px 20px rgba(0,0,0,.65)}
+[data-theme="dark"] .cf-spotlight[data-shadow="lg"]{box-shadow:0 8px 36px rgba(0,0,0,.8)}
+/* Border / shadow — per individual card */
+.cf-card[data-border="on"]{outline:1.5px solid var(--border2)!important}
+.cf-card[data-shadow="sm"]{box-shadow:0 2px 8px rgba(0,0,0,.1)!important}
+.cf-card[data-shadow="md"]{box-shadow:0 4px 16px rgba(0,0,0,.16)!important}
+.cf-card[data-shadow="lg"]{box-shadow:0 8px 32px rgba(0,0,0,.24)!important}
+[data-theme="dark"] .cf-card[data-shadow="sm"]{box-shadow:0 2px 10px rgba(0,0,0,.45)!important}
+[data-theme="dark"] .cf-card[data-shadow="md"]{box-shadow:0 4px 20px rgba(0,0,0,.6)!important}
+[data-theme="dark"] .cf-card[data-shadow="lg"]{box-shadow:0 8px 36px rgba(0,0,0,.78)!important}
 /* Active state for cfBlockBar buttons */
 .cbb-btn.active{background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent)}
 /* Block resize handles (fixed position, repositioned via JS) */
@@ -8825,6 +8836,30 @@ function _bppCardItem(card,num,defaultOpen){
     iRow.appendChild(rm);
   }
   imgF.appendChild(iLbl);imgF.appendChild(iRow);bd.appendChild(imgF);
+  // Border
+  const cardBb=document.createElement('div');cardBb.className='bpp-col-btns';
+  [{key:'',label:'None'},{key:'on',label:'Border'}].forEach(({key,label})=>{
+    const active=(card.dataset.border||'')===key;
+    const b=document.createElement('button');b.className='bpp-col-btn'+(active?' active':'');b.textContent=label;
+    b.addEventListener('click',()=>{
+      if(key)card.dataset.border=key;else delete card.dataset.border;
+      onContentChange();cardBb.querySelectorAll('.bpp-col-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+    });
+    cardBb.appendChild(b);
+  });
+  bd.appendChild(_bppField('Border',cardBb));
+  // Shadow
+  const cardSb=document.createElement('div');cardSb.className='bpp-col-btns';
+  [{key:'',label:'None'},{key:'sm',label:'Small'},{key:'md',label:'Medium'},{key:'lg',label:'Large'}].forEach(({key,label})=>{
+    const active=(card.dataset.shadow||'')===key;
+    const b=document.createElement('button');b.className='bpp-col-btn'+(active?' active':'');b.textContent=label;
+    b.addEventListener('click',()=>{
+      if(key)card.dataset.shadow=key;else delete card.dataset.shadow;
+      onContentChange();cardSb.querySelectorAll('.bpp-col-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+    });
+    cardSb.appendChild(b);
+  });
+  bd.appendChild(_bppField('Shadow',cardSb));
   // Delete card
   const delRow=document.createElement('div');delRow.style.cssText='display:flex;justify-content:flex-end';
   const delBtn=document.createElement('button');
@@ -8856,30 +8891,6 @@ function _bppCardsStyles(body){
     sec.appendChild(_bppField('Number of columns',cb));
   }));
   // ── Layouts (collapsible, open) ──
-  body.appendChild(_bppCsec('Decoration',true,sec=>{
-    const bb=document.createElement('div');bb.className='bpp-col-btns';
-    [{key:'',label:'None'},{key:'on',label:'Border'}].forEach(({key,label})=>{
-      const active=(bl.dataset.border||'')===key;
-      const b=document.createElement('button');b.className='bpp-col-btn'+(active?' active':'');b.textContent=label;
-      b.addEventListener('click',()=>{
-        if(key)bl.dataset.border=key;else delete bl.dataset.border;
-        onContentChange();bb.querySelectorAll('.bpp-col-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');
-      });
-      bb.appendChild(b);
-    });
-    sec.appendChild(_bppField('Border',bb));
-    const sb=document.createElement('div');sb.className='bpp-col-btns';
-    [{key:'',label:'None'},{key:'sm',label:'Small'},{key:'md',label:'Medium'},{key:'lg',label:'Large'}].forEach(({key,label})=>{
-      const active=(bl.dataset.shadow||'')===key;
-      const b=document.createElement('button');b.className='bpp-col-btn'+(active?' active':'');b.textContent=label;
-      b.addEventListener('click',()=>{
-        if(key)bl.dataset.shadow=key;else delete bl.dataset.shadow;
-        onContentChange();sb.querySelectorAll('.bpp-col-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');
-      });
-      sb.appendChild(b);
-    });
-    sec.appendChild(_bppField('Shadow',sb));
-  }));
   body.appendChild(_bppCsec('Layouts',true,sec=>{
     const curW=bl.dataset.width||'centered';const curFloat=bl.dataset.float||'';const curAlign=bl.dataset.align||'center';
     // Width presets
@@ -14564,10 +14575,20 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .cf-spotlight[data-align="right"],.ws-canvas .cf-cards[data-align="right"]{margin-left:auto!important;margin-right:0!important}',
     '.ws-canvas .cf-spotlight[data-float="left"],.ws-canvas .cf-cards[data-float="left"]{float:left!important;max-width:60%!important;min-width:200px;margin:4px 20px 14px 0!important;clear:left}',
     '.ws-canvas .cf-spotlight[data-float="right"],.ws-canvas .cf-cards[data-float="right"]{float:right!important;max-width:60%!important;min-width:200px;margin:4px 0 14px 20px!important;clear:right}',
-    '.ws-canvas .cf-spotlight[data-border="on"],.ws-canvas .cf-cards[data-border="on"]{outline:1.5px solid var(--border)}',
-    '.ws-canvas .cf-spotlight[data-shadow="sm"],.ws-canvas .cf-cards[data-shadow="sm"]{box-shadow:0 2px 8px rgba(0,0,0,.12)}',
-    '.ws-canvas .cf-spotlight[data-shadow="md"],.ws-canvas .cf-cards[data-shadow="md"]{box-shadow:0 4px 16px rgba(0,0,0,.18)}',
-    '.ws-canvas .cf-spotlight[data-shadow="lg"],.ws-canvas .cf-cards[data-shadow="lg"]{box-shadow:0 8px 32px rgba(0,0,0,.26)}',
+    '.ws-canvas .cf-spotlight[data-border="on"]{outline:1.5px solid var(--border)}',
+    '.ws-canvas .cf-spotlight[data-shadow="sm"]{box-shadow:0 2px 8px rgba(0,0,0,.12)}',
+    '.ws-canvas .cf-spotlight[data-shadow="md"]{box-shadow:0 4px 16px rgba(0,0,0,.18)}',
+    '.ws-canvas .cf-spotlight[data-shadow="lg"]{box-shadow:0 8px 32px rgba(0,0,0,.26)}',
+    '[data-theme="dark"] .ws-canvas .cf-spotlight[data-shadow="sm"]{box-shadow:0 2px 10px rgba(0,0,0,.5)}',
+    '[data-theme="dark"] .ws-canvas .cf-spotlight[data-shadow="md"]{box-shadow:0 4px 20px rgba(0,0,0,.65)}',
+    '[data-theme="dark"] .ws-canvas .cf-spotlight[data-shadow="lg"]{box-shadow:0 8px 36px rgba(0,0,0,.8)}',
+    '.ws-canvas .cf-card[data-border="on"]{outline:1.5px solid var(--border2)!important}',
+    '.ws-canvas .cf-card[data-shadow="sm"]{box-shadow:0 2px 8px rgba(0,0,0,.1)!important}',
+    '.ws-canvas .cf-card[data-shadow="md"]{box-shadow:0 4px 16px rgba(0,0,0,.16)!important}',
+    '.ws-canvas .cf-card[data-shadow="lg"]{box-shadow:0 8px 32px rgba(0,0,0,.24)!important}',
+    '[data-theme="dark"] .ws-canvas .cf-card[data-shadow="sm"]{box-shadow:0 2px 10px rgba(0,0,0,.45)!important}',
+    '[data-theme="dark"] .ws-canvas .cf-card[data-shadow="md"]{box-shadow:0 4px 20px rgba(0,0,0,.6)!important}',
+    '[data-theme="dark"] .ws-canvas .cf-card[data-shadow="lg"]{box-shadow:0 8px 36px rgba(0,0,0,.78)!important}',
     // Cards
     '.ws-canvas .cf-cards{margin:14px auto;max-width:500px}',
     '.ws-canvas .cf-cards-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;align-items:start}',
