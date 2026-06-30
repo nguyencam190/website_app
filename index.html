@@ -1865,45 +1865,67 @@ body{padding-bottom:28px}
   border-bottom:none!important;border-right:1px solid rgba(255,255,255,.05);
   z-index:10000;overflow:visible;
 }
-/* Hide header elements that don't fit in vertical rail */
+/* Light-mode rail tint (matches design --rail) */
+[data-theme="light"] #mainHeader{background:#1e1f2a!important}
+/* Hide header elements that don't fit the vertical rail */
 .header-center,#hdrSearchWrap,.logo-label{display:none!important}
-/* Project logo: sidebar header already shows it → hide from rail */
-#headerLogoWrap,#hdrLogoMenu{display:none!important}
+
+/* ── RAIL LOGO (top) — matches design .rail-logo ── */
+#headerLogoWrap{
+  display:flex!important;order:1;
+  width:32px;height:32px;margin:0 0 8px;padding:0;
+  border:none!important;background:none!important;
+  align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;
+}
+#headerLogoWrap .logo-box{
+  width:32px;height:32px;border-radius:9px;
+  background:linear-gradient(135deg,var(--accent),#8b5cf6)!important;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;font-weight:800;color:#fff;
+  box-shadow:0 0 18px var(--accent-glow);
+}
+
 /* Existing header icon buttons → rail style */
 .header-icon-btn{
-  width:36px!important;height:36px!important;
-  border-radius:8px!important;
-  color:rgba(255,255,255,.55)!important;background:transparent!important;
-  flex-shrink:0;
+  width:36px!important;height:36px!important;border-radius:8px!important;
+  color:rgba(255,255,255,.55)!important;background:transparent!important;flex-shrink:0;
 }
 .header-icon-btn:hover{background:rgba(255,255,255,.08)!important;color:rgba(255,255,255,.8)!important}
-/* Right actions group → vertical column */
-#mainHeader>.hdr-right-group{
-  flex-direction:column!important;align-items:center!important;
-  gap:2px!important;margin-left:0!important;width:100%;
-}
-/* ── RAIL: action buttons that moved to tabbar → hide from rail ── */
-/* Push, Focus, Accent, Theme are now in the tabbar; keep HTML for JS compat */
-#projLiveBtn,
-#focusModeBtn,
-#accentBtnWrap,
-#themeToggleBtn{display:none!important}
+
+/* Right-actions group dissolves — its children become rail flex items directly */
+#mainHeader>.hdr-right-group{display:contents!important}
+
+/* ── RAIL ORDER — design: logo · Pages · Save · Import · Bell · ⟨spacer⟩ · Help · Avatar ── */
+.hdr-right-group>div:has(#hdrExportDd){order:3}         /* Save / project */
+.hdr-right-group>div:has(#hdrNotifDd){order:5}          /* Notifications */
+.hdr-right-group>button[onclick*="hdrHelpDd"]{order:8}  /* Help (bottom) */
+.hdr-right-group>div:has(#hdrUserDd){order:9}           /* Avatar (bottom) */
+
+/* Action buttons relocated to the tabbar → hide from rail (HTML kept for JS) */
+#projLiveBtn,.hdr-right-group>div:has(#projLiveBtn),
+#focusModeBtn,#accentBtnWrap,#themeToggleBtn{display:none!important}
+/* New-page (+) lives in the sidebar in the design → hide its rail button */
+.rail-btn-new[onclick*="_quickNewRootDoc"]{display:none!important}
+
 /* User avatar → smaller */
 #hdrUserAv{width:32px!important;height:32px!important;font-size:13px!important;flex-shrink:0}
-/* Rail separator */
-.rail-div{width:24px;height:1px;background:rgba(255,255,255,.07);margin:4px 0;flex-shrink:0}
-.rail-space{flex:1}
-/* New rail Pages button */
+
+/* Rail separator + spacer */
+.rail-div{order:6;width:24px;height:1px;background:rgba(255,255,255,.07);margin:4px 0;flex-shrink:0}
+.rail-space{order:7;flex:1}
+
+/* Rail Pages button */
 #railPagesBtn{
-  width:36px;height:36px;background:transparent;border:none;border-radius:8px;
+  order:2;width:36px;height:36px;background:transparent;border:none;border-radius:8px;
   color:rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;
   cursor:pointer;font-size:18px;flex-shrink:0;transition:all .18s;
 }
 #railPagesBtn.active{background:rgba(99,102,241,.15);color:var(--accent);box-shadow:inset 2px 0 0 var(--accent)}
 #railPagesBtn:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.8)}
-/* New rail generic button */
+
+/* Rail generic button (Import) */
 .rail-btn-new{
-  width:36px;height:36px;background:transparent;border:none;border-radius:8px;
+  order:4;width:36px;height:36px;background:transparent;border:none;border-radius:8px;
   color:rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;
   cursor:pointer;font-size:17px;flex-shrink:0;transition:all .18s;
 }
@@ -1922,8 +1944,9 @@ body[data-focus="1"] #sidebar::before{display:none}
 
 /* Sidebar header: show project name */
 .sb-space-header{height:42px;padding:0 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--sb-border);flex-shrink:0}
-.sb-space-name{font-size:14px!important;font-weight:600!important;flex:1}
-.sb-space-icon{flex-shrink:0;width:24px!important;height:24px!important;font-size:11px!important;border-radius:6px!important}
+.sb-space-name{font-size:15px!important;font-weight:700!important;flex:1}
+/* Logo now lives in the rail (design) → sidebar header is text-only */
+.sb-space-icon{display:none!important}
 /* Hide sidebar star btn (favorites handled in rail) */
 .sb-space-header .sb-star-btn{display:none!important}
 /* Hide sidebar footer (collapse + space tools) */
@@ -3379,7 +3402,21 @@ function hdrToggleDd(id){
   const target=document.getElementById(id);if(!target)return;
   const wasOpen=target.classList.contains('on');
   hdrCloseAll();
-  if(!wasOpen)target.classList.add('on');
+  if(!wasOpen){target.classList.add('on');_hdrPlaceRailDd(target);}
+}
+/* Rail is a 48px fixed left bar → open dropdowns to its right, aligned to the
+   trigger and clamped inside the viewport (CSS right:0 would fly off-screen). */
+function _hdrPlaceRailDd(dd){
+  const trigger=dd.previousElementSibling;
+  if(!trigger||!trigger.getBoundingClientRect)return;
+  const r=trigger.getBoundingClientRect();
+  dd.style.position='fixed';
+  dd.style.left=(r.right+8)+'px';
+  dd.style.right='auto';
+  const h=dd.offsetHeight||280;
+  let top=r.top;
+  if(top+h>window.innerHeight-8)top=Math.max(8,window.innerHeight-8-h);
+  dd.style.top=top+'px';
 }
 function hdrCloseAll(){
   document.querySelectorAll('.hdr-dd').forEach(d=>d.classList.remove('on'));
@@ -3543,8 +3580,9 @@ function hdrLogoClick(){
   if(!menu||!wrap)return;
   if(menu.classList.contains('on')){menu.classList.remove('on');return;}
   const r=wrap.getBoundingClientRect();
-  menu.style.top=(r.bottom+6)+'px';
-  menu.style.left=r.left+'px';
+  // Rail is a 48px fixed left bar → open the menu to its right, not below/behind
+  menu.style.top=r.top+'px';
+  menu.style.left=(r.right+8)+'px';
   menu.classList.add('on');
   setTimeout(()=>document.addEventListener('click',function once(e){
     if(!e.target.closest('#hdrLogoMenu')&&!e.target.closest('#headerLogoWrap')){

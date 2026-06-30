@@ -188,18 +188,28 @@ Sau **mỗi lần thay đổi code** trong dự án này, bắt buộc phải:
 - Icon/button cũ (đã tồn tại trong old UI) → **giữ nguyên HTML, ẩn bằng CSS nếu đã có bản thay thế ở nơi mới**
 - Icon/button mới (thêm riêng cho new UI) → có thể style mới hoàn toàn
 
+### Nguồn sự thật về layout: file thiết kế `/tmp/preview_new_ui.html`
+
+Đây là **bản mockup chuẩn** mà app phải khớp. Mọi quyết định về thứ tự/vị trí icon trong rail, tabbar, statusbar đều theo file này.
+
 ### Phân loại icon trong new UI:
 
-**Navigation Rail (`#mainHeader`, 48px fixed left) — chỉ chứa:**
-- `#railPagesBtn` — [MỚI] toggle context panel/sidebar
-- `.rail-btn-new` Import — [MỚI] import folder/ZIP
-- `.rail-btn-new` New page — [MỚI] tạo trang mới
-- `.rail-div` separator
-- `#headerLogoWrap` — [CŨ] **ẨN** (`display:none!important`) vì logo đã hiện ở sidebar header (`#sbSpaceIcon`)
-- Bell (`hdrNotifDd`) — [CŨ] thông báo (giữ trong rail)
-- Help (`hdrHelpDd`) — [CŨ] trợ giúp (giữ trong rail)
-- Export/Save (`hdrExportDd`) — [CŨ] dropdown lưu/mở project (giữ trong rail)
-- `#hdrUserAv` avatar — [CŨ] menu người dùng (giữ trong rail)
+**Navigation Rail (`#mainHeader`, 48px fixed left) — thứ tự CHÍNH XÁC từ trên xuống (khớp design):**
+1. `#headerLogoWrap` — [CŨ] **HIỆN** ở đỉnh rail, style như `.rail-logo` (32×32 gradient). KHÔNG ẩn. `order:1`. Logo là DUY NHẤT ở rail — sidebar header chỉ còn text.
+2. `#railPagesBtn` (ti-files) — [MỚI] toggle context panel/sidebar. `order:2`
+3. Save/Export (`hdrExportDd`, ti-device-floppy) — [CŨ] dropdown New/Open/Export project. `order:3`
+4. `.rail-btn-new` Import (ti-file-import) — [MỚI] import folder/ZIP. `order:4`
+5. Bell (`hdrNotifDd`, ti-bell) — [CŨ] thông báo. `order:5`
+6. `.rail-div` separator. `order:6`
+7. `.rail-space` (flex:1) đẩy nhóm dưới xuống đáy. `order:7`
+8. Help (`hdrHelpDd`, ti-help-circle) — [CŨ] trợ giúp. `order:8`
+9. `#hdrUserAv` avatar — [CŨ] menu người dùng. `order:9`
+
+**Cơ chế kỹ thuật rail (KHÔNG được phá):**
+- `#mainHeader>.hdr-right-group{display:contents!important}` → các nút con (bell/save/help/avatar) trở thành flex item trực tiếp của rail, rồi dùng `order` để sắp xếp xen kẽ với các nút rail mới.
+- **Dropdown rail phải mở sang PHẢI rail**, không dùng CSS `right:0` (sẽ bay ra ngoài màn hình bên trái vì rail chỉ 48px). Hàm `hdrToggleDd()` gọi `_hdrPlaceRailDd()` đặt `position:fixed; left:trigger.right+8; top:` (clamp trong viewport). `hdrLogoClick()` cũng đặt menu ở `left:r.right+8`.
+- `.rail-btn-new[onclick*="_quickNewRootDoc"]` (nút New page +) → **ẨN** khỏi rail; tạo trang mới nằm ở hàng search trong sidebar (theo design).
+- Light mode rail tint: `[data-theme="light"] #mainHeader{background:#1e1f2a}` (khớp `--rail` của design).
 
 **Tabbar (`#pabWrapper`, 42px) — chứa các action button MỚI:**
 - `#tabLockBtn` — [MỚI] khóa trang
@@ -213,10 +223,15 @@ Sau **mỗi lần thay đổi code** trong dự án này, bắt buộc phải:
 - `#focusModeBtn` — ẩn vì tabbar có nút focus mới
 - `#accentBtnWrap` — ẩn vì tabbar có accent dot mới
 - `#themeToggleBtn` — ẩn vì tabbar có theme toggle mới
-- `#headerLogoWrap` + `#hdrLogoMenu` — ẩn vì logo đã hiện ở sidebar header (`#sbSpaceIcon`)
+- `.rail-btn-new[onclick*="_quickNewRootDoc"]` (New page +) — ẩn vì tạo trang nằm ở sidebar
+
+### Sidebar header — chỉ còn TEXT (khớp design):
+- `#sbSpaceIcon` (`.sb-space-icon`) — **ẨN** (`display:none!important`) vì logo đã chuyển lên rail. Tránh hiện logo 2 nơi (rail + sidebar) gây trùng/khác chữ.
+- `.sb-space-name` — `font-size:15px;font-weight:700` (chỉ hiện tên project, ví dụ "My Project").
 
 ### Khi thêm tính năng mới có button/icon:
 1. Nếu là **navigation/context** → thêm vào rail
 2. Nếu là **action trên document** → thêm vào tabbar
 3. **KHÔNG** đưa cùng 1 chức năng vào cả hai nơi (tránh duplicate)
 4. Button JS cũ (có `id` được JS tham chiếu) → **giữ HTML, ẩn bằng CSS**, tạo bản mới có styling mới
+5. Dropdown đặt trong rail → PHẢI mở sang phải qua `_hdrPlaceRailDd()`, KHÔNG dùng `right:0` tĩnh
