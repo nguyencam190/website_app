@@ -7714,7 +7714,14 @@ function _slashInsert(id,execRange){
     const cur=_nearestBlock(sel,editor);
     if(cur&&cur!==editor){
       const heading=document.createElement(id);
-      heading.innerHTML=cur.innerHTML||'<br>';
+      // When current block is a list, use the focused <li>'s content — not the raw <li> tags
+      let srcHtml=cur.innerHTML||'<br>';
+      if(cur.tagName==='UL'||cur.tagName==='OL'){
+        const n=sel&&sel.rangeCount?sel.getRangeAt(0).startContainer:null;
+        const li=n?(n.nodeType===Node.TEXT_NODE?n.parentElement:n)?.closest('li'):cur.querySelector('li');
+        if(li)srcHtml=li.innerHTML||'<br>';
+      }
+      heading.innerHTML=srcHtml;
       cur.parentElement.replaceChild(heading,cur);
       try{const r=document.createRange();r.selectNodeContents(heading);r.collapse(false);sel.removeAllRanges();sel.addRange(r);}catch(e){}
       onContentChange();return;
@@ -12519,7 +12526,14 @@ function bbApplyBlock(val){
     }
     if(node&&node!==editor&&node.parentElement&&node.nodeType!==3){
       const newEl=document.createElement(val);
-      newEl.innerHTML=node.innerHTML||'<br>';
+      // When converting from a list, extract the focused <li>'s content — not the raw <li> tags
+      let srcHtml=node.innerHTML||'<br>';
+      if(node.tagName==='UL'||node.tagName==='OL'){
+        const n2=sel&&sel.rangeCount?sel.getRangeAt(0).startContainer:null;
+        const li=n2?(n2.nodeType===Node.TEXT_NODE?n2.parentElement:n2)?.closest('li'):node.querySelector('li');
+        if(li)srcHtml=li.innerHTML||'<br>';
+      }
+      newEl.innerHTML=srcHtml;
       node.parentElement.replaceChild(newEl,node);
       try{const r=document.createRange();r.selectNodeContents(newEl);r.collapse(false);sel.removeAllRanges();sel.addRange(r);}catch(e){}
       editor.focus({preventScroll:true});onContentChange();setTimeout(bbShow,10);return;
