@@ -225,6 +225,8 @@ Sau **mỗi lần thay đổi code** trong dự án này, bắt buộc phải:
 - **Dropdown rail phải mở sang PHẢI rail**, không dùng CSS `right:0` (sẽ bay ra ngoài màn hình bên trái vì rail chỉ 48px). Hàm `hdrToggleDd()` gọi `_hdrPlaceRailDd()` đặt `position:fixed; left:trigger.right+8; top:` (clamp trong viewport). `hdrLogoClick()` cũng đặt menu ở `left:r.right+8`.
 - `.rail-btn-new[onclick*="_quickNewRootDoc"]` (nút New page +) → **ẨN** khỏi rail; tạo trang mới nằm ở hàng search trong sidebar (theo design).
 - Light mode rail tint: `[data-theme="light"] #mainHeader{background:#1e1f2a}` (khớp `--rail` của design).
+- **Rail rộng 56px** (không phải 48px). Khi đổi width phải sửa ĐỒNG BỘ: `#mainHeader width`, `.layout margin-left`, `#sidebar::before left`, `.statusbar left`, `--left-panels` (rail+sidebar) ở `:root` VÀ trong `sbExpand`/`sbCollapse` JS. Icon rail 23px, nút 46px.
+- **Accent popup (`#accentPop`) nằm trong `#accentBtnWrap` (rail, display:none)** → `toggleAccentPop()` phải `document.body.appendChild(pop)` (thoát khỏi wrapper ẩn) rồi đặt fixed dưới `#tabAccentBtn` (nút accent ở tabbar). KHÔNG thì popup vô hình. Có handler click-ngoài để đóng.
 
 **Tabbar (`#pabWrapper`, 42px) — chứa các action button MỚI:**
 - `#tabLockBtn` — [MỚI] khóa trang

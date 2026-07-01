@@ -1850,7 +1850,7 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 ════════════════════════════════════════════ */
 
 /* Variable aliases */
-:root{--rail-bg:#09090f;--rail-w:48px;--left-panels:308px;--tr:.18s ease}
+:root{--rail-bg:#09090f;--rail-w:56px;--left-panels:316px;--tr:.18s ease}
 
 /* Body stays flex-column; rail+statusbar are fixed so don't affect flow */
 body{padding-bottom:28px}
@@ -1858,9 +1858,9 @@ body{padding-bottom:28px}
 /* ── ICON RAIL (#mainHeader → position:fixed left rail) ── */
 #mainHeader{
   position:fixed!important;left:0;top:0;bottom:0;
-  width:48px!important;height:100vh!important;
+  width:56px!important;height:100vh!important;
   flex-direction:column;align-items:center;
-  padding:10px 0;gap:2px;
+  padding:12px 0;gap:3px;
   background:#09090f!important;
   border-bottom:none!important;border-right:1px solid rgba(255,255,255,.05);
   z-index:10000;overflow:visible;
@@ -1933,11 +1933,11 @@ body{padding-bottom:28px}
 .rail-btn-new:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.8)}
 
 /* ── LAYOUT: push right of fixed rail ── */
-.layout{margin-left:48px;height:calc(100vh - 28px);overflow:hidden}
+.layout{margin-left:56px;height:calc(100vh - 28px);overflow:hidden}
 
 /* ── SIDEBAR → CTX PANEL: accent bar + adjusted width ── */
 #sidebar::before{
-  content:'';position:fixed;left:48px;top:0;bottom:0;width:1.5px;
+  content:'';position:fixed;left:56px;top:0;bottom:0;width:1.5px;
   background:linear-gradient(180deg,var(--accent) 0%,rgba(99,102,241,.15) 100%);
   z-index:9999;pointer-events:none;
 }
@@ -2004,7 +2004,7 @@ body[data-focus="1"] #sidebar::before{display:none}
 /* ── STATUSBAR ── */
 .statusbar{
   position:fixed!important;bottom:0!important;
-  left:48px!important;right:0!important;
+  left:56px!important;right:0!important;
   height:28px!important;z-index:80;
   display:flex;align-items:center;justify-content:space-between;
   padding:0 16px;
@@ -2059,32 +2059,35 @@ body[data-focus="1"] .doc-outline{width:0!important;border:none}
 /* Outline toggle button active state */
 #tabOutlineBtn.active{background:rgba(99,102,241,.12);color:var(--accent)}
 
-/* ══ SIZE BUMP — text + icon to hơn (khớp/nhỉnh hơn design) ══ */
-/* Rail icons */
-#railPagesBtn{font-size:20px!important;width:38px!important;height:38px!important}
-.rail-btn-new{font-size:20px!important;width:38px!important;height:38px!important}
-.header-icon-btn{width:38px!important;height:38px!important}
-.header-icon-btn i,.header-icon-btn .ti{font-size:20px!important}
-/* Rail logo */
-#headerLogoWrap{width:34px!important;height:34px!important}
-#headerLogoWrap .logo-box{width:34px!important;height:34px!important;font-size:16px!important}
-#hdrUserAv{width:34px!important;height:34px!important;font-size:14px!important}
+/* ══ SIZE BUMP — icon + chữ + thanh to hơn (rail 56px) ══ */
+/* Rail icons (rail 56px → buttons 46, icon 23) */
+#railPagesBtn{font-size:23px!important;width:46px!important;height:46px!important}
+.rail-btn-new{font-size:23px!important;width:46px!important;height:46px!important}
+.header-icon-btn{width:46px!important;height:46px!important}
+.header-icon-btn i,.header-icon-btn .ti{font-size:23px!important}
+/* Rail logo + avatar */
+#headerLogoWrap{width:40px!important;height:40px!important}
+#headerLogoWrap .logo-box{width:40px!important;height:40px!important;font-size:18px!important}
+#hdrUserAv{width:40px!important;height:40px!important;font-size:16px!important}
 /* Sidebar header "My Project" */
-.sb-space-name{font-size:17px!important;font-weight:700!important}
+.sb-space-name{font-size:18px!important;font-weight:700!important}
 /* Primary nav (Recent / Starred / Pages) */
-.sb-primary-item{font-size:15px!important;padding:9px 10px!important}
-.sb-primary-item i{font-size:18px!important}
-.sb-primary-arrow{font-size:13px!important}
+.sb-primary-item{font-size:16px!important;padding:10px 11px!important}
+.sb-primary-item i{font-size:21px!important}
+.sb-primary-arrow{font-size:14px!important}
 /* Search row */
-.sb-search input{font-size:14px!important}
-.sb-search i{font-size:15px!important}
-.sb-new-btn{width:30px!important;height:30px!important;font-size:18px!important}
+.sb-search input{font-size:15px!important}
+.sb-search i{font-size:16px!important}
+.sb-new-btn{width:32px!important;height:32px!important;font-size:19px!important}
 /* Section label "PAGE TREE" */
-.sb-section-label{font-size:12.5px!important}
-.sb-section-label .sb-tree-chev{font-size:12px!important}
+.sb-section-label{font-size:13px!important}
+.sb-section-label .sb-tree-chev{font-size:13px!important}
 /* Page tree items (incl. Home) */
-.doc-title-sb,.doc-item{font-size:15px!important}
-.doc-item-icon,.doc-item-icon i{font-size:15px!important}
+.doc-title-sb,.doc-item{font-size:16px!important}
+.doc-item-icon,.doc-item-icon i{font-size:16px!important}
+/* Tabbar buttons a touch bigger */
+.tb-new{width:34px!important;height:34px!important;font-size:19px!important}
+#tabPushBtn{font-size:13px!important;height:30px!important}
 </style>
 </head>
 <body>
@@ -2461,8 +2464,8 @@ body[data-focus="1"] .doc-outline{width:0!important;border:none}
           <i class="ti ti-focus-2"></i>
         </button>
         <button class="tb-new" id="tabThemeBtn" onclick="toggleTheme()" title="Light / Dark">&#9790;</button>
-        <button class="tb-new" onclick="toggleAccentPop()" title="Accent color" style="position:relative">
-          <span id="tabAccentDot" style="width:11px;height:11px;border-radius:50%;background:var(--accent);display:block;box-shadow:0 0 6px var(--accent-glow)"></span>
+        <button class="tb-new" id="tabAccentBtn" onclick="toggleAccentPop()" title="Accent color" style="position:relative">
+          <span id="tabAccentDot" style="width:13px;height:13px;border-radius:50%;background:var(--accent);display:block;box-shadow:0 0 6px var(--accent-glow)"></span>
         </button>
         <div class="tb-sep-new"></div>
         <button id="tabPushBtn" onclick="_projToggleLive()" title="Push / Publish">
@@ -3044,7 +3047,7 @@ function sbCollapse(){
   if(expBtn)expBtn.style.display='flex';
   localStorage.setItem('sb_collapsed','1');
   if(scroll)requestAnimationFrame(()=>{scroll.scrollTop=savedScroll;});
-  document.documentElement.style.setProperty('--left-panels','48px');
+  document.documentElement.style.setProperty('--left-panels','56px');
   const rp=document.getElementById('railPagesBtn');if(rp)rp.classList.remove('active');
 }
 function sbExpand(){
@@ -3059,7 +3062,7 @@ function sbExpand(){
   if(expBtn)expBtn.style.display='none';
   sb.style.width=savedW+'px';
   const rp=document.getElementById('railPagesBtn');if(rp)rp.classList.add('active');
-  document.documentElement.style.setProperty('--left-panels',(48+savedW)+'px');
+  document.documentElement.style.setProperty('--left-panels',(56+savedW)+'px');
   localStorage.removeItem('sb_collapsed');
   if(scroll)requestAnimationFrame(()=>{scroll.scrollTop=savedScroll;});
 }
@@ -5938,9 +5941,30 @@ function _buildAccentSwatches(){
 }
 function toggleAccentPop(){
   const pop=document.getElementById('accentPop');if(!pop)return;
+  // The rail accent wrapper (#accentBtnWrap) is display:none in the new UI, which
+  // would keep the popup invisible → move it to <body> once and anchor it to the
+  // visible tabbar accent button.
+  if(pop.parentElement&&pop.parentElement.id==='accentBtnWrap')document.body.appendChild(pop);
   const on=pop.classList.toggle('on');
-  if(on)_buildAccentPopSwatches();
+  if(on){
+    _buildAccentPopSwatches();
+    const btn=document.getElementById('tabAccentBtn')||document.getElementById('accentPopBtn');
+    if(btn){
+      const r=btn.getBoundingClientRect();
+      pop.style.position='fixed';
+      pop.style.left='auto';
+      pop.style.right=Math.max(8,window.innerWidth-r.right)+'px';
+      pop.style.top=(r.bottom+8)+'px';
+    }
+  }
 }
+// Close the accent popup when clicking outside it / its button
+document.addEventListener('click',function(e){
+  const pop=document.getElementById('accentPop');
+  if(!pop||!pop.classList.contains('on'))return;
+  if(e.target.closest('#accentPop')||e.target.closest('#tabAccentBtn')||e.target.closest('#accentPopBtn'))return;
+  pop.classList.remove('on');
+});
 function _buildAccentPopSwatches(){
   const cont=document.getElementById('accentPopSwatches');if(!cont)return;
   const cur=(localStorage.getItem('accent_color')||'#2563eb').toLowerCase();
