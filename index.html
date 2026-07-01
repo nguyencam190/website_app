@@ -1956,8 +1956,8 @@ body{padding-bottom:28px}
 
 /* ── SIDEBAR → CTX PANEL: accent bar + adjusted width ── */
 #sidebar::before{
-  content:'';position:fixed;left:56px;top:0;bottom:0;width:1.5px;
-  background:linear-gradient(180deg,var(--accent) 0%,rgba(99,102,241,.15) 100%);
+  content:'';position:fixed;left:56px;top:0;bottom:0;width:2px;
+  background:linear-gradient(180deg,var(--accent) 0%,var(--accent) 55%,rgba(99,102,241,.55) 100%);
   z-index:9999;pointer-events:none;
 }
 body[data-focus="1"] #sidebar::before{display:none}
@@ -15484,6 +15484,9 @@ function _buildViewerShellCss(accent){
     '.ws-pab-right .ws-accent-dot{width:14px!important;height:14px!important;box-shadow:0 0 0 2px var(--surface)!important}',
     '.ws-pab-sep{width:1px;height:18px;background:var(--border);margin:0 3px;flex-shrink:0}',
     '.ws-layout{margin-left:56px!important;height:100vh!important}',
+    /* Thanh accent dọc giữa rail và sidebar (giống app) */
+    '.ws-sidebar::before{content:"";position:fixed;left:56px;top:0;bottom:0;width:2px;background:linear-gradient(180deg,var(--accent) 0%,var(--accent) 55%,rgba(99,102,241,.55) 100%);z-index:60;pointer-events:none}',
+    '.ws-sidebar.collapsed::before,body.ws-focused .ws-sidebar::before{display:none}',
     /* accent popup opens to the right of the rail */
     '.ws-header .ws-accent-pop{position:fixed!important;left:56px!important;right:auto!important;top:auto!important;bottom:14px!important}',
     /* Outline "On this page" panel (bên phải) */
