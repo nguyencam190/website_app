@@ -2024,6 +2024,31 @@ html.no-transition *{transition:none!important;animation:none!important}
 /* ── EDITOR SCROLL: account for removed fixed header top offset ── */
 .editor-scroll{margin-top:0!important}
 .pab-wrapper.pab-sticky{top:0!important}
+
+/* ── OUTLINE PANEL ("On this page") — sổ ra bên phải khi bấm nút ≡ ở tabbar ── */
+.doc-outline{
+  position:fixed;top:42px;bottom:28px;right:0;width:0;
+  background:var(--surface);border-left:1px solid var(--border);
+  overflow:hidden;white-space:nowrap;z-index:70;
+  transition:width .22s ease;
+}
+.doc-outline.open{width:250px;overflow-y:auto}
+.doc-outline-inner{padding:16px 14px;white-space:normal;width:250px}
+.ol-h{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px}
+.ol-item{
+  font-size:12.5px;color:var(--text2);padding:5px 0 5px 11px;
+  border-left:2px solid transparent;cursor:pointer;line-height:1.4;
+  transition:color .15s,border-color .15s;
+  white-space:normal;overflow:hidden;text-overflow:ellipsis;
+}
+.ol-item:hover,.ol-item.active{color:var(--accent);border-left-color:var(--accent)}
+.ol-item.lvl2{padding-left:20px;font-size:11.5px}
+.ol-item.lvl3{padding-left:29px;font-size:11.5px;color:var(--text3)}
+.ol-empty{font-size:12px;color:var(--text3);padding:6px 0;line-height:1.5}
+/* Focus mode hides the outline */
+body[data-focus="1"] .doc-outline{width:0!important;border:none}
+/* Outline toggle button active state */
+#tabOutlineBtn.active{background:rgba(99,102,241,.12);color:var(--accent)}
 </style>
 </head>
 <body>
@@ -2409,6 +2434,10 @@ html.no-transition *{transition:none!important;animation:none!important}
         <button id="tabPushBtn" onclick="_projToggleLive()" title="Push / Publish">
           <i class="ti ti-world-upload" style="font-size:13px"></i> Push
         </button>
+        <div class="tb-sep-new"></div>
+        <button class="tb-new" id="tabOutlineBtn" onclick="toggleDocOutline()" title="Mục lục — On this page">
+          <i class="ti ti-list"></i>
+        </button>
       </div>
       <!-- ══ OLD PAB (hidden by CSS, kept for JS) ══ -->
       <div class="page-action-bar" id="pageActionBar">
@@ -2495,6 +2524,10 @@ html.no-transition *{transition:none!important;animation:none!important}
   </div>
 </div>
 
+<!-- ── OUTLINE / "On this page" panel ── -->
+<div class="doc-outline" id="docOutline">
+  <div class="doc-outline-inner" id="docOutlineInner"></div>
+</div>
 <button class="scroll-top-btn" id="scrollTopBtn" title="Lên đầu trang" onclick="document.getElementById('editorScroll').scrollTo({top:0,behavior:'smooth'})"><i class="ti ti-arrow-up"></i></button>
 <div class="statusbar">
   <span id="saveStatusEl" class="save-ok"><i class="ti ti-circle-check" style="font-size:12px"></i> Saved</span>
@@ -4132,6 +4165,7 @@ function openDoc(id){
   if(_titleInp){_titleInp.style.transition='none';_titleInp.style.opacity='0';}
   document.getElementById('docTitleInput').value=doc.title||'';
   document.getElementById('editor').innerHTML=doc.content||'';
+  if(document.getElementById('docOutline')?.classList.contains('open'))setTimeout(buildDocOutline,0);
   requestAnimationFrame(()=>{requestAnimationFrame(()=>{
     _edScroll.style.transition='opacity .28s cubic-bezier(.25,.46,.45,.94),transform .28s cubic-bezier(.25,.46,.45,.94)';
     _edScroll.style.opacity='1';_edScroll.style.transform='translateY(0)';
@@ -4259,9 +4293,50 @@ function onContentChange(){
   // Immediate, cheap — read live DOM, keep UI responsive
   _updateBlankHint();
   _updateWordCount();
+  if(document.getElementById('docOutline')?.classList.contains('open'))buildDocOutline();
   // Defer the expensive work
   clearTimeout(_commitTimer);
   _commitTimer=setTimeout(_commitContent,250);
+}
+/* ── Outline / "On this page" — auto-generated from headings in #editor ── */
+function toggleDocOutline(){
+  const panel=document.getElementById('docOutline');if(!panel)return;
+  const btn=document.getElementById('tabOutlineBtn');
+  const open=panel.classList.toggle('open');
+  if(btn)btn.classList.toggle('active',open);
+  if(open)buildDocOutline();
+}
+function buildDocOutline(){
+  const editor=document.getElementById('editor');
+  const inner=document.getElementById('docOutlineInner');
+  if(!editor||!inner)return;
+  inner.innerHTML='';
+  const h=document.createElement('div');h.className='ol-h';h.textContent='On this page';inner.appendChild(h);
+  const heads=[...editor.querySelectorAll('h1,h2,h3')].filter(x=>(x.textContent||'').trim());
+  if(!heads.length){
+    const e=document.createElement('div');e.className='ol-empty';
+    e.textContent='Chưa có tiêu đề. Thêm heading H1/H2/H3 để tạo mục lục.';
+    inner.appendChild(e);return;
+  }
+  heads.forEach((hd,i)=>{
+    hd.dataset.olId='ol-h-'+i;
+    const lvl=hd.tagName.toLowerCase();
+    const it=document.createElement('div');
+    it.className='ol-item'+(lvl==='h2'?' lvl2':lvl==='h3'?' lvl3':'');
+    it.textContent=(hd.textContent||'').trim();
+    it.onclick=()=>_olScrollTo('ol-h-'+i,it);
+    inner.appendChild(it);
+  });
+}
+function _olScrollTo(id,itEl){
+  const editor=document.getElementById('editor');
+  const scroll=document.getElementById('editorScroll');
+  const target=editor&&editor.querySelector('[data-ol-id="'+id+'"]');
+  if(!target||!scroll)return;
+  const sr=scroll.getBoundingClientRect(),tr=target.getBoundingClientRect();
+  scroll.scrollTo({top:scroll.scrollTop+(tr.top-sr.top)-24,behavior:'smooth'});
+  document.querySelectorAll('#docOutlineInner .ol-item').forEach(x=>x.classList.remove('active'));
+  if(itEl)itEl.classList.add('active');
 }
 function flushContent(){
   if(_commitTimer){clearTimeout(_commitTimer);_commitTimer=null;_commitContent();}

@@ -206,8 +206,14 @@ Sau **mỗi lần thay đổi code** trong dự án này, bắt buộc phải:
 9. Help (`hdrHelpDd`, ti-help-circle) — [CŨ] trợ giúp. `order:9`
 10. `#hdrUserAv` avatar — [CŨ] menu người dùng. `order:10`
 
-> **Actions (Focus/Theme/Accent/Push) nằm ở TABBAR** (`#newTabRight`), KHÔNG ở rail — theo design upload `259b2af7-preview_new_ui.html`.
-> Nút **Outline** của design bị BỎ QUA vì app chưa có panel outline/TOC toggle (chỉ có block `/toc`) — không thêm UI chết.
+> **Actions (Focus/Theme/Accent/Push/Outline) nằm ở TABBAR** (`#newTabRight`), KHÔNG ở rail — theo design upload `259b2af7-preview_new_ui.html`.
+
+### Outline panel "On this page" (`#tabOutlineBtn` ≡ → `#docOutline`)
+- Nút ≡ (`ti-list`) cuối tabbar `toggleDocOutline()` → sổ panel `position:fixed;right:0` rộng 250px (giữa tabbar 42px và statusbar 28px).
+- `buildDocOutline()` quét `#editor h1,h2,h3` (bỏ heading rỗng), dựng danh sách `.ol-item` (h2→`.lvl2`, h3→`.lvl3` thụt lề). Gắn `data-ol-id` lên heading.
+- Click item → `_olScrollTo()` cuộn `#editorScroll` tới heading (smooth), set `.active`.
+- Tự refresh khi panel đang mở: trong `onContentChange()` (gõ) và `openDoc()` (đổi trang), guard `#docOutline.open`.
+- Focus mode ẩn panel (`body[data-focus="1"] .doc-outline{width:0}`).
 
 **Cơ chế kỹ thuật rail (KHÔNG được phá):**
 - `#mainHeader>.hdr-right-group{display:contents!important}` → các nút con (bell/save/help/avatar) trở thành flex item trực tiếp của rail, rồi dùng `order` để sắp xếp xen kẽ với các nút rail mới.
