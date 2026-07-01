@@ -15428,7 +15428,8 @@ function _buildViewerShellCss(accent){
     '.ws-pnav-arrow{margin-left:auto;font-size:12px;color:var(--text3);transition:transform .2s;flex-shrink:0}',
     '.ws-pnav-item.flyout-open .ws-pnav-arrow{transform:rotate(90deg);color:var(--accent)}',
     /* expand button — thin strip on left edge like main app */
-    '.ws-sb-expand{display:none;position:fixed;left:0;top:50%;transform:translateY(-50%);width:18px;height:48px;background:var(--border2);border:none;border-radius:0 4px 4px 0;cursor:pointer;color:var(--text2);font-size:12px;z-index:200;align-items:center;justify-content:center;transition:.15s;padding:0}',
+    '.ws-sb-expand{display:none;position:fixed;left:56px;top:50%;transform:translateY(-50%);width:22px;height:54px;background:var(--surface2);border:1px solid var(--border);border-left:none;border-radius:0 8px 8px 0;cursor:pointer;color:var(--text2);font-size:14px;z-index:999;align-items:center;justify-content:center;transition:.15s;padding:0;box-shadow:2px 0 12px rgba(0,0,0,.28)}',
+    '.ws-sb-expand:hover{background:var(--accent);color:#fff;border-color:var(--accent)}',
     '.ws-sb-expand:hover{background:var(--accent);color:#fff}',
     '.ws-sidebar.collapsed~.ws-sb-expand{display:flex}',
     /* ── Responsive breakpoints ── */
