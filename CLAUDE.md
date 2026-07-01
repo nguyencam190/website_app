@@ -212,8 +212,13 @@ Sau **mỗi lần thay đổi code** trong dự án này, bắt buộc phải:
 - Nút ≡ (`ti-list`) cuối tabbar `toggleDocOutline()` → sổ panel `position:fixed;right:0` rộng 250px (giữa tabbar 42px và statusbar 28px).
 - `buildDocOutline()` quét `#editor h1,h2,h3` (bỏ heading rỗng), dựng danh sách `.ol-item` (h2→`.lvl2`, h3→`.lvl3` thụt lề). Gắn `data-ol-id` lên heading.
 - Click item → `_olScrollTo()` cuộn `#editorScroll` tới heading (smooth), set `.active`.
+- Có mục **Page info** (`.ol-sep` + `.ol-h` + `.ol-meta-row`): Tạo (`doc.createdAt`), Cập nhật (`_relTime(doc.updatedAt)`), Số từ (`editor.innerText` — KHÔNG dùng `textContent` vì block dính liền), Trạng thái (locked→"Đã khóa" đỏ / "Đang sửa" xanh).
 - Tự refresh khi panel đang mở: trong `onContentChange()` (gõ) và `openDoc()` (đổi trang), guard `#docOutline.open`.
 - Focus mode ẩn panel (`body[data-focus="1"] .doc-outline{width:0}`).
+
+### Theme toggle + Publisher trong tabbar — GIỮ style app cũ:
+- `#tabThemeBtn`: hiển thị ký tự ☾ (`&#9790;` dark) / ☀ (`&#9728;` light) — `toggleTheme()` VÀ `applyTheme()` cập nhật cả `#themeToggleBtn` (rail cũ) lẫn `#tabThemeBtn`. KHÔNG dùng icon tĩnh `ti-sun-moon`.
+- `#tabPushBtn`: nhãn "Published", nền XANH lá (`#e3fcef`/`#006644` light; `rgba(0,212,170,.15)`/`#00d4aa` dark) giống `.proj-live-btn` cũ — KHÔNG dùng gradient tím.
 
 **Cơ chế kỹ thuật rail (KHÔNG được phá):**
 - `#mainHeader>.hdr-right-group{display:contents!important}` → các nút con (bell/save/help/avatar) trở thành flex item trực tiếp của rail, rồi dùng `order` để sắp xếp xen kẽ với các nút rail mới.

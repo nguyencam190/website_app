@@ -1984,16 +1984,22 @@ body[data-focus="1"] #sidebar::before{display:none}
 .tb-new.active{background:rgba(99,102,241,.12);color:var(--accent)}
 .tb-sep-new{width:1px;height:18px;background:var(--border);margin:0 2px;flex-shrink:0}
 /* Push button in tabbar */
+/* Push / Publisher button — green "Published" style like the previous app (.proj-live-btn) */
 #tabPushBtn{
-  display:flex;align-items:center;gap:6px;padding:0 13px;height:28px;
-  border-radius:6px;border:none;
-  background:linear-gradient(135deg,var(--accent),#8b5cf6);
-  color:#fff;font-size:12px;font-weight:600;cursor:pointer;
-  box-shadow:0 0 10px var(--accent-glow);transition:all .18s;
+  display:flex;align-items:center;gap:5px;padding:0 12px;height:28px;
+  border-radius:6px;border:1px solid transparent;
+  background:#e3fcef;color:#006644;
+  font-size:12px;font-weight:600;cursor:pointer;
+  white-space:nowrap;transition:all .18s;
 }
-#tabPushBtn:hover{opacity:.88}
-#tabPushBtn.active{animation:tabPushPulse .8s ease-in-out infinite alternate}
-@keyframes tabPushPulse{from{opacity:1}to{opacity:.6}}
+#tabPushBtn:hover{background:#d6f7e5}
+#tabPushBtn.active{background:#16c54f;color:#fff;border-color:#4ade80;animation:tabPushPulse .85s ease-in-out infinite}
+[data-theme="dark"] #tabPushBtn{background:rgba(0,212,170,.15);color:#00d4aa}
+[data-theme="dark"] #tabPushBtn:hover{background:rgba(0,212,170,.25)}
+[data-theme="dark"] #tabPushBtn.active{background:#00e6b8;color:#04231d;border-color:#5eead4}
+@keyframes tabPushPulse{from{opacity:1}to{opacity:.72}}
+/* Theme toggle char (☀/☽) sizing in the tabbar */
+#tabThemeBtn{font-size:17px;line-height:1}
 
 /* ── STATUSBAR ── */
 .statusbar{
@@ -2045,6 +2051,9 @@ html.no-transition *{transition:none!important;animation:none!important}
 .ol-item.lvl2{padding-left:20px;font-size:11.5px}
 .ol-item.lvl3{padding-left:29px;font-size:11.5px;color:var(--text3)}
 .ol-empty{font-size:12px;color:var(--text3);padding:6px 0;line-height:1.5}
+.ol-sep{height:1px;background:var(--border);margin:14px 0}
+.ol-meta-row{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--text3);padding:4px 0}
+.ol-meta-val{color:var(--text2);font-weight:500;text-align:right}
 /* Focus mode hides the outline */
 body[data-focus="1"] .doc-outline{width:0!important;border:none}
 /* Outline toggle button active state */
@@ -2451,15 +2460,13 @@ body[data-focus="1"] .doc-outline{width:0!important;border:none}
         <button class="tb-new" onclick="toggleFocusMode()" title="Focus mode">
           <i class="ti ti-focus-2"></i>
         </button>
-        <button class="tb-new" onclick="toggleTheme()" title="Light / Dark">
-          <i class="ti ti-sun-moon"></i>
-        </button>
+        <button class="tb-new" id="tabThemeBtn" onclick="toggleTheme()" title="Light / Dark">&#9790;</button>
         <button class="tb-new" onclick="toggleAccentPop()" title="Accent color" style="position:relative">
           <span id="tabAccentDot" style="width:11px;height:11px;border-radius:50%;background:var(--accent);display:block;box-shadow:0 0 6px var(--accent-glow)"></span>
         </button>
         <div class="tb-sep-new"></div>
         <button id="tabPushBtn" onclick="_projToggleLive()" title="Push / Publish">
-          <i class="ti ti-world-upload" style="font-size:13px"></i> Push
+          <i class="ti ti-world-upload" style="font-size:13px"></i> Published
         </button>
         <div class="tb-sep-new"></div>
         <button class="tb-new" id="tabOutlineBtn" onclick="toggleDocOutline()" title="Mục lục — On this page">
@@ -3107,6 +3114,8 @@ function toggleTheme(){
   localStorage.setItem('theme',next);
   const btn=document.getElementById('themeToggleBtn');
   if(btn)btn.innerHTML=next==='dark'?'&#9790;':'&#9728;';
+  const tbtn=document.getElementById('tabThemeBtn');
+  if(tbtn)tbtn.innerHTML=next==='dark'?'&#9790;':'&#9728;';
   html.style.setProperty('color-scheme',next);
   swapThemeColors();
   // Force a reflow while transitions are disabled so the new theme paints in one
@@ -3123,6 +3132,8 @@ function applyTheme(){
   document.documentElement.style.setProperty('color-scheme', theme);
   const btn=document.getElementById('themeToggleBtn');
   if(btn)btn.innerHTML=theme==='dark'?'&#9790;':'&#9728;';
+  const tbtn=document.getElementById('tabThemeBtn');
+  if(tbtn)tbtn.innerHTML=theme==='dark'?'&#9790;':'&#9728;';
 }
 
 function _checkShowWelcome(){
@@ -4343,17 +4354,39 @@ function buildDocOutline(){
   if(!heads.length){
     const e=document.createElement('div');e.className='ol-empty';
     e.textContent='Chưa có tiêu đề. Thêm heading H1/H2/H3 để tạo mục lục.';
-    inner.appendChild(e);return;
+    inner.appendChild(e);
+  } else {
+    heads.forEach((hd,i)=>{
+      hd.dataset.olId='ol-h-'+i;
+      const lvl=hd.tagName.toLowerCase();
+      const it=document.createElement('div');
+      it.className='ol-item'+(lvl==='h2'?' lvl2':lvl==='h3'?' lvl3':'');
+      it.textContent=(hd.textContent||'').trim();
+      it.onclick=()=>_olScrollTo('ol-h-'+i,it);
+      inner.appendChild(it);
+    });
   }
-  heads.forEach((hd,i)=>{
-    hd.dataset.olId='ol-h-'+i;
-    const lvl=hd.tagName.toLowerCase();
-    const it=document.createElement('div');
-    it.className='ol-item'+(lvl==='h2'?' lvl2':lvl==='h3'?' lvl3':'');
-    it.textContent=(hd.textContent||'').trim();
-    it.onclick=()=>_olScrollTo('ol-h-'+i,it);
-    inner.appendChild(it);
-  });
+  // ── Page info ──
+  const doc=(typeof currentDoc==='function')?currentDoc():null;
+  if(doc){
+    const sep=document.createElement('div');sep.className='ol-sep';inner.appendChild(sep);
+    const ih=document.createElement('div');ih.className='ol-h';ih.textContent='Page info';inner.appendChild(ih);
+    const fmt=ts=>{if(!ts)return'—';const d=new Date(ts);return isNaN(d)?'—':d.toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'});};
+    const rel=ts=>{const t=ts?new Date(ts).getTime():0;return t&&typeof _relTime==='function'?_relTime(t):fmt(ts);};
+    const wc=(editor.innerText||'').trim();
+    const words=wc?wc.split(/\s+/).filter(Boolean).length:0;
+    const row=(label,val,valColor)=>{
+      const r=document.createElement('div');r.className='ol-meta-row';
+      const a=document.createElement('span');a.textContent=label;
+      const b=document.createElement('span');b.className='ol-meta-val';b.textContent=val;
+      if(valColor)b.style.color=valColor;
+      r.appendChild(a);r.appendChild(b);inner.appendChild(r);
+    };
+    row('Tạo',fmt(doc.createdAt));
+    row('Cập nhật',rel(doc.updatedAt||doc.createdAt));
+    row('Số từ',String(words));
+    row('Trạng thái',doc.locked?'Đã khóa':'Đang sửa',doc.locked?'#f43f5e':'#4ade80');
+  }
 }
 function _olScrollTo(id,itEl){
   const editor=document.getElementById('editor');
