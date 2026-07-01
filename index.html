@@ -14996,6 +14996,7 @@ function _buildViewerShellCss(accent){
     '.ws-pab-icon-btn{width:30px;height:30px;border-radius:5px;border:1px solid transparent;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);font-size:14px;transition:all .15s}',
     '.ws-pab-icon-btn:hover{background:var(--surface2);border-color:var(--border);color:var(--text)}',
     '.ws-pab-icon-btn.starred{color:#f59e0b}',
+    '.ws-pab-icon-btn.on{background:var(--accent);border-color:var(--accent);color:#fff}',
     '.ws-pab-star{background:transparent;border:none;cursor:pointer;font-size:16px;padding:4px;color:var(--text3);border-radius:4px;transition:.12s;flex-shrink:0;line-height:1}',
     '.ws-pab-star:hover{color:var(--accent)}',
     '.ws-pab-star.starred{color:#f59e0b}',
@@ -15479,7 +15480,7 @@ function _buildViewerShellCss(accent){
     /* accent popup opens to the right of the rail */
     '.ws-header .ws-accent-pop{position:fixed!important;left:56px!important;right:auto!important;top:auto!important;bottom:14px!important}',
     /* Outline "On this page" panel (bên phải) */
-    '.ws-outline{position:fixed;top:0;bottom:0;right:0;width:0;background:var(--surface);border-left:1px solid var(--border);overflow:hidden;white-space:nowrap;z-index:70;transition:width .22s ease}',
+    '.ws-outline{position:fixed;top:44px;bottom:0;right:0;width:0;background:var(--surface);border-left:1px solid var(--border);overflow:hidden;white-space:nowrap;z-index:70;transition:width .22s ease}',
     '.ws-outline.on{width:250px;overflow-y:auto}',
     '.ws-outline-inner{padding:20px 16px;white-space:normal;width:250px}',
     '.ws-ol-h{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px}',
@@ -17088,7 +17089,7 @@ async function doExportOptimized(opts){
     '<div class="ws-sidebar" id="wsSidebar"><div class="ws-sb-resizer" id="wsSbRz" title="Keo de thay doi do rong"></div>'+navHTML+'</div>',
     '<button class="ws-sb-expand" id="wsSbExpand" title="Mở sidebar"><i class="ti ti-chevrons-right"></i></button>',
     '<div style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden">',
-    '<div class="ws-pab-wrapper" id="wsPabWrapper" style="display:none"><div class="ws-pab" id="wsPab"><nav class="ws-pab-crumb" id="wsPabBreadcrumb" aria-label="Vi tri trang"></nav><div class="ws-pab-right"><button class="ws-pab-icon-btn" id="wsPabStarBtn" title="Danh dau sao"><i class="ti ti-star"></i></button><button class="ws-pab-icon-btn" id="wsPabCopyBtn" title="Sao chep lien ket"><i class="ti ti-link"></i></button></div></div></div>',
+    '<div class="ws-pab-wrapper" id="wsPabWrapper" style="display:none"><div class="ws-pab" id="wsPab"><nav class="ws-pab-crumb" id="wsPabBreadcrumb" aria-label="Vi tri trang"></nav><div class="ws-pab-right"><button class="ws-pab-icon-btn" id="wsPabStarBtn" title="Danh dau sao"><i class="ti ti-star"></i></button><button class="ws-pab-icon-btn" id="wsPabCopyBtn" title="Sao chep lien ket"><i class="ti ti-link"></i></button><button class="ws-pab-icon-btn" id="wsOutlineTgl" onclick="wsToggleOutline()" title="On this page"><i class="ti ti-list"></i></button></div></div></div>',
     '<div class="ws-main" id="wsMain">',
     pagesHTML,
     '<div id="wsNoResult" class="ws-no" style="display:none">Không tìm thấy tài liệu.</div>',
@@ -17104,7 +17105,6 @@ async function doExportOptimized(opts){
     '  <div class="ws-flyout-footer" id="wsFlyoutFooter"></div>',
     '</div>',
     '<button class="ws-scroll-top" id="wsScrollTop" title="Lên đầu trang" aria-label="Lên đầu trang"><i class="ti ti-arrow-up"></i></button>',
-    '<button class="ws-outline-tgl" id="wsOutlineTgl" onclick="wsToggleOutline()" title="On this page" aria-label="On this page"><i class="ti ti-list"></i></button>',
     '<div class="ws-outline" id="wsOutline"><div class="ws-outline-inner" id="wsOutlineInner"></div></div>',
     jsTag,
     '</body>',
