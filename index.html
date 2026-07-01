@@ -14854,7 +14854,7 @@ function _buildViewerShellCss(accent){
     '::selection{background:rgba(59,130,246,.25);color:inherit}',
     '::-moz-selection{background:rgba(59,130,246,.25);color:inherit}',
     '[data-theme="dark"] ::selection{background:rgba(77,138,255,.3);color:inherit}',
-    `:root{--accent:${accent};--accent-light:${accent}22;--accent-glow:${accent}26;--sb:var(--surface);--sb-nav:#42526e;--sb-nav-hbg:var(--surface3);--sb-sec:#6b778c;--sb-active-bg:rgba(37,99,235,.08);--sb-active-txt:var(--accent);--bg:#f4f6fb;--surface:#ffffff;--surface2:#edf0f8;--surface3:#e8edf5;--border:#e2e8f0;--border2:#cbd5e1;--text:#1e293b;--text2:#475569;--text3:#94a3b8;--tbl-hbg:#f1f5f9;--tbl-htxt:#1e293b;--tbl-border:#b0bcc8;--tbl-hover:#eff6ff;--tbl-stripe:#f8fafc;--shadow-sm:0 1px 3px rgba(0,0,0,.06);--mono:'DM Mono','Consolas','Monaco','Courier New',monospace;--font:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;--tr:.25s ease}`,
+    `:root{--accent:${accent};--accent-light:${accent}22;--accent-glow:${accent}26;--sb:var(--surface);--sb-nav:#42526e;--sb-nav-hbg:var(--surface3);--sb-sec:#6b778c;--sb-active-bg:rgba(37,99,235,.08);--sb-active-txt:var(--accent);--bg:#f4f6fb;--surface:#ffffff;--surface2:#edf0f8;--surface3:#e8edf5;--border:#e2e8f0;--border2:#cbd5e1;--text:#1e293b;--text2:#475569;--text3:#94a3b8;--tbl-hbg:#f1f5f9;--tbl-htxt:#1e293b;--tbl-border:#b0bcc8;--tbl-hover:#eff6ff;--tbl-stripe:#f8fafc;--shadow-sm:0 1px 3px rgba(0,0,0,.06);--mono:'DM Mono','Consolas','Monaco','Courier New',monospace;--font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;--tr:.25s ease}`,
     `[data-theme="dark"]{--accent:${_dkAccent};--accent-light:rgba(${_dkR},${_dkG},${_dkB},.12);--accent-glow:rgba(${_dkR},${_dkG},${_dkB},.2);--sb:var(--surface);--sb-nav:#8b949e;--sb-nav-hbg:var(--surface3);--sb-sec:#6e7681;--sb-active-bg:rgba(${_dkR},${_dkG},${_dkB},.1);--sb-active-txt:var(--accent);--bg:#0c0e14;--surface:#111318;--surface2:#161a23;--surface3:#30363d;--border:#30363d;--border2:#484f58;--text:#c9d1d9;--text2:#8b949e;--text3:#6e7681;--tbl-hbg:#1e3048;--tbl-htxt:#b8d0e8;--tbl-border:#2d3d52;--tbl-hover:#1c2d3e;--tbl-stripe:#21262d;--shadow-sm:0 1px 3px rgba(0,0,0,.3)}`,
     'html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);overflow-x:hidden}',
     'body{display:flex;flex-direction:column;height:100vh;overflow:hidden;transition:background var(--tr),color var(--tr)}',
@@ -15481,7 +15481,7 @@ function _buildViewerShellCss(accent){
 // and returns a self-contained <style> with the font embedded as a data: URL.
 // Returns null on any failure (offline/CORS) → caller falls back to a
 // non-blocking CDN <link>. Cached for the session.
-const _WS_FONTS_URL='https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap';
+const _WS_FONTS_URL='https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap';
 const _WS_ICONS_URL='https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.10.0/dist/tabler-icons.min.css';
 const _WS_ICONS_BASE='https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.10.0/dist/';
 let _wsIconInlineCache; // undefined=not tried, string=ok, null=failed
