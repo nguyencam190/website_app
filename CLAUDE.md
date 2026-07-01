@@ -218,7 +218,13 @@ Sau **mỗi lần thay đổi code** trong dự án này, bắt buộc phải:
 
 ### Theme toggle + Publisher trong tabbar — GIỮ style app cũ:
 - `#tabThemeBtn`: hiển thị ký tự ☾ (`&#9790;` dark) / ☀ (`&#9728;` light) — `toggleTheme()` VÀ `applyTheme()` cập nhật cả `#themeToggleBtn` (rail cũ) lẫn `#tabThemeBtn`. KHÔNG dùng icon tĩnh `ti-sun-moon`.
-- `#tabPushBtn`: nhãn "Published", nền XANH lá (`#e3fcef`/`#006644` light; `rgba(0,212,170,.15)`/`#00d4aa` dark) giống `.proj-live-btn` cũ — KHÔNG dùng gradient tím.
+- `#tabPushBtn`: nhãn "Published", nền XANH lá (`#e3fcef`/`#006644` light; `rgba(0,212,170,.15)`/`#00d4aa` dark) giống `.proj-live-btn` cũ — KHÔNG dùng gradient tím. Khi publishing (`.active`) dùng ĐÚNG hiệu ứng cũ: `_pubPulse` (light) / `_pubPulseDark` (dark) — glow + scale.
+
+### Màu nền app = bảng màu file design:
+- Override trong `<style id="new-ui-layout">`: light `--bg:#f4f6fb;--surface:#fff;--surface2:#edf0f8`; dark `--bg:#0c0e14;--surface:#111318;--surface2:#161a23` (dùng `!important`). Khớp `preview_new_ui.html`.
+
+### Outline "Page info" = tiếng ANH, khớp hình design:
+- Rows: **Created** (`en-US` "Jul 1"), **Updated** (relative EN: "Just now"/"5m ago"/"2h ago"/"3d ago"), **Views** (`doc.views`, +1 mỗi `openDoc`), **Status** ("Editing" xanh / "Locked" đỏ). Empty state EN.
 
 **Cơ chế kỹ thuật rail (KHÔNG được phá):**
 - `#mainHeader>.hdr-right-group{display:contents!important}` → các nút con (bell/save/help/avatar) trở thành flex item trực tiếp của rail, rồi dùng `order` để sắp xếp xen kẽ với các nút rail mới.

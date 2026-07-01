@@ -1852,6 +1852,10 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 /* Variable aliases */
 :root{--rail-bg:#09090f;--rail-w:56px;--left-panels:316px;--tr:.18s ease}
 
+/* ══ Áp dụng bảng màu nền của file design (preview_new_ui.html) ══ */
+:root{--bg:#f4f6fb!important;--surface:#ffffff!important;--surface2:#edf0f8!important}
+[data-theme="dark"]{--bg:#0c0e14!important;--surface:#111318!important;--surface2:#161a23!important}
+
 /* Body stays flex-column; rail+statusbar are fixed so don't affect flow */
 body{padding-bottom:28px}
 
@@ -1993,11 +1997,11 @@ body[data-focus="1"] #sidebar::before{display:none}
   white-space:nowrap;transition:all .18s;
 }
 #tabPushBtn:hover{background:#d6f7e5}
-#tabPushBtn.active{background:#16c54f;color:#fff;border-color:#4ade80;animation:tabPushPulse .85s ease-in-out infinite}
+/* Publishing effect — same green/teal pulse (glow + scale) as the old .proj-live-btn */
+#tabPushBtn.active{background:#16c54f;color:#fff;border-color:#4ade80;animation:_pubPulse .85s ease-in-out infinite}
 [data-theme="dark"] #tabPushBtn{background:rgba(0,212,170,.15);color:#00d4aa}
 [data-theme="dark"] #tabPushBtn:hover{background:rgba(0,212,170,.25)}
-[data-theme="dark"] #tabPushBtn.active{background:#00e6b8;color:#04231d;border-color:#5eead4}
-@keyframes tabPushPulse{from{opacity:1}to{opacity:.72}}
+[data-theme="dark"] #tabPushBtn.active{background:#00e6b8;color:#04231d;border-color:#5eead4;animation:_pubPulseDark .85s ease-in-out infinite}
 /* Theme toggle char (☀/☽) sizing in the tabbar */
 #tabThemeBtn{font-size:17px;line-height:1}
 
@@ -4191,6 +4195,8 @@ function openDoc(id){
     _undoHistoryCache.set(_prevDocId,{stack:[..._undoStack],redo:[..._redoStack]});
     if(_undoHistoryCache.size>4){_undoHistoryCache.delete(_undoHistoryCache.keys().next().value);}
   }
+  // Track view count (shown in the outline "Page info")
+  doc.views=(doc.views||0)+1;
   // Track recent
   if(!state.recent)state.recent=[];
   state.recent=state.recent.filter(r=>r.id!==id);
@@ -4356,7 +4362,7 @@ function buildDocOutline(){
   const heads=[...editor.querySelectorAll('h1,h2,h3')].filter(x=>(x.textContent||'').trim());
   if(!heads.length){
     const e=document.createElement('div');e.className='ol-empty';
-    e.textContent='Chưa có tiêu đề. Thêm heading H1/H2/H3 để tạo mục lục.';
+    e.textContent='No headings yet. Add an H1/H2/H3 to build the outline.';
     inner.appendChild(e);
   } else {
     heads.forEach((hd,i)=>{
@@ -4374,10 +4380,8 @@ function buildDocOutline(){
   if(doc){
     const sep=document.createElement('div');sep.className='ol-sep';inner.appendChild(sep);
     const ih=document.createElement('div');ih.className='ol-h';ih.textContent='Page info';inner.appendChild(ih);
-    const fmt=ts=>{if(!ts)return'—';const d=new Date(ts);return isNaN(d)?'—':d.toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'});};
-    const rel=ts=>{const t=ts?new Date(ts).getTime():0;return t&&typeof _relTime==='function'?_relTime(t):fmt(ts);};
-    const wc=(editor.innerText||'').trim();
-    const words=wc?wc.split(/\s+/).filter(Boolean).length:0;
+    const fmt=ts=>{if(!ts)return'—';const d=new Date(ts);return isNaN(d)?'—':d.toLocaleDateString('en-US',{month:'short',day:'numeric'});};
+    const relEn=ts=>{if(!ts)return'—';const m=Math.floor((Date.now()-new Date(ts).getTime())/60000);if(m<1)return'Just now';if(m<60)return m+'m ago';if(m<1440)return Math.floor(m/60)+'h ago';return Math.floor(m/1440)+'d ago';};
     const row=(label,val,valColor)=>{
       const r=document.createElement('div');r.className='ol-meta-row';
       const a=document.createElement('span');a.textContent=label;
@@ -4385,10 +4389,10 @@ function buildDocOutline(){
       if(valColor)b.style.color=valColor;
       r.appendChild(a);r.appendChild(b);inner.appendChild(r);
     };
-    row('Tạo',fmt(doc.createdAt));
-    row('Cập nhật',rel(doc.updatedAt||doc.createdAt));
-    row('Số từ',String(words));
-    row('Trạng thái',doc.locked?'Đã khóa':'Đang sửa',doc.locked?'#f43f5e':'#4ade80');
+    row('Created',fmt(doc.createdAt));
+    row('Updated',relEn(doc.updatedAt||doc.createdAt));
+    row('Views',String(doc.views||0));
+    row('Status',doc.locked?'Locked':'Editing',doc.locked?'#f43f5e':'#4ade80');
   }
 }
 function _olScrollTo(id,itEl){
