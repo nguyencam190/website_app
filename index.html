@@ -1895,11 +1895,12 @@ body{padding-bottom:28px}
 /* Right-actions group dissolves — its children become rail flex items directly */
 #mainHeader>.hdr-right-group{display:contents!important}
 
-/* ── RAIL ORDER — design: logo · Pages · Save · Import · Bell · ⟨spacer⟩ · Help · Avatar ── */
+/* ── RAIL ORDER — design: logo · Pages · Save · Import · Star · Bell · ⟨spacer⟩ · Help · Avatar ── */
 .hdr-right-group>div:has(#hdrExportDd){order:3}         /* Save / project */
-.hdr-right-group>div:has(#hdrNotifDd){order:5}          /* Notifications */
-.hdr-right-group>button[onclick*="hdrHelpDd"]{order:8}  /* Help (bottom) */
-.hdr-right-group>div:has(#hdrUserDd){order:9}           /* Avatar (bottom) */
+#railStarredBtn{order:5}                                 /* Starred */
+.hdr-right-group>div:has(#hdrNotifDd){order:6}          /* Notifications */
+.hdr-right-group>button[onclick*="hdrHelpDd"]{order:9}  /* Help (bottom) */
+.hdr-right-group>div:has(#hdrUserDd){order:10}          /* Avatar (bottom) */
 
 /* Action buttons relocated to the tabbar → hide from rail (HTML kept for JS) */
 #projLiveBtn,.hdr-right-group>div:has(#projLiveBtn),
@@ -1911,8 +1912,8 @@ body{padding-bottom:28px}
 #hdrUserAv{width:32px!important;height:32px!important;font-size:13px!important;flex-shrink:0}
 
 /* Rail separator + spacer */
-.rail-div{order:6;width:24px;height:1px;background:rgba(255,255,255,.07);margin:4px 0;flex-shrink:0}
-.rail-space{order:7;flex:1}
+.rail-div{order:7;width:24px;height:1px;background:rgba(255,255,255,.07);margin:4px 0;flex-shrink:0}
+.rail-space{order:8;flex:1}
 
 /* Rail Pages button */
 #railPagesBtn{
@@ -2041,6 +2042,9 @@ html.no-transition *{transition:none!important;animation:none!important}
   </button>
   <button class="rail-btn-new" onclick="typeof _sbImportClickSmart!=='undefined'?_sbImportClickSmart(this):null" title="Import">
     <i class="ti ti-file-import"></i>
+  </button>
+  <button class="rail-btn-new" id="railStarredBtn" onclick="typeof toggleFlyout!=='undefined'&&toggleFlyout('starred',document.getElementById('sbStarredBtn'))" title="Starred">
+    <i class="ti ti-star"></i>
   </button>
   <button class="rail-btn-new" onclick="typeof _quickNewRootDoc!=='undefined'?_quickNewRootDoc():null" title="New page">
     <i class="ti ti-plus"></i>

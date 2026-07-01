@@ -199,11 +199,15 @@ Sau **mỗi lần thay đổi code** trong dự án này, bắt buộc phải:
 2. `#railPagesBtn` (ti-files) — [MỚI] toggle context panel/sidebar. `order:2`
 3. Save/Export (`hdrExportDd`, ti-device-floppy) — [CŨ] dropdown New/Open/Export project. `order:3`
 4. `.rail-btn-new` Import (ti-file-import) — [MỚI] import folder/ZIP. `order:4`
-5. Bell (`hdrNotifDd`, ti-bell) — [CŨ] thông báo. `order:5`
-6. `.rail-div` separator. `order:6`
-7. `.rail-space` (flex:1) đẩy nhóm dưới xuống đáy. `order:7`
-8. Help (`hdrHelpDd`, ti-help-circle) — [CŨ] trợ giúp. `order:8`
-9. `#hdrUserAv` avatar — [CŨ] menu người dùng. `order:9`
+5. `#railStarredBtn` (ti-star) — [MỚI] `toggleFlyout('starred',#sbStarredBtn)`. `order:5`
+6. Bell (`hdrNotifDd`, ti-bell) — [CŨ] thông báo. `order:6`
+7. `.rail-div` separator. `order:7`
+8. `.rail-space` (flex:1) đẩy nhóm dưới xuống đáy. `order:8`
+9. Help (`hdrHelpDd`, ti-help-circle) — [CŨ] trợ giúp. `order:9`
+10. `#hdrUserAv` avatar — [CŨ] menu người dùng. `order:10`
+
+> **Actions (Focus/Theme/Accent/Push) nằm ở TABBAR** (`#newTabRight`), KHÔNG ở rail — theo design upload `259b2af7-preview_new_ui.html`.
+> Nút **Outline** của design bị BỎ QUA vì app chưa có panel outline/TOC toggle (chỉ có block `/toc`) — không thêm UI chết.
 
 **Cơ chế kỹ thuật rail (KHÔNG được phá):**
 - `#mainHeader>.hdr-right-group{display:contents!important}` → các nút con (bell/save/help/avatar) trở thành flex item trực tiếp của rail, rồi dùng `order` để sắp xếp xen kẽ với các nút rail mới.
