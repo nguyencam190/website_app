@@ -194,44 +194,49 @@ Sau **mỗi lần thay đổi code** trong dự án này, bắt buộc phải:
 
 ### Phân loại icon trong new UI:
 
-**Navigation Rail (`#mainHeader`, 48px fixed left) — thứ tự CHÍNH XÁC từ trên xuống (khớp design):**
-1. `#headerLogoWrap` — [CŨ] **HIỆN** ở đỉnh rail, style như `.rail-logo` (32×32 gradient). KHÔNG ẩn. `order:1`. Logo là DUY NHẤT ở rail — sidebar header chỉ còn text.
+**Navigation Rail (`#mainHeader`, 48px fixed left) — CHỨA TẤT CẢ nav + action, thứ tự CHÍNH XÁC (khớp design):**
+
+*Nhóm TRÊN:*
+1. `#headerLogoWrap` — [CŨ] **HIỆN** ở đỉnh, style `.rail-logo` (32×32 gradient). `order:1`. Logo DUY NHẤT ở rail — sidebar header chỉ còn text.
 2. `#railPagesBtn` (ti-files) — [MỚI] toggle context panel/sidebar. `order:2`
-3. Save/Export (`hdrExportDd`, ti-device-floppy) — [CŨ] dropdown New/Open/Export project. `order:3`
-4. `.rail-btn-new` Import (ti-file-import) — [MỚI] import folder/ZIP. `order:4`
-5. Bell (`hdrNotifDd`, ti-bell) — [CŨ] thông báo. `order:5`
+3. `#railSearchBtn` (ti-search) — [MỚI] focus `#searchInput`. `order:3`
+4. `#railRecentBtn` (ti-history) — [MỚI] `toggleFlyout('recent',#sbRecentBtn)`. `order:4`
+5. `#railStarredBtn` (ti-star) — [MỚI] `toggleFlyout('starred',#sbStarredBtn)`. `order:5`
 6. `.rail-div` separator. `order:6`
-7. `.rail-space` (flex:1) đẩy nhóm dưới xuống đáy. `order:7`
-8. Help (`hdrHelpDd`, ti-help-circle) — [CŨ] trợ giúp. `order:8`
-9. `#hdrUserAv` avatar — [CŨ] menu người dùng. `order:9`
+7. Bell (`hdrNotifDd`, ti-bell) — [CŨ] thông báo. `order:7`
+8. `.rail-btn-new` Import (ti-file-import) — [MỚI] import folder/ZIP. `order:8`
+
+*`.rail-space` (flex:1) `order:9` — đẩy nhóm dưới xuống đáy*
+
+*Nhóm DƯỚI:*
+10. Save/Export (`hdrExportDd`, ti-device-floppy) — [CŨ] dropdown New/Open/Export. `order:10`
+11. `#accentBtnWrap` (accent dot) — [CŨ] `toggleAccentPop()`. `order:11`
+12. `#themeToggleBtn` (ti-sun-moon) — [CŨ] `toggleTheme()`. `order:12`
+13. `#focusModeBtn` (ti-focus-2) — [CŨ] `toggleFocusMode()`. `order:13`
+14. `#projLiveBtn` (Push, ti-world-upload) — [CŨ] `_projToggleLive()`. **Style GRADIENT** (`.rail-push`), `font-size:0` ẩn chữ, chỉ hiện icon. `order:14`
+15. `#hdrUserAv` avatar — [CŨ] menu người dùng. `order:15`
 
 **Cơ chế kỹ thuật rail (KHÔNG được phá):**
-- `#mainHeader>.hdr-right-group{display:contents!important}` → các nút con (bell/save/help/avatar) trở thành flex item trực tiếp của rail, rồi dùng `order` để sắp xếp xen kẽ với các nút rail mới.
-- **Dropdown rail phải mở sang PHẢI rail**, không dùng CSS `right:0` (sẽ bay ra ngoài màn hình bên trái vì rail chỉ 48px). Hàm `hdrToggleDd()` gọi `_hdrPlaceRailDd()` đặt `position:fixed; left:trigger.right+8; top:` (clamp trong viewport). `hdrLogoClick()` cũng đặt menu ở `left:r.right+8`.
-- `.rail-btn-new[onclick*="_quickNewRootDoc"]` (nút New page +) → **ẨN** khỏi rail; tạo trang mới nằm ở hàng search trong sidebar (theo design).
-- Light mode rail tint: `[data-theme="light"] #mainHeader{background:#1e1f2a}` (khớp `--rail` của design).
+- `#mainHeader>.hdr-right-group{display:contents!important}` → các nút con (bell/save/accent/theme/focus/push/avatar) trở thành flex item trực tiếp của rail, rồi dùng `order` sắp xen kẽ với các nút rail mới.
+- **Dropdown/popup rail phải mở sang PHẢI rail**, KHÔNG dùng CSS `right:0` (bay ra ngoài màn hình trái vì rail chỉ 48px):
+  - `hdrToggleDd()` → `_hdrPlaceRailDd()`: `position:fixed; left:trigger.right+8; top:` (clamp viewport).
+  - `toggleAccentPop()`: đặt `#accentPop` fixed ở `left:#accentPopBtn.right+8`, clamp.
+  - `hdrLogoClick()`: menu ở `left:r.right+8`.
+- Help (`hdrHelpDd`) + New-page (+) (`_quickNewRootDoc`) → **ẨN** khỏi rail (design mới không có). Tạo trang mới ở hàng search sidebar.
+- Light mode rail tint: `[data-theme="light"] #mainHeader{background:#1e1f2a}`.
 
-**Tabbar (`#pabWrapper`, 42px) — chứa các action button MỚI:**
-- `#tabLockBtn` — [MỚI] khóa trang
-- Focus toggle — [MỚI, thay thế `#focusModeBtn` trong rail]
-- Theme toggle — [MỚI, thay thế `#themeToggleBtn` trong rail]
-- Accent dot — [MỚI, thay thế `#accentBtnWrap` trong rail]
-- `#tabPushBtn` — [MỚI, thay thế `#projLiveBtn` trong rail]
-
-**Các button/element cũ bị ẩn khỏi rail (HTML giữ nguyên cho JS):**
-- `#projLiveBtn` — ẩn bằng `display:none!important` vì `#tabPushBtn` đảm nhiệm
-- `#focusModeBtn` — ẩn vì tabbar có nút focus mới
-- `#accentBtnWrap` — ẩn vì tabbar có accent dot mới
-- `#themeToggleBtn` — ẩn vì tabbar có theme toggle mới
-- `.rail-btn-new[onclick*="_quickNewRootDoc"]` (New page +) — ẩn vì tạo trang nằm ở sidebar
+**Tabbar (`#newTabRight`, 42px) — CHỈ còn tab + Lock:**
+- `#newTabList` — danh sách tab (title đồng bộ trong `updatePageActionBar`).
+- `#tabLockBtn` — [MỚI] khóa trang (per-page, không có bản ở rail → GIỮ).
+- Focus/Theme/Accent/Push trong tabbar → **ẨN** (`#newTabRight button[onclick*="toggleFocusMode/toggleTheme/toggleAccentPop"]`, `#tabPushBtn`, `.tb-sep-new`) vì đã chuyển hết xuống rail.
 
 ### Sidebar header — chỉ còn TEXT (khớp design):
-- `#sbSpaceIcon` (`.sb-space-icon`) — **ẨN** (`display:none!important`) vì logo đã chuyển lên rail. Tránh hiện logo 2 nơi (rail + sidebar) gây trùng/khác chữ.
-- `.sb-space-name` — `font-size:15px;font-weight:700` (chỉ hiện tên project, ví dụ "My Project").
+- `#sbSpaceIcon` (`.sb-space-icon`) — **ẨN** vì logo đã ở rail. Tránh 2 logo.
+- `.sb-space-name` — `font-size:15px;font-weight:700`.
 
 ### Khi thêm tính năng mới có button/icon:
-1. Nếu là **navigation/context** → thêm vào rail
-2. Nếu là **action trên document** → thêm vào tabbar
-3. **KHÔNG** đưa cùng 1 chức năng vào cả hai nơi (tránh duplicate)
-4. Button JS cũ (có `id` được JS tham chiếu) → **giữ HTML, ẩn bằng CSS**, tạo bản mới có styling mới
-5. Dropdown đặt trong rail → PHẢI mở sang phải qua `_hdrPlaceRailDd()`, KHÔNG dùng `right:0` tĩnh
+1. Nav/context/action toàn cục → thêm vào **rail** (nav → nhóm trên, action → nhóm dưới).
+2. Action per-page (như lock) → tabbar.
+3. **KHÔNG** đưa cùng 1 chức năng vào cả hai nơi (tránh duplicate).
+4. Button JS cũ (có `id` được JS tham chiếu) → giữ HTML, style lại, dùng `order` đặt vị trí.
+5. Dropdown/popup đặt trong rail → PHẢI mở sang phải (fixed + left=trigger.right+8), KHÔNG dùng `right:0` tĩnh.

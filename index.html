@@ -1895,37 +1895,72 @@ body{padding-bottom:28px}
 /* Right-actions group dissolves — its children become rail flex items directly */
 #mainHeader>.hdr-right-group{display:contents!important}
 
-/* ── RAIL ORDER — design: logo · Pages · Save · Import · Bell · ⟨spacer⟩ · Help · Avatar ── */
-.hdr-right-group>div:has(#hdrExportDd){order:3}         /* Save / project */
-.hdr-right-group>div:has(#hdrNotifDd){order:5}          /* Notifications */
-.hdr-right-group>button[onclick*="hdrHelpDd"]{order:8}  /* Help (bottom) */
-.hdr-right-group>div:has(#hdrUserDd){order:9}           /* Avatar (bottom) */
+/* ── RAIL ORDER — new design:
+   TOP: logo · Pages · Search · Recent · Starred · ⟨sep⟩ · Bell · Import
+   BOTTOM (after spacer): Save · Accent · Theme · Focus · Push · Avatar ── */
+#railPagesBtn{order:2}
+#railSearchBtn{order:3}
+#railRecentBtn{order:4}
+#railStarredBtn{order:5}
+.rail-div{order:6}
+.hdr-right-group>div:has(#hdrNotifDd){order:7}           /* Bell */
+.rail-btn-new[onclick*="_sbImportClickSmart"]{order:8}   /* Import */
+.rail-space{order:9;flex:1}
+.hdr-right-group>div:has(#hdrExportDd){order:10}         /* Save / project */
+#accentBtnWrap{order:11}                                  /* Accent */
+#themeToggleBtn{order:12}                                 /* Theme */
+#focusModeBtn{order:13}                                   /* Focus */
+.hdr-right-group>div:has(#projLiveBtn){order:14}         /* Push */
+.hdr-right-group>div:has(#hdrUserDd){order:15}           /* Avatar */
 
-/* Action buttons relocated to the tabbar → hide from rail (HTML kept for JS) */
-#projLiveBtn,.hdr-right-group>div:has(#projLiveBtn),
-#focusModeBtn,#accentBtnWrap,#themeToggleBtn{display:none!important}
-/* New-page (+) lives in the sidebar in the design → hide its rail button */
+/* Help + New-page (+) are not in the new-design rail → hide */
+.hdr-right-group>button[onclick*="hdrHelpDd"]{display:none!important}
 .rail-btn-new[onclick*="_quickNewRootDoc"]{display:none!important}
+
+/* Unhide the action buttons (now living in the rail) + rail-icon styling */
+#focusModeBtn,#themeToggleBtn{
+  display:flex!important;width:36px!important;height:36px!important;border-radius:8px!important;
+  align-items:center;justify-content:center;background:transparent!important;
+  color:rgba(255,255,255,.55)!important;border:none!important;flex-shrink:0;cursor:pointer;font-size:17px!important;
+}
+#focusModeBtn:hover,#themeToggleBtn:hover{background:rgba(255,255,255,.08)!important;color:rgba(255,255,255,.8)!important}
+#accentBtnWrap{display:flex!important;align-items:center;justify-content:center;width:36px;height:36px;flex-shrink:0;position:relative}
+#accentPopBtn{width:36px!important;height:36px!important;border-radius:8px!important;background:transparent!important;border:none!important;display:flex!important;align-items:center;justify-content:center;cursor:pointer;padding:0!important}
+#accentPopBtn:hover{background:rgba(255,255,255,.08)!important}
+#accentBtnDot{width:14px;height:14px;border-radius:50%;background:var(--accent);display:block;box-shadow:0 0 8px var(--accent-glow)}
+
+/* Push → gradient rail button (design .rail-push) */
+.hdr-right-group>div:has(#projLiveBtn){display:flex!important;align-items:center;justify-content:center}
+#projLiveBtn{
+  display:flex!important;align-items:center;justify-content:center;gap:0!important;
+  width:36px!important;height:36px!important;border-radius:9px!important;padding:0!important;
+  background:linear-gradient(135deg,var(--accent),#8b5cf6)!important;
+  color:#fff!important;border:none!important;box-shadow:0 0 14px var(--accent-glow)!important;
+  font-size:0!important;cursor:pointer;flex-shrink:0;white-space:nowrap;
+}
+#projLiveBtn i{font-size:17px!important;margin:0!important}
+#projLiveBtn:hover{opacity:.9}
+#projLiveBtn.active{animation:railPushPulse .8s ease-in-out infinite alternate}
+@keyframes railPushPulse{from{box-shadow:0 0 14px var(--accent-glow)}to{box-shadow:0 0 26px var(--accent-glow),0 0 8px var(--accent)}}
 
 /* User avatar → smaller */
 #hdrUserAv{width:32px!important;height:32px!important;font-size:13px!important;flex-shrink:0}
 
 /* Rail separator + spacer */
-.rail-div{order:6;width:24px;height:1px;background:rgba(255,255,255,.07);margin:4px 0;flex-shrink:0}
-.rail-space{order:7;flex:1}
+.rail-div{width:24px;height:1px;background:rgba(255,255,255,.07);margin:4px 0;flex-shrink:0}
 
 /* Rail Pages button */
 #railPagesBtn{
-  order:2;width:36px;height:36px;background:transparent;border:none;border-radius:8px;
+  width:36px;height:36px;background:transparent;border:none;border-radius:8px;
   color:rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;
   cursor:pointer;font-size:18px;flex-shrink:0;transition:all .18s;
 }
 #railPagesBtn.active{background:rgba(99,102,241,.15);color:var(--accent);box-shadow:inset 2px 0 0 var(--accent)}
 #railPagesBtn:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.8)}
 
-/* Rail generic button (Import) */
+/* Rail generic buttons (Search / Recent / Starred / Import) */
 .rail-btn-new{
-  order:4;width:36px;height:36px;background:transparent;border:none;border-radius:8px;
+  width:36px;height:36px;background:transparent;border:none;border-radius:8px;
   color:rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;
   cursor:pointer;font-size:17px;flex-shrink:0;transition:all .18s;
 }
@@ -1973,6 +2008,12 @@ body[data-focus="1"] #sidebar::before{display:none}
 #newTabList{display:flex;align-items:stretch;flex:1;overflow:hidden;min-width:0}
 #newTabDivider{width:1px;align-self:stretch;background:var(--border);flex-shrink:0}
 #newTabRight{display:flex;align-items:center;gap:4px;padding:0 10px;flex-shrink:0}
+/* Focus/Theme/Accent/Push moved to the rail (new design) → hide from tabbar,
+   keep only the per-page Lock button here */
+#newTabRight button[onclick*="toggleFocusMode"],
+#newTabRight button[onclick*="toggleTheme"],
+#newTabRight button[onclick*="toggleAccentPop"],
+#tabPushBtn,#newTabRight .tb-sep-new{display:none!important}
 .tb-new{
   width:30px;height:30px;border:none;border-radius:6px;
   background:transparent;color:var(--text2);cursor:pointer;
@@ -2038,6 +2079,15 @@ html.no-transition *{transition:none!important;animation:none!important}
   <!-- ══ NEW RAIL BUTTONS (thêm vào đầu header đã biến thành rail) ══ -->
   <button id="railPagesBtn" class="active" onclick="typeof sbCollapse!=='undefined'?(document.getElementById('sidebar').classList.contains('collapsed')?sbExpand():sbCollapse()):null" title="Pages">
     <i class="ti ti-files"></i>
+  </button>
+  <button class="rail-btn-new" id="railSearchBtn" onclick="(typeof sbExpand!=='undefined'&&document.getElementById('sidebar').classList.contains('collapsed'))&&sbExpand();var _s=document.getElementById('searchInput');if(_s)_s.focus()" title="Search">
+    <i class="ti ti-search"></i>
+  </button>
+  <button class="rail-btn-new" id="railRecentBtn" onclick="typeof toggleFlyout!=='undefined'&&toggleFlyout('recent',document.getElementById('sbRecentBtn'))" title="Recent">
+    <i class="ti ti-history"></i>
+  </button>
+  <button class="rail-btn-new" id="railStarredBtn" onclick="typeof toggleFlyout!=='undefined'&&toggleFlyout('starred',document.getElementById('sbStarredBtn'))" title="Starred">
+    <i class="ti ti-star"></i>
   </button>
   <button class="rail-btn-new" onclick="typeof _sbImportClickSmart!=='undefined'?_sbImportClickSmart(this):null" title="Import">
     <i class="ti ti-file-import"></i>
@@ -5800,7 +5850,21 @@ function _buildAccentSwatches(){
 function toggleAccentPop(){
   const pop=document.getElementById('accentPop');if(!pop)return;
   const on=pop.classList.toggle('on');
-  if(on)_buildAccentPopSwatches();
+  if(on){
+    _buildAccentPopSwatches();
+    // Accent button lives in the left rail → open the popup to its right, clamped
+    const btn=document.getElementById('accentPopBtn');
+    if(btn){
+      const r=btn.getBoundingClientRect();
+      pop.style.position='fixed';
+      pop.style.left=(r.right+8)+'px';
+      pop.style.right='auto';
+      const h=pop.offsetHeight||120;
+      let top=r.top;
+      if(top+h>window.innerHeight-8)top=Math.max(8,window.innerHeight-8-h);
+      pop.style.top=top+'px';
+    }
+  }
 }
 function _buildAccentPopSwatches(){
   const cont=document.getElementById('accentPopSwatches');if(!cont)return;
