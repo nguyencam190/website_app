@@ -12,10 +12,10 @@
 <!-- Load fonts + icon webfont NON-BLOCKING so first paint never waits on the network.
      media=print makes the browser fetch without render-blocking; onload flips it to all.
      <noscript> keeps it working with JS disabled. -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.10.0/dist/tabler-icons.min.css" media="print" onload="this.media='all'">
 <noscript>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.10.0/dist/tabler-icons.min.css">
 </noscript>
 <style>
@@ -1856,6 +1856,19 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 /* canvas=--bg, sidebar/tabbar/statusbar=--surface(panel), rail=#09090f */
 :root{--bg:#f4f6fb!important;--surface:#ffffff!important;--surface2:#edf0f8!important;--sidebar-bg:var(--surface)!important;--sb:var(--surface)!important}
 [data-theme="dark"]{--bg:#0c0e14!important;--surface:#111318!important;--surface2:#161a23!important}
+/* Font = Inter (giống file design) — thay DM Sans (chữ thưa/rộng hơn) */
+:root{--font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif!important}
+body,input,textarea,button,select,.sidebar,.editor-content{font-family:var(--font)!important}
+
+/* Nút mở sidebar khi thu gọn — đặt bên PHẢI rail 56px (không nấp sau rail) */
+.sb-expand-btn{
+  left:56px!important;width:22px!important;height:54px!important;
+  background:var(--surface2)!important;color:var(--text2)!important;
+  border:1px solid var(--border)!important;border-left:none!important;
+  border-radius:0 8px 8px 0!important;z-index:9998!important;
+  box-shadow:2px 0 12px rgba(0,0,0,.28)!important;font-size:15px!important;
+}
+.sb-expand-btn:hover{background:var(--accent)!important;color:#fff!important;border-color:var(--accent)!important}
 
 /* Body stays flex-column; rail+statusbar are fixed so don't affect flow */
 body{padding-bottom:28px}
