@@ -2111,7 +2111,7 @@ body[data-focus="1"] .doc-outline{width:0!important;border:none}
   <button class="rail-btn-new" onclick="typeof _sbImportClickSmart!=='undefined'?_sbImportClickSmart(this):null" title="Import">
     <i class="ti ti-file-import"></i>
   </button>
-  <button class="rail-btn-new" id="railStarredBtn" onclick="typeof toggleFlyout!=='undefined'&&toggleFlyout('starred',document.getElementById('sbStarredBtn'))" title="Starred">
+  <button class="rail-btn-new" id="railStarredBtn" onclick="typeof railStarToggle!=='undefined'&&railStarToggle()" title="Đánh dấu trang này">
     <i class="ti ti-star"></i>
   </button>
   <button class="rail-btn-new" onclick="typeof _quickNewRootDoc!=='undefined'?_quickNewRootDoc():null" title="New page">
@@ -3052,7 +3052,8 @@ function sbCollapse(){
   localStorage.setItem('sb_collapsed','1');
   if(scroll)requestAnimationFrame(()=>{scroll.scrollTop=savedScroll;});
   document.documentElement.style.setProperty('--left-panels','56px');
-  const rp=document.getElementById('railPagesBtn');if(rp)rp.classList.remove('active');
+  const rp=document.getElementById('railPagesBtn');
+  if(rp){rp.classList.remove('active');const i=rp.querySelector('i');if(i)i.className='ti ti-layout-sidebar-left-expand';rp.title='Mở sidebar';}
 }
 function sbExpand(){
   const sb=document.getElementById('sidebar');
@@ -3065,7 +3066,8 @@ function sbExpand(){
   sb.classList.remove('collapsed');
   if(expBtn)expBtn.style.display='none';
   sb.style.width=savedW+'px';
-  const rp=document.getElementById('railPagesBtn');if(rp)rp.classList.add('active');
+  const rp=document.getElementById('railPagesBtn');
+  if(rp){rp.classList.add('active');const i=rp.querySelector('i');if(i)i.className='ti ti-files';rp.title='Pages';}
   document.documentElement.style.setProperty('--left-panels',(56+savedW)+'px');
   localStorage.removeItem('sb_collapsed');
   if(scroll)requestAnimationFrame(()=>{scroll.scrollTop=savedScroll;});
@@ -3455,6 +3457,27 @@ function toggleStar(id,btn){
   persist();renderSidebar();
   if(_flyoutMode==='starred')buildFlyoutList(document.getElementById('sbFlyoutSearch')?.value||'');
 }
+// Rail star button → favourite the CURRENT page (fill the star), not open a flyout
+function railStarToggle(){
+  const doc=(typeof currentDoc==='function')?currentDoc():null;
+  if(!doc){if(typeof toast==='function')toast('Hãy mở một trang trước','info');return;}
+  if(!state.starred)state.starred=[];
+  const idx=state.starred.indexOf(doc.id);
+  if(idx>=0)state.starred.splice(idx,1); else state.starred.push(doc.id);
+  _railStarSync();
+  if(typeof persist==='function')persist();
+  if(typeof renderSidebar==='function')renderSidebar(document.getElementById('searchInput')?.value?.toLowerCase()||'');
+  if(_flyoutMode==='starred')buildFlyoutList(document.getElementById('sbFlyoutSearch')?.value||'');
+}
+function _railStarSync(){
+  const btn=document.getElementById('railStarredBtn');if(!btn)return;
+  const doc=(typeof currentDoc==='function')?currentDoc():null;
+  const on=!!(doc&&(state.starred||[]).includes(doc.id));
+  const i=btn.querySelector('i');if(i)i.className=on?'ti ti-star-filled':'ti ti-star';
+  btn.style.color=on?'#f59e0b':'';
+  btn.classList.toggle('starred',on);
+  btn.title=on?'Bỏ đánh dấu trang này':'Đánh dấu trang này';
+}
 function clearRecent(){if(!confirm('Xóa toàn bộ lịch sử?'))return;state.recent=[];persist();buildFlyoutList('');toast('Đã xóa','info');}
 function _updateFlyoutPos(){const sb=document.getElementById('sidebar');const f=document.getElementById('sbFlyout');if(f?.classList.contains('on')&&sb)f.style.left=sb.offsetWidth+'px';}
 
@@ -3741,12 +3764,14 @@ function _hdrLogoInit(){
   const hdrBox=document.getElementById('hdrLogoBox');const hdrTxt=document.getElementById('hdrLogoText');
   if(hdrBox&&hdrTxt){
     if(H.imgDataUrl){
-      hdrBox.style.cssText='max-height:36px;height:auto;width:auto;min-width:0;background:transparent;box-shadow:none;border-radius:4px;overflow:hidden;display:flex;align-items:center;cursor:pointer;flex-shrink:0';
+      // Rail logo is a fixed 40×40 square frame → the image FILLS the frame
+      // (object-fit:cover), it does NOT resize the frame to the image.
+      hdrBox.style.cssText='width:40px;height:40px;border-radius:9px;overflow:hidden;background:transparent;box-shadow:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0';
       hdrTxt.style.display='none';
       let img=hdrBox.querySelector('img');
       if(!img){img=document.createElement('img');hdrBox.insertBefore(img,hdrBox.firstChild);}
       img.src=H.imgDataUrl;
-      img.style.cssText='max-height:36px;height:auto;width:auto;object-fit:contain;display:block;max-width:240px';
+      img.style.cssText='width:100%;height:100%;object-fit:cover;display:block';
     } else {
       hdrBox.style.cssText='';
       hdrBox.style.background=H.color||'var(--accent)';
@@ -4212,6 +4237,7 @@ function openDoc(id){
   if(_titleInp){_titleInp.style.transition='none';_titleInp.style.opacity='0';}
   document.getElementById('docTitleInput').value=doc.title||'';
   document.getElementById('editor').innerHTML=doc.content||'';
+  if(typeof _railStarSync==='function')_railStarSync();
   if(document.getElementById('docOutline')?.classList.contains('open'))setTimeout(buildDocOutline,0);
   requestAnimationFrame(()=>{requestAnimationFrame(()=>{
     _edScroll.style.transition='opacity .28s cubic-bezier(.25,.46,.45,.94),transform .28s cubic-bezier(.25,.46,.45,.94)';

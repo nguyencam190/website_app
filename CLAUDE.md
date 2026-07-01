@@ -196,10 +196,12 @@ Sau **mỗi lần thay đổi code** trong dự án này, bắt buộc phải:
 
 **Navigation Rail (`#mainHeader`, 48px fixed left) — thứ tự CHÍNH XÁC từ trên xuống (khớp design):**
 1. `#headerLogoWrap` — [CŨ] **HIỆN** ở đỉnh rail, style như `.rail-logo` (32×32 gradient). KHÔNG ẩn. `order:1`. Logo là DUY NHẤT ở rail — sidebar header chỉ còn text.
-2. `#railPagesBtn` (ti-files) — [MỚI] toggle context panel/sidebar. `order:2`
+2. `#railPagesBtn` — [MỚI] toggle sidebar. Icon ĐỔI theo trạng thái: `ti-files` (mở) ↔ `ti-layout-sidebar-left-expand` (thu) — swap trong `sbCollapse`/`sbExpand`. `order:2`
 3. Save/Export (`hdrExportDd`, ti-device-floppy) — [CŨ] dropdown New/Open/Export project. `order:3`
 4. `.rail-btn-new` Import (ti-file-import) — [MỚI] import folder/ZIP. `order:4`
-5. `#railStarredBtn` (ti-star) — [MỚI] `toggleFlyout('starred',#sbStarredBtn)`. `order:5`
+5. `#railStarredBtn` (ti-star) — [MỚI] `railStarToggle()`: đánh dấu YÊU THÍCH **trang hiện tại** (fill `ti-star-filled` `#f59e0b` + `state.starred` + renderSidebar), KHÔNG mở flyout. `_railStarSync()` cập nhật icon theo trang mở (gọi trong `openDoc`). `order:5`
+
+> **Logo rail** (`_hdrLogoInit`): ảnh upload PHẢI lấp đầy khung cố định 40×40 (`object-fit:cover`, box giữ `width:40px;height:40px`) — KHÔNG để box co giãn theo kích thước ảnh (`width:auto`).
 6. Bell (`hdrNotifDd`, ti-bell) — [CŨ] thông báo. `order:6`
 7. `.rail-div` separator. `order:7`
 8. `.rail-space` (flex:1) đẩy nhóm dưới xuống đáy. `order:8`
