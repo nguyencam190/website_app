@@ -1853,7 +1853,8 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 :root{--rail-bg:#09090f;--rail-w:56px;--left-panels:316px;--tr:.18s ease}
 
 /* ══ Áp dụng bảng màu nền của file design (preview_new_ui.html) ══ */
-:root{--bg:#f4f6fb!important;--surface:#ffffff!important;--surface2:#edf0f8!important}
+/* canvas=--bg, sidebar/tabbar/statusbar=--surface(panel), rail=#09090f */
+:root{--bg:#f4f6fb!important;--surface:#ffffff!important;--surface2:#edf0f8!important;--sidebar-bg:var(--surface)!important;--sb:var(--surface)!important}
 [data-theme="dark"]{--bg:#0c0e14!important;--surface:#111318!important;--surface2:#161a23!important}
 
 /* Body stays flex-column; rail+statusbar are fixed so don't affect flow */
@@ -1962,8 +1963,12 @@ body[data-focus="1"] #sidebar::before{display:none}
 .pab-wrapper{
   height:42px!important;display:flex!important;align-items:stretch!important;
   background:var(--surface)!important;border-bottom:1px solid var(--border)!important;
-  overflow:hidden!important;flex-shrink:0;position:relative;z-index:100;
+  overflow:visible!important;flex-shrink:0;position:relative;z-index:100;
 }
+/* Tabbar always visible in the new UI (no hide-on-scroll) so the publisher
+   glow isn't clipped; tab list still clips its own overflow */
+.pab-wrapper.pab-hidden{height:42px!important;overflow:visible!important}
+#newTabList{overflow:hidden!important}
 /* New tabbar tabs */
 .new-tab{
   display:flex;align-items:center;gap:6px;padding:0 14px;
@@ -14835,8 +14840,8 @@ function _buildViewerShellCss(accent){
     '::selection{background:rgba(59,130,246,.25);color:inherit}',
     '::-moz-selection{background:rgba(59,130,246,.25);color:inherit}',
     '[data-theme="dark"] ::selection{background:rgba(77,138,255,.3);color:inherit}',
-    `:root{--accent:${accent};--accent-light:${accent}22;--accent-glow:${accent}26;--sb:var(--surface2);--sb-nav:#42526e;--sb-nav-hbg:var(--surface3);--sb-sec:#6b778c;--sb-active-bg:rgba(37,99,235,.08);--sb-active-txt:var(--accent);--bg:#f8fafc;--surface:#ffffff;--surface2:#f1f5f9;--surface3:#e8edf5;--border:#e2e8f0;--border2:#cbd5e1;--text:#1e293b;--text2:#475569;--text3:#94a3b8;--tbl-hbg:#f1f5f9;--tbl-htxt:#1e293b;--tbl-border:#b0bcc8;--tbl-hover:#eff6ff;--tbl-stripe:#f8fafc;--shadow-sm:0 1px 3px rgba(0,0,0,.06);--mono:'DM Mono','Consolas','Monaco','Courier New',monospace;--font:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;--tr:.25s ease}`,
-    `[data-theme="dark"]{--accent:${_dkAccent};--accent-light:rgba(${_dkR},${_dkG},${_dkB},.12);--accent-glow:rgba(${_dkR},${_dkG},${_dkB},.2);--sb:var(--surface2);--sb-nav:#8b949e;--sb-nav-hbg:var(--surface3);--sb-sec:#6e7681;--sb-active-bg:rgba(${_dkR},${_dkG},${_dkB},.1);--sb-active-txt:var(--accent);--bg:#0d1117;--surface:#161b22;--surface2:#21262d;--surface3:#30363d;--border:#30363d;--border2:#484f58;--text:#c9d1d9;--text2:#8b949e;--text3:#6e7681;--tbl-hbg:#1e3048;--tbl-htxt:#b8d0e8;--tbl-border:#2d3d52;--tbl-hover:#1c2d3e;--tbl-stripe:#21262d;--shadow-sm:0 1px 3px rgba(0,0,0,.3)}`,
+    `:root{--accent:${accent};--accent-light:${accent}22;--accent-glow:${accent}26;--sb:var(--surface);--sb-nav:#42526e;--sb-nav-hbg:var(--surface3);--sb-sec:#6b778c;--sb-active-bg:rgba(37,99,235,.08);--sb-active-txt:var(--accent);--bg:#f4f6fb;--surface:#ffffff;--surface2:#edf0f8;--surface3:#e8edf5;--border:#e2e8f0;--border2:#cbd5e1;--text:#1e293b;--text2:#475569;--text3:#94a3b8;--tbl-hbg:#f1f5f9;--tbl-htxt:#1e293b;--tbl-border:#b0bcc8;--tbl-hover:#eff6ff;--tbl-stripe:#f8fafc;--shadow-sm:0 1px 3px rgba(0,0,0,.06);--mono:'DM Mono','Consolas','Monaco','Courier New',monospace;--font:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;--tr:.25s ease}`,
+    `[data-theme="dark"]{--accent:${_dkAccent};--accent-light:rgba(${_dkR},${_dkG},${_dkB},.12);--accent-glow:rgba(${_dkR},${_dkG},${_dkB},.2);--sb:var(--surface);--sb-nav:#8b949e;--sb-nav-hbg:var(--surface3);--sb-sec:#6e7681;--sb-active-bg:rgba(${_dkR},${_dkG},${_dkB},.1);--sb-active-txt:var(--accent);--bg:#0c0e14;--surface:#111318;--surface2:#161a23;--surface3:#30363d;--border:#30363d;--border2:#484f58;--text:#c9d1d9;--text2:#8b949e;--text3:#6e7681;--tbl-hbg:#1e3048;--tbl-htxt:#b8d0e8;--tbl-border:#2d3d52;--tbl-hover:#1c2d3e;--tbl-stripe:#21262d;--shadow-sm:0 1px 3px rgba(0,0,0,.3)}`,
     'html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);overflow-x:hidden}',
     'body{display:flex;flex-direction:column;height:100vh;overflow:hidden;transition:background var(--tr),color var(--tr)}',
     /* Theme swap: disable all transitions/animations for one frame so every element changes color together (no janky staggered fade). Mirrors app html.no-transition. */

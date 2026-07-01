@@ -224,6 +224,9 @@ Sau **mỗi lần thay đổi code** trong dự án này, bắt buộc phải:
 
 ### Màu nền app = bảng màu file design:
 - Override trong `<style id="new-ui-layout">`: light `--bg:#f4f6fb;--surface:#fff;--surface2:#edf0f8`; dark `--bg:#0c0e14;--surface:#111318;--surface2:#161a23` (dùng `!important`). Khớp `preview_new_ui.html`.
+- **canvas** (`.editor-scroll`) = `--bg`; **sidebar/tabbar/statusbar** = `--surface` (panel); **rail** = `#09090f`. Sidebar phải trỏ `--sidebar-bg:var(--surface)!important` + `--sb:var(--surface)!important` (mặc định app là `var(--surface2)` → sai, sáng hơn design).
+- **Publisher output** (chuỗi CSS optimized ~14843/14844) đồng bộ cùng bảng màu: `--sb:var(--surface)`, dark `--bg:#0c0e14;--surface:#111318;--surface2:#161a23`, light `--bg:#f4f6fb;--surface2:#edf0f8`. Push lại để website mới có màu design.
+- **Glow nút Publisher:** `.pab-wrapper` phải `overflow:visible` (không thì `_pubPulse`/`_pubPulseDark` box-shadow bị cắt). Tabbar new UI luôn hiện (`.pab-hidden{height:42px}`), tab list tự clip (`#newTabList{overflow:hidden}`).
 
 ### Outline "Page info" = tiếng ANH, khớp hình design:
 - Rows: **Created** (`en-US` "Jul 1"), **Updated** (relative EN: "Just now"/"5m ago"/"2h ago"/"3d ago"), **Views** (`doc.views`, +1 mỗi `openDoc`), **Status** ("Editing" xanh / "Locked" đỏ). Empty state EN.
