@@ -1942,18 +1942,21 @@ body{padding-bottom:28px}
 #railPagesBtn{
   order:2;width:36px;height:36px;background:transparent;border:none;border-radius:8px;
   color:rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;
-  cursor:pointer;font-size:18px;flex-shrink:0;transition:all .18s;
+  cursor:pointer;font-size:18px;flex-shrink:0;transition:transform .22s cubic-bezier(.34,1.56,.64,1),background .16s ease,color .16s ease,box-shadow .18s ease;
 }
 #railPagesBtn.active{background:rgba(99,102,241,.15);color:var(--accent);box-shadow:inset 2px 0 0 var(--accent)}
-#railPagesBtn:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.8)}
+#railPagesBtn:hover{background:rgba(255,255,255,.12);color:#fff;transform:translateY(-2px) scale(1.14);box-shadow:0 6px 16px rgba(0,0,0,.4)}
 
 /* Rail generic button (Import) */
 .rail-btn-new{
   order:4;width:36px;height:36px;background:transparent;border:none;border-radius:8px;
   color:rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;
-  cursor:pointer;font-size:17px;flex-shrink:0;transition:all .18s;
+  cursor:pointer;font-size:17px;flex-shrink:0;transition:transform .22s cubic-bezier(.34,1.56,.64,1),background .16s ease,color .16s ease,box-shadow .18s ease;
 }
-.rail-btn-new:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.8)}
+.rail-btn-new:hover{background:rgba(255,255,255,.12);color:#fff;transform:translateY(-2px) scale(1.14);box-shadow:0 6px 16px rgba(0,0,0,.4)}
+#railPagesBtn:active,.rail-btn-new:active,#headerLogoWrap:active{transform:scale(.9)!important;transition-duration:.09s}
+#headerLogoWrap{transition:transform .22s cubic-bezier(.34,1.56,.64,1)}
+#headerLogoWrap:hover{transform:translateY(-2px) scale(1.1)}
 
 /* ── LAYOUT: push right of fixed rail ── */
 .layout{margin-left:56px;height:calc(100vh - 28px);overflow:hidden}
@@ -15512,8 +15515,11 @@ function _buildViewerShellCss(accent){
     '.ws-header>div[style*="margin-left:auto"]{margin-top:auto!important;margin-left:0!important;flex-direction:column!important;align-items:center!important;gap:4px!important;width:100%!important}',
     '.ws-header .ws-theme-btn,.ws-header .ws-focus-btn,.ws-header .ws-accent-btn{width:40px!important;height:40px!important;border-radius:9px!important;color:rgba(255,255,255,.6)!important}',
     '.ws-header .ws-theme-btn:hover,.ws-header .ws-focus-btn:hover,.ws-header .ws-accent-btn:hover{background:rgba(255,255,255,.08)!important;color:#fff!important}',
-    '.ws-header .ws-rail-btn{width:40px;height:40px;border-radius:9px;background:transparent;border:none;color:rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;flex-shrink:0;transition:all .15s}',
-    '.ws-header .ws-rail-btn:hover{background:rgba(255,255,255,.08);color:#fff}',
+    '.ws-header .ws-rail-btn{width:40px;height:40px;border-radius:9px;background:transparent;border:none;color:rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;flex-shrink:0;transition:transform .22s cubic-bezier(.34,1.56,.64,1),background .16s ease,color .16s ease,box-shadow .18s ease}',
+    '.ws-header .ws-rail-btn:hover{background:rgba(255,255,255,.12);color:#fff;transform:translateY(-2px) scale(1.14);box-shadow:0 6px 16px rgba(0,0,0,.4)}',
+    '.ws-header .ws-rail-btn:active{transform:scale(.9);transition-duration:.09s}',
+    '.ws-header .ws-logo{transition:transform .22s cubic-bezier(.34,1.56,.64,1)}',
+    '.ws-header .ws-logo:hover{transform:translateY(-2px) scale(1.08)}',
     '.ws-header .ws-rail-btn.active{background:rgba(99,102,241,.15);color:var(--accent);box-shadow:inset 2px 0 0 var(--accent)}',
     '.ws-header .ws-rail-div{width:26px;height:1px;background:rgba(255,255,255,.08);margin:4px 0;flex-shrink:0}',
     /* Focus/Theme/Accent chuyển vào PAB (page header) → style theo PAB */
