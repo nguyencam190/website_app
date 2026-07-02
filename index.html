@@ -339,9 +339,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .editor-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:48px max(32px,calc((100% - var(--read-w,900px))/2));background:var(--bg);position:relative;transition:var(--mode-transition)}
 .editor-scroll::-webkit-scrollbar{width:5px}
 .editor-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
-.doc-title-edit{width:100%;border:none;outline:none;font-size:30px;font-weight:700;color:var(--text2);background:transparent;font-family:var(--font);letter-spacing:-.5px;line-height:1.2;margin-bottom:8px;text-align:center}
+.doc-title-edit{width:100%;border:none;outline:none;font-size:30px;font-weight:700;color:var(--text2);background:transparent;font-family:var(--font);letter-spacing:-.5px;line-height:1.2;margin-bottom:8px;text-align:left}
 .doc-title-edit::placeholder{color:#cbd5e1;text-align:center}
-.doc-meta{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:24px;padding-bottom:18px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.doc-meta{display:flex;align-items:center;justify-content:flex-start;gap:12px;margin-bottom:24px;padding-bottom:18px;border-bottom:1px solid var(--border);flex-wrap:wrap}
 /* Blank page hint — shown when editor has no content */
 .doc-blank-hint{display:none;flex-direction:column;align-items:flex-start;padding:12px 2px 0;cursor:text;user-select:none}
 .doc-blank-hint.on{display:flex}
@@ -387,7 +387,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .doc-comment-save:hover{opacity:.85}
 .doc-comment-cancel{padding:4px 12px;font-size:12px;background:none;border:1px solid var(--border2);border-radius:4px;cursor:pointer;color:var(--text2);transition:background .15s}
 .doc-comment-cancel:hover{background:var(--surface2)}
-.meta-chip{display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text3)}
+.meta-chip{display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text2)}
 .meta-tag{background:var(--accent-light);color:var(--accent);padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
 .editor-content{outline:none;min-height:320px;font-size:16px;line-height:1.6;color:var(--text);position:relative}
 /* Clearfix — contain floated image blocks so a tall float never spills past the
@@ -423,7 +423,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .editor-blk-ctx-item:disabled{opacity:.4;cursor:default}
 .editor-blk-ctx-sep{height:1px;background:var(--border);margin:3px 4px}
 .editor-content h1{font-size:1.5rem;font-weight:600;line-height:28px;margin:28px 0 10px;letter-spacing:-.02em}
-.editor-content h2{font-size:1.25rem;font-weight:600;line-height:24px;margin:22px 0 9px;padding-bottom:6px;border-bottom:1px solid var(--border);letter-spacing:-.015em}
+.editor-content h2{font-size:1.25rem;font-weight:700;line-height:24px;margin:22px 0 9px;padding-bottom:6px;border-bottom:1px solid var(--border);letter-spacing:-.015em}
 .editor-content h3{font-size:1.0625rem;font-weight:700;line-height:22px;margin:20px 0 8px;letter-spacing:-.01em;padding-left:10px;border-left:3px solid var(--accent)}
 .editor-content h3:has(+p),.editor-content h3:has(+ul),.editor-content h3:has(+ol){margin-bottom:0}
 .editor-content h3+p{padding-left:10px;border-left:3px solid var(--accent);margin-top:0}
@@ -1995,6 +1995,10 @@ body[data-focus="1"] #sidebar::before{display:none}
 .new-tab-x{background:none;border:none;cursor:pointer;color:var(--text3);padding:0;margin-left:4px;line-height:1;font-size:12px;opacity:.6}
 .new-tab-x:hover{opacity:1}
 #newTabList{display:flex;align-items:stretch;flex:1;overflow:hidden;min-width:0}
+/* New UI: header shows a full-ancestry breadcrumb instead of the decorative tab chip */
+#newTabList{display:none!important}
+.hdr-breadcrumb{flex:1;min-width:0;margin:0!important;padding:0 18px;height:100%;font-size:13px;flex-wrap:nowrap!important;overflow:hidden;white-space:nowrap}
+.hdr-breadcrumb .doc-bc-item{max-width:260px}
 #newTabDivider{width:1px;align-self:stretch;background:var(--border);flex-shrink:0}
 #newTabRight{display:flex;align-items:center;gap:4px;padding:0 10px;flex-shrink:0}
 .tb-new{
@@ -2476,6 +2480,7 @@ body[data-focus="1"] .doc-outline{width:0!important;border:none}
       <!-- PAGE ACTION BAR wrapper — Smart Sticky (hides on scroll down, shows on scroll up) -->
       <div id="pabWrapper" class="pab-wrapper">
       <!-- ══ NEW TABBAR ══ -->
+      <nav class="doc-breadcrumb hdr-breadcrumb" id="docBreadcrumb" aria-label="Breadcrumb" style="display:none"></nav>
       <div id="newTabList">
         <div class="new-tab active" id="newActiveTab">
           <i class="ti ti-map"></i>
@@ -2573,7 +2578,6 @@ body[data-focus="1"] .doc-outline{width:0!important;border:none}
         <div class="editor-wrap" id="editorWrap">
           <div class="drop-overlay" id="dropOverlay"><i class="ti ti-photo-up"></i><span>Drop image/video here</span></div>
           <div class="editor-scroll" id="editorScroll">
-            <nav class="doc-breadcrumb" id="docBreadcrumb" aria-label="Breadcrumb" style="display:none"></nav>
             <input class="doc-title-edit" id="docTitleInput" placeholder="Document title..." oninput="onTitleChange()">
             <div class="doc-meta" id="docMeta"></div>
             <div class="editor-content" id="editor" contenteditable="true" spellcheck="true" oninput="onContentChange()"></div>
@@ -15027,8 +15031,8 @@ function _buildViewerShellCss(accent){
     '.ws-pab-star:hover{color:var(--accent)}',
     '.ws-pab-star.starred{color:#f59e0b}',
     '.ws-doc{padding:48px max(32px,calc((100% - var(--read-w,900px))/2))}',
-    '.ws-doc-title{font-size:30px;font-weight:700;color:var(--text);margin-bottom:4px;letter-spacing:-.5px;line-height:1.2;transition:color var(--tr);text-align:center}',
-    '.ws-doc-meta{display:flex;gap:12px;font-size:11.5px;color:var(--text3);margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);flex-wrap:wrap;transition:all var(--tr);justify-content:center}',
+    '.ws-doc-title{font-size:30px;font-weight:700;color:var(--text);margin-bottom:4px;letter-spacing:-.5px;line-height:1.2;transition:color var(--tr);text-align:left}',
+    '.ws-doc-meta{display:flex;gap:12px;font-size:11.5px;color:var(--text2);margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);flex-wrap:wrap;transition:all var(--tr);justify-content:flex-start}',
     '.ws-meta-chip{display:flex;align-items:center;gap:4px}',
     '.ws-related{padding:20px 0 24px;border-top:1px solid var(--border);margin-top:8px}',
     '.ws-related:empty{display:none}',
@@ -15049,7 +15053,7 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .editor-content *{max-width:100%;box-sizing:border-box}',
     '.ws-canvas .editor-content p{margin-bottom:12px}',
     '.ws-canvas .editor-content h1{font-size:1.5rem;font-weight:600;line-height:1.4;margin:24px 0 10px;letter-spacing:-.02em}',
-    '.ws-canvas .editor-content h2{font-size:1.25rem;font-weight:600;line-height:1.4;margin:20px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border);letter-spacing:-.015em}',
+    '.ws-canvas .editor-content h2{font-size:1.25rem;font-weight:700;line-height:1.4;margin:20px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border);letter-spacing:-.015em}',
     '.ws-canvas .editor-content h3{font-size:1.0625rem;font-weight:700;line-height:1.4;margin:18px 0 8px;padding-left:10px;border-left:3px solid var(--accent);letter-spacing:-.01em}',
     '.ws-canvas .editor-content h3:has(+p),.ws-canvas .editor-content h3:has(+ul),.ws-canvas .editor-content h3:has(+ol){margin-bottom:0}',
     // Spotlight
