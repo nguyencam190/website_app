@@ -3428,7 +3428,7 @@ function toggleFlyout(mode,triggerEl){
       flyout.style.top=rect.top+'px';
       flyout.style.height=(window.innerHeight-rect.top)+'px';
     } else {
-      const headerH=document.querySelector('.header')?.offsetHeight||52;
+      const headerH=document.getElementById('pabWrapper')?.offsetHeight||52;
       flyout.style.top=headerH+'px';
       flyout.style.height=(window.innerHeight-headerH)+'px';
     }
@@ -6278,7 +6278,7 @@ function _openSelPanel(title,type,idx,table,triggerEl){
   const rect=triggerEl.getBoundingClientRect();
   const pw=panel.offsetWidth||210,ph=panel.offsetHeight||260;
   const vw=window.innerWidth,vh=window.innerHeight;
-  const hdrH=(document.querySelector('.header')||{offsetHeight:52}).offsetHeight+4;
+  const hdrH=(document.getElementById('pabWrapper')?.offsetHeight||52)+4;
   let left=rect.left+(rect.width/2)-(pw/2),top=rect.bottom+6;
   if(left+pw>vw-8)left=vw-pw-8;
   if(left<8)left=8;
