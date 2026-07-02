@@ -336,7 +336,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .drop-overlay{display:none;position:absolute;inset:0;background:rgba(37,99,235,.05);border:2px dashed var(--accent);border-radius:12px;z-index:40;align-items:center;justify-content:center;flex-direction:column;gap:12px;pointer-events:none}
 .drop-overlay.on{display:flex}
 .drop-overlay i{font-size:48px;color:var(--accent);opacity:.7}
-.editor-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:40px 96px;background:var(--bg);position:relative;transition:var(--mode-transition)}
+.editor-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:48px max(32px,calc((100% - 820px)/2));background:var(--bg);position:relative;transition:var(--mode-transition)}
 .editor-scroll::-webkit-scrollbar{width:5px}
 .editor-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
 .doc-title-edit{width:100%;border:none;outline:none;font-size:30px;font-weight:700;color:var(--text2);background:transparent;font-family:var(--font);letter-spacing:-.5px;line-height:1.2;margin-bottom:8px;text-align:center}
@@ -15024,7 +15024,7 @@ function _buildViewerShellCss(accent){
     '.ws-pab-star{background:transparent;border:none;cursor:pointer;font-size:16px;padding:4px;color:var(--text3);border-radius:4px;transition:.12s;flex-shrink:0;line-height:1}',
     '.ws-pab-star:hover{color:var(--accent)}',
     '.ws-pab-star.starred{color:#f59e0b}',
-    '.ws-doc{padding:40px 96px}',
+    '.ws-doc{padding:48px max(32px,calc((100% - 820px)/2))}',
     '.ws-doc-title{font-size:30px;font-weight:700;color:var(--text);margin-bottom:4px;letter-spacing:-.5px;line-height:1.2;transition:color var(--tr);text-align:center}',
     '.ws-doc-meta{display:flex;gap:12px;font-size:11.5px;color:var(--text3);margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);flex-wrap:wrap;transition:all var(--tr);justify-content:center}',
     '.ws-meta-chip{display:flex;align-items:center;gap:4px}',
