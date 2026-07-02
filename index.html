@@ -1975,13 +1975,13 @@ body[data-focus="1"] #sidebar::before{display:none}
 /* ── PAGE ACTION BAR → TABBAR ── */
 .page-action-bar{display:none!important}
 .pab-wrapper{
-  height:42px!important;display:flex!important;align-items:stretch!important;
+  height:50px!important;display:flex!important;align-items:stretch!important;
   background:var(--surface)!important;border-bottom:1px solid var(--border)!important;
   overflow:visible!important;flex-shrink:0;position:relative;z-index:100;
 }
 /* Tabbar always visible in the new UI (no hide-on-scroll) so the publisher
    glow isn't clipped; tab list still clips its own overflow */
-.pab-wrapper.pab-hidden{height:42px!important;overflow:visible!important}
+.pab-wrapper.pab-hidden{height:50px!important;overflow:visible!important}
 #newTabList{overflow:hidden!important}
 /* New tabbar tabs */
 .new-tab{
@@ -2056,7 +2056,7 @@ html.no-transition *{transition:none!important;animation:none!important}
 
 /* ── OUTLINE PANEL ("On this page") — sổ ra bên phải khi bấm nút ≡ ở tabbar ── */
 .doc-outline{
-  position:fixed;top:42px;bottom:28px;right:0;width:0;
+  position:fixed;top:50px;bottom:28px;right:0;width:0;
   background:var(--surface);border-left:1px solid var(--border);
   overflow:hidden;white-space:nowrap;z-index:70;
   transition:width .22s ease;
@@ -15005,10 +15005,10 @@ function _buildViewerShellCss(accent){
     '.ws-home-item .ws-nav-title{font-weight:600}',
     '.ws-main{flex:1;overflow-y:auto;overflow-x:hidden;background:var(--bg);transition:background var(--tr)}',
     /* Page toolbar (breadcrumb bar above canvas) */
-    '.ws-pab-wrapper{overflow:hidden;height:42px;flex-shrink:0;transition:height 250ms cubic-bezier(.4,0,.2,1)}',
+    '.ws-pab-wrapper{overflow:hidden;height:50px;flex-shrink:0;transition:height 250ms cubic-bezier(.4,0,.2,1)}',
     '.ws-pab-wrapper.ws-pab-hidden{height:0}',
     '.ws-pab-wrapper.ws-pab-hidden .ws-pab{transform:translateY(-100%)}',
-    '.ws-pab{height:42px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:10px;will-change:transform;transition:transform 250ms cubic-bezier(.4,0,.2,1),background var(--tr),border-color var(--tr)}',
+    '.ws-pab{height:50px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:10px;will-change:transform;transition:transform 250ms cubic-bezier(.4,0,.2,1),background var(--tr),border-color var(--tr)}',
     '[data-theme="dark"] .ws-pab{background:var(--surface);border-bottom-color:var(--border)}',
     '.ws-pab-crumb{display:flex;align-items:center;gap:3px;font-size:13px;flex:1;min-width:0;overflow:hidden}',
     '.ws-pab-bc-space{color:var(--text);cursor:pointer;font-weight:500;white-space:nowrap;flex-shrink:0;transition:color .1s}',
@@ -15533,7 +15533,7 @@ function _buildViewerShellCss(accent){
     /* accent popup opens to the right of the rail */
     '.ws-header .ws-accent-pop{position:fixed!important;left:56px!important;right:auto!important;top:auto!important;bottom:14px!important}',
     /* Outline "On this page" panel (bên phải) */
-    '.ws-outline{position:fixed;top:42px;bottom:28px;right:0;width:0;background:var(--surface);border-left:1px solid var(--border);overflow:hidden;white-space:nowrap;z-index:70;transition:width .22s ease}',
+    '.ws-outline{position:fixed;top:50px;bottom:28px;right:0;width:0;background:var(--surface);border-left:1px solid var(--border);overflow:hidden;white-space:nowrap;z-index:70;transition:width .22s ease}',
     '.ws-outline.on{width:250px;overflow-y:auto}',
     '.ws-outline-inner{padding:20px 16px;white-space:normal;width:250px}',
     '.ws-ol-h{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px}',
