@@ -426,6 +426,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .editor-content h1{font-size:1.5rem;font-weight:600;line-height:28px;margin:28px 0 10px;letter-spacing:-.02em}
 .editor-content h2{font-size:1.25rem;font-weight:700;line-height:24px;margin:22px 0 9px;padding-bottom:6px;border-bottom:1px solid var(--border);letter-spacing:-.015em}
 .editor-content h3{font-size:1.0625rem;font-weight:700;line-height:22px;margin:20px 0 8px;letter-spacing:-.01em;padding-left:10px;border-left:3px solid var(--accent)}
+/* Headings inside table cells: compact — the big block margins don't collapse
+   across the cell boundary and would blow up the row height. */
+.editor-content td h1,.editor-content th h1,.editor-content td h2,.editor-content th h2,.editor-content td h3,.editor-content th h3,.editor-content td h4,.editor-content th h4,.editor-content td h5,.editor-content th h5,.editor-content td h6,.editor-content th h6{margin:2px 0;line-height:1.25;padding:0;border:none}
 .editor-content h3:has(+p),.editor-content h3:has(+ul),.editor-content h3:has(+ol){margin-bottom:0}
 .editor-content h3+p{padding-left:10px;border-left:3px solid var(--accent);margin-top:0}
 .editor-content h3+p:has(>br:only-child):has(+p){height:0;overflow:hidden;padding:0!important;margin:0!important;border-left:none!important}
@@ -15056,6 +15059,7 @@ function _buildViewerShellCss(accent){
     '.ws-canvas .editor-content h1{font-size:1.5rem;font-weight:600;line-height:1.4;margin:24px 0 10px;letter-spacing:-.02em}',
     '.ws-canvas .editor-content h2{font-size:1.25rem;font-weight:700;line-height:1.4;margin:20px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border);letter-spacing:-.015em}',
     '.ws-canvas .editor-content h3{font-size:1.0625rem;font-weight:700;line-height:1.4;margin:18px 0 8px;padding-left:10px;border-left:3px solid var(--accent);letter-spacing:-.01em}',
+    '.ws-canvas .editor-content td h1,.ws-canvas .editor-content th h1,.ws-canvas .editor-content td h2,.ws-canvas .editor-content th h2,.ws-canvas .editor-content td h3,.ws-canvas .editor-content th h3,.ws-canvas .editor-content td h4,.ws-canvas .editor-content th h4,.ws-canvas .editor-content td h5,.ws-canvas .editor-content th h5,.ws-canvas .editor-content td h6,.ws-canvas .editor-content th h6{margin:2px 0;line-height:1.25;padding:0;border:none}',
     '.ws-canvas .editor-content h3:has(+p),.ws-canvas .editor-content h3:has(+ul),.ws-canvas .editor-content h3:has(+ol){margin-bottom:0}',
     // Spotlight
     '.ws-canvas .cf-spotlight{display:flex;align-items:stretch;border-radius:10px;overflow:hidden;margin:14px auto;max-width:500px;background:#ede9fe}',
