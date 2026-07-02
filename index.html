@@ -4536,7 +4536,7 @@ function renderMeta(doc){
   const el=document.getElementById('docMeta');
   const d=new Date(doc.updatedAt);
   const fmt=d.toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+d.toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'});
-  el.innerHTML=`<div class="meta-chip"><i class="ti ti-user"></i> ${escH(state.username)}</div><div class="meta-chip"><i class="ti ti-clock"></i> ${fmt}</div>`;
+  el.innerHTML=`<div class="meta-chip">✍ ${escH(state.username)}</div><div class="meta-chip">📅 ${fmt}</div>`;
 }
 
 // DOC CTX
@@ -15779,7 +15779,7 @@ async function doExportWebsite(){
     const h1=document.createElement('h1');h1.className='ws-doc-title';h1.textContent=d.title||'Untitled';
     const meta=document.createElement('div');meta.className='ws-doc-meta';
     const timeStr=updated.toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'});
-    [['ti-user',state.username||''],['ti-clock',dateStr+' '+timeStr]].forEach(([ic,tx])=>{const s=document.createElement('span');s.className='ws-meta-chip';s.innerHTML='<i class="ti '+ic+'"></i> '+escH(tx);meta.appendChild(s);});
+    ['✍ '+(state.username||''),'📅 '+dateStr+' '+timeStr].forEach(t=>{const s=document.createElement('span');s.className='ws-meta-chip';s.textContent=t;meta.appendChild(s);});
     const canvasWrap=document.createElement('div');canvasWrap.className='ws-canvas-wrap';
     const canvas=document.createElement('div');canvas.className='ws-canvas';
     // Store editor natural width so published fitCanvas can scale proportionally
@@ -16821,7 +16821,7 @@ async function doExportOptimized(opts){
     const h1=document.createElement('h1');h1.className='ws-doc-title';h1.textContent=d.title||'Untitled';
     const meta=document.createElement('div');meta.className='ws-doc-meta';
     const timeStr=updated.toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'});
-    [['ti-user',state.username||''],['ti-clock',dateStr+' '+timeStr]].forEach(([ic,tx])=>{const s=document.createElement('span');s.className='ws-meta-chip';s.innerHTML='<i class="ti '+ic+'"></i> '+escH(tx);meta.appendChild(s);});
+    ['✍ '+(state.username||''),'📅 '+dateStr+' '+timeStr].forEach(t=>{const s=document.createElement('span');s.className='ws-meta-chip';s.textContent=t;meta.appendChild(s);});
     const canvasWrap=document.createElement('div');canvasWrap.className='ws-canvas-wrap';
     const canvas=document.createElement('div');canvas.className='ws-canvas';
     const _editorEl=document.getElementById('editor');canvas.dataset.natW=(_editorEl?_editorEl.offsetWidth:0)||900;
