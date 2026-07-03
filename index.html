@@ -2010,7 +2010,7 @@ body[data-focus="1"] #sidebar::before{display:none}
 #newTabRight{display:flex;align-items:center;gap:4px;padding:0 10px;flex-shrink:0}
 .tb-new{
   width:30px;height:30px;border:none;border-radius:6px;
-  background:transparent;color:var(--text2);cursor:pointer;
+  background:transparent;color:var(--text);cursor:pointer;
   display:flex;align-items:center;justify-content:center;font-size:16px;
   transition:all .15s;
 }
@@ -2123,8 +2123,8 @@ body[data-focus="1"] .doc-outline{width:0!important;border:none}
 .tb-new{width:34px!important;height:34px!important;font-size:19px!important}
 #tabPushBtn{font-size:13px!important;height:30px!important}
 /* ── Breadcrumb đầy đủ trang cha (trên tiêu đề trang) ── */
-.doc-breadcrumb{display:flex;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--text3);margin:0 0 14px;line-height:1.4}
-.doc-bc-item{cursor:pointer;color:var(--text3);white-space:nowrap;transition:color .12s;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.doc-breadcrumb{display:flex;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--text2);margin:0 0 14px;line-height:1.4}
+.doc-bc-item{cursor:pointer;color:var(--text2);white-space:nowrap;transition:color .12s;overflow:hidden;text-overflow:ellipsis;max-width:220px}
 .doc-bc-item:hover{color:var(--accent)}
 .doc-bc-item.cur{color:var(--text);font-weight:600;cursor:default}
 .doc-bc-sep{color:var(--text3);padding:0 7px;user-select:none;flex-shrink:0}
@@ -15037,7 +15037,7 @@ function _buildViewerShellCss(accent){
     '.ws-pab-icon-btn:hover{background:var(--surface2);border-color:var(--border);color:var(--text)}',
     '.ws-pab-icon-btn.starred{color:#f59e0b}',
     '.ws-pab-icon-btn.on{background:var(--accent);border-color:var(--accent);color:#fff}',
-    '.ws-pab-star{background:transparent;border:none;cursor:pointer;font-size:16px;padding:4px;color:var(--text3);border-radius:4px;transition:.12s;flex-shrink:0;line-height:1}',
+    '.ws-pab-star{background:transparent;border:none;cursor:pointer;font-size:16px;padding:4px;color:var(--text2);border-radius:4px;transition:.12s;flex-shrink:0;line-height:1}',
     '.ws-pab-star:hover{color:var(--accent)}',
     '.ws-pab-star.starred{color:#f59e0b}',
     '.ws-doc{padding:48px var(--doc-px, max(32px,calc((100% - 1200px)/2)))}',
@@ -15523,7 +15523,7 @@ function _buildViewerShellCss(accent){
     '.ws-header .ws-rail-btn.active{background:rgba(99,102,241,.15);color:var(--accent);box-shadow:inset 2px 0 0 var(--accent)}',
     '.ws-header .ws-rail-div{width:26px;height:1px;background:rgba(255,255,255,.08);margin:4px 0;flex-shrink:0}',
     /* Focus/Theme/Accent chuyển vào PAB (page header) → style theo PAB */
-    '.ws-pab-right .ws-focus-btn,.ws-pab-right .ws-theme-btn,.ws-pab-right .ws-accent-btn{width:30px!important;height:30px!important;border-radius:5px!important;border:1px solid transparent!important;background:transparent!important;color:var(--text2)!important;font-size:15px!important}',
+    '.ws-pab-right .ws-focus-btn,.ws-pab-right .ws-theme-btn,.ws-pab-right .ws-accent-btn{width:30px!important;height:30px!important;border-radius:5px!important;border:1px solid transparent!important;background:transparent!important;color:var(--text)!important;font-size:15px!important}',
     '.ws-pab-right .ws-focus-btn:hover,.ws-pab-right .ws-theme-btn:hover,.ws-pab-right .ws-accent-btn:hover{background:var(--surface2)!important;border-color:var(--border)!important;color:var(--text)!important}',
     '.ws-pab-right .ws-accent-wrap{position:relative;flex-shrink:0}',
     '.ws-pab-right .ws-accent-dot{width:14px!important;height:14px!important;box-shadow:0 0 0 2px var(--surface)!important}',
@@ -15540,7 +15540,7 @@ function _buildViewerShellCss(accent){
     /* Bỏ logo trước tên project ở sidebar header (đã có logo trên rail) */
     '.ws-sb-hdr-box,.ws-sb-hdr-img{display:none!important}',
     /* Breadcrumb đầy đủ trang cha */
-    '.ws-pab-bc-sep{color:var(--text3);font-size:13px;padding:0 5px;flex-shrink:0;user-select:none}',
+    '.ws-pab-bc-sep{color:var(--text2);font-size:13px;padding:0 5px;flex-shrink:0;user-select:none}',
     '.ws-pab-bc-link{color:var(--text2);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:color .1s;overflow:hidden;text-overflow:ellipsis;max-width:180px}',
     '.ws-pab-bc-link:hover{color:var(--accent)}',
     '.ws-help-pop{position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.25);padding:12px 14px;z-index:9999;min-width:230px}',
