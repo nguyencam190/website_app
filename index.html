@@ -1372,7 +1372,7 @@ td .cf-checklist[data-open="true"] .cf-checklist-body,.cf-column-item .cf-checkl
 [data-theme="dark"] .cf-cards[data-bg="peach"] .cf-card{background:rgba(236,72,153,.13)}
 [data-theme="dark"] .cf-cards[data-bg="sand"] .cf-card{background:rgba(245,158,11,.12)}
 [data-theme="dark"] .cf-cards[data-bg="gray"] .cf-card{background:var(--surface2)}
-.cf-card-img-wrap{position:relative;background:var(--surface2);overflow:hidden;min-height:80px;cursor:pointer}
+.cf-card-img-wrap{position:relative;background:var(--surface2);overflow:hidden;min-height:80px;cursor:zoom-in}
 .cf-card-img-wrap:hover{outline:2px solid var(--accent);outline-offset:-2px}
 /* Strip generic .editor-content img chrome; let image drive height naturally (no crop). */
 .cf-card-img-wrap img{position:static!important;inset:auto!important;width:100%!important;height:auto!important;max-width:none!important;margin:0!important;border:none!important;border-radius:0!important;box-shadow:none!important;object-fit:unset!important;display:block!important;cursor:default}
@@ -8986,6 +8986,13 @@ function _cfCardWireImg(card){
   const wrap=card.querySelector('.cf-card-img-wrap');
   if(!wrap||wrap._cardWired)return;
   wrap._cardWired=true;
+  wrap.addEventListener('dblclick',e=>{
+    const img=wrap.querySelector('img');
+    if(!img)return; // no image yet (placeholder) — nothing to zoom
+    e.preventDefault();e.stopPropagation();
+    const _all=Array.from(document.querySelectorAll('.fmedia img,.editor-content img'));
+    lbOpen(Math.max(0,_all.indexOf(img)));
+  });
   wrap.addEventListener('mousedown',e=>{
     e.preventDefault();
     const cardsBlock=card.closest('.cf-cards');
@@ -15146,7 +15153,7 @@ function _buildViewerShellCss(accent){
     '[data-theme="dark"] .ws-canvas .cf-cards[data-bg="sand"] .cf-card{background:rgba(245,158,11,.12)}',
     '[data-theme="dark"] .ws-canvas .cf-cards[data-bg="gray"] .cf-card{background:var(--surface2)}',
     '.ws-canvas .cf-card:hover{box-shadow:0 3px 14px rgba(0,0,0,.09)}',
-    '.ws-canvas .cf-card-img-wrap{position:relative;background:var(--surface2);overflow:hidden;min-height:80px;cursor:pointer}',
+    '.ws-canvas .cf-card-img-wrap{position:relative;background:var(--surface2);overflow:hidden;min-height:80px;cursor:zoom-in}',
     '.ws-canvas .cf-card-img-wrap:hover{outline:2px solid var(--accent);outline-offset:-2px}',
     '.ws-canvas .cf-card-img-wrap img{position:static!important;inset:auto!important;width:100%!important;height:auto!important;max-width:none!important;margin:0!important;border:none!important;border-radius:0!important;box-shadow:none!important;object-fit:unset!important;display:block!important}',
     '.ws-canvas .cf-card-img-ph{width:100%;height:100%;min-height:120px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;font-size:22px}',
