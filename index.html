@@ -4847,7 +4847,8 @@ function _cacheUrl(id,url){
   }
 }
 
-// ─── MEDIA UPLOAD ─────────────────────────────────────────function isVideo(f){return f.type.startsWith('video/')||/\.(mp4|webm|ogg|mov)$/i.test(f.name);}
+// ─── MEDIA UPLOAD ─────────────────────────────────────────
+function isVideo(f){return f.type.startsWith('video/')||/\.(mp4|webm|ogg|mov)$/i.test(f.name);}
 function isGif(f){return f.type==='image/gif'||/\.gif$/i.test(f.name);}
 
 async function loadMedia(file){
