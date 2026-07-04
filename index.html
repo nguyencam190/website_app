@@ -2818,6 +2818,16 @@ body[data-focus="1"] .doc-outline{width:0!important;border:none}
   <button class="bb" id="bbUnder" onmousedown="event.preventDefault();bbFmt('underline')" title="Underline" style="text-decoration:underline">U</button>
   <button class="bb" id="bbStrike" onmousedown="event.preventDefault();bbFmt('strikeThrough')" title="Strikethrough"><s>S</s></button>
   <div class="bb-sep"></div>
+  <!-- Font size -->
+  <div class="bb-size-wrap">
+    <input class="bb-size-input" id="bbSizeNum" type="number" min="8" max="200" value="16"
+      onmousedown="event.stopPropagation();saveRange()"
+      onclick="event.stopPropagation();_bbToggleSizeDD()"
+      onkeydown="if(event.key==='Enter'){event.preventDefault();restoreRange();bbApplySize(parseInt(this.value)||16);}"
+      title="Cỡ chữ">
+    <div class="bb-size-dropdown" id="bbSizeDD"></div>
+  </div>
+  <div class="bb-sep"></div>
   <!-- Alignment: L H R V J -->
   <button class="bb" id="bbAlignL" onmousedown="event.preventDefault();bbAlign('justifyLeft')" title="Căn trái (L)"><i class="ti ti-align-left" style="font-size:14px"></i></button>
   <button class="bb" id="bbAlignC" onmousedown="event.preventDefault();bbAlign('justifyCenter')" title="Căn ngang giữa (H)"><i class="ti ti-align-center" style="font-size:14px"></i></button>
@@ -13239,15 +13249,121 @@ function bbUpdateState(){
     const opt=Array.from(bbBlock.options).find(o=>o.value===tag);
     bbBlock.value=opt?tag:'p';
   }
-  [['bbBold','bold'],['bbItalic','italic'],['bbUnder','underline'],['bbStrike','strikeThrough']].forEach(([id,cmd])=>{const btn=document.getElementById(id);if(btn)btn.classList.toggle('active',document.queryCommandState(cmd));});
+  [['bbItalic','italic'],['bbUnder','underline'],['bbStrike','strikeThrough']].forEach(([id,cmd])=>{const btn=document.getElementById(id);if(btn)btn.classList.toggle('active',document.queryCommandState(cmd));});
+  const bbBoldBtn=document.getElementById('bbBold');
+  if(bbBoldBtn){
+    const sel0=window.getSelection();
+    const headingAnc=sel0&&sel0.rangeCount?_bbHeadingAncestor(sel0.getRangeAt(0)):null;
+    bbBoldBtn.classList.toggle('active',headingAnc?_bbSelectionIsExplicitBold(sel0.getRangeAt(0),headingAnc):document.queryCommandState('bold'));
+  }
   _updateAlignBtns();
   _updateVAlignBtns();
+  _updateSizeInput();
+}
+// Headings are already bold via CSS (font-weight 600/700), so the browser's
+// own queryCommandState('bold') sees them as "already bold" and toggling via
+// execCommand('bold') flips OFF (font-weight:normal override) instead of ON.
+// Detect and toggle REAL bold markup (<b>/<strong>/explicit font-weight)
+// ourselves when the selection is inside a heading, bypassing that mixup.
+function _bbHeadingAncestor(range){
+  const n=range.startContainer;
+  const el=n.nodeType===3?n.parentElement:n;
+  return el&&el.closest?el.closest('h1,h2,h3,h4,h5,h6'):null;
+}
+// A Range's commonAncestorContainer is itself a text node whenever the whole
+// selection sits inside one (the common case for a short heading) — a
+// TreeWalker rooted there finds nothing, since nextNode() only visits
+// descendants, never the root itself. Handle that case explicitly.
+function _bbRangeTextNodes(range){
+  const root=range.commonAncestorContainer;
+  if(root.nodeType===3)return range.intersectsNode(root)?[root]:[];
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+  const nodes=[];let n;
+  while(n=walker.nextNode()){if(range.intersectsNode(n))nodes.push(n);}
+  return nodes;
+}
+function _bbSelectionIsExplicitBold(range,headingAnc){
+  const nodes=_bbRangeTextNodes(range).filter(n=>n.textContent.trim());
+  if(!nodes.length)return false;
+  const isBold=node=>{
+    let el=node.parentElement;
+    while(el){
+      if(el.tagName==='B'||el.tagName==='STRONG')return true;
+      const fw=el.style&&el.style.fontWeight;
+      if(fw&&(fw==='bold'||fw==='bolder'||parseInt(fw)>=600))return true;
+      if(el===headingAnc)break;
+      el=el.parentElement;
+    }
+    return false;
+  };
+  return nodes.every(isBold);
+}
+function _bbWrapSelectionTag(range,tagName){
+  try{
+    const el=document.createElement(tagName);
+    range.surroundContents(el);
+    return true;
+  }catch(e){
+    try{
+      const nodes=_bbRangeTextNodes(range);
+      nodes.forEach(textNode=>{
+        const nodeRange=document.createRange();
+        nodeRange.selectNode(textNode);
+        if(textNode===range.startContainer)nodeRange.setStart(textNode,range.startOffset);
+        if(textNode===range.endContainer)nodeRange.setEnd(textNode,range.endOffset);
+        if(nodeRange.collapsed)return;
+        const wrapEl=document.createElement(tagName);
+        nodeRange.surroundContents(wrapEl);
+      });
+      return true;
+    }catch(e2){return false;}
+  }
+}
+function _bbToggleHeadingBold(range,headingAnc){
+  const allBold=_bbSelectionIsExplicitBold(range,headingAnc);
+  if(allBold){
+    // Unwrap in place: the range often sits entirely INSIDE the bold
+    // element's text (e.g. selecting a whole short heading), so it never
+    // spans the <strong>/<b> element boundary itself — extractContents()
+    // would then only pull out the bare text, leaving the (now-empty)
+    // wrapper standing, and re-inserting the text right back inside it.
+    // Walk up from each selected text node and unwrap whatever bold
+    // ancestor(s) actually wrap it instead.
+    const nodes=_bbRangeTextNodes(range).filter(n=>n.textContent.trim());
+    const toUnwrap=new Set();
+    nodes.forEach(node=>{
+      let el=node.parentElement;
+      while(el&&el!==headingAnc){
+        const fw=el.style&&el.style.fontWeight;
+        if(el.tagName==='B'||el.tagName==='STRONG'||(fw&&(fw==='bold'||fw==='bolder'||parseInt(fw)>=600)))toUnwrap.add(el);
+        el=el.parentElement;
+      }
+    });
+    toUnwrap.forEach(el=>{
+      if(el.tagName==='B'||el.tagName==='STRONG'){
+        while(el.firstChild)el.parentNode.insertBefore(el.firstChild,el);
+        el.remove();
+      } else {
+        el.style.fontWeight='';
+        if(!(el.getAttribute('style')||'').trim())el.removeAttribute('style');
+      }
+    });
+  } else {
+    _bbWrapSelectionTag(range,'strong');
+  }
 }
 function bbFmt(cmd){
   const activeEl=document.activeElement;
   const inBox=activeEl&&activeEl.closest&&activeEl.closest('.txtbox-body');
   const inTbl=activeEl&&activeEl.closest&&activeEl.closest('.editor-content td,.editor-content th');
-  document.execCommand(cmd,false,null);
+  if(cmd==='bold'){
+    const sel=window.getSelection();
+    const headingAnc=sel&&sel.rangeCount&&!sel.isCollapsed?_bbHeadingAncestor(sel.getRangeAt(0)):null;
+    if(headingAnc)_bbToggleHeadingBold(sel.getRangeAt(0),headingAnc);
+    else document.execCommand('bold',false,null);
+  } else {
+    document.execCommand(cmd,false,null);
+  }
   if(!inBox&&!inTbl)document.getElementById('editor')?.focus({preventScroll:true});
   onContentChange();bbUpdateState();setTimeout(bbShow,10);
 }
@@ -13281,18 +13397,59 @@ function bbApplyBlock(val){
   }
   document.execCommand('formatBlock',false,val);
   editor.focus({preventScroll:true});onContentChange();setTimeout(bbShow,10);
-}function bbApplySize(size){const editor=document.getElementById('editor');restoreRange();editor.focus({preventScroll:true});document.execCommand('fontSize',false,'7');editor.querySelectorAll('font[size="7"]').forEach(f=>{const span=document.createElement('span');span.style.fontSize=size+'px';span.innerHTML=f.innerHTML;f.replaceWith(span);});document.getElementById('bbSizeNum').value=size;document.getElementById('bbSizeDD').classList.remove('on');onContentChange();setTimeout(bbShow,10);}
+}function bbApplySize(size){
+  size=Math.min(200,Math.max(8,parseInt(size)||16));
+  const editor=document.getElementById('editor');restoreRange();editor.focus({preventScroll:true});
+  document.execCommand('fontSize',false,'7');
+  editor.querySelectorAll('font[size="7"]').forEach(f=>{
+    // execCommand('fontSize') can merge into an EXISTING <font color="..."> on
+    // the same text (the browser reuses one <font> element for both), so
+    // carry over its color/style before discarding the tag — otherwise a
+    // previously-applied text color silently disappears here.
+    const span=document.createElement('span');
+    if(f.getAttribute('style'))span.setAttribute('style',f.getAttribute('style'));
+    if(f.color)span.style.color=f.color;
+    span.style.fontSize=size+'px';
+    span.innerHTML=f.innerHTML;
+    f.replaceWith(span);
+  });
+  const numInp=document.getElementById('bbSizeNum');if(numInp)numInp.value=size;
+  document.getElementById('bbSizeDD')?.classList.remove('on');
+  onContentChange();setTimeout(bbShow,10);
+}
+function _bbToggleSizeDD(){
+  const dd=document.getElementById('bbSizeDD'),inp=document.getElementById('bbSizeNum');
+  if(!dd||!inp)return;
+  if(dd.classList.contains('on')){dd.classList.remove('on');return;}
+  const cur=parseInt(inp.value)||16;
+  dd.innerHTML=BB_SIZES.map(s=>`<div class="bb-size-opt${s===cur?' active':''}" data-sz="${s}">${s}</div>`).join('');
+  dd.querySelectorAll('.bb-size-opt').forEach(o=>{
+    o.addEventListener('mousedown',e=>{e.preventDefault();e.stopPropagation();restoreRange();bbApplySize(parseInt(o.dataset.sz));});
+  });
+  const rect=inp.getBoundingClientRect();
+  dd.style.visibility='hidden';dd.classList.add('on');
+  const w=dd.offsetWidth||72,h=dd.offsetHeight||260;
+  let left=rect.left;let top=rect.bottom+6;
+  if(left+w>window.innerWidth-8)left=window.innerWidth-w-8;
+  if(top+h>window.innerHeight-8)top=rect.top-h-6;
+  dd.style.left=left+'px';dd.style.top=top+'px';dd.style.visibility='';
+}
+function _updateSizeInput(){
+  const inp=document.getElementById('bbSizeNum');if(!inp)return;
+  const sel=window.getSelection();if(!sel||!sel.rangeCount)return;
+  const node=sel.anchorNode;const el=node&&node.nodeType===3?node.parentElement:node;if(!el)return;
+  const fs=parseInt(getComputedStyle(el).fontSize)||16;
+  inp.value=fs;
+}
 function bbTextColor(color){
-  document.getElementById('bbTextBar').style.background=color;
-  document.getElementById('textColorBar').style.background=color;
+  const bar=document.getElementById('bbTextBar');if(bar)bar.style.background=color;
   document.execCommand('foreColor',false,color);
-  addRecentColor('text',color);onContentChange();setTimeout(bbShow,10);
+  onContentChange();setTimeout(bbShow,10);
 }
 function bbHighlight(color){
-  document.getElementById('bbHlBar').style.background=color;
-  document.getElementById('bgColorBar').style.background=color;
+  const bar=document.getElementById('bbHlBar');if(bar)bar.style.background=color;
   document.execCommand('hiliteColor',false,color);
-  addRecentColor('hl',color);onContentChange();setTimeout(bbShow,10);
+  onContentChange();setTimeout(bbShow,10);
 }
 
 // ─── COLOR PALETTE (LIGHT/DARK POSITION MAPPING) ──────────
