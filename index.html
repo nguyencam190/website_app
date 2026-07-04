@@ -10772,6 +10772,23 @@ function _cfImgToCarousel(block){
   // Carry over layout: float wins; else a non-default alignment; else block width preset.
   if(block.dataset.float)carousel.dataset.float=block.dataset.float;
   else if(block.dataset.align&&block.dataset.align!=='center')carousel.dataset.align=block.dataset.align;
+  // Carry over the image's current custom size — otherwise the new carousel
+  // snaps back to its own 100% default, discarding whatever size the user
+  // had set on the image. A floated image resizes the BLOCK itself (%% of
+  // the editor); a normal image resizes .cf-img-inner (%% of .cf-img-wrap,
+  // which stays full-width) — measure whichever one actually holds the size.
+  if(block.dataset.float){
+    const _imgW=block.offsetWidth;
+    const _editorW=(document.getElementById('editor')?.offsetWidth)||_imgW||800;
+    if(_imgW>0&&_imgW<_editorW-2)carousel.style.width=Math.round(_imgW/_editorW*100)+'%';
+  } else {
+    const _inner=block.querySelector('.cf-img-inner');
+    const _wrapW=_inner?.closest('.cf-img-wrap')?.offsetWidth||0;
+    const _innerW=_inner?.offsetWidth||0;
+    if(_wrapW>0&&_innerW>0&&_innerW<_wrapW-2){
+      carousel.style.width=Math.min(100,Math.max(10,Math.round(_innerW/_wrapW*100)))+'%';
+    }
+  }
   // Carry over caption into the first slide's caption
   const capHtml=block.querySelector('.cf-img-caption')?.innerHTML||'';
   if(capHtml.trim()){const sc=carousel.querySelector('.cf-car-slide-caption');if(sc)sc.innerHTML=capHtml;}
