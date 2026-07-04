@@ -172,12 +172,16 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .notif-badge{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:#de350b;border:2px solid #09090f}
 [data-theme="light"] .notif-badge{border-color:#1e1f2a}
 /* Edit mode banner */
-.edit-banner{background:#fffae6;border-bottom:2px solid #f5cd47;padding:8px 16px;display:none;align-items:center;gap:10px;font-size:13px;color:#5e4300;flex-shrink:0}
+.edit-banner{background:#fffae6;border-bottom:2px solid #f5cd47;padding:8px 16px;display:none;align-items:center;gap:10px;font-size:13px;color:#5e4300;flex-shrink:0;margin-left:56px}
 .edit-banner.on{display:flex}
 [data-theme="dark"] .edit-banner{background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.3);color:#f59e0b}
 /* Lock / read-only banner */
-.lock-banner{background:var(--surface2);border-bottom:2px solid var(--border2);padding:8px 16px;display:none;align-items:center;gap:10px;font-size:13px;color:var(--text2);flex-shrink:0}
+.lock-banner{background:var(--surface2);border-bottom:2px solid var(--border2);padding:8px 16px;display:none;align-items:center;gap:10px;font-size:13px;color:var(--text2);flex-shrink:0;margin-left:56px}
 .lock-banner.on{display:flex}
+/* Both banners sit outside .layout (the element that normally offsets
+   content past the fixed 56px rail), so without their own margin the
+   fixed rail (z-index:10000) paints over their left edge/text. */
+body[data-focus="1"] .edit-banner,body[data-focus="1"] .lock-banner{margin-left:0!important}
 [data-theme="dark"] .lock-banner{background:rgba(30,42,56,.5);border-color:var(--border)}
 .pab-icon-btn.pab-locked{color:#f59e0b}
 .editor-content[contenteditable="false"]{cursor:default}
@@ -1854,7 +1858,8 @@ mark.cf-fh.cf-fh-cur{background:rgba(255,130,0,.75);border-radius:2px;outline:1p
 [data-theme="dark"] .proj-live-btn:hover{background:rgba(0,212,170,.25);color:#00d4aa}
 [data-theme="dark"] .proj-live-btn.active{background:#00e6b8;color:#04231d;border-color:#5eead4;animation:_pubPulseDark .85s ease-in-out infinite}
 @keyframes _pubPulseDark{0%,100%{box-shadow:0 0 12px 2px rgba(0,230,184,.7);transform:scale(1)}50%{box-shadow:0 0 30px 9px rgba(0,230,184,1);transform:scale(1.07)}}
-.proj-reconnect-banner{display:none;position:fixed;top:0;left:0;right:0;z-index:10000;background:#f59e0b;color:#1c1917;font-size:13px;padding:8px 16px;align-items:center;gap:8px}
+.proj-reconnect-banner{display:none;position:fixed;top:0;left:0;right:0;z-index:10000;background:#f59e0b;color:#1c1917;font-size:13px;padding:8px 16px;align-items:center;gap:8px;margin-left:56px}
+body[data-focus="1"] .proj-reconnect-banner{margin-left:0!important}
 .proj-reconnect-banner.on{display:flex}
 /* Unified import panel */
 .sb-import-panel{display:none;position:fixed;inset:0;z-index:10000;align-items:center;justify-content:center;background:rgba(0,0,0,.45)}
@@ -12489,6 +12494,11 @@ function _findBlockInContainer(node){
 
 function _showBlockBar(targetEl){
   if(!targetEl)return;
+  // Same lock bypass as the bubble toolbar: hovering still works on a
+  // read-only doc even though contentEditable is off, and the +/drag-handle
+  // buttons (insert, move, duplicate, delete) mutate the DOM directly.
+  const _lockedDoc=(typeof currentDoc==='function')?currentDoc():null;
+  if(_lockedDoc&&_lockedDoc.locked)return;
   _blockBarTarget=targetEl;
   const bar=_getBlockBar();
   const rect=targetEl.getBoundingClientRect();
@@ -13023,6 +13033,12 @@ function _isEditableNode(node){if(!node)return false;const el=node.nodeType===3?
 function bbShow(){
   const sel=window.getSelection();if(!sel||sel.isCollapsed||!sel.rangeCount){bbHide();return;}
   if(!_isEditableNode(sel.anchorNode)){bbHide();return;}
+  // A locked/read-only doc disables contentEditable, but text can still be
+  // selected — without this check the bubble toolbar would still appear and
+  // its actions (bbApplyBlock, bold, color, link…) directly mutate the DOM,
+  // bypassing the lock entirely since they don't rely on native typing.
+  const _lockedDoc=(typeof currentDoc==='function')?currentDoc():null;
+  if(_lockedDoc&&_lockedDoc.locked){bbHide();return;}
   const range=sel.getRangeAt(0);const rect=range.getBoundingClientRect();if(!rect.width&&!rect.height){bbHide();return;}
   const bb=document.getElementById('bubbleToolbar');if(!bb)return;
   bb.style.visibility='hidden';bb.style.left='-9999px';bb.style.top='-9999px';bb.classList.add('on');
