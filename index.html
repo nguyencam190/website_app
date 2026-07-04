@@ -10777,6 +10777,20 @@ function _cfCarToImage(block){
   // Carry over layout: float wins; else a non-default alignment.
   if(block.dataset.float)imgBlock.dataset.float=block.dataset.float;
   else if(block.dataset.align&&block.dataset.align!=='center')imgBlock.dataset.align=block.dataset.align;
+  // Carry over the carousel's current custom size (drag-resized px width or a
+  // 50/75% preset) — otherwise the new image block snaps back to its own
+  // 100% default, discarding whatever size the user had set.
+  const _carW=block.offsetWidth;
+  if(block.dataset.float){
+    const _editorW=(document.getElementById('editor')?.offsetWidth)||_carW||800;
+    if(_carW>0&&_carW<_editorW-2)imgBlock.style.width=Math.round(_carW/_editorW*100)+'%';
+  } else {
+    const _containerW=block.parentElement?.offsetWidth||_carW||0;
+    if(_containerW>0&&_carW>0&&_carW<_containerW-2){
+      const _inner=imgBlock.querySelector('.cf-img-inner');
+      if(_inner)_inner.style.width=Math.min(100,Math.max(10,Math.round(_carW/_containerW*100)))+'%';
+    }
+  }
   // Carry over the current slide's caption into the image caption.
   const capHtml=slide.querySelector('.cf-car-slide-caption')?.innerHTML||'';
   if(capHtml.trim()){const ic=imgBlock.querySelector('.cf-img-caption');if(ic)ic.innerHTML=capHtml;}
