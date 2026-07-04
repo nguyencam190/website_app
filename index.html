@@ -16888,6 +16888,17 @@ async function doExportOptimized(opts){
       const showRN=tbl.dataset.rownums!=='0';const savedW=tbl.dataset.colwidths;
       if(savedW){const cg=document.createElement('colgroup');savedW.split(',').forEach((w,i)=>{if(showRN&&i===0)return;const col=document.createElement('col');col.style.width=w;cg.appendChild(col);});tbl.prepend(cg);}
       tbl.style.tableLayout='fixed';tbl.style.borderCollapse='collapse';tbl.querySelectorAll('.tbl-row-num').forEach(e=>e.remove());
+      // Rebuild row-number cells for viewer (stripped on save, recreate for published view) —
+      // matches doExportWebsite; without this the STT column never re-appears in the Push/ZIP output.
+      if(showRN){
+        Array.from(tbl.rows).forEach((row,ri)=>{
+          const nc=ri===0?document.createElement('th'):document.createElement('td');
+          nc.className='tbl-row-num';
+          nc.textContent=ri===0?'#':String(ri);
+          nc.style.cssText='width:36px;min-width:36px;max-width:36px;';
+          row.insertBefore(nc,row.cells[0]);
+        });
+      }
     });
     // Carousels → zip
     for(const block of Array.from(tmp.querySelectorAll('.cf-carousel-block[data-cfcarids]'))){
