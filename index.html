@@ -11193,8 +11193,8 @@ function _cfBuildCarToolbar(block){
   const moreBtn=document.createElement('button');moreBtn.className='cf-img-tb-btn';
   moreBtn.innerHTML='<i class="ti ti-dots" style="font-size:14px"></i>';moreBtn.title='Thêm';
   const ctx=document.createElement('div');ctx.className='cf-img-ctx';
-  // Shadow + Border swatch rows in ctx — applied to ALL slides (one consistent look
-  // for the whole carousel). Captions stay per-slide. The active state mirrors slide 0.
+  // Shadow swatch row — applied to ALL slides (one consistent look for the
+  // whole carousel). Captions stay per-slide. The active state mirrors slide 0.
   function _makeCarCtxSw(labelText,datasetAttr){
     const row=document.createElement('div');row.className='cf-img-ctx-swrow';
     const lbl=document.createElement('span');lbl.className='cf-img-ctx-swlbl';lbl.textContent=labelText;row.appendChild(lbl);
@@ -11219,8 +11219,33 @@ function _cfBuildCarToolbar(block){
     });
     return row;
   }
+  // Border swatch row — applied to the WHOLE carousel frame (block-level),
+  // not the image content of a single slide. A per-slide border only ever
+  // hugged that slide's rendered image, so a portrait slide inside a wider
+  // carousel (or a slide shorter than the tallest one) left the border
+  // floating with visible gaps to the frame edges. Block-level border always
+  // wraps the full outer frame, consistent across every slide.
+  function _makeCarCtxSwBlock(labelText,datasetAttr){
+    const row=document.createElement('div');row.className='cf-img-ctx-swrow';
+    const lbl=document.createElement('span');lbl.className='cf-img-ctx-swlbl';lbl.textContent=labelText;row.appendChild(lbl);
+    _pal.forEach(c=>{
+      const sw=document.createElement('span');sw.className='cf-img-tb-swatch';
+      sw.style.cssText='background:'+c.bg+';border:'+c.border;sw.dataset.swval=c.val;sw.title=labelText+': '+c.name;
+      if((block.dataset[datasetAttr]||'')===c.val)sw.classList.add('active');
+      sw.addEventListener('click',e=>{
+        e.stopPropagation();
+        const isActive=(block.dataset[datasetAttr]||'')===c.val;
+        if(isActive)delete block.dataset[datasetAttr];else block.dataset[datasetAttr]=c.val;
+        row.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.remove('active'));
+        if(!isActive)sw.classList.add('active');
+        onContentChange();
+      });
+      row.appendChild(sw);
+    });
+    return row;
+  }
   const ctxShadowRow=_makeCarCtxSw('Bóng','carslideImgshadow');
-  const ctxBorderRow=_makeCarCtxSw('Viền','carslideImgborder');
+  const ctxBorderRow=_makeCarCtxSwBlock('Viền','imgborder');
   ctx.appendChild(ctxShadowRow);ctx.appendChild(ctxBorderRow);
   const _carCtxSep0=document.createElement('div');_carCtxSep0.className='cf-img-ctx-sep';ctx.appendChild(_carCtxSep0);
 
@@ -11278,12 +11303,13 @@ function _cfBuildCarToolbar(block){
   document.addEventListener('click',block._carCtxClickOff);
   moreWrap.appendChild(moreBtn);tb.appendChild(moreWrap);
 
-  // Refresh slide swatches when navigating slides
+  // Refresh slide swatches when navigating slides. Border is block-level
+  // (same for every slide) so it doesn't need refreshing on navigation, but
+  // shadow is still per-slide.
   block._carSlideSection=null;
   block._carRefreshSwatches=(sl)=>{
     if(!sl)return;
     ctxShadowRow.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.toggle('active',(sl.dataset.carslideImgshadow||'')=== s.dataset.swval));
-    ctxBorderRow.querySelectorAll('.cf-img-tb-swatch').forEach(s=>s.classList.toggle('active',(sl.dataset.carslideImgborder||'')=== s.dataset.swval));
   };
 
   // toolbar visible only when block is selected (mousedown); suppress on hover
@@ -11534,18 +11560,17 @@ function _cfCarAddImages(block,track,dotsWrap,counter){
   inp.style.cssText='position:fixed;top:-9999px;opacity:0';document.body.appendChild(inp);
   inp.addEventListener('change',async function(){
     const files=Array.from(this.files);document.body.removeChild(inp);if(!files.length)return;
-    // Inherit the carousel's current border/shadow from an existing slide so the
+    // Inherit the carousel's current shadow from an existing slide so the
     // whole carousel keeps ONE consistent look (captions stay per-slide).
+    // Border is block-level now, so it applies to new slides automatically.
     const _refSlide=block.querySelector('.cf-car-slide');
     const _inheritShadow=_refSlide?.dataset.carslideImgshadow;
-    const _inheritBorder=_refSlide?.dataset.carslideImgborder;
     for(const file of files){
       const id=uid();
       try{await _idbPut(id,file);}catch(e){}
       const src=URL.createObjectURL(file);_cacheUrl(id,src);
       const slide=_cfBuildCarSlide({id,src,name:file.name||'image'});
       if(_inheritShadow)slide.dataset.carslideImgshadow=_inheritShadow;
-      if(_inheritBorder)slide.dataset.carslideImgborder=_inheritBorder;
       _cfCarWireSlide(slide);
       track.appendChild(slide);
       const dot=document.createElement('div');dot.className='cf-car-dot';
@@ -11627,6 +11652,14 @@ async function _cfCarLoadAll(editor){
       if(src&&img2){const _sk2=_slide?.querySelector('.cf-car-skeleton');img2.onload=()=>{if(_sk2){_sk2.style.opacity='0';setTimeout(()=>_sk2.remove(),320);}};img2.src=src;}
       else if(_slide){const _sk2=_slide.querySelector('.cf-car-skeleton');if(_sk2){_sk2.style.opacity='0';setTimeout(()=>_sk2.remove(),320);}}
     }
+    // Migrate legacy per-slide border (used to hug just the image content,
+    // leaving gaps on differently-shaped slides) to the block-level border
+    // that wraps the whole carousel frame.
+    if(!block.dataset.imgborder){
+      const _legacyBorder=block.querySelector('.cf-car-slide[data-carslide-imgborder]')?.dataset.carslideImgborder;
+      if(_legacyBorder)block.dataset.imgborder=_legacyBorder;
+    }
+    block.querySelectorAll('.cf-car-slide[data-carslide-imgborder]').forEach(sl=>delete sl.dataset.carslideImgborder);
     const track=block.querySelector('.cf-car-track');
     const prev=block.querySelector('.cf-car-btn.prev');
     const next=block.querySelector('.cf-car-btn.next');
