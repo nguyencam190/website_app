@@ -1608,7 +1608,8 @@ td .cf-checklist[data-open="true"] .cf-checklist-body,.cf-column-item .cf-checkl
 .lightbox{display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.97);align-items:center;justify-content:center}
 .lightbox.on{display:flex;animation:lbIn .2s ease}
 @keyframes lbIn{from{opacity:0}to{opacity:1}}
-.lb-img{max-width:90vw;max-height:84vh;border-radius:10px;object-fit:contain;box-shadow:0 24px 80px rgba(0,0,0,.5);transition:opacity .2s;user-select:none}
+.lb-img{max-width:90vw;max-height:84vh;border-radius:10px;object-fit:contain;box-shadow:0 24px 80px rgba(0,0,0,.5);transition:opacity .2s,transform .28s cubic-bezier(.2,.8,.2,1);user-select:none;cursor:zoom-in}
+.lb-img.zoomed{cursor:zoom-out}
 .lb-img.switching{opacity:0}
 .lb-close{position:fixed;top:18px;right:20px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px}
 .lb-close:hover{background:rgba(255,255,255,.2)}
@@ -2927,7 +2928,7 @@ body[data-focus="1"] .doc-outline{width:0!important;border:none}
 <div class="lightbox" id="lightbox" onclick="lbBgClick(event)">
   <button class="lb-close" onclick="lbClose()" aria-label="Close"><i class="ti ti-x"></i></button>
   <button class="lb-arrow lb-prev" id="lbPrev" onclick="lbGo(-1)" aria-label="Ảnh trước"><i class="ti ti-chevron-left"></i></button>
-  <img class="lb-img" id="lbImg" src="" alt="">
+  <img class="lb-img" id="lbImg" src="" alt="" onclick="event.stopPropagation();_lbToggleZoom(event)">
   <button class="lb-arrow lb-next" id="lbNext" onclick="lbGo(1)" aria-label="Ảnh sau"><i class="ti ti-chevron-right"></i></button>
   <div class="lb-footer">
     <span class="lb-counter" id="lbCounter">1 / 1</span>
@@ -5886,6 +5887,7 @@ function lbOpen(startIdx){
 function lbRender(){
   const img=lbImages[lbIndex];if(!img)return;
   const el=document.getElementById('lbImg');el.classList.add('switching');
+  _lbResetZoom();
   setTimeout(()=>{el.src=img.src;el.alt=img.name;el.classList.remove('switching');},200);
   document.getElementById('lbCounter').textContent=(lbIndex+1)+' / '+lbImages.length;
   document.getElementById('lbName').textContent=img.name;
@@ -5894,6 +5896,21 @@ function lbRender(){
   const dotsEl=document.getElementById('lbDots');
   if(lbImages.length<=12)dotsEl.innerHTML=lbImages.map((_,i)=>`<span class="lb-dot${i===lbIndex?' on':''}" onclick="lbGoTo(${i})"></span>`).join('');
   else dotsEl.innerHTML='';
+}
+// Click a spot on the zoomed-out image to zoom in centered on that point; click again to zoom back out.
+function _lbResetZoom(){
+  const el=document.getElementById('lbImg');if(!el)return;
+  el.classList.remove('zoomed');el.style.transform='';el.style.transformOrigin='';
+}
+function _lbToggleZoom(e){
+  const img=document.getElementById('lbImg');if(!img)return;
+  if(img.classList.contains('zoomed')){_lbResetZoom();return;}
+  const r=img.getBoundingClientRect();
+  const ox=((e.clientX-r.left)/r.width*100).toFixed(1);
+  const oy=((e.clientY-r.top)/r.height*100).toFixed(1);
+  img.style.transformOrigin=ox+'% '+oy+'%';
+  img.classList.add('zoomed');
+  img.style.transform='scale(2.4)';
 }
 function lbGo(dir){const n=lbIndex+dir;if(n<0||n>=lbImages.length)return;lbIndex=n;lbRender();}
 function lbGoTo(i){lbIndex=i;lbRender();}
