@@ -3185,6 +3185,8 @@ function toggleTheme(){
   if(tbtn)tbtn.innerHTML=next==='dark'?'&#9790;':'&#9728;';
   html.style.setProperty('color-scheme',next);
   swapThemeColors();
+  const savedAccent=localStorage.getItem('accent_color');
+  if(savedAccent&&typeof _accentApply==='function')_accentApply(savedAccent);
   // Force a reflow while transitions are disabled so the new theme paints in one
   // frame (no staggered fade), then re-enable transitions for normal interactions.
   void html.offsetWidth;
@@ -6045,14 +6047,20 @@ const _ACCENT_PRESETS=[
 function _hexDarken(hex,a){let r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);r=Math.max(0,r+a);g=Math.max(0,g+a);b=Math.max(0,b+a);return`#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;}
 function _accentApply(hex){
   if(!/^#[0-9a-fA-F]{6}$/.test(hex))hex='#2563eb';
-  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
-  const h=_hexDarken(hex,-20);
-  document.documentElement.style.setProperty('--accent',hex);
-  document.documentElement.style.setProperty('--accent-h',h);
-  document.documentElement.style.setProperty('--accent-light',`rgba(${r},${g},${b},.12)`);
-  document.documentElement.style.setProperty('--accent-glow',`rgba(${r},${g},${b},.25)`);
   localStorage.setItem('accent_color',hex);
-  const dot=document.getElementById('accentBtnDot');if(dot)dot.style.background=hex;
+  const dark=document.documentElement.getAttribute('data-theme')==='dark';
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  // Dark mode needs a brighter accent to stay legible on dark surfaces — same
+  // +60-per-channel formula the website publisher uses (wsApplyAccent), so a
+  // custom accent color looks consistent (and actually visible) in both themes.
+  const ar=dark?Math.min(255,r+60):r, ag=dark?Math.min(255,g+60):g, ab=dark?Math.min(255,b+60):b;
+  const acc='#'+[ar,ag,ab].map(n=>n.toString(16).padStart(2,'0')).join('');
+  const h=_hexDarken(acc,-20);
+  document.documentElement.style.setProperty('--accent',acc);
+  document.documentElement.style.setProperty('--accent-h',h);
+  document.documentElement.style.setProperty('--accent-light',`rgba(${ar},${ag},${ab},${dark?.14:.10})`);
+  document.documentElement.style.setProperty('--accent-glow',`rgba(${ar},${ag},${ab},.25)`);
+  const dot=document.getElementById('accentBtnDot');if(dot)dot.style.background=acc;
 }
 function _buildAccentSwatches(){
   const cont=document.getElementById('accentSwatches');if(!cont)return;
