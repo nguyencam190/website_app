@@ -8201,16 +8201,29 @@ function _slashInsert(id,execRange){
   function _insertAfterCurrent(block,focusTarget){
     const sel2=window.getSelection();
     const cur=_nearestBlock(sel2,editor);
-    const p=document.createElement('p');p.innerHTML='<br>';
     if(cur&&cur.parentElement){
-      cur.parentElement.insertBefore(block,cur.nextSibling);
-      // Don't add a trailing <p> inside table cells — it clutters them
+      const originalNext=cur.nextSibling;
+      const prevOfCur=cur.previousElementSibling;
+      cur.parentElement.insertBefore(block,originalNext);
+      // Don't add a trailing <p> inside table cells — it clutters them.
+      // Only add one when the new block would otherwise be the very last
+      // thing in its container (nothing left to click into below it) —
+      // otherwise it just leaves a spurious blank line after the block.
+      // Also skip it when the block lands directly after a heading (h1-h6):
+      // that "heading + subtitle" pairing already has its own continuation
+      // styling, so a blank line here would just look like an odd gap.
       const inCell=!!(cur.nodeType===Node.TEXT_NODE?cur.parentElement:cur)?.closest?.('td,th');
-      if(cur.parentElement.classList?.contains('cf-toggle-body'))p.contentEditable='true';
-      if(!inCell)cur.parentElement.insertBefore(p,block.nextSibling);
+      const afterHeading=prevOfCur&&/^H[1-6]$/.test(prevOfCur.tagName);
+      if(!inCell&&!originalNext&&!afterHeading){
+        const p=document.createElement('p');p.innerHTML='<br>';
+        if(cur.parentElement.classList?.contains('cf-toggle-body'))p.contentEditable='true';
+        cur.parentElement.insertBefore(p,block.nextSibling);
+      }
       if((cur.tagName==='P'||cur.tagName==='DIV')&&!cur.textContent.trim())cur.remove();
     } else {
-      editor.appendChild(block);editor.appendChild(p);
+      editor.appendChild(block);
+      const p=document.createElement('p');p.innerHTML='<br>';
+      editor.appendChild(p);
     }
     if(focusTarget){
       try{
@@ -12179,11 +12192,61 @@ function _mdAutoFormat(e){
   }
 }
 
+// Backspace at the very start of a paragraph/list that directly follows a
+// heading: the browser's native contentEditable merge dissolves the block
+// into the heading's inline flow wrapped in a stray font-size span (font
+// sizes differ between the two), leaving text/bullets stuck inside the
+// heading permanently. Do the merge manually instead, plain-text style —
+// matching how paragraph-into-paragraph merges already behave natively.
+function _headingBackspaceMerge(e){
+  if(e.key!=='Backspace'||e.shiftKey||e.ctrlKey||e.metaKey||e.altKey)return;
+  if(_slashVisible)return;
+  const sel=window.getSelection();if(!sel||!sel.rangeCount||!sel.isCollapsed)return;
+  const range=sel.getRangeAt(0);
+  const editor=document.getElementById('editor');if(!editor)return;
+  let blockEl=range.startContainer.nodeType===Node.TEXT_NODE?range.startContainer.parentElement:range.startContainer;
+  while(blockEl&&blockEl.tagName!=='LI'&&blockEl.parentElement!==editor)blockEl=blockEl.parentElement;
+  if(!blockEl)return;
+  const startRange=document.createRange();
+  startRange.setStart(blockEl,0);
+  startRange.setEnd(range.startContainer,range.startOffset);
+  if(startRange.toString().length!==0)return;
+
+  let listEl=null,mergeSrc=blockEl,heading=null;
+  if(blockEl.tagName==='LI'){
+    const list=blockEl.parentElement;
+    if(!list||(list.tagName!=='UL'&&list.tagName!=='OL')||list.parentElement!==editor)return;
+    if(list.querySelector(':scope > li')!==blockEl)return; // only the first item merges into the heading
+    const prev=list.previousElementSibling;
+    if(!prev||!/^H[1-6]$/.test(prev.tagName))return;
+    heading=prev;listEl=list;
+  } else {
+    if(blockEl.parentElement!==editor)return;
+    const prev=blockEl.previousElementSibling;
+    if(!prev||!/^H[1-6]$/.test(prev.tagName))return;
+    heading=prev;
+  }
+
+  e.preventDefault();
+  const curNodes=Array.from(mergeSrc.childNodes);
+  const isCurEmpty=curNodes.length===0||(curNodes.length===1&&curNodes[0].nodeName==='BR');
+  if(heading.childNodes.length===1&&heading.firstChild.nodeName==='BR')heading.innerHTML='';
+  const startIdx=heading.childNodes.length;
+  if(!isCurEmpty)curNodes.forEach(n=>heading.appendChild(n));
+  const r2=document.createRange();
+  r2.setStart(heading,startIdx);r2.collapse(true);
+  sel.removeAllRanges();sel.addRange(r2);
+  mergeSrc.remove();
+  if(listEl&&!listEl.querySelector(':scope > li'))listEl.remove();
+  onContentChange();
+}
+
 function _initSlashCommands(){
   const editor=document.getElementById('editor');
   if(!editor)return;
   editor.addEventListener('keydown',_editorSlashKeydown);
   editor.addEventListener('keydown',_mdAutoFormat);
+  editor.addEventListener('keydown',_headingBackspaceMerge);
   editor.addEventListener('keydown',e=>{
     if(e.key==='Enter'||e.key==='Backspace'||e.key==='Delete'||e.key==='Tab'){_undoSnapshot();}
     if((e.ctrlKey||e.metaKey)&&!e.altKey&&['b','i','u'].includes(e.key.toLowerCase())){_undoSnapshot();}
