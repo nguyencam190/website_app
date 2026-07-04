@@ -12,11 +12,10 @@ Sau **mỗi lần thay đổi code** trong dự án này, bắt buộc phải:
 
 ## Quy tắc UI — Không được thay đổi
 
-### Nút import trên sidebar (`_sbImportClickSmart`)
-- **Chỉ chấp nhận ZIP và thư mục** — KHÔNG nhận file JSON
-- Click → mở **folder picker** (`importMergePagesFromFolder()`) — KHÔNG mở file picker
-- Kéo thả → nhận thư mục hoặc file ZIP
-- KHÔNG dùng `<input type="file">` cho click — browser không cho phép chọn cả folder lẫn file ZIP trong cùng một dialog
+### Nút import trên rail — ĐÃ XOÁ theo yêu cầu
+- Nút Import (`_sbImportClickSmart`, icon `ti-file-import`) đã bị xoá khỏi rail (left sidebar) — không còn hiển thị
+- Import qua thư mục/ZIP vẫn dùng được qua `importMergePagesFromFolder()` (phím tắt `Ctrl+Shift+I`) — chỉ không còn nút riêng trên rail
+- Dropdown ẩn `#_sbImportDd` (Thư mục / File ZIP) và hàm `_sbImportClickSmart`/`_sbImportPickZip` vẫn còn trong code nhưng không còn gì gọi tới — an toàn, không cần xoá thêm
 
 ### "New project" / "Open project" / "Export backup" — nút riêng trên rail (KHÔNG còn dropdown 💾)
 - **Mở thư mục project** — gọi `_projOpenFolder()` (tải cả data.json + ảnh/video cùng lúc) — KHÔNG gọi `_openProjectFile()`

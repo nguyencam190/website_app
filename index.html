@@ -1918,14 +1918,14 @@ body{padding-bottom:28px}
 /* Right-actions group dissolves — its children become rail flex items directly */
 #mainHeader>.hdr-right-group{display:contents!important}
 
-/* ── RAIL ORDER — design: logo · Pages · New/Open/Export · Import · Star · Bell · ⟨spacer⟩ · Help · Avatar ── */
+/* ── RAIL ORDER — design: logo · Pages · New/Open/Export · Star · Bell · ⟨spacer⟩ · Help · Avatar ── */
 #railNewProjectBtn{order:3}                              /* New project */
 #railOpenProjectBtn{order:4}                             /* Open project */
 #railExportBtn{order:5}                                  /* Export backup */
-#railStarredBtn{order:7}                                 /* Starred */
-.hdr-right-group>div:has(#hdrNotifDd){order:8}          /* Notifications */
-.hdr-right-group>button[onclick*="hdrHelpDd"]{order:11}  /* Help (bottom) */
-.hdr-right-group>div:has(#hdrUserDd){order:12}          /* Avatar (bottom) */
+#railStarredBtn{order:6}                                 /* Starred */
+.hdr-right-group>div:has(#hdrNotifDd){order:7}          /* Notifications */
+.hdr-right-group>button[onclick*="hdrHelpDd"]{order:10}  /* Help (bottom) */
+.hdr-right-group>div:has(#hdrUserDd){order:11}          /* Avatar (bottom) */
 
 /* Action buttons relocated to the tabbar → hide from rail (HTML kept for JS) */
 #projLiveBtn,.hdr-right-group>div:has(#projLiveBtn),
@@ -1937,8 +1937,8 @@ body{padding-bottom:28px}
 #hdrUserAv{width:32px!important;height:32px!important;font-size:13px!important;flex-shrink:0}
 
 /* Rail separator + spacer */
-.rail-div{order:9;width:24px;height:1px;background:rgba(255,255,255,.07);margin:4px 0;flex-shrink:0}
-.rail-space{order:10;flex:1}
+.rail-div{order:8;width:24px;height:1px;background:rgba(255,255,255,.07);margin:4px 0;flex-shrink:0}
+.rail-space{order:9;flex:1}
 
 /* Rail Pages button */
 #railPagesBtn{
@@ -1949,7 +1949,7 @@ body{padding-bottom:28px}
 #railPagesBtn.active{background:rgba(99,102,241,.15);color:var(--accent);box-shadow:inset 2px 0 0 var(--accent)}
 #railPagesBtn:hover{background:rgba(255,255,255,.12);color:#fff;transform:translateY(-2px) scale(1.14);box-shadow:0 6px 16px rgba(0,0,0,.4)}
 
-/* Rail generic button (Import) */
+/* Rail generic button (base) */
 .rail-btn-new{
   order:6;width:36px;height:36px;background:transparent;border:none;border-radius:8px;
   color:rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;
@@ -2145,9 +2145,6 @@ body[data-focus="1"] .doc-outline{width:0!important;border:none}
   <!-- ══ NEW RAIL BUTTONS (thêm vào đầu header đã biến thành rail) ══ -->
   <button id="railPagesBtn" class="active" onclick="typeof sbCollapse!=='undefined'?(document.getElementById('sidebar').classList.contains('collapsed')?sbExpand():sbCollapse()):null" title="Pages">
     <i class="ti ti-files"></i>
-  </button>
-  <button class="rail-btn-new" onclick="typeof _sbImportClickSmart!=='undefined'?_sbImportClickSmart(this):null" title="Import">
-    <i class="ti ti-file-import"></i>
   </button>
   <button class="rail-btn-new" id="railStarredBtn" onclick="typeof railStarToggle!=='undefined'&&railStarToggle()" title="Đánh dấu trang này">
     <i class="ti ti-star"></i>
