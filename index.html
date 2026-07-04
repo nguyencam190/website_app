@@ -3268,10 +3268,15 @@ function init(){
     _reposVisibleToolbars();
     document.getElementById('mainHeader')?.classList.toggle('hdr-scrolled',e.target.scrollTop>10);
     document.getElementById('scrollTopBtn')?.classList.toggle('on',e.target.scrollTop>300);
-    // Auto-close the "On this page" outline when the user scrolls to read content
+  });
+  // Auto-close the "On this page" outline only on real user scrolling (mouse
+  // wheel/trackpad) — listening on "scroll" instead would also fire for the
+  // programmatic scrollIntoView/scrollTo used when clicking a heading in the
+  // outline itself or the "back to top" button, closing it right after opening.
+  document.getElementById('editorScroll')?.addEventListener('wheel',()=>{
     const _olPanel=document.getElementById('docOutline');
     if(_olPanel&&_olPanel.classList.contains('open'))toggleDocOutline();
-  });
+  },{passive:true});
   window.addEventListener('resize',_reposVisibleToolbars);
   // Restore saved width
   const savedW=localStorage.getItem('sb_width');
