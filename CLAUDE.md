@@ -18,12 +18,11 @@ Sau **mỗi lần thay đổi code** trong dự án này, bắt buộc phải:
 - Kéo thả → nhận thư mục hoặc file ZIP
 - KHÔNG dùng `<input type="file">` cho click — browser không cho phép chọn cả folder lẫn file ZIP trong cùng một dialog
 
-### "Open project" trong menu 💾 (`_projOpenFolder`)
-- **Mở thư mục project** — tải cả data.json + ảnh/video cùng lúc
-- Gọi `_projOpenFolder()` — KHÔNG gọi `_openProjectFile()`
-- Nằm trong dropdown menu 💾 (item giữa: New project · Open project · Export backup), KHÔNG còn nút 📁 riêng trên header
-- KHÔNG đặt trên page action bar — vì khi không có trang nào thì page action bar bị ẩn, sẽ không thấy nút
-- Header chỉ còn nút **Push** (`_projToggleLive`) bên cạnh menu 💾
+### "New project" / "Open project" / "Export backup" — nút riêng trên rail (KHÔNG còn dropdown 💾)
+- **Mở thư mục project** — gọi `_projOpenFolder()` (tải cả data.json + ảnh/video cùng lúc) — KHÔNG gọi `_openProjectFile()`
+- Ba nút này (`#railNewProjectBtn`, `#railOpenProjectBtn`, `#railExportBtn`) nằm **trực tiếp trên rail** (left sidebar), ngay sau nút Pages — KHÔNG còn gộp vào 1 dropdown 💾 (đã bỏ `#hdrExportDd`)
+- Rail luôn hiển thị (không ẩn theo trang) nên các nút này KHÔNG bị mất khi không có trang nào — lý do rail được chọn thay vì page action bar
+- Header chỉ còn nút **Push** (`_projToggleLive`) ở cuối rail
 
 **Nút import sidebar và "Open project" có chức năng riêng biệt, không được gộp hay nhầm lẫn.**
 

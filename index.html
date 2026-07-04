@@ -1757,7 +1757,7 @@ kbd{background:var(--surface2);border:1px solid var(--border2);border-radius:4px
 /* ── Focus Mode ──────────────────────────────────────────── */
 body[data-focus="1"] #mainHeader{height:0;overflow:hidden;transition:height .25s ease}
 body[data-focus="1"] #sidebar{width:0!important;min-width:0!important;border-right:none;overflow:hidden}
-body[data-focus="1"] #pabWrapper{height:0!important;overflow:hidden}
+body[data-focus="1"] #pabWrapper{height:0!important;overflow:hidden!important}
 body[data-focus="1"] .editor-scroll{padding:64px 96px}
 .focus-exit-btn{position:fixed;top:14px;right:16px;z-index:9000;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-size:12px;color:var(--text2);cursor:pointer;display:none;align-items:center;gap:6px;box-shadow:var(--shadow);transition:background .15s}
 .focus-exit-btn:hover{background:var(--surface2)}
@@ -1918,12 +1918,14 @@ body{padding-bottom:28px}
 /* Right-actions group dissolves — its children become rail flex items directly */
 #mainHeader>.hdr-right-group{display:contents!important}
 
-/* ── RAIL ORDER — design: logo · Pages · Save · Import · Star · Bell · ⟨spacer⟩ · Help · Avatar ── */
-.hdr-right-group>div:has(#hdrExportDd){order:3}         /* Save / project */
-#railStarredBtn{order:5}                                 /* Starred */
-.hdr-right-group>div:has(#hdrNotifDd){order:6}          /* Notifications */
-.hdr-right-group>button[onclick*="hdrHelpDd"]{order:9}  /* Help (bottom) */
-.hdr-right-group>div:has(#hdrUserDd){order:10}          /* Avatar (bottom) */
+/* ── RAIL ORDER — design: logo · Pages · New/Open/Export · Import · Star · Bell · ⟨spacer⟩ · Help · Avatar ── */
+#railNewProjectBtn{order:3}                              /* New project */
+#railOpenProjectBtn{order:4}                             /* Open project */
+#railExportBtn{order:5}                                  /* Export backup */
+#railStarredBtn{order:7}                                 /* Starred */
+.hdr-right-group>div:has(#hdrNotifDd){order:8}          /* Notifications */
+.hdr-right-group>button[onclick*="hdrHelpDd"]{order:11}  /* Help (bottom) */
+.hdr-right-group>div:has(#hdrUserDd){order:12}          /* Avatar (bottom) */
 
 /* Action buttons relocated to the tabbar → hide from rail (HTML kept for JS) */
 #projLiveBtn,.hdr-right-group>div:has(#projLiveBtn),
@@ -1935,8 +1937,8 @@ body{padding-bottom:28px}
 #hdrUserAv{width:32px!important;height:32px!important;font-size:13px!important;flex-shrink:0}
 
 /* Rail separator + spacer */
-.rail-div{order:7;width:24px;height:1px;background:rgba(255,255,255,.07);margin:4px 0;flex-shrink:0}
-.rail-space{order:8;flex:1}
+.rail-div{order:9;width:24px;height:1px;background:rgba(255,255,255,.07);margin:4px 0;flex-shrink:0}
+.rail-space{order:10;flex:1}
 
 /* Rail Pages button */
 #railPagesBtn{
@@ -1949,7 +1951,7 @@ body{padding-bottom:28px}
 
 /* Rail generic button (Import) */
 .rail-btn-new{
-  order:4;width:36px;height:36px;background:transparent;border:none;border-radius:8px;
+  order:6;width:36px;height:36px;background:transparent;border:none;border-radius:8px;
   color:rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;
   cursor:pointer;font-size:17px;flex-shrink:0;transition:transform .22s cubic-bezier(.34,1.56,.64,1),background .16s ease,color .16s ease,box-shadow .18s ease;
 }
@@ -2232,19 +2234,16 @@ body[data-focus="1"] .doc-outline{width:0!important;border:none}
       <div class="hdr-dd-item" onclick="showKeyboardShortcuts();hdrCloseAll()"><i class="ti ti-keyboard"></i> Keyboard shortcuts</div>
     </div>
 
-    <!-- Export actions -->
-    <div style="position:relative">
-      <button class="header-icon-btn" onclick="hdrToggleDd('hdrExportDd')" title="Save / Open project" aria-label="Export">
-        <i class="ti ti-device-floppy"></i>
-      </button>
-      <div class="hdr-dd" id="hdrExportDd" style="right:0">
-        <div class="hdr-dd-item" onclick="_resetApp();hdrCloseAll()" style="color:#f38ba8"><i class="ti ti-sparkles" style="color:#f38ba8"></i> New project</div>
-        <div class="hdr-dd-sep"></div>
-        <div class="hdr-dd-item" onclick="_projOpenFolder();hdrCloseAll()"><i class="ti ti-folder-open" style="color:var(--accent)"></i> <strong>Open project</strong></div>
-        <div class="hdr-dd-sep"></div>
-        <div class="hdr-dd-item" onclick="exportProject();hdrCloseAll()"><i class="ti ti-file-zip"></i> Export backup</div>
-      </div>
-    </div>
+    <!-- Project actions — moved out of the 💾 dropdown onto the rail as direct icons -->
+    <button class="rail-btn-new" id="railNewProjectBtn" onclick="typeof _resetApp!=='undefined'&&_resetApp()" title="New project" style="color:#f38ba8">
+      <i class="ti ti-sparkles"></i>
+    </button>
+    <button class="rail-btn-new" id="railOpenProjectBtn" onclick="typeof _projOpenFolder!=='undefined'&&_projOpenFolder()" title="Open project">
+      <i class="ti ti-folder-open"></i>
+    </button>
+    <button class="rail-btn-new" id="railExportBtn" onclick="typeof exportProject!=='undefined'&&exportProject()" title="Export backup">
+      <i class="ti ti-file-zip"></i>
+    </button>
 
     <!-- Project folder -->
     <div style="display:flex;align-items:center;gap:4px">
