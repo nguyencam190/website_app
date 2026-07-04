@@ -8143,6 +8143,29 @@ function _slashDeleteSlash(){
   }
 }
 
+// If `cur` is a <ul>/<ol> and a specific <li> is focused, convert JUST that
+// li's content into a new `tagName` element and split the list around it so
+// sibling items survive — otherwise a straight replaceChild(newEl,cur) wipes
+// out every OTHER item in the list, and dumping the raw <li> markup into a
+// non-list container (e.g. <p><li>...) leaves a stray bullet marker behind
+// since the browser still renders <li> as a list item even without a <ul>.
+function _cfListItemConvert(cur,sel,tagName){
+  if(!cur||(cur.tagName!=='UL'&&cur.tagName!=='OL'))return null;
+  const n=sel&&sel.rangeCount?sel.getRangeAt(0).startContainer:null;
+  const li=n?(n.nodeType===Node.TEXT_NODE?n.parentElement:n)?.closest('li'):cur.querySelector('li');
+  if(!li)return null;
+  const newEl=document.createElement(tagName);
+  newEl.innerHTML=li.innerHTML||'<br>';
+  const items=Array.from(cur.querySelectorAll(':scope > li'));
+  const idx=items.indexOf(li);
+  const before=items.slice(0,idx),after=items.slice(idx+1);
+  const parent=cur.parentElement;
+  if(before.length){const bl=document.createElement(cur.tagName);before.forEach(x=>bl.appendChild(x));parent.insertBefore(bl,cur);}
+  parent.insertBefore(newEl,cur);
+  if(after.length){const al=document.createElement(cur.tagName);after.forEach(x=>al.appendChild(x));parent.insertBefore(al,cur);}
+  cur.remove();
+  return newEl;
+}
 function _slashInsert(id,execRange){
   const editor=document.getElementById('editor');
   const sel=window.getSelection();
@@ -8248,9 +8271,9 @@ function _slashInsert(id,execRange){
   if(id==='paragraph'){
     const cur=_nearestBlock(sel,editor);
     if(cur&&cur!==editor&&cur.tagName!=='P'){
-      const p=document.createElement('p');
-      p.innerHTML=cur.innerHTML||'<br>';
-      cur.parentElement.replaceChild(p,cur);
+      const p=_cfListItemConvert(cur,sel,'p')||(()=>{
+        const el=document.createElement('p');el.innerHTML=cur.innerHTML||'<br>';cur.parentElement.replaceChild(el,cur);return el;
+      })();
       try{const r=document.createRange();r.selectNodeContents(p);r.collapse(false);sel.removeAllRanges();sel.addRange(r);}catch(e){}
     }
     onContentChange();return;
@@ -8260,16 +8283,9 @@ function _slashInsert(id,execRange){
   if(/^h[1-6]$/.test(id)){
     const cur=_nearestBlock(sel,editor);
     if(cur&&cur!==editor){
-      const heading=document.createElement(id);
-      // When current block is a list, use the focused <li>'s content — not the raw <li> tags
-      let srcHtml=cur.innerHTML||'<br>';
-      if(cur.tagName==='UL'||cur.tagName==='OL'){
-        const n=sel&&sel.rangeCount?sel.getRangeAt(0).startContainer:null;
-        const li=n?(n.nodeType===Node.TEXT_NODE?n.parentElement:n)?.closest('li'):cur.querySelector('li');
-        if(li)srcHtml=li.innerHTML||'<br>';
-      }
-      heading.innerHTML=srcHtml;
-      cur.parentElement.replaceChild(heading,cur);
+      const heading=_cfListItemConvert(cur,sel,id)||(()=>{
+        const el=document.createElement(id);el.innerHTML=cur.innerHTML||'<br>';cur.parentElement.replaceChild(el,cur);return el;
+      })();
       try{const r=document.createRange();r.selectNodeContents(heading);r.collapse(false);sel.removeAllRanges();sel.addRange(r);}catch(e){}
       onContentChange();return;
     }
@@ -8280,10 +8296,13 @@ function _slashInsert(id,execRange){
   // ── Blockquote ───────────────────────────────────────────
   if(id==='quote'){
     const cur=_nearestBlock(sel,editor);
-    const bq=document.createElement('blockquote');
-    bq.innerHTML=(cur&&cur.textContent.trim()?cur.innerHTML:'')||'<br>';
-    if(cur&&cur!==editor&&cur.parentElement){cur.parentElement.replaceChild(bq,cur);}
-    else{_cfInsertBlockAtRange(bq,savedRange);}
+    let bq=_cfListItemConvert(cur,sel,'blockquote');
+    if(!bq){
+      bq=document.createElement('blockquote');
+      bq.innerHTML=(cur&&cur.textContent.trim()?cur.innerHTML:'')||'<br>';
+      if(cur&&cur!==editor&&cur.parentElement){cur.parentElement.replaceChild(bq,cur);}
+      else{_cfInsertBlockAtRange(bq,savedRange);}
+    }
     try{const r=document.createRange();r.selectNodeContents(bq);r.collapse(false);sel.removeAllRanges();sel.addRange(r);}catch(e){}
     onContentChange();return;
   }
@@ -13127,16 +13146,9 @@ function bbApplyBlock(val){
         node=node.parentElement;
     }
     if(node&&node!==editor&&node.parentElement&&node.nodeType!==3){
-      const newEl=document.createElement(val);
-      // When converting from a list, extract the focused <li>'s content — not the raw <li> tags
-      let srcHtml=node.innerHTML||'<br>';
-      if(node.tagName==='UL'||node.tagName==='OL'){
-        const n2=sel&&sel.rangeCount?sel.getRangeAt(0).startContainer:null;
-        const li=n2?(n2.nodeType===Node.TEXT_NODE?n2.parentElement:n2)?.closest('li'):node.querySelector('li');
-        if(li)srcHtml=li.innerHTML||'<br>';
-      }
-      newEl.innerHTML=srcHtml;
-      node.parentElement.replaceChild(newEl,node);
+      const newEl=_cfListItemConvert(node,sel,val)||(()=>{
+        const el=document.createElement(val);el.innerHTML=node.innerHTML||'<br>';node.parentElement.replaceChild(el,node);return el;
+      })();
       try{const r=document.createRange();r.selectNodeContents(newEl);r.collapse(false);sel.removeAllRanges();sel.addRange(r);}catch(e){}
       editor.focus({preventScroll:true});onContentChange();setTimeout(bbShow,10);return;
     }
