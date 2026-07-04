@@ -2100,13 +2100,13 @@ html.no-transition *{transition:none!important;animation:none!important}
 .doc-outline-inner{padding:16px 14px;white-space:normal;width:250px}
 .ol-h{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px}
 .ol-item{
-  font-size:12.5px;color:var(--text2);padding:5px 8px 5px 11px;
+  font-size:12.5px;color:var(--accent);padding:5px 8px 5px 11px;
   border-left:2px solid transparent;cursor:pointer;line-height:1.4;
   border-radius:0 6px 6px 0;
   transition:color .15s,border-color .15s,background .15s;
   white-space:normal;overflow:hidden;text-overflow:ellipsis;
 }
-.ol-item:hover,.ol-item.active{color:var(--accent);border-left-color:var(--accent);background:var(--accent-light)}
+.ol-item:hover,.ol-item.active{border-left-color:var(--accent);background:var(--accent-light)}
 .ol-item.lvl2{padding-left:20px;font-size:11.5px}
 .ol-item.lvl3{padding-left:29px;font-size:11.5px;color:var(--text3)}
 .ol-empty{font-size:12px;color:var(--text3);padding:6px 0;line-height:1.5}
@@ -8391,7 +8391,7 @@ function _slashInsert(id,execRange){
       const MAX=30*1024*1024;
       if(file.size>MAX){toast('File quá lớn (tối đa 30 MB)','error');return;}
       const fileId='cf-file-'+Date.now()+'-'+Math.random().toString(36).slice(2,8);
-      try{await _idbSet(fileId,file);}catch(e){toast('Không thể lưu file','error');return;}
+      try{await _idbPut(fileId,file);}catch(e){toast('Không thể lưu file','error');return;}
       const fmt=n=>{if(n<1024)return n+' B';if(n<1048576)return (n/1024).toFixed(1)+' KB';return (n/1048576).toFixed(1)+' MB';};
       const ext=(file.name.split('.').pop()||'').toLowerCase();
       const iconMap={pdf:'ti-file-type-pdf',doc:'ti-file-type-doc',docx:'ti-file-type-doc',xls:'ti-file-type-xls',xlsx:'ti-file-type-xls',zip:'ti-file-zip',rar:'ti-file-zip',mp3:'ti-file-music',mp4:'ti-file-video',jpg:'ti-file-type-jpg',jpeg:'ti-file-type-jpg',png:'ti-file-type-png',txt:'ti-file-text'};
@@ -11979,6 +11979,13 @@ function _isInNestedEditable(node){
     if(el.classList?.contains('txtbox-body'))return true;
     // Checklist title: single-line field, slash menu would target wrong element
     if(el.classList?.contains('cf-checklist-title'))return true;
+    // Spotlight/Card title & description: these sit several levels deep inside
+    // the block's own wrapper divs, with no exclusion stopping _nearestBlock's
+    // walk-up — a heading/list/quote conversion here would "find" the whole
+    // .cf-spotlight/.cf-cards block as the nearest block and replace its entire
+    // structure with a single heading tag.
+    if(el.classList?.contains('cf-spotlight-title')||el.classList?.contains('cf-spotlight-desc')
+      ||el.classList?.contains('cf-card-title')||el.classList?.contains('cf-card-desc'))return true;
     el=el.parentElement;
   }
   return false;
@@ -15643,8 +15650,8 @@ function _buildViewerShellCss(accent){
     '.ws-outline.on{width:250px;overflow-y:auto}',
     '.ws-outline-inner{padding:20px 16px;white-space:normal;width:100%;box-sizing:border-box}',
     '.ws-ol-h{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px}',
-    '.ws-ol-item{font-size:12.5px;color:var(--text2);padding:5px 8px 5px 11px;border-left:2px solid transparent;border-radius:0 6px 6px 0;cursor:pointer;line-height:1.4;transition:color .15s,border-color .15s,background .15s;white-space:normal;overflow:hidden;text-overflow:ellipsis}',
-    '.ws-ol-item:hover,.ws-ol-item.active{color:var(--accent);border-left-color:var(--accent);background:var(--accent-light)}',
+    '.ws-ol-item{font-size:12.5px;color:var(--accent);padding:5px 8px 5px 11px;border-left:2px solid transparent;border-radius:0 6px 6px 0;cursor:pointer;line-height:1.4;transition:color .15s,border-color .15s,background .15s;white-space:normal;overflow:hidden;text-overflow:ellipsis}',
+    '.ws-ol-item:hover,.ws-ol-item.active{border-left-color:var(--accent);background:var(--accent-light)}',
     '.ws-ol-item.lvl2{padding-left:20px;font-size:11.5px}',
     '.ws-ol-item.lvl3{padding-left:29px;font-size:11.5px;color:var(--text3)}',
     '.ws-ol-empty{font-size:12px;color:var(--text3);padding:6px 0;line-height:1.5}',
