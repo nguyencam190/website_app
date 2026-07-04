@@ -15715,8 +15715,6 @@ async function doExportWebsite(){
   }
   const sbLogoName=document.createElement('span');sbLogoName.className='ws-sb-hdr-name';sbLogoName.textContent=title;
   sbHdr.appendChild(sbLogoName);
-  const sbStar=document.createElement('button');sbStar.className='ws-sb-hdr-star';sbStar.title='Yêu thích';sbStar.innerHTML='<i class="ti ti-star"></i>';
-  sbHdr.appendChild(sbStar);
   navRoot.appendChild(sbHdr);
 
   // Primary nav buttons
@@ -16809,7 +16807,7 @@ async function doExportOptimized(opts){
   if(state.projectLogo&&state.projectLogo.imgDataUrl){const si=document.createElement('img');si.className='ws-sb-hdr-img';si.setAttribute('src',state.projectLogo.imgDataUrl);sbHdr.appendChild(si);}
   else{const sb=document.createElement('div');sb.className='ws-sb-hdr-box';sb.style.background=(state.projectLogo&&state.projectLogo.color)||'var(--accent)';sb.textContent=(title.charAt(0)||'P').toUpperCase();sbHdr.appendChild(sb);}
   const sbLogoName=document.createElement('span');sbLogoName.className='ws-sb-hdr-name';sbLogoName.textContent=title;sbHdr.appendChild(sbLogoName);
-  const sbStar=document.createElement('button');sbStar.className='ws-sb-hdr-star';sbStar.title='Yêu thích';sbStar.innerHTML='<i class="ti ti-star"></i>';sbHdr.appendChild(sbStar);navRoot.appendChild(sbHdr);
+  navRoot.appendChild(sbHdr);
   const pnav=document.createElement('div');pnav.className='ws-pnav';
   ['recent','starred','pages'].forEach((mode,i)=>{const btn=document.createElement('div');btn.className='ws-pnav-item';btn.id='wsPNavBtn-'+mode;const icons={recent:'ti-history',starred:'ti-star',pages:'ti-files'};const labels={recent:'Recent',starred:'Starred',pages:'Pages'};const arrow=mode!=='pages'?'<i class="ti ti-chevron-right ws-pnav-arrow"></i>':'';btn.innerHTML=`<i class="ti ${icons[mode]}"></i><span>${labels[mode]}</span>${arrow}`;btn.dataset.wsmode=mode;pnav.appendChild(btn);});
   navRoot.appendChild(pnav);
