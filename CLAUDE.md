@@ -29,6 +29,12 @@ Sau **mỗi lần thay đổi code** trong dự án này, bắt buộc phải:
 
 **Nguyên tắc bất biến:** Bất kỳ thay đổi UI nào trên app cũng PHẢI được phản ánh đúng trên website được publisher, đặc biệt về light/dark mode.
 
+### Theme mặc định khi publish — LUÔN là light mode
+- Website xuất ra (Push) **luôn khởi động ở light mode**, bất kể app đang ở theme nào lúc bấm Push — KHÔNG bake theme hiện tại của app vào `<html data-theme>` (biến `exportDark` trong `doExportOptimized`/`doExportWebsite` phải luôn là `false`)
+- Dark mode **chỉ xảy ra khi người xem tự bấm** nút đổi theme trên website — KHÔNG tự động chuyển dark theo `prefers-color-scheme` của hệ điều hành
+- Lựa chọn của người xem được lưu `localStorage("wst")` và áp dụng lại ở các lần ghé thăm sau (theo từng site/path)
+- Khi thêm tính năng liên quan tới màu sắc bake sẵn lúc export (ví dụ shadow ảnh light/dark), phải tính theo `exportDark=false` để nhất quán với theme mặc định light
+
 ### Quy tắc cụ thể:
 - **App dùng màu cố định** (ví dụ header `#1a1a1a` không đổi theo theme) → Publisher phải dùng màu cố định giống hệt, KHÔNG dùng `var(--surface)` hay biến theme
 - **App dùng `var(--...)` thay đổi theo theme** (sidebar, main content, PAB) → Publisher phải dùng biến theme tương ứng, KHÔNG hardcode màu cố định
