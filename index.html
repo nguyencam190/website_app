@@ -8310,9 +8310,22 @@ function _slashInsert(id,execRange){
   // ── Lists ────────────────────────────────────────────────
   if(id==='ul'||id==='ol'){
     const cur=_nearestBlock(sel,editor);
+    // Switching an EXISTING list to the other marker type (bullet<->numbered):
+    // just swap the wrapper tag and keep every <li> — the old code below only
+    // handled non-list -> list, so this case fell through to "no text",
+    // silently leaving the current list untouched and inserting a stray
+    // EMPTY list next to it instead of actually converting it.
+    if(cur&&(cur.tagName==='UL'||cur.tagName==='OL')){
+      if(cur.tagName===id.toUpperCase()){onContentChange();return;}
+      const newList=document.createElement(id);
+      Array.from(cur.children).forEach(li2=>newList.appendChild(li2));
+      cur.parentElement.replaceChild(newList,cur);
+      try{const r=document.createRange();r.selectNodeContents(newList);r.collapse(false);sel.removeAllRanges();sel.addRange(r);}catch(e){}
+      onContentChange();return;
+    }
     const list=document.createElement(id);
     const li=document.createElement('li');
-    const hasText=cur&&cur!==editor&&cur.textContent.trim()&&cur.tagName!=='UL'&&cur.tagName!=='OL';
+    const hasText=cur&&cur!==editor&&cur.textContent.trim();
     li.innerHTML=hasText?cur.innerHTML:'<br>';
     list.appendChild(li);
     if(hasText){cur.parentElement.replaceChild(list,cur);}
