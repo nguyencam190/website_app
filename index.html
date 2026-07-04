@@ -1372,7 +1372,7 @@ td .cf-checklist[data-open="true"] .cf-checklist-body,.cf-column-item .cf-checkl
 [data-theme="dark"] .cf-cards[data-bg="peach"] .cf-card{background:rgba(236,72,153,.13)}
 [data-theme="dark"] .cf-cards[data-bg="sand"] .cf-card{background:rgba(245,158,11,.12)}
 [data-theme="dark"] .cf-cards[data-bg="gray"] .cf-card{background:var(--surface2)}
-.cf-card-img-wrap{position:relative;background:var(--surface2);overflow:hidden;min-height:80px;cursor:zoom-in}
+.cf-card-img-wrap{position:relative;background:var(--surface2);overflow:hidden;min-height:80px;cursor:pointer}
 .cf-card-img-wrap:hover{outline:2px solid var(--accent);outline-offset:-2px}
 /* Strip generic .editor-content img chrome; let image drive height naturally (no crop). */
 .cf-card-img-wrap img{position:static!important;inset:auto!important;width:100%!important;height:auto!important;max-width:none!important;margin:0!important;border:none!important;border-radius:0!important;box-shadow:none!important;object-fit:unset!important;display:block!important;cursor:default}
@@ -6959,7 +6959,6 @@ async function tblInsertImage(cell,file){
   cell.classList.add('tbl-has-img');
   // No fixed height — cell auto-grows to the image's natural height (Confluence-style),
   // so a short image leaves no excess whitespace below.
-  el.addEventListener('dblclick',()=>{const _all=Array.from(document.querySelectorAll('.fmedia img,.editor-content img'));lbOpen(Math.max(0,_all.indexOf(el)));});
   el.addEventListener('mouseenter',()=>{_hoveredTblImg=el;el.style.outline='2px solid var(--accent)';el.style.outlineOffset='2px';});
   el.addEventListener('mouseleave',()=>{if(_hoveredTblImg===el){_hoveredTblImg=null;}el.style.outline='';el.style.outlineOffset='';});
   // Clear existing text/content in cell, then insert image
@@ -7350,7 +7349,6 @@ function tblAttachTable(table){
       if(!src){try{const b=await _idbGet(id);if(b){src=URL.createObjectURL(b);_cacheUrl(id,src);}}catch(e){}}
       if(src){
         img.src=src;
-        if(!img._dblclkWired){img._dblclkWired=true;img.addEventListener('dblclick',()=>{const _all=Array.from(document.querySelectorAll('.fmedia img,.editor-content img'));lbOpen(Math.max(0,_all.indexOf(img)));});}
       } else {
         // IDB data missing — remove broken img and clean up cell
         img.remove();
@@ -9007,13 +9005,6 @@ function _cfCardWireImg(card){
   const wrap=card.querySelector('.cf-card-img-wrap');
   if(!wrap||wrap._cardWired)return;
   wrap._cardWired=true;
-  wrap.addEventListener('dblclick',e=>{
-    const img=wrap.querySelector('img');
-    if(!img)return; // no image yet (placeholder) — nothing to zoom
-    e.preventDefault();e.stopPropagation();
-    const _all=Array.from(document.querySelectorAll('.fmedia img,.editor-content img'));
-    lbOpen(Math.max(0,_all.indexOf(img)));
-  });
   wrap.addEventListener('mousedown',e=>{
     e.preventDefault();
     const cardsBlock=card.closest('.cf-cards');
@@ -10366,11 +10357,6 @@ function _cfBuildImgBlock(id,src,isVid,name){
     if(e.target===cap||cap.contains(e.target))return;
     e.preventDefault();_cfImgSelect(block);
   });
-  if(!isVid)block.addEventListener('dblclick',e=>{
-    if(e.target===cap||cap.contains(e.target))return;
-    const allImgs=Array.from(document.querySelectorAll('.fmedia img,.editor-content img'));
-    lbOpen(Math.max(0,allImgs.indexOf(media)));
-  });
   return block;
 }
 
@@ -10880,12 +10866,6 @@ function _cfImgRewireEvents(block){
       if(cap&&(ev.target===cap||cap.contains(ev.target)))return;
       ev.preventDefault();_cfImgSelect(block);
     });
-    const _rMedia=block.querySelector('img');
-    if(_rMedia)block.addEventListener('dblclick',ev=>{
-      if(cap&&(ev.target===cap||cap.contains(ev.target)))return;
-      const _all=Array.from(document.querySelectorAll('.fmedia img,.editor-content img')).filter(img=>!img.closest('.tcc-thumb')&&!img.closest('.tcc-thumbs'));
-      lbOpen(Math.max(0,_all.indexOf(_rMedia)));
-    });
   }
 }
 function _cfImgRewireBlock(block){
@@ -11234,10 +11214,6 @@ function _cfCarSlideInitResize(inner,handle,side){
 function _cfCarWireSlide(slide){
   if(slide._carSlideWired)return;slide._carSlideWired=true;
   const inner=slide.querySelector('.cf-car-slide-inner');
-  // Wire dblclick on slide image for lightbox — must be here (not _cfBuildCarSlide) so it
-  // survives openDoc: on reload the DOM is rebuilt from innerHTML and all listeners are lost.
-  const _sImg=slide.querySelector('img[data-carid]');
-  if(_sImg){_sImg.addEventListener('dblclick',()=>{const _all=Array.from(document.querySelectorAll('.fmedia img,.editor-content img'));lbOpen(Math.max(0,_all.indexOf(_sImg)));});}
   const lh=slide.querySelector('.cf-car-slide-resize-h.left')||
     (()=>{const h=document.createElement('div');h.className='cf-car-slide-resize-h left';inner?.appendChild(h);return h;})();
   const rh=slide.querySelector('.cf-car-slide-resize-h.right')||
