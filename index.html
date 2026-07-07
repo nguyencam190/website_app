@@ -17341,7 +17341,18 @@ async function doExportOptimized(opts){
     // Table colgroup rebuild
     tmp.querySelectorAll('table').forEach(tbl=>{
       const showRN=tbl.dataset.rownums!=='0';const savedW=tbl.dataset.colwidths;
-      if(savedW){const cg=document.createElement('colgroup');savedW.split(',').forEach((w,i)=>{if(showRN&&i===0)return;const col=document.createElement('col');col.style.width=w;cg.appendChild(col);});tbl.prepend(cg);}
+      if(savedW){
+        // savedW[0] is the row-num column's own width (it was the first real
+        // <col> in the live colgroup when this was saved) — keep it in the
+        // colgroup as-is instead of skipping it. The row-num cell gets
+        // re-inserted as a real physical column further below, so dropping
+        // its <col> here would shift every OTHER col one column off from
+        // the cell it's meant to size (exactly the bug this whole rebuild
+        // exists to avoid).
+        const cg=document.createElement('colgroup');
+        savedW.split(',').forEach(w=>{const col=document.createElement('col');col.style.width=w;cg.appendChild(col);});
+        tbl.prepend(cg);
+      }
       else{
         // Never manually resized (still auto-equalized): the editor always
         // renders this with a real equal-width <colgroup> (tblEqualizeColumns),
@@ -17358,6 +17369,10 @@ async function doExportOptimized(opts){
         Array.from(tbl.rows).forEach(row=>{let n=0;Array.from(row.cells).forEach(c=>n+=(c.colSpan||1));if(n>dataCols)dataCols=n;});
         if(dataCols>0){
           const cg=document.createElement('colgroup');
+          // The row-num column gets rebuilt as a real cell further below —
+          // the colgroup needs a matching entry for it too, or every <col>
+          // shifts one column off from the physical cell it's meant to size.
+          if(showRN){const rnCol=document.createElement('col');rnCol.style.width='36px';cg.appendChild(rnCol);}
           for(let i=0;i<dataCols;i++){const col=document.createElement('col');col.style.width=(100/dataCols)+'%';cg.appendChild(col);}
           tbl.prepend(cg);
         }
